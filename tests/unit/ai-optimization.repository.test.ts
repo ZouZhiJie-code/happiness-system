@@ -1,16 +1,32 @@
 const { prisma, tx } = vi.hoisted(() => {
   const transactionClient = {
-    aIOptimizationCandidate: { findUnique: vi.fn(), update: vi.fn() },
-    aIFewShotExample: { updateMany: vi.fn(), findMany: vi.fn() },
+    $queryRaw: vi.fn(),
+    user: { findMany: vi.fn() },
+    aIGenerationTrace: { findMany: vi.fn() },
+    aIBadcaseCluster: { create: vi.fn() },
+    aIOptimizationCandidate: {
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn()
+    },
+    aIFewShotExample: { create: vi.fn(), updateMany: vi.fn(), findMany: vi.fn() },
+    aIOptimizationValidation: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      updateMany: vi.fn(),
+      findUniqueOrThrow: vi.fn()
+    },
     aIPromptRelease: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
-    adminAuditLog: { create: vi.fn() }
+    adminAuditLog: { create: vi.fn(), createMany: vi.fn() }
   };
   return {
     tx: transactionClient,
     prisma: {
       aICase: { findMany: vi.fn() },
-      aIOptimizationCandidate: { findUnique: vi.fn() },
+      aIOptimizationCandidate: { findUnique: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
       aIGenerationTrace: { findMany: vi.fn() },
+      aIFewShotExample: { findMany: vi.fn() },
       $transaction: vi.fn(async (callback: (client: typeof transactionClient) => unknown) => callback(transactionClient))
     }
   };
@@ -19,15 +35,32 @@ const { prisma, tx } = vi.hoisted(() => {
 vi.mock("@/server/db/prisma", () => ({ prisma }));
 
 import {
+  completeOptimizationValidation,
+  createClusterAndCandidate,
+  createFewShotCandidate,
   findOptimizationCandidateEvidencePage,
+  listOptimizationCandidates,
+  loadActivePromptOptimization,
   loadOptimizationEvidence,
+  loadOptimizationValidationInput,
   publishOptimizationCandidate,
   reviewOptimizationCandidateStatus,
   rollbackOptimizationCandidate
 } from "@/server/repositories/ai-optimization.repository";
 
 describe("AI optimization repository", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    prisma.$transaction.mockImplementation(
+      async (callback: (client: typeof tx) => unknown) => callback(tx)
+    );
+    tx.$queryRaw.mockResolvedValue([{ id: "locked" }]);
+    tx.user.findMany.mockResolvedValue([{ id: "user-1" }]);
+    tx.aIGenerationTrace.findMany.mockResolvedValue([{ id: "trace-1", userId: "user-1" }]);
+    tx.aIOptimizationCandidate.updateMany.mockResolvedValue({ count: 1 });
+    tx.aIOptimizationValidation.findFirst.mockResolvedValue(null);
+    tx.aIOptimizationValidation.updateMany.mockResolvedValue({ count: 1 });
+  });
 
   it("requires current consent for both bad-case and positive optimization evidence", async () => {
     prisma.aICase.findMany.mockResolvedValue([]);
@@ -65,16 +98,24 @@ describe("AI optimization repository", () => {
       })
     }));
 
-    prisma.aIOptimizationCandidate.findUnique.mockResolvedValue({
-      id: "candidate-published",
-      evidenceTraceIds: ["trace-current", "trace-withdrawn"]
-    });
-    prisma.aIGenerationTrace.findMany
-      .mockResolvedValueOnce([{ id: "trace-current" }])
+    tx.aIOptimizationCandidate.findUnique
+      .mockResolvedValueOnce({
+        id: "candidate-published",
+        evidenceTraceIds: ["trace-current", "trace-withdrawn"]
+      })
+      .mockResolvedValueOnce({ evidenceTraceIds: ["trace-current", "trace-withdrawn"] });
+    tx.aIGenerationTrace.findMany
+      .mockResolvedValueOnce([{ id: "trace-current", userId: "user-current" }])
+      .mockResolvedValueOnce([{ id: "trace-current", userId: "user-current" }])
       .mockResolvedValueOnce([{ id: "trace-current", userId: "user-current" }]);
+    tx.user.findMany.mockResolvedValue([{ id: "user-current" }]);
+    tx.$queryRaw
+      .mockResolvedValueOnce([{ id: "user-current" }])
+      .mockResolvedValueOnce([{ id: "candidate-published" }]);
 
     const evidence = await findOptimizationCandidateEvidencePage({
       candidateId: "candidate-published",
+      adminUsername: "admin",
       page: 1,
       pageSize: 20
     });
@@ -84,7 +125,7 @@ describe("AI optimization repository", () => {
       total: 1,
       traces: [{ id: "trace-current" }]
     });
-    expect(prisma.aIGenerationTrace.findMany).toHaveBeenNthCalledWith(2, {
+    expect(tx.aIGenerationTrace.findMany).toHaveBeenNthCalledWith(1, {
       where: {
         id: { in: ["trace-current", "trace-withdrawn"] },
         user: {
@@ -95,9 +136,9 @@ describe("AI optimization repository", () => {
           }
         }
       },
-      select: { id: true }
+      select: { id: true, userId: true }
     });
-    expect(prisma.aIGenerationTrace.findMany).toHaveBeenNthCalledWith(3, {
+    expect(tx.aIGenerationTrace.findMany).toHaveBeenNthCalledWith(3, {
       where: {
         id: { in: ["trace-current"] },
         user: {
@@ -110,14 +151,359 @@ describe("AI optimization repository", () => {
       },
       include: expect.any(Object)
     });
+    expect(tx.adminAuditLog.createMany).toHaveBeenCalledWith({
+      data: [{
+        adminUsername: "admin",
+        targetUserId: "user-current",
+        resourceType: "ai_quality_evidence",
+        resourceId: "trace-current",
+        action: "view_content"
+      }]
+    });
+  });
+
+  it("keeps candidate list few-shot data metadata-only", async () => {
+    prisma.aIOptimizationCandidate.findMany.mockResolvedValue([]);
+
+    await listOptimizationCandidates();
+
+    const query = prisma.aIOptimizationCandidate.findMany.mock.calls[0]?.[0];
+    expect(query).toMatchObject({
+      include: {
+        fewShotExamples: {
+          select: {
+            id: true,
+            status: true,
+            qualityScore: true
+          }
+        }
+      }
+    });
+    expect(query.include.fewShotExamples.select).not.toHaveProperty("inputSnapshot");
+    expect(query.include.fewShotExamples.select).not.toHaveProperty("output");
+    expect(query.include.validations.select).not.toHaveProperty("results");
+    expect(query.include.cluster.select).not.toHaveProperty("traceIds");
+    expect(query.include.cluster.select).not.toHaveProperty("summary");
+    expect(query.include.releases.select).not.toHaveProperty("instructionPatch");
+    expect(query.include.releases.select).not.toHaveProperty("fewShotExampleIds");
+  });
+
+  it("never rewrites an existing active few-shot example from a new draft candidate", async () => {
+    tx.aIOptimizationCandidate.findUnique.mockResolvedValue(null);
+    tx.aIFewShotExample.findMany.mockResolvedValue([{ sourceTraceId: "trace-1" }]);
+
+    await expect(createFewShotCandidate({
+      dedupeKey: "few-shot-dedupe",
+      runId: "run-1",
+      promptKey: "interview.question.joy",
+      artifactType: "interview_turn",
+      dimension: "joy",
+      traces: [{
+        id: "trace-1",
+        contextSnapshot: { userMessage: "今天很好" },
+        finalOutput: { question: "哪一刻最开心？" },
+        evaluation: { totalScore: 95 }
+      }]
+    })).rejects.toThrow("OPTIMIZATION_FEW_SHOT_SOURCE_ALREADY_BOUND");
+
+    expect(tx.aIOptimizationCandidate.updateMany).not.toHaveBeenCalled();
+    expect(tx.aIFewShotExample.create).not.toHaveBeenCalled();
+  });
+
+  it("locks and rechecks every source trace before creating or reusing a candidate", async () => {
+    tx.aIOptimizationCandidate.findUnique.mockResolvedValue({
+      id: "candidate-withdrawn",
+      status: "rejected",
+      reviewedBy: "system:ai_quality_consent_withdrawal"
+    });
+
+    const result = await createClusterAndCandidate({
+      dedupeKey: "dedupe-1",
+      runId: "run-1",
+      artifactType: "interview_turn",
+      dimension: "joy",
+      issueCode: "schema_parse_failed",
+      caseCount: 1,
+      traceIds: ["trace-1"],
+      summary: "自动质量问题",
+      path: "engineering",
+      promptKey: null,
+      title: "修复结构错误",
+      rationale: "本地单元测试",
+      proposal: {},
+      riskLevel: "medium"
+    });
+
+    expect(result).toMatchObject({
+      created: false,
+      candidate: { id: "candidate-withdrawn", status: "rejected" }
+    });
+    expect(tx.aIGenerationTrace.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["trace-1"] },
+        user: {
+          is: {
+            aiQualityConsentVersion: "2026-07-19",
+            aiQualityConsentAt: { not: null },
+            aiQualityConsentRevokedAt: null
+          }
+        }
+      },
+      select: { id: true, userId: true }
+    });
+    expect(tx.aIBadcaseCluster.create).not.toHaveBeenCalled();
+
+    tx.aIGenerationTrace.findMany.mockResolvedValue([]);
+    await expect(createClusterAndCandidate({
+      dedupeKey: "dedupe-2",
+      runId: "run-1",
+      artifactType: "interview_turn",
+      dimension: "joy",
+      issueCode: "schema_parse_failed",
+      caseCount: 1,
+      traceIds: ["trace-withdrawn"],
+      summary: "自动质量问题",
+      path: "engineering",
+      promptKey: null,
+      title: "修复结构错误",
+      rationale: "本地单元测试",
+      proposal: {},
+      riskLevel: "medium"
+    })).rejects.toThrow("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  });
+
+  it("loads validation bodies only after double consent checks, audits them, and atomically starts validation", async () => {
+    tx.aIOptimizationCandidate.findUnique
+      .mockResolvedValueOnce({
+        id: "candidate-validate",
+        status: "approved",
+        artifactType: "interview_turn",
+        dimension: "joy",
+        promptKey: "interview.question.joy",
+        evidenceTraceIds: ["trace-target"],
+        fewShotExamples: [{ id: "example-1", sourceTraceId: "trace-target" }]
+      })
+      .mockResolvedValueOnce({
+        id: "candidate-validate",
+        status: "approved",
+        path: "few_shot",
+        artifactType: "interview_turn",
+        dimension: "joy",
+        promptKey: "interview.question.joy",
+        proposal: {},
+        evidenceTraceIds: ["trace-target"],
+        fewShotExamples: [{
+          id: "example-1",
+          sourceTraceId: "trace-target",
+          inputSnapshot: { private: "context" },
+          output: { private: "answer" },
+          sourceTrace: { userId: "user-1" }
+        }]
+      });
+    tx.aIFewShotExample.findMany.mockResolvedValue([{ id: "example-1", sourceTraceId: "trace-target" }]);
+    tx.aIGenerationTrace.findMany
+      .mockResolvedValueOnce([{ id: "trace-target", userId: "user-1" }])
+      .mockResolvedValueOnce([{ id: "trace-regression", userId: "user-2" }])
+      .mockResolvedValueOnce([
+        { id: "trace-regression", userId: "user-2" },
+        { id: "trace-target", userId: "user-1" }
+      ])
+      .mockResolvedValueOnce([{
+        id: "trace-target",
+        userId: "user-1",
+        invocations: [],
+        evaluation: null,
+        feedback: null
+      }])
+      .mockResolvedValueOnce([{
+        id: "trace-regression",
+        userId: "user-2",
+        invocations: [],
+        evaluation: null,
+        feedback: null
+      }]);
+    tx.$queryRaw
+      .mockResolvedValueOnce([{ id: "user-1" }, { id: "user-2" }])
+      .mockResolvedValueOnce([{ id: "candidate-validate" }]);
+    tx.user.findMany.mockResolvedValue([{ id: "user-1" }, { id: "user-2" }]);
+    tx.aIOptimizationValidation.create.mockResolvedValue({ id: "validation-1", status: "running" });
+
+    const result = await loadOptimizationValidationInput({
+      candidateId: "candidate-validate",
+      rubricVersion: "rubric-v1",
+      adminUsername: "admin"
+    });
+
+    expect(result).toMatchObject({
+      validation: { id: "validation-1" },
+      expectedStatus: "approved",
+      consentTraceIds: ["trace-regression", "trace-target"]
+    });
+    expect(tx.adminAuditLog.createMany).toHaveBeenCalledWith({
+      data: expect.arrayContaining([
+        expect.objectContaining({
+          targetUserId: "user-1",
+          resourceType: "ai_optimization_validation_trace",
+          resourceId: "trace-target",
+          action: "validate_content"
+        }),
+        expect.objectContaining({
+          targetUserId: "user-2",
+          resourceType: "ai_optimization_validation_trace",
+          resourceId: "trace-regression",
+          action: "validate_content"
+        }),
+        expect.objectContaining({
+          targetUserId: "user-1",
+          resourceType: "ai_optimization_validation_few_shot",
+          resourceId: "example-1",
+          action: "validate_content"
+        })
+      ])
+    });
+    expect(tx.aIOptimizationValidation.create).toHaveBeenCalledWith({
+      data: {
+        candidateId: "candidate-validate",
+        rubricVersion: "rubric-v1",
+        createdBy: "admin",
+        results: []
+      }
+    });
+  });
+
+  it("rejects a second validation start while the candidate already has a running validation", async () => {
+    tx.aIOptimizationCandidate.findUnique
+      .mockResolvedValueOnce({
+        id: "candidate-running",
+        status: "approved",
+        path: "system_prompt",
+        artifactType: "interview_turn",
+        dimension: "joy",
+        promptKey: null,
+        evidenceTraceIds: ["trace-1"],
+        fewShotExamples: []
+      })
+      .mockResolvedValueOnce({
+        id: "candidate-running",
+        status: "approved",
+        path: "system_prompt",
+        artifactType: "interview_turn",
+        dimension: "joy",
+        promptKey: null,
+        proposal: {},
+        evidenceTraceIds: ["trace-1"],
+        fewShotExamples: []
+      });
+    tx.aIGenerationTrace.findMany
+      .mockResolvedValueOnce([{ id: "trace-1", userId: "user-1" }])
+      .mockResolvedValueOnce([{ id: "trace-1", userId: "user-1" }]);
+    tx.$queryRaw
+      .mockResolvedValueOnce([{ id: "user-1" }])
+      .mockResolvedValueOnce([{ id: "candidate-running" }]);
+    tx.aIOptimizationValidation.findFirst.mockResolvedValue({ id: "validation-running" });
+
+    await expect(loadOptimizationValidationInput({
+      candidateId: "candidate-running",
+      rubricVersion: "rubric-v1",
+      adminUsername: "admin"
+    })).rejects.toThrow("OPTIMIZATION_VALIDATION_ALREADY_RUNNING");
+
+    expect(tx.adminAuditLog.createMany).not.toHaveBeenCalled();
+    expect(tx.aIOptimizationValidation.create).not.toHaveBeenCalled();
+  });
+
+  it("rechecks consent and expected candidate status before completing validation", async () => {
+    tx.aIOptimizationValidation.findUniqueOrThrow.mockResolvedValue({
+      id: "validation-1",
+      status: "passed"
+    });
+
+    await completeOptimizationValidation({
+      validationId: "validation-1",
+      candidateId: "candidate-1",
+      expectedCandidateStatus: "approved",
+      consentTraceIds: ["trace-1"],
+      status: "passed",
+      targetCaseCount: 1,
+      targetPassedCount: 1,
+      regressionCaseCount: 0,
+      regressionPassedCount: 0,
+      criticalRegressionCount: 0,
+      averageScoreDelta: 0,
+      summary: "通过",
+      results: []
+    });
+
+    expect(tx.aIOptimizationValidation.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: "validation-1",
+        candidateId: "candidate-1",
+        status: "running"
+      },
+      data: expect.objectContaining({ status: "passed", completedAt: expect.any(Date) })
+    });
+
+    tx.aIGenerationTrace.findMany.mockResolvedValue([]);
+    await expect(completeOptimizationValidation({
+      validationId: "validation-2",
+      candidateId: "candidate-1",
+      expectedCandidateStatus: "approved",
+      consentTraceIds: ["trace-withdrawn"],
+      status: "passed",
+      targetCaseCount: 1,
+      targetPassedCount: 1,
+      regressionCaseCount: 0,
+      regressionPassedCount: 0,
+      criticalRegressionCount: 0,
+      averageScoreDelta: 0,
+      summary: "通过",
+      results: []
+    })).rejects.toThrow("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  });
+
+  it("filters active runtime few-shot bodies by the source user's current consent", async () => {
+    prisma.aIOptimizationCandidate.findFirst.mockResolvedValue(null);
+    prisma.aIFewShotExample.findMany.mockResolvedValue([]);
+
+    await loadActivePromptOptimization("interview.question.joy");
+
+    expect(prisma.aIFewShotExample.findMany).toHaveBeenCalledWith({
+      where: {
+        promptKey: "interview.question.joy",
+        status: "active",
+        sourceTrace: {
+          is: {
+            user: {
+              is: {
+                aiQualityConsentVersion: "2026-07-19",
+                aiQualityConsentAt: { not: null },
+                aiQualityConsentRevokedAt: null
+              }
+            }
+          }
+        }
+      },
+      select: { id: true, inputSnapshot: true, output: true, qualityScore: true },
+      orderBy: [{ qualityScore: "desc" }, { promotedAt: "desc" }],
+      take: 6
+    });
   });
 
   it("publishes an approved few-shot candidate, keeps six ranked examples and writes an audit record", async () => {
-    tx.aIOptimizationCandidate.findUnique.mockResolvedValue({
+    tx.aIOptimizationCandidate.findUnique
+      .mockResolvedValueOnce({
+        id: "candidate-1",
+        status: "approved",
+        evidenceTraceIds: ["trace-1"],
+        fewShotExamples: [{ id: "example-1", sourceTraceId: "trace-1" }],
+        validations: [{ id: "validation-1" }]
+      })
+      .mockResolvedValueOnce({
       id: "candidate-1",
       status: "approved",
       path: "few_shot",
       promptKey: "interview.question.joy",
+      evidenceTraceIds: ["trace-1"],
       proposal: { sourceTraceIds: ["trace-1"] },
       fewShotExamples: [{ id: "example-1" }],
       validations: [{ id: "validation-1", status: "passed" }]
@@ -155,15 +541,24 @@ describe("AI optimization repository", () => {
   });
 
   it("blocks engineering candidates from runtime prompt publication", async () => {
-    tx.aIOptimizationCandidate.findUnique.mockResolvedValue({
-      id: "candidate-engineering",
-      status: "approved",
-      path: "engineering",
-      promptKey: "interview.question.joy",
-      proposal: {},
-      fewShotExamples: [],
-      validations: []
-    });
+    tx.aIOptimizationCandidate.findUnique
+      .mockResolvedValueOnce({
+        id: "candidate-engineering",
+        status: "approved",
+        evidenceTraceIds: ["trace-1"],
+        fewShotExamples: [],
+        validations: [{ id: "validation-1" }]
+      })
+      .mockResolvedValueOnce({
+        id: "candidate-engineering",
+        status: "approved",
+        path: "engineering",
+        promptKey: "interview.question.joy",
+        evidenceTraceIds: ["trace-1"],
+        proposal: {},
+        fewShotExamples: [],
+        validations: [{ id: "validation-1" }]
+      });
 
     await expect(publishOptimizationCandidate("candidate-engineering", "admin")).rejects.toThrow(
       "ENGINEERING_CANDIDATE_CANNOT_PUBLISH"
@@ -172,15 +567,24 @@ describe("AI optimization repository", () => {
   });
 
   it("requires a passed validation before publishing", async () => {
-    tx.aIOptimizationCandidate.findUnique.mockResolvedValue({
-      id: "candidate-unvalidated",
-      status: "approved",
-      path: "system_prompt",
-      promptKey: "interview.question.joy",
-      proposal: { instructionPatch: "每次只问一个问题。" },
-      fewShotExamples: [],
-      validations: []
-    });
+    tx.aIOptimizationCandidate.findUnique
+      .mockResolvedValueOnce({
+        id: "candidate-unvalidated",
+        status: "approved",
+        evidenceTraceIds: ["trace-1"],
+        fewShotExamples: [],
+        validations: []
+      })
+      .mockResolvedValueOnce({
+        id: "candidate-unvalidated",
+        status: "approved",
+        path: "system_prompt",
+        promptKey: "interview.question.joy",
+        evidenceTraceIds: ["trace-1"],
+        proposal: { instructionPatch: "每次只问一个问题。" },
+        fewShotExamples: [],
+        validations: []
+      });
 
     await expect(publishOptimizationCandidate("candidate-unvalidated", "admin")).rejects.toThrow(
       "OPTIMIZATION_VALIDATION_REQUIRED"
@@ -213,28 +617,44 @@ describe("AI optimization repository", () => {
   });
 
   it("audits approve and reject decisions in the same transaction", async () => {
-    tx.aIOptimizationCandidate.update.mockResolvedValue({ id: "candidate-1", status: "approved" });
+    tx.aIOptimizationCandidate.findUnique.mockResolvedValue({
+      id: "candidate-1",
+      evidenceTraceIds: ["trace-1"],
+      fewShotExamples: []
+    });
+    tx.aIOptimizationCandidate.findUniqueOrThrow.mockResolvedValue({ id: "candidate-1", status: "approved" });
 
-    await reviewOptimizationCandidateStatus({ id: "candidate-1", status: "approved", adminUsername: "admin" });
+    await reviewOptimizationCandidateStatus({
+      id: "candidate-1",
+      expectedStatus: "draft",
+      status: "approved",
+      adminUsername: "admin"
+    });
 
-    expect(tx.aIOptimizationCandidate.update).toHaveBeenCalledWith({
-      where: { id: "candidate-1" },
+    expect(tx.aIOptimizationCandidate.updateMany).toHaveBeenCalledWith({
+      where: { id: "candidate-1", status: "draft" },
       data: expect.objectContaining({ status: "approved", reviewedBy: "admin", reviewedAt: expect.any(Date) })
     });
     expect(tx.adminAuditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ action: "approve", resourceId: "candidate-1" })
     });
 
-    tx.aIOptimizationCandidate.update.mockResolvedValue({ id: "candidate-2", status: "rejected" });
+    tx.aIOptimizationCandidate.findUnique.mockResolvedValue({
+      id: "candidate-2",
+      evidenceTraceIds: ["trace-1"],
+      fewShotExamples: []
+    });
+    tx.aIOptimizationCandidate.findUniqueOrThrow.mockResolvedValue({ id: "candidate-2", status: "rejected" });
     await reviewOptimizationCandidateStatus({
       id: "candidate-2",
+      expectedStatus: "approved",
       status: "rejected",
       adminUsername: "admin",
       reviewReason: "证据不足，请补充具体对话。"
     });
 
-    expect(tx.aIOptimizationCandidate.update).toHaveBeenLastCalledWith({
-      where: { id: "candidate-2" },
+    expect(tx.aIOptimizationCandidate.updateMany).toHaveBeenLastCalledWith({
+      where: { id: "candidate-2", status: "approved" },
       data: expect.objectContaining({
         status: "rejected",
         reviewedBy: "admin",

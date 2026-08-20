@@ -35,8 +35,7 @@ const candidate: AIOptimizationCandidateView = {
     averageScoreDelta: 8,
     summary: "验证通过。",
     errorCode: null,
-    completedAt: "2026-07-19T01:00:00.000Z",
-    results: []
+    completedAt: "2026-07-19T01:00:00.000Z"
   }
 };
 

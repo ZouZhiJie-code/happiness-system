@@ -21,7 +21,12 @@ export async function POST(request: Request, context: { params: Promise<{ candid
         ? 403
         : message === "OPTIMIZATION_CANDIDATE_NOT_FOUND"
           ? 404
-          : message.includes("NOT_VALIDATABLE") || message.includes("REQUIRES_MANUAL") || message.includes("MISSING")
+          : message.includes("NOT_VALIDATABLE")
+              || message.includes("REQUIRES_MANUAL")
+              || message.includes("MISSING")
+              || message.includes("CONSENT_REQUIRED")
+              || message.includes("STATE_CHANGED")
+              || message.includes("ALREADY_RUNNING")
             ? 409
             : 500;
     if (status === 500) logger.error({ err: error }, "AI optimization candidate validation failed.");

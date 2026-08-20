@@ -34,8 +34,8 @@
 - 已确认事实：设置页退出请求已统一返回 `participated=false`；原退出清理只撤回反馈并退役 Few-shot，`AICase` 用户信号、回复再生成点踩时间和保存反馈时的并发撤回仍存在残留窗口。
 - 产品判断：Golden Set 只使用当前有效同意且撤回时间为空的记录。
 - Codex 评估：退出事务需要同步清理反馈、案例信号、回复再生成点踩状态和 Few-shot；反馈保存事务需先锁定用户同意行并在同一事务复核，才能关闭“退出后又重新写入反馈”的并发窗口。
-- 待验证假设：已由专用本地 loopback PostgreSQL 的两种锁顺序 `2/2` 验证；保存先持共享锁和撤回先持排他锁均形成预期等待与最终状态。
-- 当前处理状态：本地候选已补齐派生证据清理、事务内参数化 `FOR SHARE` 锁、二次同意校验、引用撤回 trace 的 draft／approved 优化候选失效，以及历史候选证据正文的当前同意双层筛选。真实 PostgreSQL 结果为 `2/2` 通过，`AIRequestLog=0`、模型调用 `0`、临时 Schema 残留 `0`；Stage 3 定向 `77/77` 与类型、Prisma、文档、Lint、差异门通过。公开回执见 [`consent-concurrency-postgres-receipt.json`](./golden-set-v2/consent-concurrency-postgres-receipt.json)。Production 发布与正文读取继续关闭。
+- 待验证假设：已由专用本地 loopback PostgreSQL 的 `13/13` 个并发场景验证；候选创建、审批、发布、验证启动和反馈保存分别覆盖操作先行与撤回先行，验证完成阶段在撤回后拒绝；另覆盖单候选验证互斥、活跃 Few-shot 重用保护和双用户稳定锁序。
+- 当前处理状态：本地候选按用户全部 AIGenerationTrace 清理同意绑定的派生状态，覆盖无 AIFeedback 的自动 Bad Case；draft／approved 候选一次去重失效并移除 `evidenceTraceIds` 中该用户的直接 trace 引用，published／rolled_back 历史状态与原引用保持。候选创建、审批、发布、验证统一采用稳定 User 锁序、当前同意双层复核和候选状态原子门；验证与候选证据正文读取在同一事务审计。真实 PostgreSQL `13/13` 通过，`AIRequestLog=0`、模型调用 `0`、临时 Schema 残留 `0`。公开回执见 [`consent-concurrency-postgres-receipt.json`](./golden-set-v2/consent-concurrency-postgres-receipt.json)。Production 发布与正文读取继续关闭。
 
 ## PEH-005｜零模型证明不能只依赖 AIRequestLog
 
@@ -143,3 +143,11 @@
 - Codex 评估：三项都属于发布前隐私门。授权状态增加 `sample_authorization_not_started`，会话首查只保留元数据，公开按日阈值固定为 `3` 并由合同与资产测试共同约束。
 - 待验证假设：当前按月汇总在不披露具体日期的情况下可承担收集进度说明；样本量增长后再复核更高阈值或分组策略。
 - 当前处理状态：本地候选 `7c87119` 已完成修复；公开资产保持零用户正文、零身份字段、Production 正文读取 `0`、模型调用 `0`。Preview、Production 和真实逐例正文均为 `not_run`。
+
+## PEH-025｜Stage 3 独立终审发现优化候选正文与撤回竞态边界
+
+- 已确认事实：候选列表曾直接返回 Few-shot 的 `inputSnapshot / output` 与验证 `results.candidateOutput`；候选证据页、验证目标、回归与 Few-shot 正文读取缺少同一事务内的 current-consent 双层门和内容审计；活跃 Few-shot 可被新草稿 upsert 改写；验证启动使用读重试且同候选可并发创建多条 running 记录；候选创建、审批、发布与验证采用先读状态后写状态，用户撤回可与这些动作交错；退出清理只从活跃 AIFeedback 起步，遗漏无反馈自动 Bad Case。
+- 产品判断：用户当前同意是候选派生、正文读取和状态推进的共同前提；撤回后 draft／approved 候选退出后续流程，published／rolled_back 只承担历史记录；管理列表默认只展示候选、问题簇、发布、Few-shot 与验证元数据；活跃示例和验证任务都要经过候选门。
+- Codex 评估：相关用户按稳定顺序取得共享锁、在锁内复核 current consent，再对候选执行 expected-status 原子门，可以让候选操作与撤回形成可解释的先后关系。验证与候选证据正文读取同时写入 AdminAuditLog；验证启动取消读重试并在候选锁内拒绝重复 running；Few-shot 新候选只创建未绑定来源，运行时 active Few-shot 继续按来源用户当前同意过滤。
+- 待验证假设：已由 `7` 个真实 PostgreSQL 测试用例中的 `13/13` 个场景验证，覆盖创建、审批、发布、验证启动、反馈保存与撤回的双向顺序，以及活跃 Few-shot 保护、单候选验证互斥和双用户稳定锁序；发布先完成时保留 published 历史，撤回先完成时后续操作关闭，验证完成阶段再次复核同意。
+- 当前处理状态：本地修复完成，定向单元回归 `20` 个文件、`107/107` 通过；全量最终回归 `367` 个文件／`3271` 条用例通过，`17` 个文件／`89` 条用例按既有条件跳过。首次全量复跑只暴露新增界面断言等待不足，测试等待修正后最终全绿。真实 PostgreSQL 最终 Schema `daily_light_stage3_consent_1b020dd4905e1d40` 已删除，残留 `0`，模型调用与 AIRequestLog 均为 `0`。公开回执只声明 pending 候选 `evidenceTraceIds` 的直接引用移除，同时明确 published／rolled_back 历史引用保留；本地完整工程门通过，分支保持未推送。

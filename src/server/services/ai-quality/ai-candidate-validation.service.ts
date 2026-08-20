@@ -8,13 +8,11 @@ import { assistantTurnPayloadSchema } from "@/features/interview/schema/intervie
 import { joyDraftResultSchema } from "@/features/joy-interview/schema/joy-ai.schema";
 import {
   completeOptimizationValidation,
-  createOptimizationValidation,
   failOptimizationValidation,
   loadOptimizationValidationInput
 } from "@/server/repositories/ai-optimization.repository";
 import { getAIProvider } from "@/server/services/ai";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
-import { withAdminReadRetry } from "@/server/services/admin-read-retry";
 
 type ValidationCaseResult = {
   traceId: string;
@@ -230,18 +228,18 @@ function fewShotEligibilityResults(
 }
 
 export async function validateAIOptimizationCandidate(input: { candidateId: string; adminUsername: string }) {
-  const validationInput = await withAdminReadRetry(() => loadOptimizationValidationInput(input.candidateId));
+  const validationInput = await loadOptimizationValidationInput({
+    candidateId: input.candidateId,
+    rubricVersion: AI_EVALUATION_RUBRIC_VERSION,
+    adminUsername: input.adminUsername
+  });
   if (!validationInput) throw new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND");
   if (validationInput.candidate.path === "engineering") throw new Error("ENGINEERING_CANDIDATE_REQUIRES_MANUAL_VALIDATION");
   if (!(["draft", "approved"] as string[]).includes(validationInput.candidate.status)) {
     throw new Error("OPTIMIZATION_CANDIDATE_NOT_VALIDATABLE");
   }
 
-  const validation = await createOptimizationValidation({
-    candidateId: input.candidateId,
-    rubricVersion: AI_EVALUATION_RUBRIC_VERSION,
-    createdBy: input.adminUsername
-  });
+  const validation = validationInput.validation;
 
   try {
     const provider = await getAIProvider("chat");
@@ -273,6 +271,9 @@ export async function validateAIOptimizationCandidate(input: { candidateId: stri
 
     return completeOptimizationValidation({
       validationId: validation.id,
+      candidateId: validationInput.candidate.id,
+      expectedCandidateStatus: validationInput.expectedStatus,
+      consentTraceIds: validationInput.consentTraceIds,
       status: passed ? "passed" : "failed",
       targetCaseCount: targetResults.length,
       targetPassedCount: targetPassed,

@@ -15,7 +15,7 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 
 - 当前本地候选分支：`codex/production-evidence-hardening-stage3-release-20260820`
 - 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
-- 最新 main 父节点：`aef37577`
+- Stage 3 当前基线：`aef37577`，已包含 PR #43 merge `795417d` 与 Stage 5 merge `aef37577`
 - Production 发布头：`a86a4ba`
 - 阶段 1 main 合并提交：`305f209`
 - 阶段 2 main 合并提交：`77de8d1`
@@ -27,10 +27,11 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 阶段 3 本地候选事实：
 
 - 独立 worktree：`/Users/zouzhijie/Desktop/Happiness-system-stage3-release-20260820`；分支：`codex/production-evidence-hardening-stage3-release-20260820`；基线：`origin/main@77de8d1`。
-- 提交序列：`34acb1f` 统一退出合同，`1b4820d` 建立 Golden Set v2 fail-closed 基础，`7c87119` 修复并发撤回、派生证据清理、未来授权、归属前零正文和按日小样本抑制。
+- 已封存提交序列：`34acb1f` 统一退出合同，`1b4820d` 建立 Golden Set v2 fail-closed 基础，`7c87119` 修复并发撤回、派生证据清理、未来授权、归属前零正文和按日小样本抑制，`550d0df` 增加真实 PostgreSQL 撤回门；独立终审 P1／P2 修复以分支最新本地 HEAD 承担。
 - Production 零正文元数据证据显示完整轨迹可入集数 `0`，状态 `insufficient_samples / collection_pending`；内容开关保持关闭，Production 正文读取 `0`、模型调用 `0`。
-- 专用本地 loopback PostgreSQL 真实并发撤回双锁序 `2/2` 通过：save-first 最终撤回完成，withdrawal-first 最终保存以 `CONSENT_REQUIRED` 关闭；反馈、案例用户信号、再生成点踩、Few-shot 和 draft／approved 优化候选均撤销或失效。`AIRequestLog=0`、模型调用 `0`，临时 Schema 已删除且残留 `0`。
-- 最终本地门为 Stage 3 定向 `12` 个文件、`77/77` 通过，类型、Prisma、文档和差异检查通过；全仓 Lint `0 errors / 43` 条既有 warnings，文档检查为 `24` 份核心文档、`846` 个本地链接、`1` 个当前入口。
+- 独立终审修复后，候选列表只返回候选、问题簇、发布、Few-shot 与验证元数据，初始页面不下发 Few-shot 或验证逐例正文；验证 target／regression／Few-shot 与候选证据正文读取统一经过 current-consent 双层门并在同一事务写入审计；候选创建、审批、发布和验证统一采用稳定 User 锁序、同意复核与 expected-status 原子门；active Few-shot 运行时读取按来源用户当前同意过滤，新草稿不能改写既有示例，同候选并发验证只保留一条 running。
+- 撤回现在覆盖该用户全部 AIGenerationTrace，包含无 AIFeedback 自动 Bad Case；draft／approved 候选一次去重转为 rejected，并只从 `evidenceTraceIds` 移除该用户的直接 trace 引用；published／rolled_back 历史状态与引用保持。
+- 专用本地 loopback PostgreSQL `7` 个测试用例、`13/13` 个并发场景通过，覆盖反馈保存、候选创建、审批、发布、验证启动与撤回的双向顺序，并新增活跃 Few-shot 重用保护、单候选验证互斥和双用户稳定锁序；`AIRequestLog=0`、模型调用 `0`，最终临时 Schema `daily_light_stage3_consent_1b020dd4905e1d40` 已删除且残留 `0`。定向回归 `20` 个文件、`107/107` 通过；全量回归 `367` 个文件／`3271` 条用例通过、`17` 个文件／`89` 条用例按既有条件跳过；Lint `0 errors / 43 inherited warnings`，类型、构建、Prisma、文档与差异检查通过。
 - 当前候选未推送、未开 PR、未部署 Preview／Production；真实逐例正文、样本导出、人工评审和产品检查点均为 `not_run`。
 
 阶段 1 Production 证据：

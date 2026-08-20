@@ -30,4 +30,19 @@ describe("AI candidate validation API", () => {
     });
     expect(response.status).toBe(403);
   });
+
+  it("returns a structured conflict when validation is already running", async () => {
+    validateAIOptimizationCandidate.mockRejectedValue(
+      new Error("OPTIMIZATION_VALIDATION_ALREADY_RUNNING")
+    );
+    const response = await POST(
+      new Request("http://localhost/api/admin/ai-quality/candidates/candidate-1/validate", { method: "POST" }),
+      { params: Promise.resolve({ candidateId: "candidate-1" }) }
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "OPTIMIZATION_VALIDATION_ALREADY_RUNNING"
+    });
+  });
 });

@@ -55,7 +55,6 @@ export type AIOptimizationCandidateView = {
     summary: string | null;
     errorCode: string | null;
     completedAt: string | null;
-    results: unknown;
   } | null;
 };
 
@@ -74,16 +73,6 @@ export type AIOptimizationRunView = {
 
 type CandidateStage = "review" | "validation" | "publish" | "technical" | "observe" | "history";
 type QueueFilter = "actionable" | "review" | "validation" | "publish" | "observe" | "history";
-
-type ValidationResult = {
-  traceId: string;
-  kind: "target" | "regression";
-  passed: boolean;
-  baselineScore: number | null;
-  candidateScore: number | null;
-  reason: string;
-  candidateOutput: Record<string, unknown>;
-};
 
 const PATH_LABEL = {
   system_prompt: "回答规则",
@@ -250,6 +239,7 @@ function getFriendlyError(errorCode: string) {
   if (errorCode === "AUTHENTICATION_REQUIRED") return "登录状态已失效，请重新登录后再试。";
   if (/DATABASE|P1001|P2024/iu.test(errorCode)) return "数据连接暂时不可用，请稍后重新尝试。";
   if (errorCode === "OPTIMIZATION_VALIDATION_REQUIRED") return "这条建议需要先通过上线前验证。";
+  if (errorCode === "OPTIMIZATION_VALIDATION_ALREADY_RUNNING") return "这条建议正在验证，请等待当前结果完成。";
   if (errorCode === "OPTIMIZATION_VALIDATION_FAILED") return "验证过程暂时未完成，请检查 AI 运行配置后重试。";
   if (errorCode === "ENGINEERING_CANDIDATE_REQUIRES_MANUAL_VALIDATION") return "工程修复建议需要由产品技术人员完成验证。";
   if (errorCode === "OPTIMIZATION_REVIEW_REASON_REQUIRED") return "请填写 4–300 字的退回原因。";
@@ -267,32 +257,6 @@ function formatRunResult(run: AIOptimizationRunView) {
   const reused = getReusedCount(run.summary);
   const reusedText = reused > 0 ? `另有 ${reused} 条建议已自动合并。` : "";
   return `发现 ${run.scannedBad} 条需改进回复和 ${run.scannedGood} 条优质回复，整理出 ${run.clusterCount} 类问题，形成 ${run.candidateCount} 条新建议。${reusedText}`;
-}
-
-function readValidationResults(value: unknown): ValidationResult[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
-    const record = readRecord(item);
-    if (typeof record.traceId !== "string" || (record.kind !== "target" && record.kind !== "regression")) return [];
-    return [{
-      traceId: record.traceId,
-      kind: record.kind,
-      passed: record.passed === true,
-      baselineScore: typeof record.baselineScore === "number" ? record.baselineScore : null,
-      candidateScore: typeof record.candidateScore === "number" ? record.candidateScore : null,
-      reason: typeof record.reason === "string" ? record.reason : "验证结果已记录。",
-      candidateOutput: readRecord(record.candidateOutput)
-    }];
-  });
-}
-
-function formatValidationOutput(value: Record<string, unknown>) {
-  const title = typeof value.title === "string" ? value.title.trim() : "";
-  const content = typeof value.content === "string" ? value.content.trim() : "";
-  if (content) return [title, content].filter(Boolean).join("\n");
-  const summary = typeof value.thinkingSummary === "string" ? value.thinkingSummary.trim() : "";
-  const question = typeof value.question === "string" ? value.question.trim() : "";
-  return [summary, question].filter(Boolean).join("\n");
 }
 
 function formatProposal(value: unknown) {
@@ -384,18 +348,15 @@ function StatusFilter({
 }
 
 function ValidationComparison({
-  evidence,
-  result
+  evidence
 }: {
   evidence: AdminAIQualityEvidenceItem | null;
-  result: ValidationResult | null;
 }) {
-  const candidateOutput = result ? formatValidationOutput(result.candidateOutput) : "";
   return (
     <section className="grid gap-4 border-t border-[var(--line-soft)] pt-5" aria-labelledby="reply-comparison-title">
       <div>
         <h3 id="reply-comparison-title" className="font-display text-xl text-ink">原回复与候选回复</h3>
-        <p className="mt-1 text-sm leading-6 text-[var(--text-dim)]">证据完成审计加载后，按 Trace 对齐最近一次验证结果。</p>
+        <p className="mt-1 text-sm leading-6 text-[var(--text-dim)]">证据完成同意复核与审计后显示原回复；候选逐例正文保留在受控验证记录中。</p>
       </div>
       {!evidence ? (
         <p className="text-sm leading-7 text-[var(--text-dim)]">展开上方问题证据并选择一段对话后，这里会显示原回复。</p>
@@ -403,25 +364,14 @@ function ValidationComparison({
         <div className="grid border-y border-[var(--line-soft)] lg:grid-cols-2">
           <div className="min-w-0 py-4 lg:pr-5">
             <h4 className="text-sm font-semibold text-ink">原回复</h4>
-            <p className="mt-1 text-xs tabular-nums text-[var(--text-dim)]">
-              {result?.baselineScore === null || result?.baselineScore === undefined ? "评分待确认" : `${result.baselineScore} 分`}
-            </p>
             {evidence.targetOutput.title ? <p className="mt-3 font-medium text-ink">{evidence.targetOutput.title}</p> : null}
             <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-ink/80">{evidence.targetOutput.text}</p>
           </div>
           <div className="min-w-0 border-t border-[var(--line-soft)] py-4 lg:border-l lg:border-t-0 lg:pl-5">
             <h4 className="text-sm font-semibold text-ink">候选回复</h4>
-            <p className="mt-1 text-xs tabular-nums text-[var(--text-dim)]">
-              {result?.candidateScore === null || result?.candidateScore === undefined
-                ? "运行验证后生成"
-                : `${result.candidateScore} 分 · ${result.passed ? "通过" : "未通过"}`}
+            <p className="mt-3 text-sm leading-7 text-[var(--text-dim)]">
+              候选列表只展示验证状态和汇总指标。逐例候选正文需要通过单独的受控读取流程查看。
             </p>
-            {candidateOutput ? (
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-ink/80">{candidateOutput}</p>
-            ) : (
-              <p className="mt-3 text-sm leading-7 text-[var(--text-dim)]">当前 Trace 还没有候选回复，运行上线前验证后自动补充。</p>
-            )}
-            {result ? <p className="mt-3 text-xs leading-6 text-[var(--text-dim)]">{result.reason}</p> : null}
           </div>
         </div>
       )}
@@ -745,9 +695,6 @@ export function AdminAIQualityShell({
   const latestRun = runs[0] ?? null;
   const pending = selectedCandidate ? activeAction?.startsWith(`${selectedCandidate.id}:`) ?? false : false;
   const selectedEvidence = selectedCandidate ? activeEvidence[selectedCandidate.id] ?? null : null;
-  const selectedValidationResult = selectedCandidate && selectedEvidence
-    ? readValidationResults(selectedCandidate.latestValidation?.results).find((result) => result.traceId === selectedEvidence.traceId) ?? null
-    : null;
 
   return (
     <Surface
@@ -946,7 +893,7 @@ export function AdminAIQualityShell({
                       <p className="text-sm leading-7 text-ink/80">{getProposalText(selectedCandidate)}</p>
                     </section>
 
-                    <ValidationComparison evidence={selectedEvidence} result={selectedValidationResult} />
+                    <ValidationComparison evidence={selectedEvidence} />
 
                     <ValidationSection
                       candidate={selectedCandidate}

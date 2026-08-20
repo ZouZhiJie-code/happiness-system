@@ -43,6 +43,7 @@ type FeedbackRevocationContext = {
   feedback: {
     id: string;
     revision: number;
+    status?: "active" | "revoked";
     vote: AIFeedbackVote;
     tags: string[];
     comment: string | null;
@@ -55,10 +56,113 @@ type FeedbackRevocationContext = {
   } | null;
 };
 
+async function sanitizeCaseAfterFeedbackWithdrawal(
+  tx: Prisma.TransactionClient,
+  context: Pick<FeedbackRevocationContext, "traceId" | "evaluation" | "evaluationCase">
+) {
+  if (!context.evaluationCase) return;
+  const userDerivedCase = context.evaluationCase.sourceSignals.some(
+    (item) => item.startsWith("user_")
+  ) || context.evaluationCase.primaryIssueCode?.startsWith("user_downvote:") === true;
+  if (!userDerivedCase) return;
+
+  const sourceSignals = context.evaluationCase.sourceSignals.filter(
+    (item) => !item.startsWith("user_")
+  );
+  const score = context.evaluation?.totalScore ?? 80;
+  await tx.aICase.update({
+    where: { traceId: context.traceId },
+    data: {
+      classification: score < 70 ? "bad" : score < 85 ? "review" : "good",
+      priority: score < 70 ? 70 : score < 85 ? 50 : 10,
+      sourceSignals,
+      primaryIssueCode: context.evaluationCase.primaryIssueCode?.startsWith("user_downvote:")
+        ? null
+        : context.evaluationCase.primaryIssueCode,
+      summary: "用户已撤回反馈，当前按自动评估结果分类。"
+    }
+  });
+}
+
+async function invalidateConsentBoundCandidates(
+  tx: Prisma.TransactionClient,
+  traceIds: string[],
+  now: Date
+) {
+  const uniqueTraceIds = Array.from(new Set(traceIds));
+  if (uniqueTraceIds.length === 0) return;
+  const pendingCandidates = await tx.aIOptimizationCandidate.findMany({
+    where: {
+      evidenceTraceIds: { hasSome: uniqueTraceIds },
+      OR: [
+        { status: { in: ["draft", "approved"] } },
+        {
+          status: "rejected",
+          reviewedBy: CONSENT_WITHDRAWAL_REVIEWED_BY,
+          reviewReason: CONSENT_WITHDRAWAL_REVIEW_REASON
+        }
+      ]
+    },
+    select: { id: true, status: true, evidenceTraceIds: true },
+    orderBy: { id: "asc" }
+  });
+
+  for (const candidate of pendingCandidates) {
+    const update = await tx.aIOptimizationCandidate.updateMany({
+      where: {
+        id: candidate.id,
+        OR: [
+          { status: { in: ["draft", "approved"] } },
+          {
+            status: "rejected",
+            reviewedBy: CONSENT_WITHDRAWAL_REVIEWED_BY,
+            reviewReason: CONSENT_WITHDRAWAL_REVIEW_REASON
+          }
+        ]
+      },
+      data: {
+        status: "rejected",
+        evidenceTraceIds: candidate.evidenceTraceIds.filter(
+          (traceId) => !uniqueTraceIds.includes(traceId)
+        ),
+        reviewedBy: CONSENT_WITHDRAWAL_REVIEWED_BY,
+        reviewedAt: now,
+        reviewReason: CONSENT_WITHDRAWAL_REVIEW_REASON
+      }
+    });
+    if (update.count !== 1) {
+      throw new Error("AI_QUALITY_CONSENT_CANDIDATE_STATE_CHANGED");
+    }
+  }
+}
+
+async function clearConsentBoundDerivedState(
+  tx: Prisma.TransactionClient,
+  traceIds: string[],
+  now: Date
+) {
+  const uniqueTraceIds = Array.from(new Set(traceIds));
+  if (uniqueTraceIds.length === 0) return;
+  await tx.aIGenerationTrace.updateMany({
+    where: { id: { in: uniqueTraceIds } },
+    data: { feedbackEvaluationPending: false }
+  });
+  await tx.aIResponseRegeneration.updateMany({
+    where: { generatedTraceId: { in: uniqueTraceIds } },
+    data: { downvotedAt: null }
+  });
+  await tx.aIFewShotExample.updateMany({
+    where: { sourceTraceId: { in: uniqueTraceIds }, status: { in: ["candidate", "active"] } },
+    data: { status: "retired", retiredAt: now }
+  });
+  await invalidateConsentBoundCandidates(tx, uniqueTraceIds, now);
+}
+
 async function revokeFeedbackWithinTransaction(
   tx: Prisma.TransactionClient,
   context: FeedbackRevocationContext,
-  now: Date
+  now: Date,
+  options: { clearDerivedState?: boolean } = {}
 ) {
   const revision = context.feedback.revision + 1;
   const feedback = await tx.aIFeedback.update({
@@ -75,69 +179,9 @@ async function revokeFeedbackWithinTransaction(
       status: "revoked"
     }
   });
-  await tx.aIGenerationTrace.update({
-    where: { id: context.traceId },
-    data: { feedbackEvaluationPending: false }
-  });
-  await tx.aIResponseRegeneration.updateMany({
-    where: { generatedTraceId: context.traceId },
-    data: { downvotedAt: null }
-  });
-  await tx.aIFewShotExample.updateMany({
-    where: { sourceTraceId: context.traceId, status: { in: ["candidate", "active"] } },
-    data: { status: "retired", retiredAt: now }
-  });
-  const pendingCandidates = await tx.aIOptimizationCandidate.findMany({
-    where: {
-      evidenceTraceIds: { has: context.traceId },
-      OR: [
-        { status: { in: ["draft", "approved"] } },
-        {
-          status: "rejected",
-          reviewedBy: CONSENT_WITHDRAWAL_REVIEWED_BY,
-          reviewReason: CONSENT_WITHDRAWAL_REVIEW_REASON
-        }
-      ]
-    },
-    select: { id: true, evidenceTraceIds: true }
-  });
-  for (const candidate of pendingCandidates) {
-    await tx.aIOptimizationCandidate.update({
-      where: { id: candidate.id },
-      data: {
-        status: "rejected",
-        evidenceTraceIds: candidate.evidenceTraceIds.filter(
-          (traceId) => traceId !== context.traceId
-        ),
-        reviewedBy: CONSENT_WITHDRAWAL_REVIEWED_BY,
-        reviewedAt: now,
-        reviewReason: CONSENT_WITHDRAWAL_REVIEW_REASON
-      }
-    });
-  }
-
-  if (context.evaluationCase) {
-    const sourceSignals = context.evaluationCase.sourceSignals.filter(
-      (item) => !item.startsWith("user_")
-    );
-    const score = context.evaluation?.totalScore ?? 80;
-    const userDerivedCase = context.evaluationCase.sourceSignals.some(
-      (item) => item.startsWith("user_")
-    ) || context.evaluationCase.primaryIssueCode?.startsWith("user_downvote:") === true;
-    await tx.aICase.update({
-      where: { traceId: context.traceId },
-      data: {
-        classification: score < 70 ? "bad" : score < 85 ? "review" : "good",
-        priority: score < 70 ? 70 : score < 85 ? 50 : 10,
-        sourceSignals,
-        primaryIssueCode: context.evaluationCase.primaryIssueCode?.startsWith("user_downvote:")
-          ? null
-          : context.evaluationCase.primaryIssueCode,
-        summary: userDerivedCase
-          ? "用户已撤回反馈，当前按自动评估结果分类。"
-          : context.evaluationCase.summary
-      }
-    });
+  await sanitizeCaseAfterFeedbackWithdrawal(tx, context);
+  if (options.clearDerivedState !== false) {
+    await clearConsentBoundDerivedState(tx, [context.traceId], now);
   }
 
   return feedback;
@@ -177,38 +221,48 @@ export async function recordAIQualityConsentDecision(userId: string, participate
     });
 
     if (!participate) {
-      const activeFeedback = await tx.aIFeedback.findMany({
-        where: { userId, status: "active" },
+      const traces = await tx.aIGenerationTrace.findMany({
+        where: { userId },
         select: {
           id: true,
-          traceId: true,
-          revision: true,
-          vote: true,
-          tags: true,
-          comment: true,
-          trace: {
+          feedback: {
             select: {
-              evaluation: { select: { totalScore: true } },
-              case: {
-                select: {
-                  sourceSignals: true,
-                  primaryIssueCode: true,
-                  summary: true
-                }
-              }
+              id: true,
+              revision: true,
+              vote: true,
+              tags: true,
+              comment: true,
+              status: true
+            }
+          },
+          evaluation: { select: { totalScore: true } },
+          case: {
+            select: {
+              sourceSignals: true,
+              primaryIssueCode: true,
+              summary: true
             }
           }
         }
       });
 
-      for (const feedback of activeFeedback) {
-        await revokeFeedbackWithinTransaction(tx, {
-          traceId: feedback.traceId,
-          feedback,
-          evaluation: feedback.trace.evaluation,
-          evaluationCase: feedback.trace.case
-        }, now);
+      for (const trace of traces) {
+        if (trace.feedback?.status === "active") {
+          await revokeFeedbackWithinTransaction(tx, {
+            traceId: trace.id,
+            feedback: trace.feedback,
+            evaluation: trace.evaluation,
+            evaluationCase: trace.case
+          }, now, { clearDerivedState: false });
+        } else {
+          await sanitizeCaseAfterFeedbackWithdrawal(tx, {
+            traceId: trace.id,
+            evaluation: trace.evaluation,
+            evaluationCase: trace.case
+          });
+        }
       }
+      await clearConsentBoundDerivedState(tx, traces.map((trace) => trace.id), now);
     }
 
     return user;

@@ -1,12 +1,12 @@
 const { prismaTransaction, tx } = vi.hoisted(() => {
   const transactionClient = {
     $queryRaw: vi.fn(),
-    aIGenerationTrace: { findFirst: vi.fn(), update: vi.fn() },
+    aIGenerationTrace: { findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     aIFeedback: { upsert: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     aIFeedbackRevision: { create: vi.fn() },
     aICase: { upsert: vi.fn(), update: vi.fn() },
     aIFewShotExample: { updateMany: vi.fn() },
-    aIOptimizationCandidate: { findMany: vi.fn(), update: vi.fn() },
+    aIOptimizationCandidate: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     aIResponseRegeneration: { updateMany: vi.fn() },
     user: { findUnique: vi.fn(), update: vi.fn() }
   };
@@ -37,6 +37,7 @@ describe("AI feedback repository", () => {
       aiQualityConsentRevokedAt: null
     });
     tx.aIOptimizationCandidate.findMany.mockResolvedValue([]);
+    tx.aIOptimizationCandidate.updateMany.mockResolvedValue({ count: 1 });
   });
 
   it("appends an immutable revision and marks the exact trace for feedback evaluation", async () => {
@@ -155,11 +156,11 @@ describe("AI feedback repository", () => {
       })
     });
     expect(tx.aIFewShotExample.updateMany).toHaveBeenCalledWith({
-      where: { sourceTraceId: "trace-1", status: { in: ["candidate", "active"] } },
+      where: { sourceTraceId: { in: ["trace-1"] }, status: { in: ["candidate", "active"] } },
       data: { status: "retired", retiredAt: expect.any(Date) }
     });
     expect(tx.aIResponseRegeneration.updateMany).toHaveBeenCalledWith({
-      where: { generatedTraceId: "trace-1" },
+      where: { generatedTraceId: { in: ["trace-1"] } },
       data: { downvotedAt: null }
     });
   });
@@ -171,43 +172,57 @@ describe("AI feedback repository", () => {
       aiQualityConsentAt: null,
       aiQualityConsentRevokedAt: new Date()
     });
-    tx.aIFeedback.findMany.mockResolvedValue([
+    tx.aIGenerationTrace.findMany.mockResolvedValue([
       {
-        id: "feedback-1",
-        traceId: "trace-1",
-        revision: 1,
-        vote: "upvote",
-        tags: [],
-        comment: null,
-        trace: {
-          evaluation: { totalScore: 60 },
-          case: {
-            sourceSignals: ["user_upvote", "assistant_server_guard"],
-            primaryIssueCode: "user_downvote:free_text",
-            summary: "用户反馈摘要"
-          }
+        id: "trace-1",
+        feedback: {
+          id: "feedback-1",
+          revision: 1,
+          status: "active",
+          vote: "upvote",
+          tags: [],
+          comment: null
+        },
+        evaluation: { totalScore: 60 },
+        case: {
+          sourceSignals: ["user_upvote", "assistant_server_guard"],
+          primaryIssueCode: "user_downvote:free_text",
+          summary: "用户反馈摘要"
+        }
+      },
+      {
+        id: "trace-auto-bad",
+        feedback: null,
+        evaluation: { totalScore: 55 },
+        case: {
+          sourceSignals: ["assistant_server_guard"],
+          primaryIssueCode: "schema_parse_failed",
+          summary: "自动质量问题"
         }
       }
     ]);
     tx.aIFeedback.update.mockResolvedValue({ id: "feedback-1" });
     tx.aIOptimizationCandidate.findMany.mockResolvedValue([
-      { id: "candidate-draft", evidenceTraceIds: ["trace-1", "trace-2"] },
-      { id: "candidate-approved", evidenceTraceIds: ["trace-1"] }
+      { id: "candidate-draft", status: "draft", evidenceTraceIds: ["trace-1", "trace-2"] },
+      { id: "candidate-approved", status: "approved", evidenceTraceIds: ["trace-auto-bad"] }
     ]);
 
     await recordAIQualityConsentDecision("user-1", false);
 
     expect(tx.aIFewShotExample.updateMany).toHaveBeenCalledWith({
-      where: { sourceTraceId: "trace-1", status: { in: ["candidate", "active"] } },
+      where: {
+        sourceTraceId: { in: ["trace-1", "trace-auto-bad"] },
+        status: { in: ["candidate", "active"] }
+      },
       data: { status: "retired", retiredAt: expect.any(Date) }
     });
     expect(tx.aIResponseRegeneration.updateMany).toHaveBeenCalledWith({
-      where: { generatedTraceId: "trace-1" },
+      where: { generatedTraceId: { in: ["trace-1", "trace-auto-bad"] } },
       data: { downvotedAt: null }
     });
     expect(tx.aIOptimizationCandidate.findMany).toHaveBeenCalledWith({
       where: {
-        evidenceTraceIds: { has: "trace-1" },
+        evidenceTraceIds: { hasSome: ["trace-1", "trace-auto-bad"] },
         OR: [
           { status: { in: ["draft", "approved"] } },
           {
@@ -217,10 +232,21 @@ describe("AI feedback repository", () => {
           }
         ]
       },
-      select: { id: true, evidenceTraceIds: true }
+      select: { id: true, status: true, evidenceTraceIds: true },
+      orderBy: { id: "asc" }
     });
-    expect(tx.aIOptimizationCandidate.update).toHaveBeenNthCalledWith(1, {
-      where: { id: "candidate-draft" },
+    expect(tx.aIOptimizationCandidate.updateMany).toHaveBeenNthCalledWith(1, {
+      where: {
+        id: "candidate-draft",
+        OR: [
+          { status: { in: ["draft", "approved"] } },
+          {
+            status: "rejected",
+            reviewedBy: "system:ai_quality_consent_withdrawal",
+            reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
+          }
+        ]
+      },
       data: {
         status: "rejected",
         evidenceTraceIds: ["trace-2"],
@@ -229,8 +255,18 @@ describe("AI feedback repository", () => {
         reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
       }
     });
-    expect(tx.aIOptimizationCandidate.update).toHaveBeenNthCalledWith(2, {
-      where: { id: "candidate-approved" },
+    expect(tx.aIOptimizationCandidate.updateMany).toHaveBeenNthCalledWith(2, {
+      where: {
+        id: "candidate-approved",
+        OR: [
+          { status: { in: ["draft", "approved"] } },
+          {
+            status: "rejected",
+            reviewedBy: "system:ai_quality_consent_withdrawal",
+            reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
+          }
+        ]
+      },
       data: {
         status: "rejected",
         evidenceTraceIds: [],
@@ -248,5 +284,6 @@ describe("AI feedback repository", () => {
         summary: "用户已撤回反馈，当前按自动评估结果分类。"
       })
     });
+    expect(tx.aICase.update).toHaveBeenCalledTimes(1);
   });
 });

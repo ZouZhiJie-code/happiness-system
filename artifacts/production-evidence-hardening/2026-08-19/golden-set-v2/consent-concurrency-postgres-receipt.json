@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "gateId": "stage3-ai-quality-consent-postgres-v1",
+  "gateId": "stage3-ai-quality-consent-postgres-v3",
   "status": "passed",
   "executedAt": "2026-08-20",
   "environment": {
@@ -42,13 +42,71 @@
     }
   ],
   "finalRun": {
-    "schema": "daily_light_stage3_consent_63ebafb0f93f",
+    "schema": "daily_light_stage3_consent_1b020dd4905e1d40",
     "migrationsApplied": 45,
     "testFileCount": 1,
-    "scenarioCount": 2,
-    "passedScenarioCount": 2,
+    "testCaseCount": 7,
+    "scenarioCount": 13,
+    "passedScenarioCount": 13,
     "failedScenarioCount": 0,
     "scenarios": [
+      {
+        "id": "candidate_create_then_withdrawal",
+        "candidateOperationResult": "completed_before_waiting_withdrawal",
+        "finalCandidateStatus": "rejected"
+      },
+      {
+        "id": "candidate_approve_then_withdrawal",
+        "candidateOperationResult": "completed_before_waiting_withdrawal",
+        "finalCandidateStatus": "rejected"
+      },
+      {
+        "id": "candidate_publish_then_withdrawal",
+        "candidateOperationResult": "completed_before_waiting_withdrawal",
+        "finalCandidateStatus": "published_history_preserved"
+      },
+      {
+        "id": "candidate_validation_start_then_withdrawal",
+        "candidateOperationResult": "started_before_waiting_withdrawal",
+        "validationCompletionResult": "rejected_consent_required"
+      },
+      {
+        "id": "withdrawal_then_candidate_create",
+        "withdrawalResult": "completed_before_waiting_candidate_operation",
+        "candidateOperationResult": "rejected_consent_required"
+      },
+      {
+        "id": "withdrawal_then_candidate_approve",
+        "withdrawalResult": "completed_before_waiting_candidate_operation",
+        "candidateOperationResult": "rejected_consent_or_state_changed"
+      },
+      {
+        "id": "withdrawal_then_candidate_publish",
+        "withdrawalResult": "completed_before_waiting_candidate_operation",
+        "candidateOperationResult": "rejected_consent_or_state_changed"
+      },
+      {
+        "id": "withdrawal_then_candidate_validation",
+        "withdrawalResult": "completed_before_waiting_candidate_operation",
+        "candidateOperationResult": "rejected_consent_or_state_changed"
+      },
+      {
+        "id": "active_few_shot_then_new_draft_reuse",
+        "candidateOperationResult": "rejected_source_already_bound",
+        "activeFewShotBodyResult": "unchanged"
+      },
+      {
+        "id": "concurrent_validation_start",
+        "firstValidationResult": "running_created",
+        "secondValidationResult": "rejected_already_running",
+        "runningValidationCount": 1
+      },
+      {
+        "id": "multi_user_reverse_evidence_then_withdrawals",
+        "candidateOperationResult": "completed_before_two_waiting_withdrawals",
+        "withdrawalResult": "both_completed_without_deadlock",
+        "finalCandidateStatus": "rejected_with_zero_direct_evidence_trace_ids"
+      },
       {
         "id": "save_shared_lock_then_withdrawal",
         "saveResult": "completed",
@@ -67,7 +125,13 @@
     "downvotedRegenerationCount": 0,
     "activeOrCandidateFewShotCount": 0,
     "pendingOptimizationCandidateCount": 0,
-    "withdrawnEvidenceReferencesRemoved": true,
+    "automaticBadCaseWithoutFeedbackCovered": true,
+    "pendingCandidateDirectEvidenceTraceIdsRemoved": true,
+    "publishedAndRolledBackCandidateHistoryPreserved": true,
+    "validationCompletionAfterWithdrawalRejected": true,
+    "activeFewShotBodyPreservedAgainstDraftReuse": true,
+    "singleRunningValidationPerCandidate": true,
+    "multiUserStableLockOrderCovered": true,
     "consentRevoked": true
   },
   "cleanup": {

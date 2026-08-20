@@ -155,6 +155,7 @@ export async function reviewAIOptimizationCandidate(input: {
     if (candidate.status !== "draft") throw new Error("OPTIMIZATION_CANDIDATE_NOT_DRAFT");
     return reviewOptimizationCandidateStatus({
       id: candidate.id,
+      expectedStatus: "draft",
       status: "approved",
       adminUsername: input.adminUsername
     });
@@ -170,6 +171,7 @@ export async function reviewAIOptimizationCandidate(input: {
     }
     return reviewOptimizationCandidateStatus({
       id: candidate.id,
+      expectedStatus: candidate.status as "draft" | "approved",
       status: "rejected",
       adminUsername: input.adminUsername,
       reviewReason: reason

@@ -87,8 +87,9 @@ describe("Golden Set v2 public assets", () => {
     expect(concurrencyReceipt).toMatchObject({
       status: "passed",
       finalRun: {
-        scenarioCount: 2,
-        passedScenarioCount: 2,
+        testCaseCount: 7,
+        scenarioCount: 13,
+        passedScenarioCount: 13,
         failedScenarioCount: 0
       },
       finalPrivacyAssertions: {
@@ -97,7 +98,13 @@ describe("Golden Set v2 public assets", () => {
         downvotedRegenerationCount: 0,
         activeOrCandidateFewShotCount: 0,
         pendingOptimizationCandidateCount: 0,
-        withdrawnEvidenceReferencesRemoved: true,
+        automaticBadCaseWithoutFeedbackCovered: true,
+        pendingCandidateDirectEvidenceTraceIdsRemoved: true,
+        publishedAndRolledBackCandidateHistoryPreserved: true,
+        validationCompletionAfterWithdrawalRejected: true,
+        activeFewShotBodyPreservedAgainstDraftReuse: true,
+        singleRunningValidationPerCandidate: true,
+        multiUserStableLockOrderCovered: true,
         consentRevoked: true
       },
       cleanup: { schemaDropped: true, residualSchemaCount: 0 },

@@ -1,6 +1,5 @@
 const repository = vi.hoisted(() => ({
   loadOptimizationValidationInput: vi.fn(),
-  createOptimizationValidation: vi.fn(),
   completeOptimizationValidation: vi.fn(),
   failOptimizationValidation: vi.fn()
 }));
@@ -18,7 +17,6 @@ import { validateAIOptimizationCandidate } from "@/server/services/ai-quality/ai
 describe("AI candidate validation service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    repository.createOptimizationValidation.mockResolvedValue({ id: "validation-1" });
     repository.completeOptimizationValidation.mockImplementation(async (input) => input);
     repository.failOptimizationValidation.mockResolvedValue(undefined);
     getAIProvider.mockResolvedValue({ name: "test-provider", complete: vi.fn() });
@@ -26,6 +24,9 @@ describe("AI candidate validation service", () => {
 
   it("replays a problem trace with the candidate patch and persists a passed quality gate", async () => {
     repository.loadOptimizationValidationInput.mockResolvedValue({
+      validation: { id: "validation-1" },
+      expectedStatus: "approved",
+      consentTraceIds: ["trace-bad"],
       candidate: {
         id: "candidate-1",
         status: "approved",
@@ -71,6 +72,9 @@ describe("AI candidate validation service", () => {
     expect(result.status).toBe("passed");
     expect(repository.completeOptimizationValidation).toHaveBeenCalledWith(expect.objectContaining({
       validationId: "validation-1",
+      candidateId: "candidate-1",
+      expectedCandidateStatus: "approved",
+      consentTraceIds: ["trace-bad"],
       status: "passed",
       targetCaseCount: 1,
       targetPassedCount: 1
@@ -84,6 +88,9 @@ describe("AI candidate validation service", () => {
 
   it("validates few-shot eligibility without replaying its own source example", async () => {
     repository.loadOptimizationValidationInput.mockResolvedValue({
+      validation: { id: "validation-1" },
+      expectedStatus: "draft",
+      consentTraceIds: ["trace-good"],
       candidate: { id: "candidate-fs", status: "draft", path: "few_shot", proposal: {}, fewShotExamples: [] },
       targetTraces: [{
         id: "trace-good",

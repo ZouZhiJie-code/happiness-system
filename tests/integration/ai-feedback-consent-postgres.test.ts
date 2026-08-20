@@ -9,7 +9,7 @@ const INTEGRATION_ACK = "I_UNDERSTAND";
 const INTEGRATION_ENABLED =
   process.env.DAILY_LIGHT_STAGE3_CONSENT_POSTGRES_INTEGRATION === INTEGRATION_ACK;
 const describeIntegration = INTEGRATION_ENABLED ? describe.sequential : describe.skip;
-const TEST_TIMEOUT_MS = 30_000;
+const TEST_TIMEOUT_MS = 60_000;
 const LOCK_WAIT_TIMEOUT_MS = 8_000;
 const SCHEMA_PATTERN = /^daily_light_stage3_consent_[a-f0-9]{12,24}$/u;
 const DATABASE_NAME = "daily_light_e2e_validation_20260819";
@@ -17,15 +17,18 @@ const REVIEWED_BY = "system:ai_quality_consent_withdrawal";
 const REVIEW_REASON = "AI_QUALITY_CONSENT_WITHDRAWN";
 
 type RepositoryModule = typeof import("@/server/repositories/ai-feedback.repository");
+type OptimizationRepositoryModule = typeof import("@/server/repositories/ai-optimization.repository");
 
 type SeededScenario = {
   userId: string;
   traceId: string;
+  automaticTraceId: string;
   feedbackId: string;
   fewShotId: string;
   regenerationId: string;
   runId: string;
-  candidateIds: string[];
+  candidateIds: { draft: string; approved: string };
+  historicalCandidateIds: { published: string; rolledBack: string };
 };
 
 type OperationOutcome<T> =
@@ -78,6 +81,7 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
   let observer: PrismaClient;
   let serviceDatabase: PrismaClient;
   let repository: RepositoryModule;
+  let optimizationRepository: OptimizationRepositoryModule;
   let schema: string;
   let applicationName: string;
   let advisoryLockKey: bigint;
@@ -132,8 +136,32 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
       FOR EACH ROW
       EXECUTE FUNCTION "stage3_pause_feedback_update"()
     `);
+    await database.$executeRawUnsafe(`
+      CREATE FUNCTION "stage3_pause_candidate_write"()
+      RETURNS trigger
+      LANGUAGE plpgsql
+      AS $trigger$
+      BEGIN
+        PERFORM pg_advisory_xact_lock(hashtextextended(TG_TABLE_SCHEMA, 0));
+        RETURN NEW;
+      END;
+      $trigger$
+    `);
+    await database.$executeRawUnsafe(`
+      CREATE TRIGGER "stage3_pause_candidate_write_trigger"
+      BEFORE INSERT OR UPDATE ON "AIOptimizationCandidate"
+      FOR EACH ROW
+      EXECUTE FUNCTION "stage3_pause_candidate_write"()
+    `);
+    await database.$executeRawUnsafe(`
+      CREATE TRIGGER "stage3_pause_validation_write_trigger"
+      BEFORE INSERT OR UPDATE ON "AIOptimizationValidation"
+      FOR EACH ROW
+      EXECUTE FUNCTION "stage3_pause_candidate_write"()
+    `);
 
     repository = await import("@/server/repositories/ai-feedback.repository");
+    optimizationRepository = await import("@/server/repositories/ai-optimization.repository");
     serviceDatabase = (await import("@/server/db/prisma")).prisma;
   }, TEST_TIMEOUT_MS);
 
@@ -206,6 +234,26 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
         completedAt: now
       }
     });
+    const automaticTrace = await database.aIGenerationTrace.create({
+      data: {
+        userId: user.id,
+        sessionId: session.id,
+        artifactType: "interview_turn",
+        status: "completed",
+        outputOrigin: "fallback",
+        contextSnapshot: {
+          providerAttemptCount: 0,
+          actualModelCallExecuted: false,
+          source: "automatic-bad-case"
+        },
+        pipelineDecisions: {
+          providerAttemptCount: 0,
+          actualModelCallExecuted: false
+        },
+        finalOutput: { source: "automatic-bad-case" },
+        completedAt: now
+      }
+    });
     const feedback = await database.aIFeedback.create({
       data: {
         traceId: trace.id,
@@ -226,6 +274,16 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
         sourceSignals: ["assistant_server_guard", "user_downvote"],
         primaryIssueCode: "user_downvote:repetitive_question",
         summary: "local integration case"
+      }
+    });
+    await database.aICase.create({
+      data: {
+        traceId: automaticTrace.id,
+        classification: "bad",
+        priority: 70,
+        sourceSignals: ["assistant_server_guard"],
+        primaryIssueCode: "schema_parse_failed",
+        summary: "local automatic bad case without feedback"
       }
     });
     const fewShot = await database.aIFewShotExample.create({
@@ -261,32 +319,72 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
         completedAt: now
       }
     });
-    const candidates = await Promise.all(
-      (["draft", "approved"] as const).map((status) =>
-        database.aIOptimizationCandidate.create({
-          data: {
-            runId: run.id,
-            path: "few_shot",
-            status,
-            artifactType: "interview_turn",
-            promptKey: "interview.question.local-integration",
-            title: `local integration ${status}`,
-            rationale: "local integration only",
-            proposal: { sourceTraceIds: [trace.id] },
-            evidenceTraceIds: [trace.id]
-          }
-        })
-      )
-    );
+    const draftCandidate = await database.aIOptimizationCandidate.create({
+      data: {
+        runId: run.id,
+        path: "few_shot",
+        status: "draft",
+        artifactType: "interview_turn",
+        promptKey: "interview.question.local-integration",
+        title: "local integration draft",
+        rationale: "local integration only",
+        proposal: { sourceTraceIds: [trace.id, automaticTrace.id] },
+        evidenceTraceIds: [trace.id, automaticTrace.id]
+      }
+    });
+    const approvedCandidate = await database.aIOptimizationCandidate.create({
+      data: {
+        runId: run.id,
+        path: "few_shot",
+        status: "approved",
+        artifactType: "interview_turn",
+        promptKey: "interview.question.local-integration",
+        title: "local integration approved",
+        rationale: "local integration only",
+        proposal: { sourceTraceIds: [automaticTrace.id] },
+        evidenceTraceIds: [automaticTrace.id]
+      }
+    });
+    const publishedCandidate = await database.aIOptimizationCandidate.create({
+      data: {
+        runId: run.id,
+        path: "system_prompt",
+        status: "published",
+        artifactType: "interview_turn",
+        promptKey: "interview.question.local-integration",
+        title: "local integration published history",
+        rationale: "local integration only",
+        proposal: { instructionPatch: "local" },
+        evidenceTraceIds: [trace.id]
+      }
+    });
+    const rolledBackCandidate = await database.aIOptimizationCandidate.create({
+      data: {
+        runId: run.id,
+        path: "system_prompt",
+        status: "rolled_back",
+        artifactType: "interview_turn",
+        promptKey: "interview.question.local-integration",
+        title: "local integration rolled-back history",
+        rationale: "local integration only",
+        proposal: { instructionPatch: "local" },
+        evidenceTraceIds: [automaticTrace.id]
+      }
+    });
 
     return {
       userId: user.id,
       traceId: trace.id,
+      automaticTraceId: automaticTrace.id,
       feedbackId: feedback.id,
       fewShotId: fewShot.id,
       regenerationId: regeneration.id,
       runId: run.id,
-      candidateIds: candidates.map((candidate) => candidate.id)
+      candidateIds: { draft: draftCandidate.id, approved: approvedCandidate.id },
+      historicalCandidateIds: {
+        published: publishedCandidate.id,
+        rolledBack: rolledBackCandidate.id
+      }
     };
   }
 
@@ -352,7 +450,10 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
     );
   }
 
-  async function assertRevokedOutcome(seed: SeededScenario) {
+  async function assertRevokedOutcome(
+    seed: SeededScenario,
+    options: { publishedCandidateId?: string } = {}
+  ) {
     const [
       user,
       feedback,
@@ -364,6 +465,7 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
       downvotedRegenerationCount,
       activeFewShotCount,
       candidates,
+      historicalCandidates,
       requestLogCount
     ] = await Promise.all([
       database.user.findUnique({ where: { id: seed.userId } }),
@@ -383,7 +485,11 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
         where: { sourceTraceId: seed.traceId, status: { in: ["candidate", "active"] } }
       }),
       database.aIOptimizationCandidate.findMany({
-        where: { id: { in: seed.candidateIds } },
+        where: { id: { in: Object.values(seed.candidateIds) } },
+        orderBy: { status: "asc" }
+      }),
+      database.aIOptimizationCandidate.findMany({
+        where: { id: { in: Object.values(seed.historicalCandidateIds) } },
         orderBy: { status: "asc" }
       }),
       database.aIRequestLog.count()
@@ -414,13 +520,28 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
     expect(regeneration?.downvotedAt).toBeNull();
     expect(activeFewShotCount).toBe(0);
     expect(fewShot).toMatchObject({ status: "retired", retiredAt: expect.any(Date) });
-    expect(userSignalCases).toEqual([{
-      sourceSignals: ["assistant_server_guard"],
-      primaryIssueCode: null,
-      summary: "用户已撤回反馈，当前按自动评估结果分类。"
-    }]);
+    expect(userSignalCases).toEqual(expect.arrayContaining([
+      {
+        sourceSignals: ["assistant_server_guard"],
+        primaryIssueCode: null,
+        summary: "用户已撤回反馈，当前按自动评估结果分类。"
+      },
+      {
+        sourceSignals: ["assistant_server_guard"],
+        primaryIssueCode: "schema_parse_failed",
+        summary: "local automatic bad case without feedback"
+      }
+    ]));
+    expect(userSignalCases).toHaveLength(2);
     expect(candidates).toHaveLength(2);
     for (const candidate of candidates) {
+      if (candidate.id === options.publishedCandidateId) {
+        expect(candidate).toMatchObject({
+          status: "published",
+          evidenceTraceIds: [seed.automaticTraceId]
+        });
+        continue;
+      }
       expect(candidate).toMatchObject({
         status: "rejected",
         evidenceTraceIds: [],
@@ -429,7 +550,20 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
         reviewReason: REVIEW_REASON
       });
       expect(candidate.evidenceTraceIds).not.toContain(seed.traceId);
+      expect(candidate.evidenceTraceIds).not.toContain(seed.automaticTraceId);
     }
+    expect(historicalCandidates).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: seed.historicalCandidateIds.published,
+        status: "published",
+        evidenceTraceIds: [seed.traceId]
+      }),
+      expect.objectContaining({
+        id: seed.historicalCandidateIds.rolledBack,
+        status: "rolled_back",
+        evidenceTraceIds: [seed.automaticTraceId]
+      })
+    ]));
     expect(requestLogCount).toBe(0);
   }
 
@@ -437,6 +571,366 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
     await database.aIOptimizationRun.deleteMany({ where: { id: seed.runId } });
     await database.user.deleteMany({ where: { id: seed.userId } });
   }
+
+  type CandidateOperation = "create" | "approve" | "publish" | "validate";
+
+  async function prepareCandidateOperation(operation: CandidateOperation, seed: SeededScenario) {
+    if (operation !== "publish") return;
+    await database.aIOptimizationValidation.create({
+      data: {
+        candidateId: seed.candidateIds.approved,
+        status: "passed",
+        rubricVersion: "local-integration-rubric",
+        targetCaseCount: 1,
+        targetPassedCount: 1,
+        results: [],
+        completedAt: new Date(),
+        createdBy: "local-integration"
+      }
+    });
+  }
+
+  function startCandidateOperation(
+    operation: CandidateOperation,
+    seed: SeededScenario
+  ): Promise<unknown> {
+    if (operation === "create") {
+      return optimizationRepository.createClusterAndCandidate({
+        dedupeKey: `stage3-create-${seed.userId}`,
+        runId: seed.runId,
+        artifactType: "interview_turn",
+        dimension: "joy",
+        issueCode: "schema_parse_failed",
+        caseCount: 1,
+        traceIds: [seed.automaticTraceId],
+        summary: "local integration automatic bad case",
+        path: "engineering",
+        promptKey: null,
+        title: "local integration create",
+        rationale: "local integration only",
+        proposal: {},
+        riskLevel: "medium"
+      });
+    }
+    if (operation === "approve") {
+      return optimizationRepository.reviewOptimizationCandidateStatus({
+        id: seed.candidateIds.draft,
+        expectedStatus: "draft",
+        status: "approved",
+        adminUsername: "local-integration"
+      });
+    }
+    if (operation === "publish") {
+      return optimizationRepository.publishOptimizationCandidate(
+        seed.candidateIds.approved,
+        "local-integration"
+      );
+    }
+    return optimizationRepository.loadOptimizationValidationInput({
+      candidateId: seed.candidateIds.draft,
+      rubricVersion: "local-integration-rubric",
+      adminUsername: "local-integration"
+    });
+  }
+
+  async function assertOperationFirstOutcome(
+    operation: CandidateOperation,
+    seed: SeededScenario,
+    operationValue: unknown
+  ) {
+    if (operation === "create") {
+      const created = await database.aIOptimizationCandidate.findUnique({
+        where: { dedupeKey: `stage3-create-${seed.userId}` }
+      });
+      expect(created).toMatchObject({
+        status: "rejected",
+        evidenceTraceIds: [],
+        reviewedBy: REVIEWED_BY,
+        reviewReason: REVIEW_REASON
+      });
+      return;
+    }
+    if (operation === "publish") {
+      expect(operationValue).toMatchObject({ candidateId: seed.candidateIds.approved });
+      const candidate = await database.aIOptimizationCandidate.findUnique({
+        where: { id: seed.candidateIds.approved }
+      });
+      expect(candidate).toMatchObject({
+        status: "published",
+        evidenceTraceIds: [seed.automaticTraceId]
+      });
+      return;
+    }
+    if (operation === "validate") {
+      const started = operationValue as Awaited<ReturnType<OptimizationRepositoryModule["loadOptimizationValidationInput"]>>;
+      expect(started).toMatchObject({
+        validation: { status: "running" },
+        expectedStatus: "draft"
+      });
+      if (!started) throw new Error("STAGE3_VALIDATION_START_MISSING");
+      await expect(optimizationRepository.completeOptimizationValidation({
+        validationId: started.validation.id,
+        candidateId: started.candidate.id,
+        expectedCandidateStatus: started.expectedStatus,
+        consentTraceIds: started.consentTraceIds,
+        status: "passed",
+        targetCaseCount: started.targetTraces.length,
+        targetPassedCount: started.targetTraces.length,
+        regressionCaseCount: started.regressionTraces.length,
+        regressionPassedCount: started.regressionTraces.length,
+        criticalRegressionCount: 0,
+        averageScoreDelta: 0,
+        summary: "local integration",
+        results: []
+      })).rejects.toThrow("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+      return;
+    }
+    const candidate = await database.aIOptimizationCandidate.findUnique({
+      where: { id: seed.candidateIds.draft }
+    });
+    expect(candidate).toMatchObject({
+      status: "rejected",
+      reviewedBy: REVIEWED_BY,
+      reviewReason: REVIEW_REASON
+    });
+  }
+
+  it("serializes create, approve, publish, and validation before a waiting withdrawal", async () => {
+    for (const operation of ["create", "approve", "publish", "validate"] as const) {
+      const seed = await seedScenario("active");
+      await prepareCandidateOperation(operation, seed);
+      const gate = await holdFeedbackUpdateGate();
+      const operations: Array<Promise<unknown>> = [];
+      try {
+        const candidateOutcome = captureOutcome(startCandidateOperation(operation, seed));
+        operations.push(candidateOutcome);
+        await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 0 });
+
+        const withdrawalOutcome = captureOutcome(
+          repository.recordAIQualityConsentDecision(seed.userId, false)
+        );
+        operations.push(withdrawalOutcome);
+        await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 1 });
+
+        gate.release();
+        const candidateResult = await candidateOutcome;
+        expect(candidateResult.ok).toBe(true);
+        if (!candidateResult.ok) throw candidateResult.error;
+        await expect(withdrawalOutcome).resolves.toMatchObject({ ok: true });
+        await gate.transaction;
+        await assertRevokedOutcome(seed, {
+          ...(operation === "publish" ? { publishedCandidateId: seed.candidateIds.approved } : {})
+        });
+        await assertOperationFirstOutcome(operation, seed, candidateResult.value);
+      } finally {
+        gate.release();
+        await Promise.allSettled(operations);
+        await gate.transaction.catch(() => undefined);
+        await cleanupScenario(seed);
+      }
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("lets withdrawal reject waiting create, approve, publish, and validation operations", async () => {
+    for (const operation of ["create", "approve", "publish", "validate"] as const) {
+      const seed = await seedScenario("candidate");
+      await prepareCandidateOperation(operation, seed);
+      const gate = await holdFeedbackUpdateGate();
+      const operations: Array<Promise<unknown>> = [];
+      try {
+        const withdrawalOutcome = captureOutcome(
+          repository.recordAIQualityConsentDecision(seed.userId, false)
+        );
+        operations.push(withdrawalOutcome);
+        await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 0 });
+
+        const candidateOutcome = captureOutcome(startCandidateOperation(operation, seed));
+        operations.push(candidateOutcome);
+        await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 1 });
+
+        gate.release();
+        await expect(withdrawalOutcome).resolves.toMatchObject({ ok: true });
+        const candidateResult = await candidateOutcome;
+        expect(candidateResult.ok).toBe(false);
+        if (candidateResult.ok) throw new Error("STAGE3_WITHDRAWAL_OPERATION_UNEXPECTEDLY_SUCCEEDED");
+        expect(candidateResult.error).toBeInstanceOf(Error);
+        expect((candidateResult.error as Error).message).toMatch(
+          /OPTIMIZATION_(?:EVIDENCE_CONSENT_REQUIRED|CANDIDATE_(?:NOT_(?:DRAFT|APPROVED|REVIEWABLE|VALIDATABLE)|STATE_CHANGED))/u
+        );
+        await gate.transaction;
+        await assertRevokedOutcome(seed);
+
+        if (operation === "create") {
+          await expect(database.aIOptimizationCandidate.findUnique({
+            where: { dedupeKey: `stage3-create-${seed.userId}` }
+          })).resolves.toBeNull();
+        }
+        if (operation === "publish") {
+          await expect(database.aIPromptRelease.count({
+            where: { candidateId: seed.candidateIds.approved }
+          })).resolves.toBe(0);
+        }
+        if (operation === "validate") {
+          await expect(database.aIOptimizationValidation.count({
+            where: { candidateId: seed.candidateIds.draft }
+          })).resolves.toBe(0);
+        }
+      } finally {
+        gate.release();
+        await Promise.allSettled(operations);
+        await gate.transaction.catch(() => undefined);
+        await cleanupScenario(seed);
+      }
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("keeps an active few-shot example unchanged when a new draft reuses its source trace", async () => {
+    const seed = await seedScenario("active");
+    try {
+      const before = await database.aIFewShotExample.findUniqueOrThrow({
+        where: { id: seed.fewShotId }
+      });
+
+      await expect(optimizationRepository.createFewShotCandidate({
+        dedupeKey: `stage3-few-shot-reuse-${seed.userId}`,
+        runId: seed.runId,
+        promptKey: "interview.question.local-integration",
+        artifactType: "interview_turn",
+        dimension: "joy",
+        traces: [{
+          id: seed.traceId,
+          contextSnapshot: { source: "new-draft-must-not-rewrite" },
+          finalOutput: { source: "new-draft-must-not-rewrite" },
+          evaluation: { totalScore: 99 }
+        }]
+      })).rejects.toThrow("OPTIMIZATION_FEW_SHOT_SOURCE_ALREADY_BOUND");
+
+      const after = await database.aIFewShotExample.findUniqueOrThrow({
+        where: { id: seed.fewShotId }
+      });
+      expect(after).toMatchObject({
+        candidateId: before.candidateId,
+        status: "active",
+        inputSnapshot: before.inputSnapshot,
+        output: before.output,
+        qualityScore: before.qualityScore,
+        promotedAt: before.promotedAt
+      });
+      await expect(database.aIOptimizationCandidate.findUnique({
+        where: { dedupeKey: `stage3-few-shot-reuse-${seed.userId}` }
+      })).resolves.toBeNull();
+      await expect(database.aIRequestLog.count()).resolves.toBe(0);
+    } finally {
+      await cleanupScenario(seed);
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("serializes concurrent validation starts and creates exactly one running validation", async () => {
+    const seed = await seedScenario("candidate");
+    const gate = await holdFeedbackUpdateGate();
+    const operations: Array<Promise<unknown>> = [];
+    try {
+      const firstOutcome = captureOutcome(optimizationRepository.loadOptimizationValidationInput({
+        candidateId: seed.candidateIds.draft,
+        rubricVersion: "local-integration-rubric",
+        adminUsername: "local-integration-first"
+      }));
+      operations.push(firstOutcome);
+      await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 0 });
+
+      const secondOutcome = captureOutcome(optimizationRepository.loadOptimizationValidationInput({
+        candidateId: seed.candidateIds.draft,
+        rubricVersion: "local-integration-rubric",
+        adminUsername: "local-integration-second"
+      }));
+      operations.push(secondOutcome);
+      await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 1 });
+
+      gate.release();
+      const firstResult = await firstOutcome;
+      expect(firstResult.ok).toBe(true);
+      const secondResult = await secondOutcome;
+      expect(secondResult.ok).toBe(false);
+      if (secondResult.ok) throw new Error("STAGE3_DUPLICATE_VALIDATION_UNEXPECTEDLY_STARTED");
+      expect(secondResult.error).toBeInstanceOf(Error);
+      expect((secondResult.error as Error).message).toBe("OPTIMIZATION_VALIDATION_ALREADY_RUNNING");
+      await gate.transaction;
+
+      await expect(database.aIOptimizationValidation.count({
+        where: { candidateId: seed.candidateIds.draft, status: "running" }
+      })).resolves.toBe(1);
+      await expect(database.aIRequestLog.count()).resolves.toBe(0);
+    } finally {
+      gate.release();
+      await Promise.allSettled(operations);
+      await gate.transaction.catch(() => undefined);
+      await cleanupScenario(seed);
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("uses one stable multi-user lock order while two source users withdraw", async () => {
+    const left = await seedScenario("candidate");
+    const right = await seedScenario("candidate");
+    const gate = await holdFeedbackUpdateGate();
+    const operations: Array<Promise<unknown>> = [];
+    const dedupeKey = `stage3-multi-user-${randomUUID()}`;
+    try {
+      const reverseUserOrderTraceIds = [
+        { userId: left.userId, traceId: left.automaticTraceId },
+        { userId: right.userId, traceId: right.automaticTraceId }
+      ]
+        .sort((first, second) => second.userId.localeCompare(first.userId))
+        .map((item) => item.traceId);
+      const createOutcome = captureOutcome(optimizationRepository.createClusterAndCandidate({
+        dedupeKey,
+        runId: left.runId,
+        artifactType: "interview_turn",
+        dimension: "joy",
+        issueCode: "schema_parse_failed",
+        caseCount: 2,
+        traceIds: reverseUserOrderTraceIds,
+        summary: "local integration multi-user evidence",
+        path: "engineering",
+        promptKey: null,
+        title: "local integration multi-user create",
+        rationale: "local integration only",
+        proposal: {},
+        riskLevel: "medium"
+      }));
+      operations.push(createOutcome);
+      await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 0 });
+
+      const leftWithdrawal = captureOutcome(
+        repository.recordAIQualityConsentDecision(left.userId, false)
+      );
+      const rightWithdrawal = captureOutcome(
+        repository.recordAIQualityConsentDecision(right.userId, false)
+      );
+      operations.push(leftWithdrawal, rightWithdrawal);
+      await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 2 });
+
+      gate.release();
+      await expect(createOutcome).resolves.toMatchObject({ ok: true });
+      await expect(leftWithdrawal).resolves.toMatchObject({ ok: true });
+      await expect(rightWithdrawal).resolves.toMatchObject({ ok: true });
+      await gate.transaction;
+
+      await expect(database.aIOptimizationCandidate.findUnique({ where: { dedupeKey } })).resolves.toMatchObject({
+        status: "rejected",
+        evidenceTraceIds: [],
+        reviewedBy: REVIEWED_BY,
+        reviewReason: REVIEW_REASON
+      });
+      await assertRevokedOutcome(left);
+      await assertRevokedOutcome(right);
+    } finally {
+      gate.release();
+      await Promise.allSettled(operations);
+      await gate.transaction.catch(() => undefined);
+      await cleanupScenario(left);
+      await cleanupScenario(right);
+    }
+  }, TEST_TIMEOUT_MS);
 
   it("lets a save holding FOR SHARE finish before a waiting withdrawal", async () => {
     const seed = await seedScenario("active");
