@@ -1,0 +1,179 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-6-background-facts-quality-v1",
+  "status": "ready",
+  "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+  "candidateIdentity": {
+    "candidate": "2026-08-20.gi088-complete-response-first-v1-6-background-facts-v1",
+    "runtime": {
+      "model": "deepseek-v4-pro",
+      "temperature": 0.2,
+      "maxTokens": 1600,
+      "timeoutMs": 20000,
+      "thinking": "disabled",
+      "reasoningEffort": null,
+      "responseFormat": "json_object",
+      "maxAttempts": 1,
+      "callsPerVisibleTurn": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0
+    },
+    "candidateFingerprint": "2ea974c831b417b037bde74f7d34220756b08189b4851feefe91df05710a596c"
+  },
+  "parentEvidence": {
+    "identity": "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage-quality-v1",
+    "startSha256": "5cd09c3127e72edbeb85167a822a6abb51160bfc11aa21beea92acf947fe01df",
+    "receiptSha256": "83b04df1ddc8f0e5095e545b9a254d7bdb4736ed93f4af11a7007954e1d15534",
+    "privateLedgerSha256": "abcc0d910964165bca7589ba72ccd568dd7622180a6cf1b4a309362db41a6494",
+    "technicalCases": 8,
+    "contractValidCases": 8,
+    "visibleProductVerdict": "pending"
+  },
+  "dataset": {
+    "version": "2026-08-19.gi088-complete-response-first-eight-full-context-v1",
+    "fingerprint": "1ea88517dfa6f5d8346929d4f80842427096c4d9f175ff6ce2129d2ebbd4eadd",
+    "sourceVersion": "2026-08-16.gi088-real-problem-regression-v1.2",
+    "sourceFingerprint": "cf04a7584d74bb7cabb235fc0cc001ac6953fb01a90364d5690284c927c85eb1",
+    "privacyLevel": "private_sensitive",
+    "developmentCount": 3,
+    "regressionCount": 5
+  },
+  "cases": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-01",
+      "split": "development",
+      "hardGate": false,
+      "sourceFingerprint": "bd813c06a6acbef1fe917f87af53d5464ef9c2317463dc86c2d060630f9bc23b",
+      "generationInputFingerprint": "eab01b48f36c065ce49d7bee4a16ea67afadef5ec417a5b3500eff5e73582e73",
+      "parentVisibleOutputHash": "1235a2b1cd75e134dce47e20bb4fd776556aaa8333821c2430b3cc1c68cbfa3f",
+      "requestFingerprint": "a14232ab959bc5802730459d8a8e78eb691e6b1f42646cefd73a0e7fad813647"
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-REAL-05",
+      "split": "development",
+      "hardGate": false,
+      "sourceFingerprint": "e202adf9abe595f6f5413543901397a3335b1a623bb2416f9e941d45432654e1",
+      "generationInputFingerprint": "aac50d83560b641f938dd4fc811f7ceb4e3d1746d1dba87d24851e8437c6a1b4",
+      "parentVisibleOutputHash": "0b4dfbb850c49334b2592954171ce80b44128059d37d32860366ca9eac1114c9",
+      "requestFingerprint": "f3a58dcdabd3676a719b78ea835a3fb79f86018512725e9b837e3ddc6c65e0a3"
+    },
+    {
+      "order": 3,
+      "caseId": "RPR-REAL-11",
+      "split": "development",
+      "hardGate": false,
+      "sourceFingerprint": "5d0e7754e534304896f2212c317b8db55691b4c062128b6f022be8fbc675339c",
+      "generationInputFingerprint": "c90371eb13b9a98d5bb9f616476c751910fe63a7c1a408afb36f3c4429fe5dd8",
+      "parentVisibleOutputHash": "0fa9b1f25397a59a0f94cfe4bff56a5ca5ac2eb0ad2d71ed3380d8fccd1b3258",
+      "requestFingerprint": "e84b57150386cd6c60d5fe572e9732c3efbaf65fb8bec10eec4d717a6b1943ec"
+    },
+    {
+      "order": 4,
+      "caseId": "RPR-REAL-13",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "aa6d91e160f110fb00ad93ceb1b7cf5b89476d73a2c02d0ec088d470b13429f2",
+      "generationInputFingerprint": "5f2155e57fb9c64b272937894372471c0f4a8284ec7f9d56db409e64476aaa9a",
+      "parentVisibleOutputHash": "1cc41e831aff033b7f7eb67b8841321c09da66db90bdb5b5c9a8612b4b72dfd1",
+      "requestFingerprint": "3302fb24f13bc6c8b8bebc6f4fc1db87c4c7ab6617b1391ea913ed6eabbd5309"
+    },
+    {
+      "order": 5,
+      "caseId": "RPR-REAL-22",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "f9e3f08f99516df9cba966f350b7c2d95a6c1a20c59ef24a458471f48343b943",
+      "generationInputFingerprint": "ef2c895f231be33dc4ae99afd46b8cf4de12be837b3bfc4d0fab9652cec24638",
+      "parentVisibleOutputHash": "671bc6980f0c50c67b7e2988177f29df3bd5b755225d5e02c17d80a1e1060288",
+      "requestFingerprint": "d9bd715fb7728eb7c2e294ed30b66b349aec4c41027c25e5a66b34899a735b6d"
+    },
+    {
+      "order": 6,
+      "caseId": "RPR-CF-03",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "ea1f6d699f46f4e71a585452e14a5ef2f3c5562741dd78ff9dce482b2090488e",
+      "generationInputFingerprint": "b5fed6830859123de5c13d8dc3965d5e8e76ab148d0d291ce84d606324bea528",
+      "parentVisibleOutputHash": "3271447dab8eef2fcdbeb20dcea871ea298fd42694b856206876c2a2f35e5e4d",
+      "requestFingerprint": "f1bef2183e017f54116ad7f38a171878a61e3da7b61f15b60e82877c3fcf8307"
+    },
+    {
+      "order": 7,
+      "caseId": "RPR-REAL-21",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "caeb002aa3cb9e266059a98989ca6da3d1ab8e7d1ee20169c49c60a7d0a16e7c",
+      "generationInputFingerprint": "fab74d927119772eb6c77e5c045757fb298a9b56cf8234afbaa16fcb7b2ad6d4",
+      "parentVisibleOutputHash": "26db1c891f92e636ebeb8a47e2578fd88426208bb69d5aea8d31813d6073486f",
+      "requestFingerprint": "a21719fee1ff0dc74c692ad8a461a2b9867c855dd52f4123851f8e83b85851ab"
+    },
+    {
+      "order": 8,
+      "caseId": "RPR-REAL-19",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "6385f5687671aabb0decfe3bcd3e9b81b2d58b8f5713e505f068b46d93137048",
+      "generationInputFingerprint": "bb44717f13777b6e1f14a2fc88571f4c20c7a6636aa1207d807232915afa9964",
+      "parentVisibleOutputHash": "3576f57108db0b3203b8915e4e5e99670dfa1ee651279f8e3ca33f11c9771382",
+      "requestFingerprint": "819f8795020b7434981613a5c0a3970a5b501544f18f57ad3bd9528f81524c4f"
+    }
+  ],
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "temperature": 0.2,
+    "maxTokens": 1600,
+    "timeoutMs": 20000,
+    "thinking": "disabled",
+    "reasoningEffort": null,
+    "responseFormat": "json_object",
+    "maxAttempts": 1,
+    "callsPerVisibleTurn": 1,
+    "retries": 0,
+    "recoveryCalls": 0,
+    "fallback": 0,
+    "concurrency": 1,
+    "recovery": 0
+  },
+  "budget": {
+    "authorized": 8,
+    "development": 3,
+    "regression": 5,
+    "callsPerCase": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "stopPolicy": {
+    "ordinarySemanticQualityStopsCalls": false,
+    "ordinaryContractFailureStopsCalls": false,
+    "consecutiveTechnicalFailures": 2,
+    "severeProgramGateFailure": 1,
+    "severeProgramIssues": [
+      "BACKGROUND_FACTS_SOURCE_OR_REFERENCE_INVALID",
+      "BACKGROUND_FACTS_REQUEST_CONTRACT_MISMATCH"
+    ]
+  },
+  "publicBoundary": {
+    "startAndReceiptContainUserOrModelBody": false,
+    "onlyIdentifiersHashesMetricsAndSafeCodes": true
+  },
+  "inputHashes": {
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "executionPlanSha256": "9ba989f94a8c48b3fdca27b4148272cbee72371bb7722646d28422ec53ea4789",
+    "fixturesSha256": "4b668a3feee85c5020505e771e7194efcf078baf585950c8f2a70343222521b6",
+    "backgroundCandidateSha256": "92c5caed27cbfdf09db661b5aa11c98339e7bd522b67a8f7b034cfa2425bd3c5",
+    "backgroundContractSha256": "5a014e02bfa0560b0c9dc4ccdbb2cc0fbcee49c0110eaa3b98a7ea5e17b4c9bf",
+    "parentVisibleCandidateSha256": "c573067c518eb2cb6fb657ee10da4a48555db50147dafea998384dd533f365dc",
+    "providerSha256": "932baf57ada773942695c9ec6cef5f7ae53eb93a8a296672f8cf566f465a3dc0",
+    "providerContractSha256": "8ee44101394828e1e34438fff50ee96cb9b4493f60d97b6e8a2310756843a523",
+    "parentStartSha256": "5cd09c3127e72edbeb85167a822a6abb51160bfc11aa21beea92acf947fe01df",
+    "parentReceiptSha256": "83b04df1ddc8f0e5095e545b9a254d7bdb4736ed93f4af11a7007954e1d15534",
+    "parentPrivateLedgerSha256": "abcc0d910964165bca7589ba72ccd568dd7622180a6cf1b4a309362db41a6494",
+    "packageSha256": "cf66a9f82495d46fa3f2fe3a6ec1d6d005c44f4aae81351ef7631b3114fb3ea9",
+    "runnerSha256": "caf8682a878871d140c1e17acc16995c0cf8eae221b196a408514da20519994a"
+  },
+  "planFingerprint": "b88ba1924eeb218e3290b784236e0485c164653b56607e09b66e9e98052158b3"
+}

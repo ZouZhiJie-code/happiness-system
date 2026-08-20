@@ -66,9 +66,48 @@ import {
   validateEventCenteredCompleteResponseFirstV121Output,
   type EventCenteredCompleteResponseFirstV121Output
 } from "@/features/interview/event-centered/complete-response-first-v1-2-1";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_PROMPT_VERSION,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_VERSION,
+  buildEventCenteredCompleteResponseFirstV13Messages,
+  createEventCenteredCompleteResponseFirstV13Envelope,
+  projectEventCenteredCompleteResponseFirstV13Turn,
+  validateEventCenteredCompleteResponseFirstV13Output
+} from "@/features/interview/event-centered/complete-response-first-v1-3";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_PROMPT_VERSION,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_VERSION,
+  buildEventCenteredCompleteResponseFirstV14Messages,
+  createEventCenteredCompleteResponseFirstV14Envelope,
+  projectEventCenteredCompleteResponseFirstV14Turn,
+  validateEventCenteredCompleteResponseFirstV14Output
+} from "@/features/interview/event-centered/complete-response-first-v1-4";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_PROMPT_VERSION,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_VERSION,
+  buildEventCenteredCompleteResponseFirstV15Messages,
+  createEventCenteredCompleteResponseFirstV15Envelope,
+  projectEventCenteredCompleteResponseFirstV15Turn,
+  validateEventCenteredCompleteResponseFirstV15Output
+} from "@/features/interview/event-centered/complete-response-first-v1-5";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_PROMPT_VERSION,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_VERSION,
+  buildEventCenteredCompleteResponseFirstV16Messages,
+  createEventCenteredCompleteResponseFirstV16Envelope,
+  projectEventCenteredCompleteResponseFirstV16Turn,
+  validateEventCenteredCompleteResponseFirstV16Output
+} from "@/features/interview/event-centered/complete-response-first-v1-6";
 import { isEventCenteredThoughtOnlyScope } from "@/features/interview/event-centered-release";
 import { createPromptEnvelope } from "@/features/ai-quality/prompt-manifest";
-import type { AIProvider } from "@/server/services/ai/ai-provider";
+import {
+  getAIProviderFailureCode,
+  type AIProvider
+} from "@/server/services/ai/ai-provider";
 import { getEventCenteredAIProvider } from "@/server/services/ai/event-centered-provider";
 import {
   completeStructuredOutput,
@@ -4179,6 +4218,516 @@ export async function generateEventCenteredCompleteResponseV121AI(
     completeResponseText: output.response,
     completeResponseEnvelope: output
   };
+}
+
+/** v1.3 的首个调用只生成最终可见纯文本，状态结构退出首屏关键路径。 */
+export async function generateEventCenteredCompleteResponseV13AI(
+  input: EventCenteredGenerativeGenerationInput
+): Promise<EventCenteredGenerativeGenerationResult> {
+  const provider = input.provider === undefined
+    ? await getEventCenteredAIProvider()
+    : input.provider;
+  const attempts: StructuredOutputAttempt[] = [];
+  const messages = buildEventCenteredCompleteResponseFirstV13Messages(input);
+  const envelope = createPromptEnvelope({
+    promptKey: "interview.event_centered.complete_response_first_v1_3",
+    promptVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_PROMPT_VERSION,
+    messages
+  });
+  const promptLineage = [{
+    promptKey: envelope.promptKey,
+    promptVersion: envelope.promptVersion,
+    resolvedPromptHash: envelope.resolvedPromptHash
+  }];
+
+  if (!provider) {
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: "disabled",
+      success: false,
+      latencyMs: null,
+      errorCode: "PROVIDER_NOT_CONFIGURED"
+    });
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues: ["PROVIDER_NOT_CONFIGURED"],
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_VERSION
+    });
+  }
+
+  try {
+    const completion = await provider.complete({
+      messages: envelope.messages,
+      temperature: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_RUNTIME.temperature,
+      maxTokens: input.maxTokens ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_RUNTIME.maxTokens,
+      timeoutMs: input.timeoutMs ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_RUNTIME.timeoutMs,
+      thinking: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_RUNTIME.thinking,
+      signal: input.signal
+    });
+    const response = completion.content.trim();
+    const validationIssues = validateEventCenteredCompleteResponseFirstV13Output({
+      generationInput: input,
+      response
+    });
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: completion.provider,
+      success: validationIssues.length === 0,
+      latencyMs: completion.latencyMs,
+      tokenUsage: completion.tokenUsage ?? null,
+      errorCode: validationIssues.length ? "OUTPUT_VALIDATION_FAILED" : null,
+      errorMessage: validationIssues.length ? validationIssues.join(";") : null,
+      responseText: completion.content
+    });
+    if (validationIssues.length > 0) {
+      return failedGenerativeResult({
+        provider,
+        attempts,
+        promptLineage,
+        validationIssues,
+        fewShotIds: [],
+        architecture: "one_call",
+        strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_VERSION
+      });
+    }
+
+    const projectedEnvelope = createEventCenteredCompleteResponseFirstV13Envelope({
+      generationInput: input,
+      response
+    });
+    return {
+      turn: projectEventCenteredCompleteResponseFirstV13Turn({
+        generationInput: input,
+        response
+      }),
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts,
+      promptLineage,
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_VERSION,
+      angleCardVersion: EVENT_CENTERED_ANGLE_CARD_VERSION,
+      fewShotVersion: EVENT_CENTERED_FEW_SHOT_VERSION,
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: projectedEnvelope
+    };
+  } catch (error) {
+    if (input.signal?.aborted) throw error;
+    const errorCode = getAIProviderFailureCode(error);
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: provider.name,
+      success: false,
+      latencyMs: null,
+      errorCode,
+      errorMessage: error instanceof Error
+        ? error.message.slice(0, 500)
+        : "Unknown provider error"
+    });
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues: [errorCode],
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_VERSION
+    });
+  }
+}
+
+/** v1.4 在纯文本首调内先完成意图、覆盖、新目标与依据检查。 */
+export async function generateEventCenteredCompleteResponseV14AI(
+  input: EventCenteredGenerativeGenerationInput
+): Promise<EventCenteredGenerativeGenerationResult> {
+  const provider = input.provider === undefined
+    ? await getEventCenteredAIProvider()
+    : input.provider;
+  const attempts: StructuredOutputAttempt[] = [];
+  const messages = buildEventCenteredCompleteResponseFirstV14Messages(input);
+  const envelope = createPromptEnvelope({
+    promptKey: "interview.event_centered.complete_response_first_v1_4",
+    promptVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_PROMPT_VERSION,
+    messages
+  });
+  const promptLineage = [{
+    promptKey: envelope.promptKey,
+    promptVersion: envelope.promptVersion,
+    resolvedPromptHash: envelope.resolvedPromptHash
+  }];
+
+  if (!provider) {
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: "disabled",
+      success: false,
+      latencyMs: null,
+      errorCode: "PROVIDER_NOT_CONFIGURED"
+    });
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues: ["PROVIDER_NOT_CONFIGURED"],
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_VERSION
+    });
+  }
+
+  try {
+    const completion = await provider.complete({
+      messages: envelope.messages,
+      temperature: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_RUNTIME.temperature,
+      maxTokens:
+        input.maxTokens ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_RUNTIME.maxTokens,
+      timeoutMs:
+        input.timeoutMs ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_RUNTIME.timeoutMs,
+      thinking: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_RUNTIME.thinking,
+      signal: input.signal
+    });
+    const response = completion.content.trim();
+    const validationIssues = validateEventCenteredCompleteResponseFirstV14Output({
+      generationInput: input,
+      response
+    });
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: completion.provider,
+      success: validationIssues.length === 0,
+      latencyMs: completion.latencyMs,
+      tokenUsage: completion.tokenUsage ?? null,
+      errorCode: validationIssues.length ? "OUTPUT_VALIDATION_FAILED" : null,
+      errorMessage: validationIssues.length ? validationIssues.join(";") : null,
+      responseText: completion.content
+    });
+    if (validationIssues.length > 0) {
+      return failedGenerativeResult({
+        provider,
+        attempts,
+        promptLineage,
+        validationIssues,
+        fewShotIds: [],
+        architecture: "one_call",
+        strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_VERSION
+      });
+    }
+
+    const projectedEnvelope = createEventCenteredCompleteResponseFirstV14Envelope({
+      generationInput: input,
+      response
+    });
+    return {
+      turn: projectEventCenteredCompleteResponseFirstV14Turn({
+        generationInput: input,
+        response
+      }),
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts,
+      promptLineage,
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_VERSION,
+      angleCardVersion: EVENT_CENTERED_ANGLE_CARD_VERSION,
+      fewShotVersion: EVENT_CENTERED_FEW_SHOT_VERSION,
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: projectedEnvelope
+    };
+  } catch (error) {
+    if (input.signal?.aborted) throw error;
+    const errorCode = getAIProviderFailureCode(error);
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: provider.name,
+      success: false,
+      latencyMs: null,
+      errorCode,
+      errorMessage: error instanceof Error
+        ? error.message.slice(0, 500)
+        : "Unknown provider error"
+    });
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues: [errorCode],
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_VERSION
+    });
+  }
+}
+
+/** v1.5 在选择新目标前排除已经回答的同层近义问题。 */
+export async function generateEventCenteredCompleteResponseV15AI(
+  input: EventCenteredGenerativeGenerationInput
+): Promise<EventCenteredGenerativeGenerationResult> {
+  const provider = input.provider === undefined
+    ? await getEventCenteredAIProvider()
+    : input.provider;
+  const attempts: StructuredOutputAttempt[] = [];
+  const messages = buildEventCenteredCompleteResponseFirstV15Messages(input);
+  const envelope = createPromptEnvelope({
+    promptKey: "interview.event_centered.complete_response_first_v1_5",
+    promptVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_PROMPT_VERSION,
+    messages
+  });
+  const promptLineage = [{
+    promptKey: envelope.promptKey,
+    promptVersion: envelope.promptVersion,
+    resolvedPromptHash: envelope.resolvedPromptHash
+  }];
+
+  if (!provider) {
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: "disabled",
+      success: false,
+      latencyMs: null,
+      errorCode: "PROVIDER_NOT_CONFIGURED"
+    });
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues: ["PROVIDER_NOT_CONFIGURED"],
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_VERSION
+    });
+  }
+
+  try {
+    const completion = await provider.complete({
+      messages: envelope.messages,
+      temperature: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_RUNTIME.temperature,
+      maxTokens:
+        input.maxTokens ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_RUNTIME.maxTokens,
+      timeoutMs:
+        input.timeoutMs ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_RUNTIME.timeoutMs,
+      thinking: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_RUNTIME.thinking,
+      signal: input.signal
+    });
+    const response = completion.content.trim();
+    const validationIssues = validateEventCenteredCompleteResponseFirstV15Output({
+      generationInput: input,
+      response
+    });
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: completion.provider,
+      success: validationIssues.length === 0,
+      latencyMs: completion.latencyMs,
+      tokenUsage: completion.tokenUsage ?? null,
+      errorCode: validationIssues.length ? "OUTPUT_VALIDATION_FAILED" : null,
+      errorMessage: validationIssues.length ? validationIssues.join(";") : null,
+      responseText: completion.content
+    });
+    if (validationIssues.length > 0) {
+      return failedGenerativeResult({
+        provider,
+        attempts,
+        promptLineage,
+        validationIssues,
+        fewShotIds: [],
+        architecture: "one_call",
+        strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_VERSION
+      });
+    }
+
+    const projectedEnvelope = createEventCenteredCompleteResponseFirstV15Envelope({
+      generationInput: input,
+      response
+    });
+    return {
+      turn: projectEventCenteredCompleteResponseFirstV15Turn({
+        generationInput: input,
+        response
+      }),
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts,
+      promptLineage,
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_VERSION,
+      angleCardVersion: EVENT_CENTERED_ANGLE_CARD_VERSION,
+      fewShotVersion: EVENT_CENTERED_FEW_SHOT_VERSION,
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: projectedEnvelope
+    };
+  } catch (error) {
+    if (input.signal?.aborted) throw error;
+    const errorCode = getAIProviderFailureCode(error);
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: provider.name,
+      success: false,
+      latencyMs: null,
+      errorCode,
+      errorMessage: error instanceof Error
+        ? error.message.slice(0, 500)
+        : "Unknown provider error"
+    });
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues: [errorCode],
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_VERSION
+    });
+  }
+}
+
+/** v1.6 用跨场景对比例子落实已答语义层排除。 */
+export async function generateEventCenteredCompleteResponseV16AI(
+  input: EventCenteredGenerativeGenerationInput
+): Promise<EventCenteredGenerativeGenerationResult> {
+  const provider = input.provider === undefined
+    ? await getEventCenteredAIProvider()
+    : input.provider;
+  const attempts: StructuredOutputAttempt[] = [];
+  const messages = buildEventCenteredCompleteResponseFirstV16Messages(input);
+  const envelope = createPromptEnvelope({
+    promptKey: "interview.event_centered.complete_response_first_v1_6",
+    promptVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_PROMPT_VERSION,
+    messages
+  });
+  const promptLineage = [{
+    promptKey: envelope.promptKey,
+    promptVersion: envelope.promptVersion,
+    resolvedPromptHash: envelope.resolvedPromptHash
+  }];
+
+  if (!provider) {
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: "disabled",
+      success: false,
+      latencyMs: null,
+      errorCode: "PROVIDER_NOT_CONFIGURED"
+    });
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues: ["PROVIDER_NOT_CONFIGURED"],
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_VERSION
+    });
+  }
+
+  try {
+    const completion = await provider.complete({
+      messages: envelope.messages,
+      temperature: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME.temperature,
+      maxTokens:
+        input.maxTokens ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME.maxTokens,
+      timeoutMs:
+        input.timeoutMs ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME.timeoutMs,
+      thinking: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME.thinking,
+      signal: input.signal
+    });
+    const response = completion.content.trim();
+    const validationIssues = validateEventCenteredCompleteResponseFirstV16Output({
+      generationInput: input,
+      response
+    });
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: completion.provider,
+      success: validationIssues.length === 0,
+      latencyMs: completion.latencyMs,
+      tokenUsage: completion.tokenUsage ?? null,
+      errorCode: validationIssues.length ? "OUTPUT_VALIDATION_FAILED" : null,
+      errorMessage: validationIssues.length ? validationIssues.join(";") : null,
+      responseText: completion.content
+    });
+    if (validationIssues.length > 0) {
+      return failedGenerativeResult({
+        provider,
+        attempts,
+        promptLineage,
+        validationIssues,
+        fewShotIds: [],
+        architecture: "one_call",
+        strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_VERSION
+      });
+    }
+
+    const projectedEnvelope = createEventCenteredCompleteResponseFirstV16Envelope({
+      generationInput: input,
+      response
+    });
+    return {
+      turn: projectEventCenteredCompleteResponseFirstV16Turn({
+        generationInput: input,
+        response
+      }),
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts,
+      promptLineage,
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_VERSION,
+      angleCardVersion: EVENT_CENTERED_ANGLE_CARD_VERSION,
+      fewShotVersion: EVENT_CENTERED_FEW_SHOT_VERSION,
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: projectedEnvelope
+    };
+  } catch (error) {
+    if (input.signal?.aborted) throw error;
+    const errorCode = getAIProviderFailureCode(error);
+    attempts.push({
+      stage: "question",
+      attempt: 1,
+      provider: provider.name,
+      success: false,
+      latencyMs: null,
+      errorCode,
+      errorMessage: error instanceof Error
+        ? error.message.slice(0, 500)
+        : "Unknown provider error"
+    });
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues: [errorCode],
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_VERSION
+    });
+  }
 }
 
 /** 历史对照与显式 one_call 调用继续复用既有单次组合入口。 */

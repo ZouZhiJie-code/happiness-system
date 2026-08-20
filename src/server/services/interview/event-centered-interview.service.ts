@@ -10,6 +10,7 @@ import {
   parseEventCenteredDialogueState,
   serializeEventCenteredAssistantPayload
 } from "@/features/interview/event-centered/dialogue-state";
+import { createEventCenteredBackgroundFactsTaskContext } from "@/features/interview/event-centered/background-facts-task";
 import {
   decideEventCenteredTurnPolicy,
   getEventCenteredReflectionMaterialStatus,
@@ -26,6 +27,10 @@ import {
   isCompleteResponseFirstEventCenteredStrategyEnabled,
   isCompleteResponseFirstV121EventCenteredStrategyEnabled,
   isCompleteResponseFirstV12EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV13EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV14EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV15EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV16EventCenteredStrategyEnabled,
   isGenerativeEventCenteredStrategyEnabled
 } from "@/features/interview/event-centered/generative-release";
 import {
@@ -41,6 +46,26 @@ import {
   EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_STRATEGY,
   alignEventCenteredCompleteResponseFirstV121Policy
 } from "@/features/interview/event-centered/complete-response-first-v1-2-1";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_STRATEGY,
+  alignEventCenteredCompleteResponseFirstV13Policy
+} from "@/features/interview/event-centered/complete-response-first-v1-3";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_STRATEGY,
+  alignEventCenteredCompleteResponseFirstV14Policy
+} from "@/features/interview/event-centered/complete-response-first-v1-4";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_STRATEGY,
+  alignEventCenteredCompleteResponseFirstV15Policy
+} from "@/features/interview/event-centered/complete-response-first-v1-5";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_STRATEGY,
+  alignEventCenteredCompleteResponseFirstV16Policy
+} from "@/features/interview/event-centered/complete-response-first-v1-6";
 import {
   EVENT_CENTERED_ANGLE_CARD_VERSION,
   EVENT_CENTERED_FEW_SHOT_VERSION,
@@ -127,6 +152,10 @@ import {
   generateEventCenteredGenerativeVisibleTurnAI,
   generateEventCenteredCompleteResponseV121AI,
   generateEventCenteredCompleteResponseV12AI,
+  generateEventCenteredCompleteResponseV13AI,
+  generateEventCenteredCompleteResponseV14AI,
+  generateEventCenteredCompleteResponseV15AI,
+  generateEventCenteredCompleteResponseV16AI,
   generateEventCenteredThoughtMapUpdateAI,
   generateEventCenteredThoughtQuestionAI,
   generateEventCenteredTurnOnceAI,
@@ -246,6 +275,39 @@ function displayWorkspaceMessage(message: EventCenteredInterviewWorkspaceData["m
   }
   const legacyPayload = parseAssistantTurnPayload(message.content);
   return legacyPayload ? getAssistantDisplayParts(legacyPayload).combinedText : message.content;
+}
+
+function completeResponseBackgroundConversation(input: {
+  before: EventCenteredInterviewWorkspaceData;
+  sourceUserMessageId: string;
+  rawText: string;
+  assistantMessageId: string;
+  assistantText: string;
+}) {
+  const messages = input.before.messages.flatMap((message) => {
+    if (message.role !== "user" && message.role !== "assistant") return [];
+    const content = displayWorkspaceMessage(message).trim();
+    return content ? [{ id: message.id, role: message.role, content }] : [];
+  });
+  const next = [
+    ...messages.filter((message) => message.id !== input.sourceUserMessageId),
+    {
+      id: input.sourceUserMessageId,
+      role: "user" as const,
+      content: input.rawText.trim()
+    },
+    {
+      id: input.assistantMessageId,
+      role: "assistant" as const,
+      content: input.assistantText.trim()
+    }
+  ];
+  const seen = new Set<string>();
+  return next.filter((message) => {
+    if (!message.content || seen.has(message.id)) return false;
+    seen.add(message.id);
+    return true;
+  });
 }
 
 function emptyAngleProjection(): JournalEventAngleProjection {
@@ -1989,8 +2051,18 @@ export async function respondEventCenteredInterview(
       isCompleteResponseFirstV12EventCenteredStrategyEnabled();
     const completeResponseFirstV121Enabled =
       isCompleteResponseFirstV121EventCenteredStrategyEnabled();
+    const completeResponseFirstV13Enabled =
+      isCompleteResponseFirstV13EventCenteredStrategyEnabled();
+    const completeResponseFirstV14Enabled =
+      isCompleteResponseFirstV14EventCenteredStrategyEnabled();
+    const completeResponseFirstV15Enabled =
+      isCompleteResponseFirstV15EventCenteredStrategyEnabled();
+    const completeResponseFirstV16Enabled =
+      isCompleteResponseFirstV16EventCenteredStrategyEnabled();
     const completeResponseFirstMinimalEnabled =
-      completeResponseFirstV12Enabled || completeResponseFirstV121Enabled;
+      completeResponseFirstV12Enabled || completeResponseFirstV121Enabled ||
+      completeResponseFirstV13Enabled || completeResponseFirstV14Enabled ||
+      completeResponseFirstV15Enabled || completeResponseFirstV16Enabled;
     const completeResponseFirstEnabled =
       completeResponseFirstV11Enabled || completeResponseFirstMinimalEnabled;
     const thoughtControl = thoughtOnly
@@ -2070,6 +2142,14 @@ export async function respondEventCenteredInterview(
       ? "baseline"
       : deterministicUnableAnswerHandling
         ? "baseline"
+      : completeResponseFirstV16Enabled
+        ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_STRATEGY
+      : completeResponseFirstV15Enabled
+        ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_STRATEGY
+      : completeResponseFirstV14Enabled
+        ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_STRATEGY
+      : completeResponseFirstV13Enabled
+        ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_STRATEGY
       : completeResponseFirstV121Enabled
         ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_STRATEGY
       : completeResponseFirstV12Enabled
@@ -2176,19 +2256,43 @@ export async function respondEventCenteredInterview(
       ...(completeResponseFirstEnabled
         ? {
             maxTokens: completeResponseFirstMinimalEnabled
-              ? completeResponseFirstV121Enabled
-                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.maxTokens
-                : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.maxTokens
+              ? completeResponseFirstV16Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME.maxTokens
+              : completeResponseFirstV15Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_RUNTIME.maxTokens
+              : completeResponseFirstV14Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_RUNTIME.maxTokens
+              : completeResponseFirstV13Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_RUNTIME.maxTokens
+                : completeResponseFirstV121Enabled
+                  ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.maxTokens
+                  : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.maxTokens
               : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.maxTokens,
             maxAttempts: completeResponseFirstMinimalEnabled
-              ? completeResponseFirstV121Enabled
-                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.maxAttempts
-                : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.maxAttempts
+              ? completeResponseFirstV16Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME.maxAttempts
+              : completeResponseFirstV15Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_RUNTIME.maxAttempts
+              : completeResponseFirstV14Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_RUNTIME.maxAttempts
+              : completeResponseFirstV13Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_RUNTIME.maxAttempts
+                : completeResponseFirstV121Enabled
+                  ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.maxAttempts
+                  : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.maxAttempts
               : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.maxAttempts,
             timeoutMs: completeResponseFirstMinimalEnabled
-              ? completeResponseFirstV121Enabled
-                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.timeoutMs
-                : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.timeoutMs
+              ? completeResponseFirstV16Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME.timeoutMs
+              : completeResponseFirstV15Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_RUNTIME.timeoutMs
+              : completeResponseFirstV14Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_RUNTIME.timeoutMs
+              : completeResponseFirstV13Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_RUNTIME.timeoutMs
+                : completeResponseFirstV121Enabled
+                  ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.timeoutMs
+                  : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.timeoutMs
               : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.timeoutMs
           }
         : {}),
@@ -2294,8 +2398,16 @@ export async function respondEventCenteredInterview(
         };
       } else if (generativeArchitecture === "one_call") {
         const modelStartedAt = Date.now();
-        generativeResult = completeResponseFirstV121Enabled
-          ? await generateEventCenteredCompleteResponseV121AI(generativeInput)
+        generativeResult = completeResponseFirstV16Enabled
+          ? await generateEventCenteredCompleteResponseV16AI(generativeInput)
+          : completeResponseFirstV15Enabled
+          ? await generateEventCenteredCompleteResponseV15AI(generativeInput)
+          : completeResponseFirstV14Enabled
+          ? await generateEventCenteredCompleteResponseV14AI(generativeInput)
+          : completeResponseFirstV13Enabled
+          ? await generateEventCenteredCompleteResponseV13AI(generativeInput)
+          : completeResponseFirstV121Enabled
+            ? await generateEventCenteredCompleteResponseV121AI(generativeInput)
           : completeResponseFirstV12Enabled
             ? await generateEventCenteredCompleteResponseV12AI(generativeInput)
             : await generateEventCenteredTurnOnceAI(generativeInput);
@@ -2362,6 +2474,14 @@ export async function respondEventCenteredInterview(
         ? "baseline"
       : generativeRuntimeFallback
         ? "baseline"
+        : completeResponseFirstV16Enabled
+          ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_STRATEGY
+        : completeResponseFirstV15Enabled
+          ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_STRATEGY
+        : completeResponseFirstV14Enabled
+          ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_STRATEGY
+        : completeResponseFirstV13Enabled
+          ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_3_STRATEGY
         : completeResponseFirstV121Enabled
           ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_STRATEGY
         : completeResponseFirstV12Enabled
@@ -2402,6 +2522,11 @@ export async function respondEventCenteredInterview(
       resumedGenerativeCheckpoint = null;
     }
     const generativeTurn = generativeResult?.turn ?? null;
+    const completeResponseBackgroundFactsOwner = Boolean(
+      completeResponseFirstV16Enabled &&
+      generativeTurn &&
+      !generativeRuntimeFallback
+    );
     const generativeDeterministicFallback = generativeEnabled &&
       (
         deterministicControlOnly ||
@@ -2469,6 +2594,7 @@ export async function respondEventCenteredInterview(
       decision = { ...decision, facts: [], outcomeCandidate: null, unsupportedHypothesis: null };
     }
     const rejectsPendingHypothesis = Boolean(
+      !completeResponseBackgroundFactsOwner &&
       state.pendingUnderstandingClaimId &&
       state.currentQuestion?.cognitiveAction === "test_understanding" &&
       (
@@ -2494,7 +2620,8 @@ export async function respondEventCenteredInterview(
     const thoughtCorrectionKind = thoughtOnly && correction
       ? gi066ThoughtExecution?.mapUpdate.correction?.kind ?? classifyThoughtCorrectionKind(rawText)
       : null;
-    const factRevisionCorrection = correction && (
+    const factRevisionCorrection = correction &&
+      !completeResponseBackgroundFactsOwner && (
       !thoughtOnly || thoughtCorrectionKind === "fact_or_judgment"
     );
     if (bareAngleChange) {
@@ -2521,6 +2648,7 @@ export async function respondEventCenteredInterview(
       decision.eventBoundary !== "multiple_events";
     let confirmedThisTurnFactId: string | null = null;
     if (
+      !completeResponseBackgroundFactsOwner &&
       !factRevisionCorrection &&
       !rejectsPendingHypothesis &&
       !bareAngleChange &&
@@ -2681,7 +2809,51 @@ export async function respondEventCenteredInterview(
           understanding: decision,
           bareAngleChange
         });
-    const policy = completeResponseFirstV121Enabled &&
+    const policy = completeResponseFirstV16Enabled &&
+      effectiveGenerativeTurn &&
+      generativeResult?.completeResponseText
+      ? alignEventCenteredCompleteResponseFirstV16Policy({
+          state,
+          action: effectiveRequest.action,
+          turn: effectiveGenerativeTurn,
+          response: generativeResult.completeResponseText,
+          generationInput: generativeInput,
+          basePolicy
+        })
+      : completeResponseFirstV15Enabled &&
+      effectiveGenerativeTurn &&
+      generativeResult?.completeResponseText
+      ? alignEventCenteredCompleteResponseFirstV15Policy({
+          state,
+          action: effectiveRequest.action,
+          turn: effectiveGenerativeTurn,
+          response: generativeResult.completeResponseText,
+          generationInput: generativeInput,
+          basePolicy
+        })
+      : completeResponseFirstV14Enabled &&
+      effectiveGenerativeTurn &&
+      generativeResult?.completeResponseText
+      ? alignEventCenteredCompleteResponseFirstV14Policy({
+          state,
+          action: effectiveRequest.action,
+          turn: effectiveGenerativeTurn,
+          response: generativeResult.completeResponseText,
+          generationInput: generativeInput,
+          basePolicy
+        })
+      : completeResponseFirstV13Enabled &&
+      effectiveGenerativeTurn &&
+      generativeResult?.completeResponseText
+      ? alignEventCenteredCompleteResponseFirstV13Policy({
+          state,
+          action: effectiveRequest.action,
+          turn: effectiveGenerativeTurn,
+          response: generativeResult.completeResponseText,
+          generationInput: generativeInput,
+          basePolicy
+        })
+      : completeResponseFirstV121Enabled &&
       effectiveGenerativeTurn &&
       generativeResult?.completeResponseEnvelope
       ? alignEventCenteredCompleteResponseFirstV121Policy({
@@ -2947,7 +3119,9 @@ export async function respondEventCenteredInterview(
     let nonModelMs: number | null = null;
     await options?.onPhase?.("committing");
 
-    const facts = revisionApplied
+    const facts = completeResponseBackgroundFactsOwner
+      ? []
+      : revisionApplied
       ? []
       : turnFactWrites({
           decision,
@@ -2957,7 +3131,9 @@ export async function respondEventCenteredInterview(
           action: effectiveRequest.action,
           contextMessageId: answeredQuestionMessageId
         });
-    const pendingClaim = committedOutcome ? null : decision.unsupportedHypothesis;
+    const pendingClaim = completeResponseBackgroundFactsOwner || committedOutcome
+      ? null
+      : decision.unsupportedHypothesis;
     const traceAttempts = [
       ...(generativeRuntimeFallback ? generativeResult?.attempts ?? [] : []),
       ...understandingResult.attempts,
@@ -2969,8 +3145,35 @@ export async function respondEventCenteredInterview(
     const deterministicAttemptCount = traceAttempts.filter(
       (attempt) => attempt.provider === "disabled"
     ).length;
+    const assistantVisibleText = [
+      responsePayload.naturalUnderstanding,
+      responsePayload.naturalResponse
+    ].filter(Boolean).join("\n").trim();
+    const backgroundFactsTask = completeResponseBackgroundFactsOwner &&
+      responsePayload.presentation !== "hidden" &&
+      rawText.trim() &&
+      assistantVisibleText
+      ? {
+          id: randomUUID(),
+          contextSnapshot: createEventCenteredBackgroundFactsTaskContext({
+            branchStateId: reservation.branchStateId,
+            sourceTurnId: reservation.turn.id,
+            sourceUserMessageId: reservation.userMessageId,
+            currentVisibleAssistantMessageId: assistantMessageId,
+            conversation: completeResponseBackgroundConversation({
+              before,
+              sourceUserMessageId: reservation.userMessageId,
+              rawText,
+              assistantMessageId,
+              assistantText: assistantVisibleText
+            }),
+            explicitCorrectionTargetAssistantMessageId:
+              correctionTargetMessage?.id ?? null
+          })
+        }
+      : null;
     const writeCommitStartedAt = Date.now();
-    await commitEventCenteredTurnUnderstanding({
+    const commitResult = await commitEventCenteredTurnUnderstanding({
       userId,
       eventId: reservation.eventId,
       activeBranchSessionId: reservation.activeBranchSessionId,
@@ -2987,6 +3190,7 @@ export async function respondEventCenteredInterview(
       },
       facts,
       pendingClaim,
+      backgroundFactsTask,
       focusSummary: responsePayload.naturalUnderstanding ||
         responsePayload.naturalResponse ||
         committedOutcome?.statement ||
@@ -3270,7 +3474,16 @@ export async function respondEventCenteredInterview(
       finalWorkspaceRecoveryMs: timing.finalWorkspaceRecoveryMs
     });
     await options?.onPhase?.("complete");
-    return { workspace, assistantPayload: responsePayload };
+    return {
+      workspace,
+      assistantPayload: responsePayload,
+      backgroundFactsTask: commitResult.backgroundFactsTaskTraceId
+        ? {
+            traceId: commitResult.backgroundFactsTaskTraceId,
+            sessionId: reservation.activeBranchSessionId
+          }
+        : null
+    };
   } catch (error) {
     await markEventCenteredTurnUnderstandingFailed(
       reservation.turn.id,

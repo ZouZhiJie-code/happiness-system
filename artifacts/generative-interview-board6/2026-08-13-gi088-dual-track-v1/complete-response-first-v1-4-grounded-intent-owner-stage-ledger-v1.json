@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner-quality-v1",
+  "planFingerprint": "ece2a81622bc5bec4664afd22dda3939675d772485cce1c95671ae6210d08741",
+  "status": "codex_quality_no_go_product_pending",
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technical": {
+    "valid": 8,
+    "http200": 8,
+    "finishStop": 8,
+    "thinkingDisabled": 8,
+    "under15Seconds": 8,
+    "tokenCeilingTriggered": 0,
+    "medianLatencyMs": 2701.5,
+    "maxLatencyMs": 3350,
+    "maxCompletionTokens": 77
+  },
+  "quality": {
+    "codex": {
+      "pass": 6,
+      "minor": 1,
+      "fail": 1,
+      "reviewSha256": "a61c1fb22e9a5902743e149b3899a50a36b8eb1825094409c4988cb4bc4c0a25"
+    },
+    "productOwnerDecision": "pending",
+    "gatePassed": false
+  },
+  "next": {
+    "changedFactor": "semantic_information_layer_coverage_before_new_target",
+    "status": "confirmed_in_progress",
+    "budgetAuthorized": 8
+  },
+  "release": {
+    "pageIntegration": "not_run",
+    "backgroundStateCall": "not_run",
+    "preview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deploy": "not_run",
+    "production": "event_centered_baseline"
+  }
+}

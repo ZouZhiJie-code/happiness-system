@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-5-semantic-layer-coverage-quality-v1",
+  "planFingerprint": "3d35702fc80172bda879d845d12777fc7188d8e360216038fbed8a137abcbfe3",
+  "status": "codex_quality_no_go_product_pending",
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technical": {
+    "valid": 8,
+    "http200": 8,
+    "finishStop": 8,
+    "thinkingDisabled": 8,
+    "under15Seconds": 8,
+    "tokenCeilingTriggered": 0,
+    "medianLatencyMs": 3509,
+    "maxLatencyMs": 5324,
+    "maxCompletionTokens": 109
+  },
+  "quality": {
+    "codex": {
+      "pass": 6,
+      "minor": 1,
+      "fail": 1,
+      "reviewSha256": "50be05bf13d045a99a38866961db6e2789d56b59bb1c382730022838dc21576c"
+    },
+    "productOwnerDecision": "pending",
+    "gatePassed": false
+  },
+  "next": {
+    "changedFactor": "contrastive_examples_for_same_layer_exclusion",
+    "status": "confirmed_in_progress",
+    "budgetAuthorized": 8,
+    "promptOnlyExitRule": "same_layer_repeat_means_reopen_model_factor"
+  },
+  "release": {
+    "pageIntegration": "not_run",
+    "backgroundStateCall": "not_run",
+    "preview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deploy": "not_run",
+    "production": "event_centered_baseline"
+  }
+}

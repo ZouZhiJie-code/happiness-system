@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-6-fresh-stability-replay-v1",
+  "status": "stopped_source_contract_failure",
+  "planFingerprint": "ce877c79aa05f3fd47f62719c19309667f4a0b0c3f863b1153b098aa778253ba",
+  "budget": {
+    "authorized": 16,
+    "consumed": 12,
+    "completed": 12,
+    "notRun": 4,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technical": {
+    "visibleValid": 6,
+    "backgroundValid": 5,
+    "backgroundProgramGateFailure": 1,
+    "finishLength": 0,
+    "visibleMedianMs": 3277,
+    "visibleMaxMs": 4916,
+    "backgroundMedianMs": 5886.5,
+    "backgroundMaxMs": 16816
+  },
+  "failure": {
+    "caseId": "RPR-REAL-20",
+    "stage": "background",
+    "code": "FACT_QUOTE_NOT_IN_SOURCE_USER_MESSAGE",
+    "confirmedBoundary": "punctuation_changed_while_non_punctuation_characters_match_source",
+    "sourceFabricationObserved": false
+  },
+  "quality": {
+    "visibleCodex": "pending",
+    "backgroundCodex": "pending",
+    "productOwner": "pending"
+  },
+  "evidence": {
+    "startCardSha256": "4c7c12c8c2afe779a65b6074b161c47110ee3ced1ca877ae17482cb7058e7075",
+    "receiptSha256": "a88f5c84ec826bc376c7856ec42d3a12f3855e75aa448624c82a47e94e854eae",
+    "privateLedger": "git_ignored_mode_0600",
+    "privateReview": "git_ignored_mode_0600"
+  },
+  "release": {
+    "preview": "not_run",
+    "production": "event_centered_plus_baseline_unchanged"
+  }
+}

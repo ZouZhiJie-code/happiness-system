@@ -365,6 +365,13 @@ describe("journal event facts and understanding", () => {
         finalOutput: {},
         pipelineDecisions: []
       },
+      backgroundFactsTask: {
+        id: "background-trace-1",
+        contextSnapshot: {
+          kind: "event_centered_background_facts_v1",
+          sourceTurnId: "turn-1"
+        }
+      },
       checks: {
         eventBoundaryPassed: true,
         factsHaveUserSource: true,
@@ -376,10 +383,19 @@ describe("journal event facts and understanding", () => {
     expect(result).toMatchObject({
       kind: "committed",
       assistantMessageId: "assistant-1",
-      generationTraceId: "trace-1"
+      generationTraceId: "trace-1",
+      backgroundFactsTaskTraceId: "background-trace-1"
     });
     expect(mockPrisma.aIGenerationTrace.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ journalEventId: "event-1", triggerMessageId: "user-message-1" })
+    });
+    expect(mockPrisma.aIGenerationTrace.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        id: "background-trace-1",
+        artifactId: "assistant-1",
+        artifactVersion: 2,
+        status: "pending"
+      })
     });
     expect(mockPrisma.interviewEvent.update).toHaveBeenCalledWith({
       where: { id: "branch-state-1" },
@@ -737,6 +753,7 @@ describe("journal event facts and understanding", () => {
       userTurnId: "turn-1",
       assistantMessageId: "assistant-1",
       generationTraceId: "trace-1",
+      backgroundFactsTaskTraceId: null,
       factIds: ["fact-1"],
       pendingUnderstandingClaimId: "claim-1",
       angleOutcomeIds: [],

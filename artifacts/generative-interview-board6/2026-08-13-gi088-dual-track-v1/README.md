@@ -5,9 +5,9 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-版本：`完整回应优先 v1.2.1 结构稳定性 No-Go；v1.3 纯文本可见负责人实施中`
+版本：`完整回应优先 v1.6 隔离 Preview 验收实施中`
 
-状态：`v1.2.1 请求 8/8 完成、合同 0/8，结构化首调技术 No-Go；v1.3 新预算 0/8、结果待验证；页面、Preview 与发布 not_run；Production baseline`
+状态：`v1.7 新调用 10/10 完成；八条可见与八条后台技术有效；当前分支隔离 Preview 实施中；Production baseline`
 
 现行职责、单一回答焦点规则和旧身份边界统一读取[板块 7 当前运行合同](../../../docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。本目录中的原始回执继续保存当时请求、失败码和调用事实。
 
@@ -21,14 +21,43 @@
 
 ### 完整回应优先当前任务
 
+- 当前专项：[v1.6 隔离 Preview 验收](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md)
+- 当前状态：正式链路与离线 Pro 模型、v1.7 来源对齐规则已一致；全量工程门通过；当前分支配置、推送和隔离部署实施中
+- 验收预算：最多 `15` 次可见回应；覆盖普通表达、深挖、关系、纠正、停止、连续回合、后台晚到与恢复
+- 发布边界：Production 继续使用 `event_centered + baseline`
+
+- 当前专项：[v1.7 后台来源标点对齐](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-7-background-source-alignment.md)
+- 当前运行：`2026-08-20.gi088-complete-response-first-v1-7-source-alignment-quality-v1`
+- 父结果：v1.6 新案例复验 `12/16`；六条可见有效、五条后台有效，第六条因一处标点变化触发来源合同
+- 当前预算：`10/10`；复用六条可见，补两条可见并重跑八条后台；并发 1，重试、恢复、回退 0
+- [v1.7 结果交接](./complete-response-first-v1-7-source-alignment-quality-v1-handoff.md)
+- [v1.7 阶段账](./complete-response-first-v1-7-source-alignment-quality-stage-ledger-v1.json)
+- [v1.6 新案例复验结果交接](./complete-response-first-v1-6-fresh-stability-replay-v1-handoff.md)
+- [v1.6 新案例复验阶段账](./complete-response-first-v1-6-fresh-stability-stage-ledger-v1.json)
+
 - 父候选／运行：`2026-08-19.gi088-complete-response-first-v1`／`2026-08-19.gi088-complete-response-first-quality-v1`
 - 父结果：技术与正文合同 `8/8`；中位 `3087ms`、最长 `6976ms`；Codex 初评 RPR-REAL-22 与 RPR-REAL-21 fail，v1 质量 No-Go，产品裁决 pending
-- 当前候选：`2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner`
-- 当前运行：`2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner-quality-v1`
-- 当前唯一变化：首个可见调用从最小 JSON 改为纯文本完整回应；后台状态退出首屏关键路径
-- 数据与预算：同一 `3＋5`；新预算 `0/8`，并发 1，重试、恢复、回退 0
+- 当前候选：`2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage`
+- 当前运行：`2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage-quality-v1`
+- 当前唯一变化：继承 v1.5 语义层覆盖，并增加跨场景的同层错误／跨层正确对比例子
+- 数据与预算：同一 `3＋5`；v1.6 已消费 `8/8`，并发 1，重试、恢复、回退 0
 - 父技术结果：v1.2.1 `8/8` HTTP 200／stop、正文非空；合同 `0/8`；中位 `5402ms`、最长 `11488ms`
-- 当前质量状态：v1.3 结果待验证；技术稳定后逐题交付完整原文与实际输出
+- 当前质量状态：v1.6 Codex `7 pass / 1 minor / 0 fail`、产品裁决 pending
+- 后台状态：离线事实整理 `8/8 technical_valid`、Codex `7 pass / 1 minor / 0 fail`；持久任务本地接入、恢复和全量工程门通过；产品裁决与真实 Preview pending
+- [v1.5 公开启动卡](./complete-response-first-v1-5-semantic-layer-coverage-quality-v1-start-card.json)
+- [v1.5 公开回执](./complete-response-first-v1-5-semantic-layer-coverage-quality-v1-receipt.json)
+- [v1.5 结果交接](./complete-response-first-v1-5-semantic-layer-coverage-quality-v1-handoff.md)
+- [v1.5 阶段账](./complete-response-first-v1-5-semantic-layer-coverage-stage-ledger-v1.json)
+- [v1.6 公开启动卡](./complete-response-first-v1-6-contrastive-coverage-quality-v1-start-card.json)
+- [v1.6 公开回执](./complete-response-first-v1-6-contrastive-coverage-quality-v1-receipt.json)
+- [v1.6 结果交接](./complete-response-first-v1-6-contrastive-coverage-quality-v1-handoff.md)
+- [v1.6 阶段账](./complete-response-first-v1-6-contrastive-coverage-stage-ledger-v1.json)
+- [v1.6 后台事实启动卡](./complete-response-first-v1-6-background-facts-quality-v1-start-card.json)
+- [v1.6 后台事实回执](./complete-response-first-v1-6-background-facts-quality-v1-receipt.json)
+- [v1.6 后台事实结果交接](./complete-response-first-v1-6-background-facts-quality-v1-handoff.md)
+- [v1.6 后台事实阶段账](./complete-response-first-v1-6-background-facts-stage-ledger-v1.json)
+- [v1.6 后台任务工程接入交接](./complete-response-first-v1-6-background-integration-v1-handoff.md)
+- [v1.6 后台任务工程接入阶段账](./complete-response-first-v1-6-background-integration-stage-ledger-v1.json)
 - [v1.2.1 公开启动卡](./complete-response-first-v1-2-1-json-mode-off-quality-v1-start-card.json)
 - [v1.2.1 公开回执](./complete-response-first-v1-2-1-json-mode-off-quality-v1-receipt.json)
 - [v1.2.1 结果交接](./complete-response-first-v1-2-1-json-mode-off-quality-v1-handoff.md)
@@ -45,7 +74,7 @@
 - [v1 公开回执](./complete-response-first-quality-v1-receipt.json)
 - [v1 结果交接](./complete-response-first-quality-v1-handoff.md)
 - [v1 阶段账](./complete-response-first-stage-ledger-v1.json)
-- 发布边界：产品验收前 Production 保持 `event_centered + baseline`
+- 发布边界：当前分支隔离 Preview 实施中；Production 切换待真人验收，继续保持 `event_centered + baseline`
 
 ### 回应优先 v2.9 当前任务
 

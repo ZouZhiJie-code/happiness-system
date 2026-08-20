@@ -7,9 +7,23 @@
 
 ## 1. 当前交接结论
 
-GI-088 已进入[完整回应优先 v1.3 纯文本可见负责人](./plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md)。父 v1.2.1 已完成 `8/8` 调用：八题均 HTTP 200、`finishReason=stop`、正文非空、低于 15 秒且未触发 Token 上限，中位 `5402ms`、最长 `11488ms`；合同有效 `0/8`。六条缺少完整顶层 `response` 结构，另外两条混写自然语言或放错 `correction` 层级，因此 v1.2.1 技术 No-Go。
+GI-088 当前执行[v1.6 隔离 Preview 验收](./plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md)。v1.7 已完成新增调用 `10/10`：复用前六条可见回应，补完 `RPR-CF-02`、`RPR-CF-05` 两条可见回应，并重跑八条后台事实。八条可见与八条后台均技术有效，HTTP 200、stop、Thinking 关闭且未截断。
 
-v1.3 让首个调用只生成一至两个短段落的纯文本完整回应，继续使用 v1.1 的“先选择未答新信息目标”方法。程序保存用户原话并校验中文、段落、内部词泄漏、一个问题或零问题、明确停止；后台状态整理退出首屏关键路径，后续最多使用一次独立调用。模型、Thinking、Temperature、`1280` Token、同一八题和速度门保持固定。新预算为 `8` 次，隔离策略为 `complete_response_v1_3`。Production 在产品负责人页面验收前继续使用 `event_centered + baseline`。
+v1.7 只允许程序在汉字、数字、字母等实质字符连续、逐字、唯一匹配时对齐空白和标点，最终保存的证据仍从用户原文截取。上一失败原始结果的确定性重放通过；本次八条后台新输出均直接返回逐字引用，实际对齐 `0` 次。可见中位 `3273.5ms`、最长 `4916ms`；后台中位 `6429ms`、最长 `13363ms`，最高 completion `1102/1600`。
+
+Codex 对新八题初评：可见 `6 pass / 2 minor / 0 fail`；一题把用户明确事实扩成更具体的事件过程，另一题增加未经用户明确表达的延后应对选项。后台为 `8 pass / 0 minor / 0 fail`。产品负责人裁决 pending，公开结果见[v1.7 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-v1-handoff.md)与[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-stage-ledger-v1.json)。
+
+GI-088 已完成 v1.6 持久后台任务的本地工程接入。首个可见调用继续冻结 v1.6，产品质量仍为 `7 pass / 1 minor / 0 fail` 的 Codex 初评、产品裁决 pending；后台结果继续独立分账。
+
+后台状态采用独立候选 `2026-08-20.gi088-complete-response-first-v1-6-background-facts-v1`：第二次调用只整理用户明确表达的事实与纠正，逐条绑定当前用户原话；不生成问题、不追加或改写可见气泡。离线 `3＋5` 已消费 `8/8`，全部 `technical_valid`，中位 `4388ms`、最长 `11318ms`、最高 completion `983/1600`，重试、恢复调用和回退为 `0`。Codex 初评 `7 pass / 1 minor / 0 fail`，产品裁决 pending。当前专项见[v1.6 后台状态与上线准备](./plans/2026-08-20-gi088-complete-response-first-v1-6-background-state-readiness.md)。
+
+GI-088 完整回应优先 v1.6 对比式覆盖已完成同一 `3＋5` 八题：`8/8 technical_valid`，中位 `2915ms`、最长 `5152ms`、最高 completion `91/1280`。预算消费 `8/8`，重试、恢复和回退均为 `0`。当前停在产品负责人逐题裁决。
+
+持久后台任务已经接入隔离 `complete_response_v1_6`：可见回应与任务同事务提交，页面响应完成后处理后台队列；每项任务调用前记账一次，模型结果先保存再写事实，写入前中断只重放结果，调用中断则记失败并允许后续任务继续。分支写入权、来源、逐字引用、顺序、幂等和纠正失效由程序校验，后台始终不能修改可见气泡。该实现复用 `AIGenerationTrace`，不需要数据库迁移。
+
+最新本地工程门已通过：全量 `455` 个测试文件、`3666` 条测试通过，`10` 条按既有条件跳过；TypeScript、两套 Prisma 和 Production build 通过；Lint `0` error、`45` 条既有 warning。Production build 保留 `16` 条既有 Turbopack 动态文件系统 warning。正式可见 Provider 已锁定离线使用的 Pro 模型，后台正式解析已接入 v1.7 来源对齐。
+
+v1.6 Codex 初评为 `7 pass / 1 minor / 0 fail`。v1.5 的两处同层回问均已修复；唯一 minor 是硬门 `RPR-REAL-13` 增加一处合理但未经用户明确确认的感受。产品负责人把该题裁决为 pass 后，首批质量门成立；裁决为 minor 或 fail 时转入模型能力比较。
 
 GI-088 完整回应优先 v1.1 已完成。运行身份 `2026-08-19.gi088-complete-response-first-v1-1-quality-v1` 按 `3` 条开发题＋`5` 条冻结回归题消费 `8/8`；八题均为 `technical_valid / stop`，中位耗时 `3406ms`、最长 `4621ms`，`1280` Token 上限未触发截断。重试、恢复和回退均为 `0`。
 
@@ -17,7 +31,7 @@ Codex 原文初评为 `7 pass / 1 minor / 0 fail`。唯一 minor 是硬门长上
 
 v1.1 候选身份为 `2026-08-19.gi088-complete-response-first-v1-1-new-information-target`。唯一变化是生成完整回应前先选择一项完整原文尚未回答、会带来实际新进展的信息目标；继续或深挖进入新层，负担但未停止时提供低负担入口，每轮最多一处有依据且可纠正的解释与一个主问题。
 
-当前先完成 v1.3 同一 `3＋5` 八题纯文本复验；达到 `8/8` 技术有效后，按“完整相关原文 → 实际 AI 输出 → Codex 初评”交付八题，等待产品负责人逐题裁决。页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 继续使用 `event_centered + baseline`。
+当前继续补齐正式链路与离线候选的一致性，分组提交并部署隔离 Preview。真人验收直接覆盖离线待裁决项、单气泡完整回应、连续回合、后台晚到与恢复。Production 切换保持 `not_run`；Production 继续使用 `event_centered + baseline`。
 
 v2.9 候选身份为 `2026-08-19.gi088-response-first-v2-9-separated-open-gap-high`，运行族为 `2026-08-19.gi088-response-first-v2-9-two-turn-causal-quality-v1`。本轮只处理一个概念根因：把用户原文已经支持的认识与仍待共同弄清的开放目标分开，并在生成问题前完成当前分支全部用户消息的覆盖判断。
 

@@ -9,11 +9,11 @@
 
 置信度：`高`
 
-落地验证状态：`完整回应优先 v1.2.1 运行 8/8、合同有效 0/8 并因结构稳定性 No-Go；v1.3 纯文本可见负责人 0/8、实施中`
+落地验证状态：`v1.7 新案例续跑 10/10 技术有效；当前分支隔离 Preview 实施中；Production baseline`
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 
-Production 状态：`项目主链使用 event_centered + baseline；生成式访谈保持关闭`
+Production 状态：`项目主链使用 event_centered + baseline；当前分支隔离 Preview 不改变 Production`
 
 当前产品事实源：[04x-07｜GI-074 生成式访谈评测体系与下游交接](./04x-07-evaluation-preview-and-handoff.md)
 
@@ -25,6 +25,93 @@ Production 状态：`项目主链使用 event_centered + baseline；生成式访
 
 当前 Prompt、Interview Skill、模型、程序和产品负责人的职责，以及单一回答焦点与重复追问规则，只在板块 7 当前入口维护。本页保留 QR-04 判尺、运行身份、指标、质量结果和历史证据。
 
+## 完整回应优先 v1.6 隔离 Preview 验收卡｜2026-08-20
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 当前专项 | [v1.6 隔离 Preview 验收](../../plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md) |
+| 进入依据 | 新八题可见与后台全部技术有效，Codex 零 fail；两处可见 minor 进入真实页面裁决 |
+| 隔离配置 | 当前分支使用 `event_centered + complete_response_v1_6`、`deepseek-v4-pro`；Production baseline |
+| 工程状态 | 正式 Provider 与离线模型一致；来源对齐进入正式后台链路；全量 `3666` 条测试及构建门通过 |
+| 验收预算 | 最多 `15` 次可见回应；后台按实际回合独立记账 |
+| 停止点 | Preview 技术冒烟完成后交产品负责人真实体验；通过后进入 Production 发布准备 |
+
+## 完整回应优先 v1.7 后台来源标点对齐启动卡｜2026-08-20
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 父结果 | v1.6 新案例复验 `12/16`；六条可见与前五条后台有效，第六条因一处标点变化触发逐字来源门 |
+| 产品决策 | 把确定性的来源字符核对交给程序，保持语义摘要与重要性判断由模型和原文评审承担 |
+| 候选与运行身份 | 后台 `2026-08-20.gi088-complete-response-first-v1-7-background-source-alignment-v1`；运行 `2026-08-20.gi088-complete-response-first-v1-7-source-alignment-quality-v1` |
+| 唯一变化 | 仅容忍空白／标点差异；实质字符必须连续、逐字、唯一匹配，最终证据从用户原文截取 |
+| 数据与预算 | 复用六条实际可见输出，补两条可见回应并重跑八条后台；实际 `10/10`，重试／恢复／回退 0 |
+| 实际结果 | 八条可见与八条后台技术有效；可见中位 `3273.5ms`、后台中位 `6429ms`；Codex 可见 `6 pass / 2 minor / 0 fail`、后台 `8 pass / 0 minor / 0 fail` |
+| 当前状态 | `awaiting_product_review`；产品裁决、Preview 与发布待验证，Production baseline |
+
+## 完整回应优先 v1.6 新案例稳定性复验启动卡｜2026-08-20
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 产品决策 | v1.6 提问方法和后台事实整理离开参与调优的八题后能否保持稳定 |
+| 候选与运行身份 | 可见 `2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage`；后台 `event-centered-complete-response-background-facts-v1`；运行 `2026-08-20.gi088-complete-response-first-v1-6-fresh-stability-replay-v1` |
+| 数据与预算 | 八个未参与 v1.6 调优的封存真实检查点；实际消费 `12/16`，剩余 `4 not_run` |
+| 质量门 | 硬场景全 pass；可见零 fail、最多一项 minor；后台零来源编造和纠正复活；普通语义问题不提前停整批 |
+| 隐私与裁决 | 公共区只保存哈希、状态、耗时和 Token；原文与输出进入 0600 私有评审卡；产品负责人最终裁决 |
+| 实际结果 | 六条可见有效、前五条后台有效；第六条因引用标点变化触发来源门 |
+| 当前状态 | `No-Go / stop`；由 v1.7 来源对齐接续，Production baseline |
+
+## 完整回应优先 v1.6 后台状态启动卡｜2026-08-20
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 产品决策 | 第二次调用只整理用户事实与纠正，能否在不影响首条回应的情况下支持长期连续性 |
+| 候选与运行身份 | `2026-08-20.gi088-complete-response-first-v1-6-background-facts-v1`；`2026-08-20.gi088-complete-response-first-v1-6-background-facts-quality-v1` |
+| 数据与预算 | v1.6 同一 `3＋5`、实际可见输出与只读状态；实际消费 `8/8`，重试／恢复调用／回退 0 |
+| 程序责任 | 校验逐字来源、事实标识、顺序、幂等、预算、超时、隐私和写入权；后台永远不能写可见回应 |
+| 质量责任 | 事实摘要与纠正目标由 Codex 初评和产品负责人依据原文裁决 |
+| 实际结果 | `8/8 technical_valid`；中位 `4388ms`、最长 `11318ms`、最高 completion `983/1600`；Codex `7 pass / 1 minor / 0 fail` |
+| 工程接入 | 本地专项 `84/84`、全量 `3649` 条、类型、Lint、两套 Prisma 与 Production build 通过；后台恢复与顺序写入已接入隔离策略 |
+| 当前状态 | `产品待确认`；真实页面 Preview 与发布待验证，Production baseline |
+
+## 完整回应优先 v1.6 对比式覆盖启动卡｜2026-08-20
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 父结果 | v1.5 `8/8 technical_valid`、中位 `3509ms`；Codex `6 pass / 1 minor / 1 fail` |
+| 产品决策 | 用跨场景对比例子明确同层细分仍是已答内容；本轮是纯提示方法最后一次修复 |
+| 候选与运行身份 | `2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage`；`2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage-quality-v1` |
+| 数据与预算 | 同一 `3＋5`；实际消费 `8/8`，重试／恢复／回退 `0` |
+| 质量门 | 硬案例全 pass、全体零 fail、最多一个 minor；仍同层重复则转模型能力比较 |
+| 实际结果 | `8/8 technical_valid`；中位 `2915ms`、最长 `5152ms`；Codex `7 pass / 1 minor / 0 fail` |
+| 当前状态 | `待确认`；唯一 minor 等待产品负责人裁决，页面、后台状态、Preview 与发布未进入，Production baseline |
+
+
+## 完整回应优先 v1.5 语义信息层覆盖结果卡｜2026-08-20
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 父结果 | v1.4 `8/8 technical_valid`、中位 `2701.5ms`；Codex `6 pass / 1 minor / 1 fail` |
+| 产品决策 | 已回答的信息层不能靠更细、近义或二选一措辞重新成为新增目标 |
+| 候选与运行身份 | `2026-08-20.gi088-complete-response-first-v1-5-semantic-layer-coverage`；`2026-08-20.gi088-complete-response-first-v1-5-semantic-layer-coverage-quality-v1` |
+| 数据与预算 | 同一 `3＋5`；实际消费 `8/8`，重试／恢复／回退 `0` |
+| 质量门 | 硬案例全 pass、全体零 fail、最多一个 minor；首批通过后再做独立稳定性复验 |
+| 实际结果 | `8/8 technical_valid`；中位 `3509ms`、最长 `5324ms`；Codex `6 pass / 1 minor / 1 fail` |
+| 当前状态 | `No-Go`；产品裁决 pending，由 v1.6 接续，Production baseline |
+
+
+## 完整回应优先 v1.4 有依据的意图兑现启动卡｜2026-08-20
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 父结果 | v1.3 八题正文完整，中位 `3731ms`；Codex `5 pass / 1 minor / 2 fail`，产品裁决 pending |
+| 产品决策 | 生成前明确本轮意图、已知内容、一个未答目标和理解依据，能否消除共同语义失败 |
+| 候选与运行身份 | `2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner`；`2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner-quality-v1` |
+| 程序职责 | 明确停止硬保护；普通问号数量只观察，连续问句不再触发语义拦截 |
+| 数据与预算 | 同一 `3＋5`；新预算 `0/8`，重试／恢复／回退 `0` |
+| 质量门 | 硬案例全 pass、总计零 fail、最多一个 minor；逐例交付完整原文和实际输出 |
+| 当前状态 | `已确认·实施中`；结果、页面、后台状态、Preview 与发布待验证，Production baseline |
+
+
 ## 完整回应优先 v1.3 纯文本可见负责人启动卡｜2026-08-20
 
 | 项目 | 本专项当前答案 |
@@ -33,10 +120,13 @@ Production 状态：`项目主链使用 event_centered + baseline；生成式访
 | 产品决策 | 首个调用只输出纯文本完整回应，能否恢复稳定可见结果并保留未答新信息目标的方法质量 |
 | 候选与运行身份 | `2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner`；`2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner-quality-v1` |
 | 唯一主要变化 | 删除首个可见调用的 JSON 和状态结构；程序只校验纯文本确定边界，后台状态后续独立接入 |
-| 数据与预算 | 同一 `3` 条开发题＋`5` 条冻结回归题；新预算 `0/8`，重试／恢复／回退 `0` |
+| 数据与预算 | 同一 `3` 条开发题＋`5` 条冻结回归题；实际消费 `8/8`，重试／恢复／回退 `0` |
 | 技术门 | `8/8` HTTP 200／stop、非空纯文本、Thinking 关闭、单例不高于 `15s`、无 length |
 | 质量门 | 完整跑完并逐例交付原文；硬案例全 pass，总计零 fail、最多一个 minor |
-| 当前状态 | `已确认·实施中`；结果、页面、Preview 与发布待验证，Production baseline |
+| 实际结果 | 八题均 HTTP 200／stop、正文完整、低于 15 秒且未截断；中位 `3731ms`、最长 `4956ms`、最高 completion `93/1280` |
+| 程序合同 | `6/8 valid`；两条因两个问号被拦截。问号数量只作观察，原始正文继续进入内容评审 |
+| 内容初评 | Codex `5 pass / 1 minor / 2 fail`；产品负责人裁决待确认 |
+| 当前状态 | `待确认`；页面、后台状态、Preview 与发布保持 `not_run`，Production baseline |
 
 ## 完整回应优先 v1.2.1 JSON 模式单因素结果卡｜2026-08-20
 

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-7-source-alignment-quality-v1",
+  "planFingerprint": "3f023eb4c6f68973f03d138a572811b13c756941d8877cfc85182a23deb4d4fb",
+  "status": "technical_valid_visible_six_pass_two_minor_background_eight_pass_awaiting_product_review",
+  "budget": {
+    "authorized": 10,
+    "consumed": 10,
+    "completed": 10,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "visible": {
+    "cases": 8,
+    "parentReused": 6,
+    "newlyGenerated": 2,
+    "technicalValid": 8,
+    "medianLatencyMs": 3273.5,
+    "maxLatencyMs": 4916,
+    "codex": {
+      "pass": 6,
+      "minor": 2,
+      "fail": 0,
+      "minorCases": [
+        "RPR-REAL-15",
+        "RPR-REAL-20"
+      ]
+    }
+  },
+  "background": {
+    "cases": 8,
+    "technicalValid": 8,
+    "sourceContractValid": 8,
+    "correctionCases": 2,
+    "medianLatencyMs": 6429,
+    "maxLatencyMs": 13363,
+    "maxCompletionTokens": 1102,
+    "maxTokens": 1600,
+    "tokenCeilingTriggered": 0,
+    "actualAlignedQuoteCount": 0,
+    "historicalFailedRawReplayAligned": true,
+    "codex": {
+      "pass": 8,
+      "minor": 0,
+      "fail": 0
+    }
+  },
+  "evidence": {
+    "startCardSha256": "095f58904f4f15044ea0f18bb996e0487942d21c2bf986e9567a5d8cca8eb824",
+    "receiptSha256": "8b81328e3e32fbb35cd45350141dfa63cc2d33c29bb8ebe9a9be62761e21362d",
+    "privateReviewSha256": "a7dc4154e15ce59a381b3d73b8ba657d9fc0c1a46cb47fa48b1a3bee1386f7f8",
+    "privateLedgerSha256": "c737dbd9e61755949c39d98682adf4edba62e53ba6fdd251d090b84a3ee94ec6",
+    "codexReviewSha256": "acac72759445f3f5729e6c27d558ee98cb3744c888d328bf94d733bd084e1649"
+  },
+  "quality": {
+    "productOwnerDecision": "pending",
+    "gatePassed": false
+  },
+  "next": {
+    "productReviewRequired": true,
+    "passPath": "isolated_preview_real_page_continuity_and_recovery",
+    "minorOrFailPath": "visible_response_single_factor_only_if_product_requires_change"
+  },
+  "release": {
+    "pagePreview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deploy": "not_run",
+    "production": "event_centered_baseline"
+  }
+}

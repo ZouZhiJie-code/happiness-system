@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner-quality-v1",
+  "planFingerprint": "b4f6e84842ce7dc204334a838a91be6054b62a5c06f4ae0cc387b70c3f61c288",
+  "status": "awaiting_product_review",
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technical": {
+    "http200": 8,
+    "finishStop": 8,
+    "thinkingDisabled": 8,
+    "nonEmptyProviderBody": 8,
+    "under15Seconds": 8,
+    "tokenCeilingTriggered": 0,
+    "medianLatencyMs": 3731,
+    "maxLatencyMs": 4956,
+    "maxCompletionTokens": 93
+  },
+  "contract": {
+    "valid": 6,
+    "failed": 2,
+    "multipleQuestionMarkGate": 2,
+    "finding": "两条失败正文均完整返回；问号数量硬拦截与既有产品原则冲突，内容质量已按原始正文单独评审。"
+  },
+  "quality": {
+    "codex": {
+      "pass": 5,
+      "minor": 1,
+      "fail": 2,
+      "reviewSha256": "158b8435145f492f6b6ba025824b7451f1b72a3d95fefb805333c4b167bbaf54"
+    },
+    "productOwnerDecision": "pending",
+    "gatePassed": false
+  },
+  "release": {
+    "pageIntegration": "not_run",
+    "backgroundStateCall": "not_run",
+    "preview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deploy": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "stopPoint": "await_product_owner_case_by_case_review"
+}

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v90",
-  "status": "complete_response_first_v1_3_visible_text_owner_in_progress",
-  "currentQueueStage": "complete_response_first_v1_3_visible_quality",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v102",
+  "status": "complete_response_first_v1_6_isolated_preview_implementing",
+  "currentQueueStage": "complete_response_first_v1_6_isolated_preview_predeployment",
   "semanticQualityDecisionPresentation": {
     "status": "product_owner_confirmed",
     "productJudgment": "每个语义质量判断先逐例展示与判断直接相关的用户输入和 AI 实际输出；Codex 只作初评，产品负责人基于原文作最终裁决。",
@@ -183,19 +183,19 @@
     "stopPoint": "v1_2_1_no_go_superseded_by_v1_3_visible_text_owner"
   },
   "completeResponseFirstV13": {
-    "status": "confirmed_in_progress_results_pending",
-    "confirmedFact": "v1.1 纯文本方法曾实现 8/8 完整返回并获 Codex 7 pass / 1 minor / 0 fail；v1.2 与 v1.2.1 共 16 次结构化首调暴露持续结构不稳定。",
-    "productJudgment": "继续优化到页面可验收和验收后可发布水平；首个可见调用只负责纯文本完整回应，每个语义判断继续展示原文与实际输出。",
-    "codexAssessment": "用户体验的关键路径只保留一条纯文本完整回应；程序只判断停止、问号、隐私、预算和写入，后台状态调用随后独立接入。",
+    "status": "provider_complete_contract_six_of_eight_codex_quality_no_go_product_pending",
+    "confirmedFact": "v1.3 已完成同一八题 8/8。八次均 HTTP 200、finishReason=stop、正文完整、低于 15 秒且未触发 Token 上限；中位 3731ms、最长 4956ms、最高 completion 93/1280。当前程序合同 6/8 valid，两条完整正文因两个问号被拦截。",
+    "productJudgment": "继续优化到页面可验收和验收后可发布水平；每个语义判断展示完整相关原文与实际输出。问号数量只作观察，语义焦点由模型方法、Codex 初评和产品负责人裁决。",
+    "codexAssessment": "原文初评 5 pass / 1 minor / 2 fail。REAL-05 为部分同义回问；REAL-22 替奶奶补充未经确认的原因并要求用户继续解释；REAL-19 新增用户未说过的动机和目标，又询问已回答的愤慨。程序以两个问号拦截非停止场景违反既有职责边界。",
     "openHypotheses": [
-      "同一方法改为生产纯文本后能否达到 8/8 技术有效和离线质量门。",
-      "单气泡纯文本能否在约 5 秒内同时完成承接与推进。"
+      "产品负责人是否同意 Codex 的八题初评。",
+      "下一轮共同语义方法能否同时修复无依据原因、动机推断和重复已答信息，而不围绕单案例过拟合。"
     ],
     "execution": {
       "candidate": "2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner",
       "strategy": "complete_response_v1_3",
       "callsAuthorized": 8,
-      "callsConsumed": 0,
+      "callsConsumed": 8,
       "concurrency": 1,
       "retries": 0,
       "recoveryCalls": 0,
@@ -206,9 +206,250 @@
     "evidence": {
       "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md",
       "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-receipt.json",
-      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-handoff.md"
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-handoff.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-3-visible-text-owner-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-3-visible-text-owner-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-3-visible-text-owner-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-3-visible-text-owner-stage-ledger-v1.json",
+      "privateReview": "git_ignored_mode_0600"
     },
-    "stopPoint": "eight_case_visible_quality_gate_before_page_integration"
+    "stopPoint": "wait_for_product_owner_eight_case_review_before_next_candidate_or_page_integration"
+  },
+  "completeResponseFirstV14": {
+    "status": "technical_valid_codex_six_pass_one_minor_one_fail_product_pending",
+    "confirmedFact": "v1.4 已完成同一八题 8/8。八次均 HTTP 200、finishReason=stop、正文完整、合同有效、低于 15 秒且未触发 Token 上限；中位 2701.5ms、最长 3350ms、最高 completion 77/1280。",
+    "productJudgment": "产品负责人裁决 pending；当前比较案例继续只作为八题中的最后一条回归。问号数量只作观察，明确停止继续由程序保护。",
+    "codexAssessment": "初评 6 pass / 1 minor / 1 fail。REAL-05 在用户已明确开心和新的一天后再次询问同层感受；REAL-19 重新复述纠正、增加“想表现得接纳、不想显得计较”的动机，并再次询问已经回答的愤慨层。",
+    "openHypotheses": [
+      "意图与依据先行能否在完整八题中消除第三方原因、用户动机和已答信息重复。",
+      "收紧依据后能否继续保持自然度、关系表达和约 5 秒完整回复。"
+    ],
+    "execution": {
+      "candidate": "2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner",
+      "strategy": "complete_response_v1_4",
+      "callsAuthorized": 8,
+      "callsConsumed": 8,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-4-grounded-intent-owner.md",
+      "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-3-visible-text-owner-quality-v1-receipt.json",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-3-visible-text-owner-quality-v1-handoff.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-4-grounded-intent-owner-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-4-grounded-intent-owner-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-4-grounded-intent-owner-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-4-grounded-intent-owner-stage-ledger-v1.json",
+      "privateReview": "git_ignored_mode_0600"
+    },
+    "stopPoint": "v1_4_quality_no_go_superseded_by_v1_5_semantic_layer_coverage"
+  },
+  "completeResponseFirstV15": {
+    "status": "technical_valid_codex_six_pass_one_minor_one_fail_product_pending",
+    "confirmedFact": "v1.5 已完成同一八题 8/8。八次均 HTTP 200、finishReason=stop、正文完整、合同有效、低于 15 秒且未触发 Token 上限；中位 3509ms、最长 5324ms、最高 completion 109/1280。",
+    "productJudgment": "继续优化到页面可验收和验收后可发布水平；语义质量继续按完整相关原文、实际 AI 输出、Codex 初评和产品负责人裁决展示。",
+    "codexAssessment": "初评 6 pass / 1 minor / 1 fail。REAL-05 在用户已表达幸福和新一天后继续追问感觉；硬门 REAL-21 在上一问已询问感受、用户明确回答落差感及自我判断后，再次询问最强烈感受。",
+    "openHypotheses": [
+      "语义层覆盖能否同时消除普通幸福表达与纠正后继续中的同层回问。",
+      "收紧覆盖判断后能否保持自然承接、关系表达和约 5 秒完整回复。"
+    ],
+    "execution": {
+      "candidate": "2026-08-20.gi088-complete-response-first-v1-5-semantic-layer-coverage",
+      "strategy": "complete_response_v1_5",
+      "callsAuthorized": 8,
+      "callsConsumed": 8,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-5-semantic-layer-coverage.md",
+      "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-4-grounded-intent-owner-quality-v1-receipt.json",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-4-grounded-intent-owner-quality-v1-handoff.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-5-semantic-layer-coverage-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-5-semantic-layer-coverage-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-5-semantic-layer-coverage-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-5-semantic-layer-coverage-stage-ledger-v1.json",
+      "privateReview": "git_ignored_mode_0600"
+    },
+    "stopPoint": "v1_5_quality_no_go_superseded_by_v1_6_contrastive_coverage"
+  },
+  "completeResponseFirstV16": {
+    "status": "technical_valid_codex_seven_pass_one_minor_product_pending",
+    "confirmedFact": "v1.6 已完成同一八题 8/8。八次均 HTTP 200、finishReason=stop、正文完整、合同有效、低于 15 秒且未触发 Token 上限；中位 2915ms、最长 5152ms、最高 completion 91/1280。",
+    "productJudgment": "继续优化到页面可验收和验收后可发布水平；本轮是纯提示方法最后一次修复，仍同层重复时转入模型能力比较。",
+    "codexAssessment": "初评 7 pass / 1 minor / 0 fail。v1.5 两处同层回问均已修复；唯一 minor 是硬门 REAL-13 新增一处未经用户明确确认的感受，其余关系对比与问题焦点有原文支持。",
+    "openHypotheses": [
+      "对比例子能否比抽象层表更稳定地约束同层重复。",
+      "增加少量示例后能否保持约 5 秒完整回复和原有六题质量。"
+    ],
+    "execution": {
+      "candidate": "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage",
+      "strategy": "complete_response_v1_6",
+      "callsAuthorized": 8,
+      "callsConsumed": 8,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-6-contrastive-coverage.md",
+      "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-5-semantic-layer-coverage-quality-v1-receipt.json",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-5-semantic-layer-coverage-quality-v1-handoff.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-contrastive-coverage-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-contrastive-coverage-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-contrastive-coverage-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-contrastive-coverage-stage-ledger-v1.json",
+      "privateReview": "git_ignored_mode_0600"
+    },
+    "stopPoint": "product_owner_eight_case_review_before_stability_replay_or_model_factor"
+  },
+  "completeResponseFirstV16BackgroundState": {
+    "status": "offline_quality_complete_and_persistent_integration_locally_verified_product_pending",
+    "confirmedFact": "后台事实与纠正整理已完成同一 3＋5 八题。8/8 technical_valid，来源与引用合同全部有效；中位 4388ms、最长 11318ms、最高 completion 983/1600，未截断。持久后台任务已完成本地接入，专项 84/84、全量 3649 条、类型、Lint、两套 Prisma 与 Production build 通过；本阶段模型调用 0。",
+    "productJudgment": "继续推进到可页面验收和验收后可发布水平；可见质量裁决与后台状态质量分账，后台不得追加或改写用户已经看到的回应。",
+    "codexAssessment": "原文初评 7 pass / 1 minor / 0 fail。唯一 minor 为 RPR-REAL-21：八条已保存事实均有原文依据，但遗漏 U1 的跨关系主线‘为什么别人后来不主动找我’。RPR-REAL-19 正确用 U3 撤回 U2 的表面接纳并标记 A2 被替代。",
+    "openHypotheses": [
+      "产品负责人是否接受 RPR-REAL-21 的跨关系主线遗漏为 minor。",
+      "真实页面中用户快速继续时，持久任务和顺序应用能否维持自然等待体验。",
+      "真实 Preview 中后台失败保留原话和可见回应后，下一轮能否继续保持自然体验。"
+    ],
+    "execution": {
+      "candidate": "2026-08-20.gi088-complete-response-first-v1-6-background-facts-v1",
+      "runIdentity": "2026-08-20.gi088-complete-response-first-v1-6-background-facts-quality-v1",
+      "callsAuthorized": 8,
+      "callsConsumed": 8,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "integration": "locally_verified",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "fixedFactors": {
+      "visibleCandidate": "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage",
+      "model": "deepseek-v4-pro",
+      "thinking": "disabled",
+      "reasoningEffort": "omitted",
+      "temperature": 0.2,
+      "maxTokens": 1600,
+      "timeoutMs": 20000,
+      "maxCallsPerClientTurnId": 2
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-6-background-state-readiness.md",
+      "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-contrastive-coverage-quality-v1-receipt.json",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-background-facts-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-background-facts-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-background-facts-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-background-facts-stage-ledger-v1.json",
+      "integrationHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-background-integration-v1-handoff.md",
+      "integrationStageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-background-integration-stage-ledger-v1.json",
+      "privateReview": "git_ignored_mode_0600"
+    },
+    "stopPoint": "product_owner_original_text_review_before_isolated_preview"
+  },
+  "completeResponseFirstV16FreshStability": {
+    "status": "stopped_source_contract_failure",
+    "confirmedFact": "新案例稳定性复验消费 12/16 后按来源硬门停止。六条可见回应全部技术有效，前五条后台事实有效；RPR-REAL-20 后台事实把用户原文中的一个逗号改成句号，触发 FACT_QUOTE_NOT_IN_SOURCE_USER_MESSAGE；剩余 4 not_run。",
+    "productJudgment": "停止围绕单一案例继续调优，用跨关系、事件切换、继续、纠正和停止等不同场景判断方法是否具有通用性；所有语义裁决继续展示完整相关原文与实际输出。",
+    "codexAssessment": "已确认失败属于来源复制的标点脆弱性，未观察到实质字符变化或来源编造；六条可见语义与五条有效后台结果仍需随完整八题统一评审。",
+    "openHypotheses": [
+      "v1.6 能否在未参与调优的八个场景中保持零 fail、最多一项 minor。",
+      "后台事实整理能否继续保持来源忠实、纠正有效且不遗漏影响连续性的主要用户事实。"
+    ],
+    "execution": {
+      "runIdentity": "2026-08-20.gi088-complete-response-first-v1-6-fresh-stability-replay-v1",
+      "dataset": "2026-08-20.gi088-complete-response-first-v1-6-fresh-regression-eight-v1",
+      "callsAuthorized": 16,
+      "callsConsumed": 12,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-6-fresh-stability-replay.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-fresh-stability-replay-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-fresh-stability-replay-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-fresh-stability-replay-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-fresh-stability-stage-ledger-v1.json",
+      "privateReview": "git_ignored_mode_0600"
+    },
+    "stopPoint": "continued_by_v1_7_source_alignment"
+  },
+  "completeResponseFirstV17SourceAlignment": {
+    "status": "technical_valid_visible_six_pass_two_minor_background_eight_pass_awaiting_product_review",
+    "confirmedFact": "v1.7 已完成新增调用 10/10：复用六条可见输出、补两条可见输出并重跑八条后台。八条可见和八条后台均技术有效；可见中位 3273.5ms、最长 4916ms，后台中位 6429ms、最长 13363ms、最高 completion 1102/1600，零截断。上一失败原始结果的确定性来源对齐重放通过；本次新后台输出均直接逐字引用，实际对齐 0 次。",
+    "productJudgment": "程序承担确定性的来源字符核对；模型继续承担事实语义、摘要和纠正判断。产品负责人按完整相关原文、实际可见回应和实际后台输出作最终裁决。",
+    "codexAssessment": "新八题可见初评 6 pass / 2 minor / 0 fail：REAL-15 增加‘它消失、那几次去找’的具体情节，REAL-20 增加‘记一笔、以后一起算’的行为选项；后台初评 8 pass / 0 minor / 0 fail。",
+    "openHypotheses": [
+      "产品负责人是否接受 REAL-15 与 REAL-20 的两处可见回应轻微问题。",
+      "原八题待裁决项与新八题产品裁决完成后，完整回应和后台事实是否达到隔离 Preview 准入。"
+    ],
+    "execution": {
+      "candidate": "2026-08-20.gi088-complete-response-first-v1-7-background-source-alignment-v1",
+      "runIdentity": "2026-08-20.gi088-complete-response-first-v1-7-source-alignment-quality-v1",
+      "callsAuthorized": 10,
+      "callsConsumed": 10,
+      "visibleParentReused": 6,
+      "visibleNewCalls": 2,
+      "backgroundCalls": 8,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-7-background-source-alignment.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-stage-ledger-v1.json",
+      "privateReview": "git_ignored_mode_0600"
+    },
+    "stopPoint": "product_owner_original_text_review_before_isolated_preview"
+  },
+  "completeResponseFirstV16IsolatedPreview": {
+    "status": "confirmed_implementing_results_pending",
+    "confirmedFact": "离线 v1.6 可见候选与后台事实候选均使用 deepseek-v4-pro；正式后台 Provider 已固定 Pro，但正式可见事件 Provider 的历史合同仍只接受 Flash。v1.7 来源标点对齐已离线验证，正式后台服务仍调用旧解析与校验入口。两处属于部署一致性缺口，真实 Preview 前必须补齐。",
+    "productJudgment": "新八题零 fail，两处 minor 进入真实页面裁决；继续部署隔离 Preview，Production 保持 baseline。",
+    "codexAssessment": "正式链路必须与已评测候选使用同一模型和来源方法。只为 complete_response_v1_6 选择 Pro，历史 Flash 候选保持原身份；后台服务在解析后先执行确定性来源对齐，再沿原合同校验和写入。",
+    "openHypotheses": [
+      "真实页面中首条完整回应能否继续保持约五秒并兑现明确继续、纠正和停止。",
+      "后台任务晚到、刷新和重复提交能否保持单气泡冻结、零重复模型调用和顺序写入。",
+      "REAL-15 与 REAL-20 的离线 minor 在真人连续体验中是否影响可用性。"
+    ],
+    "execution": {
+      "strategy": "complete_response_v1_6",
+      "previewMode": "event_centered",
+      "visibleModel": "deepseek-v4-pro",
+      "backgroundModel": "deepseek-v4-pro",
+      "visibleAcceptanceBudget": 15,
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md",
+      "offlineHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-v1-handoff.md",
+      "offlineStageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-stage-ledger-v1.json"
+    },
+    "stopPoint": "deploy_isolated_preview_then_product_owner_real_page_acceptance"
   },
   "responseFirstV29": {
     "status": "correction_gate_product_pass_continuation_product_fail_no_go",

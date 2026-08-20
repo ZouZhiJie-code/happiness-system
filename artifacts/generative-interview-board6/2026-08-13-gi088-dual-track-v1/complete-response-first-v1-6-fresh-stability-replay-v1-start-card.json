@@ -1,0 +1,201 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-6-fresh-stability-replay-v1",
+  "status": "ready",
+  "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+  "dataset": {
+    "version": "2026-08-20.gi088-complete-response-first-v1-6-fresh-regression-eight-v1",
+    "fingerprint": "5caed03a0923f3ba3e550af7f08df9c2fb5e8b7fdedca326dcb99ffcaff3949b",
+    "sourceVersion": "2026-08-16.gi088-real-problem-regression-v1.2",
+    "sourceFingerprint": "cf04a7584d74bb7cabb235fc0cc001ac6953fb01a90364d5690284c927c85eb1",
+    "privacyLevel": "private_sensitive",
+    "count": 8,
+    "candidateExposure": "fresh_to_v1_6_tuning"
+  },
+  "candidates": {
+    "visible": {
+      "version": "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage",
+      "parentProductionIdentity": "2026-08-20.gi088-complete-response-first-v1-5-semantic-layer-coverage-quality-v1",
+      "productionStrategyVersion": "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage",
+      "runtime": {
+        "model": "deepseek-v4-pro",
+        "maxTokens": 1280,
+        "maxAttempts": 1,
+        "timeoutMs": 45000,
+        "thinking": "disabled",
+        "temperature": 0.2,
+        "responseFormat": null,
+        "reasoningEffort": null,
+        "callsPerCase": 1,
+        "recentTurnLimit": 8
+      },
+      "inputAdapter": "full_checkpoint_to_plain_visible_response_last_8_complete_turns_v1",
+      "visibleProjection": "provider_text_byte_preserving_single_bubble_v1",
+      "changedFactor": "contrastive_examples_for_same_layer_exclusion",
+      "candidateFingerprint": "a82a90df00b102fea45e72a7794db6a61b0f9e8a7cec18618986c6714c061332"
+    },
+    "background": {
+      "candidate": "2026-08-20.gi088-complete-response-first-v1-6-background-facts-v1",
+      "runtime": {
+        "model": "deepseek-v4-pro",
+        "temperature": 0.2,
+        "maxTokens": 1600,
+        "timeoutMs": 20000,
+        "thinking": "disabled",
+        "reasoningEffort": null,
+        "responseFormat": "json_object",
+        "maxAttempts": 1,
+        "callsPerVisibleTurn": 1,
+        "retries": 0,
+        "recoveryCalls": 0,
+        "fallback": 0
+      },
+      "candidateFingerprint": "2ea974c831b417b037bde74f7d34220756b08189b4851feefe91df05710a596c"
+    }
+  },
+  "cases": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-03",
+      "hardGate": true,
+      "sourceFingerprint": "e15a6b8e9c81b04d7a5da84abd869227e2045dd21b82bc073846a41055168be7",
+      "visibleGenerationInputFingerprint": "728b798ad8586aedb1d8b43d81c1f6187f2a38d314c59b40842a45b4791d380b",
+      "visibleRequestFingerprint": "8c2afb74d2884549969c7efa21bb7da2fc328e503c08c5f5ed9688cb8969dddc",
+      "backgroundAuthorizationFingerprint": "c15be37c22da5d74f467d786414869a421db9493a0600ac70b5666f67165ecaa"
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-REAL-07",
+      "hardGate": false,
+      "sourceFingerprint": "b0e7f9fd9fa3447be371141a3b100ba38d6f81dea33314bb4a025e2049331205",
+      "visibleGenerationInputFingerprint": "1e8e68000cc4a633f0930b8f059f7120c9768b00e0f00cced37bf21b13606aa0",
+      "visibleRequestFingerprint": "9202082ee9c350a88d51b9ac393ac51cb281b9e57c8d07576116eb29307c4c40",
+      "backgroundAuthorizationFingerprint": "fd4cf9dedb2750ea667b2f8fac0f54db4b1f3c4d357dfbf0805616f4532b8bca"
+    },
+    {
+      "order": 3,
+      "caseId": "RPR-REAL-09",
+      "hardGate": true,
+      "sourceFingerprint": "8e3243ba40b7466e35a8a4ea3f80b721b354d7e682c9f5de595b4d8c432eec22",
+      "visibleGenerationInputFingerprint": "3747ff62d5a648b3cfea048ef804bd3f0a59995ffdfb57ae37fc568fdbeef221",
+      "visibleRequestFingerprint": "90518e98a5203764297e8dfa4e2afbfd612f465564fc14c9d704d322a20bb158",
+      "backgroundAuthorizationFingerprint": "962cd38b572442fc95bfe782596068a1d6363145f59f7d14fda4a9052df0da4b"
+    },
+    {
+      "order": 4,
+      "caseId": "RPR-REAL-15",
+      "hardGate": false,
+      "sourceFingerprint": "f4f32136da167197aae63c6eb1d8581b1e988d05920423dba02866b2253788c4",
+      "visibleGenerationInputFingerprint": "f39b48331776e12421ecdd52e47e8b5b9d155e7328c2a69e6d3291399f487b7e",
+      "visibleRequestFingerprint": "fac0fd28f2dfbe695f3dc68fed891c60dd10c2bf2f4d7890c6dc73863d22eb4c",
+      "backgroundAuthorizationFingerprint": "3369228c0bdbfb472b385504f2d07c5793ee90450594e4f0e77f400af9f0b8b0"
+    },
+    {
+      "order": 5,
+      "caseId": "RPR-REAL-17",
+      "hardGate": true,
+      "sourceFingerprint": "db9b594e4684ccbeeb9d947dd00db85e506221a48d5a9e185f3ae72d786ff769",
+      "visibleGenerationInputFingerprint": "1249864f195baa34e2e1ec7413c2bf48529b72a740bbb08fe5562b12a64034c0",
+      "visibleRequestFingerprint": "8b0f11bd36f9775ed7c6339d2ac44dba1d1b33878c1adaf40215d5700735f4d7",
+      "backgroundAuthorizationFingerprint": "a91826b76e3c0b8ebe360bb6f4a5969f1ab4b6463e58406152b91aba39889b99"
+    },
+    {
+      "order": 6,
+      "caseId": "RPR-REAL-20",
+      "hardGate": true,
+      "sourceFingerprint": "c2bc20657018521db908af41e51610fbe0351bed3a1e28be9125b806286f6e63",
+      "visibleGenerationInputFingerprint": "ce83ef649b9d88db0bf6020809c4f69537d4bf6add234c3e5ceae15ff6144dbd",
+      "visibleRequestFingerprint": "1984bfc70a4e1e7662526c9612a4c1e6e207a91fc7d6f59bf5eca2a0cf1749f5",
+      "backgroundAuthorizationFingerprint": "26339d5a6b4bec340c11171aa8cecd291558d4d2c6bb6812faa8b4d6009850dd"
+    },
+    {
+      "order": 7,
+      "caseId": "RPR-CF-02",
+      "hardGate": true,
+      "sourceFingerprint": "fded342a8385302a8a8b4dd0cffb29f9604ffd6070033310546c07aefa42d9cd",
+      "visibleGenerationInputFingerprint": "d8730265326750b4f71e7bff5eea1825a52060294ffb96ce1d9fe1245d401b0b",
+      "visibleRequestFingerprint": "511646144da561223605c841971152a8f542e32a9894acd7f7d804d4b1ac56d5",
+      "backgroundAuthorizationFingerprint": "3ef051c43ef9201f2054a92dd562e59261dad3741434a288cc163c9161d4f713"
+    },
+    {
+      "order": 8,
+      "caseId": "RPR-CF-05",
+      "hardGate": true,
+      "sourceFingerprint": "edd2c503a195da6484b294e1f38e8520014cb8a5cd2a19daeba7ab1e036116a0",
+      "visibleGenerationInputFingerprint": "d8cb15eabbd740443cff124b7cb3f460c1aa321ee478c531fd12e3f02ad2ed05",
+      "visibleRequestFingerprint": "dd99eeea6d614fea7bac68061f768b356be423ef65b2eef6d71a36ae9e3171e8",
+      "backgroundAuthorizationFingerprint": "f64ae10c8ab41b628b1f177f3e87f8ddadcb0a05cdccc973b5a49fbc160d54be"
+    }
+  ],
+  "runtime": {
+    "visible": {
+      "model": "deepseek-v4-pro",
+      "maxTokens": 1280,
+      "maxAttempts": 1,
+      "timeoutMs": 45000,
+      "thinking": "disabled",
+      "temperature": 0.2,
+      "responseFormat": null,
+      "reasoningEffort": null,
+      "callsPerCase": 1,
+      "recentTurnLimit": 8
+    },
+    "background": {
+      "model": "deepseek-v4-pro",
+      "temperature": 0.2,
+      "maxTokens": 1600,
+      "timeoutMs": 20000,
+      "thinking": "disabled",
+      "reasoningEffort": null,
+      "responseFormat": "json_object",
+      "maxAttempts": 1,
+      "callsPerVisibleTurn": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0
+    },
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "budget": {
+    "authorized": 16,
+    "visible": 8,
+    "background": 8
+  },
+  "stopRules": {
+    "ordinarySemanticIssueStopsBatch": false,
+    "singleSevereProgramGateStopsBatch": true,
+    "consecutiveTechnicalFailures": 2,
+    "unresolvedReservationRecovery": 0
+  },
+  "productGate": {
+    "visibleFailMax": 0,
+    "visibleMinorMax": 1,
+    "controlCorrectionEventBoundaryAllPass": true,
+    "backgroundSourceFabricationMax": 0,
+    "productOwnerFinalAuthority": true
+  },
+  "inputHashes": {
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "executionPlanSha256": "340d9c20fa04c3291e4f59aca3d9c6b202f719ad3dae6d7ba3926f890b91c463",
+    "fixturesSha256": "5d71085b0b69bbd906ac6ebed92c8ad4ae6979048400f55441e3fc67efcdd9dc",
+    "visibleCandidateSha256": "c573067c518eb2cb6fb657ee10da4a48555db50147dafea998384dd533f365dc",
+    "visibleRuntimeSha256": "ed1ab2687832dd1ed1a418700dd4d3af237f1470628700c2a088a5c34cfd3f59",
+    "backgroundCandidateSha256": "92c5caed27cbfdf09db661b5aa11c98339e7bd522b67a8f7b034cfa2425bd3c5",
+    "backgroundContractSha256": "5a014e02bfa0560b0c9dc4ccdbb2cc0fbcee49c0110eaa3b98a7ea5e17b4c9bf",
+    "providerSha256": "932baf57ada773942695c9ec6cef5f7ae53eb93a8a296672f8cf566f465a3dc0",
+    "providerContractSha256": "8ee44101394828e1e34438fff50ee96cb9b4493f60d97b6e8a2310756843a523",
+    "sourcePrivateSha256": "391e735110d274ded276827895a4027927dcbd16aef327042753b075a0fa8190",
+    "sourceReceiptSha256": "b650328e02886730c93f0093fcd357e3b964f1007698ff62022439a8e51f8a6f",
+    "parentVisibleReceiptSha256": "83b04df1ddc8f0e5095e545b9a254d7bdb4736ed93f4af11a7007954e1d15534",
+    "parentBackgroundReceiptSha256": "fdfe59804b619e3544c83b7acd38d40f1e2a3e36e9803842bc2b02eb117f9a9c",
+    "runnerSha256": "d88062bb17c3c8bbeb30f83b3fe28808a763dd2077710304af0a296cd94d48e8"
+  },
+  "releaseBoundary": {
+    "preview": "not_run",
+    "production": "event_centered_plus_baseline_unchanged"
+  },
+  "planFingerprint": "ce877c79aa05f3fd47f62719c19309667f4a0b0c3f863b1153b098aa778253ba"
+}

@@ -11,10 +11,13 @@ Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、�
 
 - 正式域名：`https://dailylight.chat`。
 - 当前 Production 主链：`event_centered + baseline`；`legacy + baseline` 保留为应急回退与历史运行身份。
-- GI-088 生成式访谈、独立准入、真人 Preview 和生成式能力发布继续关闭。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
+- GI-088 隔离 Preview 已进入实施；独立准入与 Production 生成式能力发布继续关闭。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
 - `2026-08-13` 阶段 C2 已修复 Judge 运行器并完成全新校准：Plus 普通与思考均 `20/20` 且 No-Go；Max 思考 `15/20` 后因连接与 DNS 故障形成 `technical_blocked`。累计 `64` 次、4 次补跑、0.584052 元，历史身份保持不变。
 - `2026-08-19` GI-088 回应优先 v2.9 纠正首题产品 `pass` 后，真实 CONTINUE 已完成 Low＋High `2/2`：Low `3967ms`、Codex 初评 `minor`；High `1885ms`、HTTP 200／stop／完整 JSON，但缺少覆盖判断与开放目标，状态合同失败；纯时间 `5852ms` 通过，整体技术门因合同失败为 `false`。Codex 与产品负责人均裁决完整回合 `fail`，本轮 `No-Go / stop`；后续 `4 not_run`，页面、Preview 和发布均为 `not_run`；Production 保持 `event_centered + baseline`。
-- `2026-08-20` GI-088 完整回应优先 v1.2.1 已完成 `8/8`：八次均 HTTP 200／stop、正文非空、低于 15 秒且未触发 Token 上限，中位 `5402ms`、最长 `11488ms`；关闭 Provider JSON 模式后合同有效仍为 `0/8`，模型持续漏掉顶层字段、混写自然语言或放错字段层级，形成技术 No-Go。当前进入 v1.3 纯文本可见负责人，新预算 `0/8`；首个调用只生成用户看到的完整回应，后台状态退出首屏关键路径。页面、Preview 和发布仍未运行；Production 继续保持 `event_centered + baseline`。
+- `2026-08-20` GI-088 完整回应优先 v1.6 已完成 `8/8 technical_valid`：中位 `2915ms`、最长 `5152ms`、最高 completion `91/1280`；Codex 原文初评为 `7 pass / 1 minor / 0 fail`。v1.5 两处同层回问已修复，唯一待裁决项是关系题新增一处未经用户明确确认的感受；产品负责人裁决 pending。
+- `2026-08-20` 后台事实与纠正整理已完成 `8/8 technical_valid`：中位 `4388ms`、最长 `11318ms`、最高 completion `983/1600`；来源合同全部有效。Codex 原文初评 `7 pass / 1 minor / 0 fail`，唯一 minor 是长上下文漏存一条跨关系主线；产品负责人裁决 pending。
+- `2026-08-20` v1.6 持久后台任务已完成本地工程接入：可见回应与任务原子提交、调用前记账、结果先保存后顺序写入、恢复零重复调用、迟到失权和失败后续行均有自动验证；最新全量 `3666` 条通过，类型、Lint、两套 Prisma 与 Production build 通过。正式链路已与离线 Pro 模型和 v1.7 来源对齐规则保持一致，当前进入隔离 Preview。
+- `2026-08-20` v1.7 新案例稳定性续跑已完成新增调用 `10/10`：八条可见回应和八条后台事实均技术有效，未截断；可见中位 `3273.5ms`、最长 `4916ms`，后台中位 `6429ms`、最长 `13363ms`。Codex 初评可见 `6 pass / 2 minor / 0 fail`、后台 `8 pass / 0 minor / 0 fail`，产品负责人将在真实页面裁决两处 minor；当前分支隔离 Preview 实施中，Production 保持 `event_centered + baseline`。
 - 网页端产品主线：`访谈记录 → 当天时间线事件卡片 → 今日日记`。访谈页负责表达、回应、保存和返回当天；日记页负责生成、查看和更新当天日记。
 - 五个维度为 `joy / fulfillment / reflection / improvement / gratitude`。理论与完成规则由 [`docs/theory/`](./docs/theory/) 承担。
 - 历史候选、测试数字和部署记录只承担各自时期的证据职责，不能自动转化为当前产品结论或发布授权。

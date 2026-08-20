@@ -1,0 +1,214 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-7-source-alignment-quality-v1",
+  "planFingerprint": "3f023eb4c6f68973f03d138a572811b13c756941d8877cfc85182a23deb4d4fb",
+  "status": "awaiting_product_review",
+  "budget": {
+    "authorized": 10,
+    "consumed": 10,
+    "completed": 10,
+    "notRun": 0
+  },
+  "visible": {
+    "parentReused": 6,
+    "newlyGenerated": 2,
+    "evidence": [
+      {
+        "caseId": "RPR-REAL-03",
+        "origin": "parent_reused",
+        "responseHash": "d9b0e2defa46d39ca2b186bebe0d93706629ac9c47ae9c9e6ba7a838caf085c9",
+        "totalLatencyMs": 3747,
+        "status": "parent_technical_valid"
+      },
+      {
+        "caseId": "RPR-REAL-07",
+        "origin": "parent_reused",
+        "responseHash": "c5fdd1c2db7286316b8dd5bad6eea8468f2f04ec15c2d71e94484b8561da7d53",
+        "totalLatencyMs": 2889,
+        "status": "parent_technical_valid"
+      },
+      {
+        "caseId": "RPR-REAL-09",
+        "origin": "parent_reused",
+        "responseHash": "8908facb469b7b476c57477e884d7a5c3025f3477e1ca43b30a28709cca9ab31",
+        "totalLatencyMs": 2337,
+        "status": "parent_technical_valid"
+      },
+      {
+        "caseId": "RPR-REAL-15",
+        "origin": "parent_reused",
+        "responseHash": "94fbac8cc5f13f7d799834c1efd1865b5b367f98f0912a2a761f0a177b2362ac",
+        "totalLatencyMs": 4916,
+        "status": "parent_technical_valid"
+      },
+      {
+        "caseId": "RPR-REAL-17",
+        "origin": "parent_reused",
+        "responseHash": "fb4815a62bd6e44a70184ec205b14d0be9383fecd36b9373a6fa965a75498043",
+        "totalLatencyMs": 2683,
+        "status": "parent_technical_valid"
+      },
+      {
+        "caseId": "RPR-REAL-20",
+        "origin": "parent_reused",
+        "responseHash": "ad559756a2f5af14225a7204a1ed854abe359ab547e2bab5f91b6eba1222ab7d",
+        "totalLatencyMs": 3665,
+        "status": "parent_technical_valid"
+      },
+      {
+        "caseId": "RPR-CF-02",
+        "origin": "new_generated",
+        "responseHash": "21460468dfba3a60a1af2d8f6e37ec6b5ac95a6e8325199bcbd2feb15078b680",
+        "totalLatencyMs": 3658,
+        "status": "technical_valid"
+      },
+      {
+        "caseId": "RPR-CF-05",
+        "origin": "new_generated",
+        "responseHash": "6ce98d366c161035ad8294c00fff94453ed0dd404ff781c598358626547cf7aa",
+        "totalLatencyMs": 1970,
+        "status": "technical_valid"
+      }
+    ]
+  },
+  "background": [
+    {
+      "caseId": "RPR-REAL-03",
+      "status": "technical_valid",
+      "rawResponseHash": "0104279ff843bfbdcdb4e38956ba39ab7791f2d9f69286dc3fe572666ae7c8bb",
+      "alignedOutputHash": "8409fd4437da9cd5b147784551e2ddba84ad40344782182ab80b2c2e3edae3fd",
+      "alignedQuoteCount": 0,
+      "validationIssueCount": 0,
+      "validationIssueHashes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "totalLatencyMs": 6026,
+      "finishReason": "stop",
+      "promptTokens": 778,
+      "completionTokens": 430,
+      "reasoningTokens": null
+    },
+    {
+      "caseId": "RPR-REAL-07",
+      "status": "technical_valid",
+      "rawResponseHash": "25f1698a47b806e5de1ea1bd7af4ef625816a0743a91b6253ec03c2f69e65133",
+      "alignedOutputHash": "c32a0328ffd50aa1100f04f67b43b1e2895f74d46c8fc4c36fc467c508f2a06e",
+      "alignedQuoteCount": 0,
+      "validationIssueCount": 0,
+      "validationIssueHashes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "totalLatencyMs": 3671,
+      "finishReason": "stop",
+      "promptTokens": 597,
+      "completionTokens": 184,
+      "reasoningTokens": null
+    },
+    {
+      "caseId": "RPR-REAL-09",
+      "status": "technical_valid",
+      "rawResponseHash": "f549db367cac771a7bd1f040af66d7c80dec777364ffbc134ba7b9a2ca04ac60",
+      "alignedOutputHash": "d2363c854001f7965775a8793501bf5713cf39c7f39afa73817112c042613b43",
+      "alignedQuoteCount": 0,
+      "validationIssueCount": 0,
+      "validationIssueHashes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "totalLatencyMs": 6832,
+      "finishReason": "stop",
+      "promptTokens": 865,
+      "completionTokens": 484,
+      "reasoningTokens": null
+    },
+    {
+      "caseId": "RPR-REAL-15",
+      "status": "technical_valid",
+      "rawResponseHash": "80441eb857a3107c28f6a47117cdc8c8d3fd68d942977a4cc2274c7ca686d75a",
+      "alignedOutputHash": "b50a84bac56d1b5a24f9a989cde440cb1acbfbab38064e8c4a1e187fc56bcba5",
+      "alignedQuoteCount": 0,
+      "validationIssueCount": 0,
+      "validationIssueHashes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "totalLatencyMs": 5318,
+      "finishReason": "stop",
+      "promptTokens": 676,
+      "completionTokens": 359,
+      "reasoningTokens": null
+    },
+    {
+      "caseId": "RPR-REAL-17",
+      "status": "technical_valid",
+      "rawResponseHash": "e6a6aeb3234fe09a631523d69b21c2b116a3b71b5dc0623fb0281dcc3f528808",
+      "alignedOutputHash": "228bd501634bfd27be7a06bbfd656d81e42b369e32b419f7744299a7356b5001",
+      "alignedQuoteCount": 0,
+      "validationIssueCount": 0,
+      "validationIssueHashes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "totalLatencyMs": 6845,
+      "finishReason": "stop",
+      "promptTokens": 1105,
+      "completionTokens": 557,
+      "reasoningTokens": null
+    },
+    {
+      "caseId": "RPR-REAL-20",
+      "status": "technical_valid",
+      "rawResponseHash": "124b78a754c76cd571c1aeae97e50a9533e16e64461559ebc26e946928ed3cf0",
+      "alignedOutputHash": "7a1c8ca31b985b242ae6691ffc7e16823be06d4b613485ab1e3d8441cd118a73",
+      "alignedQuoteCount": 0,
+      "validationIssueCount": 0,
+      "validationIssueHashes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "totalLatencyMs": 13363,
+      "finishReason": "stop",
+      "promptTokens": 1556,
+      "completionTokens": 1102,
+      "reasoningTokens": null
+    },
+    {
+      "caseId": "RPR-CF-02",
+      "status": "technical_valid",
+      "rawResponseHash": "2c606fa6298fd65abf3dfade540f80499f2c00b03cefd3cdc1d258fe48cd204a",
+      "alignedOutputHash": "69a2573516b6877090142ee1b48a03db333c07d19db01ab72e9d322fc01c5427",
+      "alignedQuoteCount": 0,
+      "validationIssueCount": 0,
+      "validationIssueHashes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "totalLatencyMs": 3151,
+      "finishReason": "stop",
+      "promptTokens": 620,
+      "completionTokens": 161,
+      "reasoningTokens": null
+    },
+    {
+      "caseId": "RPR-CF-05",
+      "status": "technical_valid",
+      "rawResponseHash": "8adcc2485872fa61c60181ffdb22eca0c4795b5ac749b5c45473feeca7cee22d",
+      "alignedOutputHash": "c719c84954a10a293a03cbf86d49e467403a3012856bf73180ddc48c28092f75",
+      "alignedQuoteCount": 0,
+      "validationIssueCount": 0,
+      "validationIssueHashes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "totalLatencyMs": 10751,
+      "finishReason": "stop",
+      "promptTokens": 1039,
+      "completionTokens": 880,
+      "reasoningTokens": null
+    }
+  ],
+  "latency": {
+    "medianMs": 5672,
+    "maxMs": 13363
+  },
+  "stopReason": null,
+  "productOwnerReview": "pending",
+  "privateBoundary": {
+    "publicReceiptContainsUserOrModelBody": false,
+    "rawInputsOutputsAndReviews": "git_ignored_private_directory"
+  }
+}

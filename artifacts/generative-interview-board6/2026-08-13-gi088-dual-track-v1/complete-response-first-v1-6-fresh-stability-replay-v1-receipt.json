@@ -1,0 +1,219 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-6-fresh-stability-replay-v1",
+  "planFingerprint": "ce877c79aa05f3fd47f62719c19309667f4a0b0c3f863b1153b098aa778253ba",
+  "status": "stopped",
+  "budget": {
+    "authorized": 16,
+    "consumed": 12,
+    "completed": 12,
+    "notRun": 4
+  },
+  "casesCompleted": 6,
+  "stopReason": "SEVERE_BACKGROUND_PROGRAM_GATE:RPR-REAL-20",
+  "latency": {
+    "medianMs": 4001,
+    "maxMs": 16816
+  },
+  "results": [
+    {
+      "caseId": "RPR-REAL-03",
+      "visible": {
+        "status": "technical_valid",
+        "responseHash": "d9b0e2defa46d39ca2b186bebe0d93706629ac9c47ae9c9e6ba7a838caf085c9",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 3747,
+        "finishReason": "stop",
+        "promptTokens": 941,
+        "completionTokens": 53,
+        "reasoningTokens": null
+      },
+      "background": {
+        "status": "technical_valid",
+        "responseHash": "628bfe49331a73fb0c3371becfbb34e7e0bcfde2e92afb67984abb7bc0a0deee",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 7362,
+        "finishReason": "stop",
+        "promptTokens": 778,
+        "completionTokens": 695,
+        "reasoningTokens": null
+      },
+      "backgroundNotRunReason": null
+    },
+    {
+      "caseId": "RPR-REAL-07",
+      "visible": {
+        "status": "technical_valid",
+        "responseHash": "c5fdd1c2db7286316b8dd5bad6eea8468f2f04ec15c2d71e94484b8561da7d53",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 2889,
+        "finishReason": "stop",
+        "promptTokens": 763,
+        "completionTokens": 46,
+        "reasoningTokens": null
+      },
+      "background": {
+        "status": "technical_valid",
+        "responseHash": "e8e4fbe8d0b1947265e3c5b5f2e5ccf2919a2234650a9e7644c2fe09badfcacf",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 3165,
+        "finishReason": "stop",
+        "promptTokens": 597,
+        "completionTokens": 187,
+        "reasoningTokens": null
+      },
+      "backgroundNotRunReason": null
+    },
+    {
+      "caseId": "RPR-REAL-09",
+      "visible": {
+        "status": "technical_valid",
+        "responseHash": "8908facb469b7b476c57477e884d7a5c3025f3477e1ca43b30a28709cca9ab31",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 2337,
+        "finishReason": "stop",
+        "promptTokens": 1018,
+        "completionTokens": 51,
+        "reasoningTokens": null
+      },
+      "background": {
+        "status": "technical_valid",
+        "responseHash": "2930fb97a5c0a740b8b89936d216f65e89b5c6ca99f7ba8456b584ce5f10eea8",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 5167,
+        "finishReason": "stop",
+        "promptTokens": 865,
+        "completionTokens": 390,
+        "reasoningTokens": null
+      },
+      "backgroundNotRunReason": null
+    },
+    {
+      "caseId": "RPR-REAL-15",
+      "visible": {
+        "status": "technical_valid",
+        "responseHash": "94fbac8cc5f13f7d799834c1efd1865b5b367f98f0912a2a761f0a177b2362ac",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 4916,
+        "finishReason": "stop",
+        "promptTokens": 800,
+        "completionTokens": 85,
+        "reasoningTokens": null
+      },
+      "background": {
+        "status": "technical_valid",
+        "responseHash": "a5cdd7adbabdb6d3513694bf1a080e8ddb6fc347ed6d29b5d98bd5e0c82403ef",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 4255,
+        "finishReason": "stop",
+        "promptTokens": 676,
+        "completionTokens": 289,
+        "reasoningTokens": null
+      },
+      "backgroundNotRunReason": null
+    },
+    {
+      "caseId": "RPR-REAL-17",
+      "visible": {
+        "status": "technical_valid",
+        "responseHash": "fb4815a62bd6e44a70184ec205b14d0be9383fecd36b9373a6fa965a75498043",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 2683,
+        "finishReason": "stop",
+        "promptTokens": 1181,
+        "completionTokens": 61,
+        "reasoningTokens": null
+      },
+      "background": {
+        "status": "technical_valid",
+        "responseHash": "62146c57d47d42e4e68324fa13a9058cf20cb324d5762226f846d49008f5a436",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 6606,
+        "finishReason": "stop",
+        "promptTokens": 1105,
+        "completionTokens": 570,
+        "reasoningTokens": null
+      },
+      "backgroundNotRunReason": null
+    },
+    {
+      "caseId": "RPR-REAL-20",
+      "visible": {
+        "status": "technical_valid",
+        "responseHash": "ad559756a2f5af14225a7204a1ed854abe359ab547e2bab5f91b6eba1222ab7d",
+        "technicalGatePassed": true,
+        "severeProgramGateFailed": false,
+        "errorCode": null,
+        "validationIssueCount": 0,
+        "validationIssueHashes": [],
+        "totalLatencyMs": 3665,
+        "finishReason": "stop",
+        "promptTokens": 1589,
+        "completionTokens": 96,
+        "reasoningTokens": null
+      },
+      "background": {
+        "status": "program_gate_failure",
+        "responseHash": "73ac775a9e2d55e943690edb9073c6bd3c971a710feb6345fe4d99437344db78",
+        "technicalGatePassed": false,
+        "severeProgramGateFailed": true,
+        "errorCode": "BACKGROUND_FACTS_SOURCE_OR_REFERENCE_INVALID",
+        "validationIssueCount": 1,
+        "validationIssueHashes": [
+          "736f6cff41631787e2d4cd8c69ed5e044e3a679942b28c3be1e1e7e81aff2091"
+        ],
+        "totalLatencyMs": 16816,
+        "finishReason": "stop",
+        "promptTokens": 1556,
+        "completionTokens": 1437,
+        "reasoningTokens": null
+      },
+      "backgroundNotRunReason": null
+    }
+  ],
+  "productOwnerReview": "pending",
+  "privateBoundary": {
+    "publicReceiptContainsUserOrModelBody": false,
+    "rawInputsOutputsAndReviews": "git_ignored_private_directory"
+  }
+}

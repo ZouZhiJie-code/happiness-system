@@ -1,0 +1,461 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage-quality-v1",
+  "planFingerprint": "c16f0089b70b4f108b9d5a58714ad2ac05c59a17d71d586653e559b46969b6e9",
+  "candidateFingerprint": "a82a90df00b102fea45e72a7794db6a61b0f9e8a7cec18618986c6714c061332",
+  "datasetFingerprint": "1ea88517dfa6f5d8346929d4f80842427096c4d9f175ff6ce2129d2ebbd4eadd",
+  "stages": {
+    "development": "complete",
+    "regression": "complete"
+  },
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "stopReason": null,
+  "medianLatencyMs": 2915,
+  "maxLatencyMs": 5152,
+  "results": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-01",
+      "split": "development",
+      "status": "technical_valid",
+      "requestFingerprint": "c2da7375ae9439749db98df6abbaf3ceec71a9401a6fbaa5d8df9f1a9f7d48bc",
+      "responseHash": "1235a2b1cd75e134dce47e20bb4fd776556aaa8333821c2430b3cc1c68cbfa3f",
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": "ask",
+        "visibleCharacterCount": 95,
+        "paragraphCount": 1,
+        "questionMarkCount": 1,
+        "questionFocusHash": "d0ba740635ce75321288640a49f5c456b53069105fb7b2ee657b3cf1496c92e7",
+        "visibleHash": "0cd3ee6415b768f187606ce5b4c204730ba864512684a3deb004290ad2d3ba52",
+        "recentTurnCount": 1
+      },
+      "totalLatencyMs": 3375,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 858,
+        "completionTokens": 61,
+        "totalTokens": 919,
+        "promptCacheHitTokens": 384,
+        "promptCacheMissTokens": 474
+      }
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-REAL-05",
+      "split": "development",
+      "status": "technical_valid",
+      "requestFingerprint": "8997fd44e665d9914c812b16083d9d5592413e1bdb12db3ecd47be09fdd772e9",
+      "responseHash": "0b4dfbb850c49334b2592954171ce80b44128059d37d32860366ca9eac1114c9",
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": "ask",
+        "visibleCharacterCount": 64,
+        "paragraphCount": 2,
+        "questionMarkCount": 1,
+        "questionFocusHash": "7d12b95cf560a4d8e89ccefbe8c73675f61cd11d6c2ad66e884f479b9ccba289",
+        "visibleHash": "39da379769d4dcff87a649367bd0ceed2d0bcbfad012cbb984a5b6c69802cdc1",
+        "recentTurnCount": 1
+      },
+      "totalLatencyMs": 2868,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 865,
+        "completionTokens": 40,
+        "totalTokens": 905,
+        "promptCacheHitTokens": 384,
+        "promptCacheMissTokens": 481
+      }
+    },
+    {
+      "order": 3,
+      "caseId": "RPR-REAL-11",
+      "split": "development",
+      "status": "technical_valid",
+      "requestFingerprint": "9b1445ebe7c9560b15aa7079e96387757751ef8f31cc54ae2ee8319f607fcf78",
+      "responseHash": "0fa9b1f25397a59a0f94cfe4bff56a5ca5ac2eb0ad2d71ed3380d8fccd1b3258",
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": "ask",
+        "visibleCharacterCount": 73,
+        "paragraphCount": 2,
+        "questionMarkCount": 1,
+        "questionFocusHash": "843697cdf382ec2baaba538edbe21d46da8173b82b1ead5dc6bc0474f13dd0d1",
+        "visibleHash": "d33e627c66948d9c015236f7b502e7925f5933e6e811c1fbe0d2e02d34e16f7c",
+        "recentTurnCount": 1
+      },
+      "totalLatencyMs": 1649,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 824,
+        "completionTokens": 45,
+        "totalTokens": 869,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 184
+      }
+    },
+    {
+      "order": 4,
+      "caseId": "RPR-REAL-13",
+      "split": "regression",
+      "status": "technical_valid",
+      "requestFingerprint": "651eee42431e9f5c1553df04dca67cd2f9000835afd43bf2458c96a541f04957",
+      "responseHash": "1cc41e831aff033b7f7eb67b8841321c09da66db90bdb5b5c9a8612b4b72dfd1",
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": "ask",
+        "visibleCharacterCount": 156,
+        "paragraphCount": 2,
+        "questionMarkCount": 1,
+        "questionFocusHash": "5d0ebb909d5fe88ab6ce2d054ec1699d9866381bff88f6fa568e7d53ad5ed8e5",
+        "visibleHash": "307ba0a6fe8c4189d64e77455c979b529e409a1b95471605f1e5b8df1e46255a",
+        "recentTurnCount": 0
+      },
+      "totalLatencyMs": 5152,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 787,
+        "completionTokens": 91,
+        "totalTokens": 878,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 147
+      }
+    },
+    {
+      "order": 5,
+      "caseId": "RPR-REAL-22",
+      "split": "regression",
+      "status": "technical_valid",
+      "requestFingerprint": "a0cbbd87b6a01d479564cf090ef84fd01125de0633124c37b3b1f296a7988210",
+      "responseHash": "671bc6980f0c50c67b7e2988177f29df3bd5b755225d5e02c17d80a1e1060288",
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": "ask",
+        "visibleCharacterCount": 74,
+        "paragraphCount": 1,
+        "questionMarkCount": 1,
+        "questionFocusHash": "85153d6da79bf26186bc73e079d28fd1e93a19c6634b359fd85818eb708affa9",
+        "visibleHash": "7be887959d809117b7fcefd8185735146e1f8d3d6bab57285827d5956a526a59",
+        "recentTurnCount": 0
+      },
+      "totalLatencyMs": 2095,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 817,
+        "completionTokens": 45,
+        "totalTokens": 862,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 177
+      }
+    },
+    {
+      "order": 6,
+      "caseId": "RPR-CF-03",
+      "split": "regression",
+      "status": "technical_valid",
+      "requestFingerprint": "35b250689e5dc5d80baa4bbd3f2534021363e42e7a2d12364e88b059591829aa",
+      "responseHash": "3271447dab8eef2fcdbeb20dcea871ea298fd42694b856206876c2a2f35e5e4d",
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": "stop",
+        "visibleCharacterCount": 25,
+        "paragraphCount": 1,
+        "questionMarkCount": 0,
+        "questionFocusHash": null,
+        "visibleHash": "5dbfe270ca999cac43aa0cba0db3e8bcc51703784d4f6c23a02494846ee1c78a",
+        "recentTurnCount": 0
+      },
+      "totalLatencyMs": 1019,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 777,
+        "completionTokens": 14,
+        "totalTokens": 791,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 137
+      }
+    },
+    {
+      "order": 7,
+      "caseId": "RPR-REAL-21",
+      "split": "regression",
+      "status": "technical_valid",
+      "requestFingerprint": "0c7633d3350780a529b7f06d984286e7ec406ab3fa90ab48b023755b23c110ee",
+      "responseHash": "26db1c891f92e636ebeb8a47e2578fd88426208bb69d5aea8d31813d6073486f",
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": "ask",
+        "visibleCharacterCount": 171,
+        "paragraphCount": 2,
+        "questionMarkCount": 2,
+        "questionFocusHash": "4b45a96d36889f87a0d5e41dbd2a8b949c664628ca880b17ac268f9b01d7bfac",
+        "visibleHash": "4138f2dcc0a801168f9ba7ba411011d494ba9a8c298257073e670ee1f18a8dc8",
+        "recentTurnCount": 7
+      },
+      "totalLatencyMs": 3610,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 1651,
+        "completionTokens": 91,
+        "totalTokens": 1742,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 1011
+      }
+    },
+    {
+      "order": 8,
+      "caseId": "RPR-REAL-19",
+      "split": "regression",
+      "status": "technical_valid",
+      "requestFingerprint": "186eadc908b935dc69e4eba992bd18e81d23a4c08ceb81115b6f2680756945a2",
+      "responseHash": "3576f57108db0b3203b8915e4e5e99670dfa1ee651279f8e3ca33f11c9771382",
+      "validationIssueCodes": [],
+      "errorCode": null,
+      "technicalGatePassed": true,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": true,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": "ask",
+        "visibleCharacterCount": 116,
+        "paragraphCount": 1,
+        "questionMarkCount": 2,
+        "questionFocusHash": "6bb78ea10a851e9d6936a4ba42d26a12c5de33d99a4d3b5a2ce5d2c37f6f5479",
+        "visibleHash": "2c6538ebf5f3b7645ff68e4ef570de4364bcbf46f321d4191360f25100f4f344",
+        "recentTurnCount": 3
+      },
+      "totalLatencyMs": 2962,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 1201,
+        "completionTokens": 70,
+        "totalTokens": 1271,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 561
+      }
+    }
+  ],
+  "privateBoundary": {
+    "publicReceiptContainsUserOrModelBody": false,
+    "rawInputsOutputsAndReviews": "git_ignored_private_directory"
+  }
+}

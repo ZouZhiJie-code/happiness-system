@@ -20,6 +20,10 @@ import {
   EVENT_CENTERED_GENERATIVE_SEMANTIC_PLAN_PROMPT_VERSION,
   generateEventCenteredCompleteResponseV121AI,
   generateEventCenteredCompleteResponseV12AI,
+  generateEventCenteredCompleteResponseV13AI,
+  generateEventCenteredCompleteResponseV14AI,
+  generateEventCenteredCompleteResponseV15AI,
+  generateEventCenteredCompleteResponseV16AI,
   generateEventCenteredGenerativeSemanticPlanAI,
   generateEventCenteredGenerativeTurnAI,
   generateEventCenteredGenerativeVisibleTurnAI,
@@ -27,6 +31,7 @@ import {
   generateEventCenteredTurnOnceAI
 } from "@/server/services/interview/event-centered-ai.service";
 import { createInitialThoughtProtocol } from "@/features/interview/event-centered/thought-judgment-map";
+import type { AICompletionParams } from "@/server/services/ai/ai-provider";
 import type { JournalEventFactRecord } from "@/types/journal-event-understanding";
 
 describe("GI-066 判断地图来源局部修复", () => {
@@ -776,6 +781,163 @@ describe("event-centered generative architecture", () => {
       thinking: "disabled"
     }));
     expect("responseFormat" in request).toBe(false);
+  });
+
+  it("v1.3 直接请求纯文本，并原样投影为完整可见回应", async () => {
+    const response = "你已经把比较这件事说清楚了。没有具体结果时，你也会默默衡量自己吗？";
+    const complete = vi.fn(async (request: AICompletionParams) => {
+      void request;
+      return {
+        content: response,
+        latencyMs: 2_100,
+        provider: "test",
+        tokenUsage: {
+          promptTokens: 800,
+          completionTokens: 50,
+          totalTokens: 850
+        }
+      };
+    });
+
+    const result = await generateEventCenteredCompleteResponseV13AI(baseInput({
+      rawText: "继续和我聊聊吧，帮我深挖一下。",
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test", complete }
+    }));
+
+    expect(result.validationIssues).toEqual([]);
+    expect(result.completeResponseText).toBe(response);
+    expect(result.turn?.reply.question).toBe(
+      "没有具体结果时，你也会默默衡量自己吗？"
+    );
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner"
+    );
+    expect(complete).toHaveBeenCalledWith(expect.objectContaining({
+      temperature: 0.2,
+      maxTokens: 1_280,
+      timeoutMs: 45_000,
+      thinking: "disabled"
+    }));
+    const request = complete.mock.calls[0]?.[0];
+    expect(Object.prototype.hasOwnProperty.call(request, "responseFormat")).toBe(false);
+    expect(result.attempts[0]?.responseText).toBe(response);
+  });
+
+  it("v1.4 保留同焦点连续问句，并省略结构化输出参数", async () => {
+    const response =
+      "我先接住你现在的在意。你更想从哪一层继续？是它什么时候出现，还是它会怎样影响你？";
+    const complete = vi.fn(async (request: AICompletionParams) => {
+      void request;
+      return {
+        content: response,
+        latencyMs: 2_000,
+        provider: "test",
+        tokenUsage: {
+          promptTokens: 800,
+          completionTokens: 50,
+          totalTokens: 850
+        }
+      };
+    });
+
+    const result = await generateEventCenteredCompleteResponseV14AI(baseInput({
+      rawText: "继续和我聊聊吧，帮我深挖一下。",
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test", complete }
+    }));
+
+    expect(result.validationIssues).toEqual([]);
+    expect(result.completeResponseText).toBe(response);
+    expect(result.turn?.reply.question).toBe(
+      "你更想从哪一层继续？是它什么时候出现，还是它会怎样影响你？"
+    );
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner"
+    );
+    const request = complete.mock.calls[0]?.[0];
+    expect(Object.prototype.hasOwnProperty.call(request, "responseFormat")).toBe(false);
+  });
+
+  it("v1.5 使用语义层覆盖提示并保持纯文本单次请求", async () => {
+    const response =
+      "你已经说清了当下的愤慨。继续往下看时，这种比较会怎样影响你之后做题或学习的选择？";
+    const complete = vi.fn(async (request: AICompletionParams) => {
+      void request;
+      return {
+        content: response,
+        latencyMs: 2_000,
+        provider: "test",
+        tokenUsage: {
+          promptTokens: 800,
+          completionTokens: 45,
+          totalTokens: 845
+        }
+      };
+    });
+
+    const result = await generateEventCenteredCompleteResponseV15AI(baseInput({
+      rawText: "继续和我聊聊吧，帮我深挖一下。",
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test", complete }
+    }));
+
+    expect(result.validationIssues).toEqual([]);
+    expect(result.completeResponseText).toBe(response);
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-5-semantic-layer-coverage"
+    );
+    const prompt = complete.mock.calls[0]?.[0].messages
+      .map((message) => message.content)
+      .join("\n");
+    expect(prompt).toContain("信息层覆盖");
+    expect(prompt).toContain("不能算新增信息");
+    const request = complete.mock.calls[0]?.[0];
+    expect(Object.prototype.hasOwnProperty.call(request, "responseFormat")).toBe(false);
+  });
+
+  it("v1.6 注入跨场景对比例子并保持纯文本单次请求", async () => {
+    const response =
+      "这份落差和自我怀疑你已经说清了。你最希望这段关系发生哪个具体变化，才会让你感到被重视？";
+    const complete = vi.fn(async (request: AICompletionParams) => {
+      void request;
+      return {
+        content: response,
+        latencyMs: 2_000,
+        provider: "test",
+        tokenUsage: {
+          promptTokens: 900,
+          completionTokens: 45,
+          totalTokens: 945
+        }
+      };
+    });
+
+    const result = await generateEventCenteredCompleteResponseV16AI(baseInput({
+      rawText: "我有很大的落差，也觉得自己不被重视。",
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test", complete }
+    }));
+
+    expect(result.validationIssues).toEqual([]);
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage"
+    );
+    const prompt = complete.mock.calls[0]?.[0].messages
+      .map((message) => message.content)
+      .join("\n");
+    expect(prompt).toContain("对比例子一");
+    expect(prompt).toContain("同层换词");
+    const request = complete.mock.calls[0]?.[0];
+    expect(Object.prototype.hasOwnProperty.call(request, "responseFormat")).toBe(false);
   });
 
   it("唯一分流顺序先判断用户成果和 AI 综合，再考虑继续提问", async () => {

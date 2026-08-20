@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0",
   "receiptVersion": "2026-08-16.gi088-real-conversation-review-v2",
-  "generatedAt": "2026-08-17T07:30:09.306Z",
+  "generatedAt": "2026-08-20T10:02:24.135Z",
   "status": "real_conversation_review_pack_ready_waiting_product_owner",
   "counts": {
     "originalAssets": 70,
@@ -25,7 +25,7 @@
     "productionChanges": 0
   },
   "reviewPacketFingerprint": "a0e98f16df9e63bc13d1dbe335ea223eea0b9a2a2b780cf59a09f9b72b13ea25",
-  "privateHtmlFingerprint": "ea07624d572afa4f5f0d187ed6676c2181b2550257c258be3c276c78ff8b8cf3",
+  "privateHtmlFingerprint": "be422a0bde82845b232308c4006eb1b002447df70b629b88777cadcd32b87b4c",
   "publicContentBoundary": {
     "userUtterances": 0,
     "aiResponses": 0,

@@ -7,9 +7,9 @@
 
 产品决策状态：`当前运行合同 v1 已确认；继承 GI-067 / GI-068～080 冻结结论；GI-081～088 的旧候选、结果和运行身份只承担历史证据职责`
 
-落地验证状态：`v1.2.1 运行 8/8、合同有效 0/8，结构化首调技术 No-Go；v1.3 纯文本可见负责人已确认·实施中；Production baseline`
+落地验证状态：`v1.7 新案例续跑 10/10 技术有效；当前分支隔离 Preview 实施中；Production baseline`
 
-Production：`项目主链保持 event_centered + baseline；隔离 complete_response_v1_3 合同、接入与 Preview 待验证`
+Production：`项目主链保持 event_centered + baseline；当前分支隔离 complete_response_v1_6 Preview 实施中`
 
 工作方法：[生成式访谈 AI 产品工作方法 v1.0](./00-generative-interview-ai-product-working-method.md)（`已冻结`）
 
@@ -25,6 +25,98 @@ Production：`项目主链保持 event_centered + baseline；隔离 complete_res
 
 > 本文是生成式访谈实现层的唯一当前入口。当前职责和现行规则只在这里维护；总 Map、Handoff、评测文档和问题台账只保存状态、证据与本页链接。GI-081～088 的诊断过程统一归入历史证据。
 
+## 完整回应优先 v1.6 隔离 Preview 运行合同｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 当前专项 | [v1.6 隔离 Preview 验收](../../plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md) |
+| 可见链路 | 一次调用生成一条完整气泡；`deepseek-v4-pro`、Thinking disabled、`1280` Token、45 秒硬门 |
+| 后台链路 | 第二次调用只整理事实与纠正；同模型、Thinking disabled、`1600` Token、20 秒硬门；零可见写权限 |
+| 正式一致性 | 当前策略强制选择 Pro；后台解析使用 v1.7 来源对齐并保存真实原文片段 |
+| 工程门 | 全量 `3666` 条测试、Lint、类型、两套 Prisma、Production build、文档与差异检查通过 |
+| 当前状态 | 当前分支配置、推送和隔离部署实施中；Production baseline |
+
+## 完整回应优先 v1.7 后台来源对齐合同｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 当前专项 | [v1.7 后台来源标点对齐](../../plans/2026-08-20-gi088-complete-response-first-v1-7-background-source-alignment.md) |
+| 语义责任 | 模型继续选择事实、摘要、类别与纠正目标；自然度、忠实度和重要性由原文评审 |
+| 来源责任 | 实质字符连续逐字唯一匹配时，程序容忍空白／标点差异并保存用户原文真实片段；其他变化继续拒绝 |
+| 复用范围 | v1.6 前六条实际可见输出冻结；补两条可见输出；八条后台重新调用 |
+| 运行配置 | 可见仍为 `1280` Token／45 秒；后台仍为 `1600` Token／20 秒；Thinking disabled |
+| 实际结果 | 新调用 `10/10`；八条可见与八条后台技术有效；Codex 可见 `6 pass / 2 minor / 0 fail`、后台 `8 pass / 0 minor / 0 fail` |
+| 当前状态 | `awaiting_product_review`；产品裁决、真实 Preview 与发布待验证，Production baseline |
+
+## 完整回应优先 v1.6 新案例稳定性复验合同｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 当前专项 | [v1.6 新案例稳定性复验](../../plans/2026-08-20-gi088-complete-response-first-v1-6-fresh-stability-replay.md) |
+| 可见责任 | 冻结 v1.6，一次调用独立交付完整回应；承接、意图兑现和一个新入口共同形成一条自然回复 |
+| 后台责任 | 冻结后台 facts v1，只整理用户明确事实与纠正，不改写可见气泡 |
+| 数据 | 八个未参与 v1.6 调优的封存检查点；完整相关对话；每例从初始语义状态开始 |
+| 程序责任 | 身份、来源、预算、调用前记账、超时、隐私和确定性合同；不硬判语义自然度与问题价值 |
+| 运行配置 | 可见 `1280` Token／45 秒；后台 `1600` Token／20 秒；Thinking disabled；各一次调用 |
+| 实际结果 | `12/16`；六条可见有效、前五条后台有效，第六条因一处标点变化触发来源合同 |
+| 当前状态 | `No-Go / stop`；由 v1.7 来源对齐接续，Production baseline |
+
+## 完整回应优先 v1.6 后台状态合同｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 当前专项 | [v1.6 后台状态与上线准备](../../plans/2026-08-20-gi088-complete-response-first-v1-6-background-state-readiness.md) |
+| 可见责任 | v1.6 首个调用独立拥有整条用户可见回应，完成后冻结 |
+| 后台责任 | 第二个调用只输出用户事实和纠正；每条事实必须绑定当前用户原话，允许空结果 |
+| 程序责任 | 持久任务、调用前记账、一次预算、顺序应用、迟到失权、幂等、隐私和失败恢复 |
+| 明确排除 | 后台不生成问题、开放方向、气泡、动机、心理结论或第三方心理 |
+| 运行配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1600` Token、20 秒、一次尝试 |
+| 实际结果 | `8/8 technical_valid`；中位 `4388ms`、最长 `11318ms`；Codex `7 pass / 1 minor / 0 fail` |
+| 持久任务实现 | 同事务创建任务；调用前记账；结果先保存后应用；顺序处理；写入权失效取消；后台失败不阻断后续任务；复用现有 Trace，无数据库迁移 |
+| 本地验证 | 专项 `84/84`、全量 `3649` 条、类型、Lint、两套 Prisma 与 Production build 通过 |
+| 当前状态 | `本地接入已验证·产品待确认`；真实 Preview 与发布待验证 |
+
+## 完整回应优先 v1.6 对比式覆盖卡｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 接入身份 | `2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage` |
+| 当前专项 | [v1.6 对比式覆盖](../../plans/2026-08-20-gi088-complete-response-first-v1-6-contrastive-coverage.md) |
+| 唯一变化 | 在 v1.5 语义层规则后增加两个跨场景对比例子，展示同层近义追问和跨到未答层的差异 |
+| 语义责任 | 用户已经明确回答感受时，默认吸收并转向影响、期待、行为、规律或其他真正未答层 |
+| 程序责任 | 继承 v1.5：明确停止硬保护，普通问号数量只观察，单气泡原样保存 |
+| 运行配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、单次调用、45 秒硬门 |
+| 实际结果 | `8/8 technical_valid`；中位 `2915ms`、最长 `5152ms`；Codex `7 pass / 1 minor / 0 fail` |
+| 当前状态 | `待确认`；关系题一处未确认感受等待产品裁决，页面、后台状态、Preview 与发布未进入 |
+
+
+## 完整回应优先 v1.5 语义信息层覆盖结果卡｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 接入身份 | `2026-08-20.gi088-complete-response-first-v1-5-semantic-layer-coverage` |
+| 当前专项 | [v1.5 语义信息层覆盖](../../plans/2026-08-20-gi088-complete-response-first-v1-5-semantic-layer-coverage.md) |
+| 目标选择 | 先按事件、感受、想法、需要、行为、关系意义、变化规律和影响盘点已回答层，再选一个未覆盖层 |
+| 承接责任 | 只自然转述用户明确内容；原因、动机、目标和第三方心理缺少原文时不进入陈述 |
+| 程序责任 | 继承 v1.4：明确停止硬保护，普通问号数量只观察，单气泡原样保存 |
+| 运行配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、单次调用、45 秒硬门 |
+| 实际结果 | `8/8 technical_valid`；中位 `3509ms`、最长 `5324ms`；Codex `6 pass / 1 minor / 1 fail` |
+| 当前状态 | `No-Go`；产品裁决 pending，由 v1.6 接续 |
+
+
+## 完整回应优先 v1.4 有依据的意图兑现卡｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 接入身份 | `2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner` |
+| 当前专项 | [v1.4 有依据的意图兑现](../../plans/2026-08-20-gi088-complete-response-first-v1-4-grounded-intent-owner.md) |
+| 可见责任 | 先确定本轮意图、已知内容、一个未答目标和理解依据，再输出一至两个短段落的完整回应 |
+| 依据边界 | 第三方原因、用户动机和心理目标缺少直接原文时省略；问题能够从完整原文回答时删除并重选 |
+| 程序责任 | 明确停止后零提问；普通问号数量只作观察，程序保存一个连续回答焦点片段 |
+| 运行配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、单次调用、45 秒硬门 |
+| 当前状态 | `已确认·实施中`；新预算 `0/8`，结果、页面、后台状态、Preview 与发布待验证 |
+
+
 ## 完整回应优先 v1.3 纯文本可见负责人卡｜2026-08-20
 
 | 项目 | 当前合同 |
@@ -32,11 +124,13 @@ Production：`项目主链保持 event_centered + baseline；隔离 complete_res
 | 接入身份 | `2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner` |
 | 当前专项 | [v1.3 纯文本可见负责人](../../plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md) |
 | 父结果 | v1.2.1 调用 `8/8`，全部 HTTP 200／stop、正文非空且未截断；合同 `0/8`，结构化首调技术 No-Go |
-| 可见责任 | 首个调用只输出一至两个短段落的完整中文回应；自然承接后选择未答新层、低负担入口或自然停止；最多一个问题 |
-| 程序责任 | 保存原话；校验中文、段落、内部词泄漏、问号和停止；从纯文本确定一个问题或零问题 |
+| 可见责任 | 首个调用只输出一至两个短段落的完整中文回应；自然承接后选择未答新层、低负担入口或自然停止；问题共同服务一个回答焦点 |
+| 程序责任 | 保存原话；校验中文、内部词泄漏、明确停止、预算和写入；问号数量只记录观察，不承担非停止场景的语义拦截 |
 | 后台状态 | 最多一次独立调用；只整理事实、纠正和开放方向，失败不阻断、不追加、不改写可见回应 |
 | 运行配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、一次尝试、45 秒硬门 |
-| 当前状态 | `已确认·实施中`；新预算 `0/8`，结果、页面、Preview 与发布待验证，Production baseline |
+| 运行结果 | `8/8` HTTP 200／stop、正文完整；中位 `3731ms`、最长 `4956ms`；程序合同 `6/8 valid`，两条被问号硬门误拦截 |
+| 内容初评 | Codex `5 pass / 1 minor / 2 fail`；产品负责人裁决待确认 |
+| 当前状态 | `待确认`；页面、后台状态、Preview 与发布 `not_run`，Production baseline |
 
 ## 完整回应优先 v1.2.1 JSON 模式单因素结果卡｜2026-08-20
 

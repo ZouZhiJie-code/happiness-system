@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-6-background-facts-quality-v1",
+  "planFingerprint": "b88ba1924eeb218e3290b784236e0485c164653b56607e09b66e9e98052158b3",
+  "status": "technical_valid_codex_seven_pass_one_minor_awaiting_product_review",
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technical": {
+    "valid": 8,
+    "http200": 8,
+    "finishStop": 8,
+    "thinkingDisabled": 8,
+    "under20Seconds": 8,
+    "tokenCeilingTriggered": 0,
+    "medianLatencyMs": 4388,
+    "maxLatencyMs": 11318,
+    "maxCompletionTokens": 983
+  },
+  "content": {
+    "sourceContractValid": 8,
+    "correctionCases": 1,
+    "codex": {
+      "pass": 7,
+      "minor": 1,
+      "fail": 0,
+      "reviewSha256": "66cdf5fb40bff29004dd5a2f577834c874cfdc356c962e48a0f96f7086347db3"
+    },
+    "productOwnerDecision": "pending",
+    "gatePassed": false
+  },
+  "next": {
+    "productReviewRequired": true,
+    "passPath": "persistent_background_job_ordering_and_recovery_integration",
+    "minorOrFailPath": "background_fact_coverage_single_factor"
+  },
+  "release": {
+    "persistentJobIntegration": "not_run",
+    "pageIntegration": "not_run",
+    "preview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deploy": "not_run",
+    "production": "event_centered_baseline"
+  }
+}

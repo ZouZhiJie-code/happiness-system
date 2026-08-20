@@ -22,7 +22,7 @@
 - Production 正式域名为 `https://dailylight.chat`；`2026-08-16` 已验证公开首页返回 `200`。
 - 仓库当前批准的 Production 主链为 `event_centered + baseline`；生成式访谈能力继续关闭。
 - 网页端用户路径为 `访谈记录 → 当天时间线事件卡片 → 今日日记`。
-- GI-088 完整回应优先 v1.2.1 已完成 `8/8`，八次均 HTTP 200／stop、正文非空、低于 15 秒且未触发 Token 上限；合同有效 `0/8`，关闭 Provider JSON 模式仍无法稳定生成最小结构。当前进入 v1.3 纯文本可见负责人，新预算 `0/8`、结果待验证；Production 保持 `event_centered + baseline`。
+- GI-088 v1.7 新案例续跑已完成新增调用 `10/10`：八条可见回应与八条后台事实均技术有效；Codex 初评可见 `6 pass / 2 minor / 0 fail`、后台 `8 pass / 0 minor / 0 fail`，产品裁决 pending。Production 保持 `event_centered + baseline`。
 - 文档治理两阶段及授权清理已经完成；[最终治理记录](./maintenance/2026-08-16-document-governance-cleanup-preview.md)保留全量台账、清理结果和仍受保护的独立成果。
 
 当前任务、工作区血缘、验证门和停止点统一从 [Handoff](./handoff.md) 读取；专项数字与裁决从对应 Map 和证据包读取。
@@ -44,7 +44,16 @@
 | 需要回答的问题 | 权威入口 |
 |---|---|
 | 完整回应优先 v1.1 八题技术结果与 Codex 初评 | [完整回应优先 v1.1 离线结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md) |
-| v1.2.1 为什么停止结构化首调、v1.3 为什么改为纯文本完整回应 | [v1.2.1 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-handoff.md)、[v1.3 当前专项](./plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md) |
+| v1.3 纯文本完整回应的八题结果与当前产品裁决入口 | [v1.3 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-3-visible-text-owner-quality-v1-handoff.md)、[v1.3 专项](./plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md) |
+| v1.4 怎样用意图、已知内容、未答目标和依据检查修复共同语义问题 | [v1.4 当前专项](./plans/2026-08-20-gi088-complete-response-first-v1-4-grounded-intent-owner.md) |
+| v1.5 怎样避免把已回答的信息层包装成更细的新问题 | [v1.5 当前专项](./plans/2026-08-20-gi088-complete-response-first-v1-5-semantic-layer-coverage.md) |
+| v1.6 怎样用跨场景对比例子落实同层排除 | [v1.6 当前专项](./plans/2026-08-20-gi088-complete-response-first-v1-6-contrastive-coverage.md) |
+| v1.6 首条完整回应后怎样异步整理事实、纠正并安全恢复 | [v1.6 后台状态与上线准备](./plans/2026-08-20-gi088-complete-response-first-v1-6-background-state-readiness.md) |
+| v1.6 后台事实整理八题的技术结果与 Codex 初评 | [后台事实整理结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-background-facts-quality-v1-handoff.md) |
+| v1.6 持久后台任务怎样接入、恢复及通过哪些本地门禁 | [后台任务工程接入交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-background-integration-v1-handoff.md) |
+| v1.6 离开调优八题后怎样验证提问与后台事实的稳定性 | [v1.6 新案例稳定性复验](./plans/2026-08-20-gi088-complete-response-first-v1-6-fresh-stability-replay.md) |
+| v1.7 来源对齐与八个新案例的实际结果 | [v1.7 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-7-source-alignment-quality-v1-handoff.md)、[v1.7 后台来源标点对齐](./plans/2026-08-20-gi088-complete-response-first-v1-7-background-source-alignment.md) |
+| v1.6 怎样部署隔离 Preview 并完成真实页面验收 | [v1.6 隔离 Preview 验收](./plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md) |
 | v1.2 为什么因 JSON 传输 No-Go、v1.2.1 如何验证 JSON 模式因素 | [v1.2 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md)、[v1.2.1 单因素计划](./plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md) |
 | v1.1 生产旧合同为何 No-Go、v1.2 为什么改成最少状态 | [v1.1 生产合同交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-handoff.md)、[v1.2 最小合同计划](./plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md) |
 | v1.1 怎样在完整回应前先选择尚未回答的新信息目标 | [完整回应优先 v1.1 新信息目标](./plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md) |

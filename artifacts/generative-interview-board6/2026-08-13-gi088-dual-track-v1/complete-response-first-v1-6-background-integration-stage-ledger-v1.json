@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-6-background-integration-v1",
+  "status": "locally_verified_awaiting_product_review_and_isolated_preview",
+  "scope": {
+    "visibleStrategy": "complete_response_v1_6",
+    "backgroundCandidate": "2026-08-20.gi088-complete-response-first-v1-6-background-facts-v1",
+    "productionStrategy": "event_centered_baseline",
+    "databaseMigrationRequired": false
+  },
+  "implementation": {
+    "atomicVisibleCommitAndTaskCreation": true,
+    "deferredAfterVisibleResponse": true,
+    "maxProviderCallsPerTask": 1,
+    "providerCallReservedBeforeRequest": true,
+    "resultSavedBeforeApply": true,
+    "resultReadyRecoveryWithoutProviderCall": true,
+    "staleStartedFailsWithoutProviderRetry": true,
+    "orderedPerSessionProcessing": true,
+    "writeAuthorityValidation": true,
+    "visibleResponseImmutable": true,
+    "laterTasksContinueAfterFailure": true
+  },
+  "verification": {
+    "targetedTests": {
+      "passed": 84,
+      "failed": 0
+    },
+    "fullTests": {
+      "filesPassed": 451,
+      "filesSkipped": 2,
+      "testsPassed": 3649,
+      "testsSkipped": 10,
+      "testsFailed": 0
+    },
+    "typecheck": "passed",
+    "lint": {
+      "errors": 0,
+      "existingWarnings": 45,
+      "newFileWarnings": 0
+    },
+    "prisma": {
+      "applicationSchema": "passed",
+      "evaluationSchema": "passed"
+    },
+    "productionBuild": "passed",
+    "existingBuildWarnings": 16,
+    "modelCalls": 0
+  },
+  "quality": {
+    "visibleCodex": {
+      "pass": 7,
+      "minor": 1,
+      "fail": 0
+    },
+    "backgroundCodex": {
+      "pass": 7,
+      "minor": 1,
+      "fail": 0
+    },
+    "productOwnerDecision": "pending",
+    "previewGatePassed": false,
+    "productionGatePassed": false
+  },
+  "release": {
+    "pagePreview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deploy": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "next": {
+    "required": "product_owner_original_text_verdicts",
+    "passPath": "isolated_preview_real_page_continuity_and_recovery_acceptance",
+    "stopPoint": "before_preview_and_release"
+  }
+}

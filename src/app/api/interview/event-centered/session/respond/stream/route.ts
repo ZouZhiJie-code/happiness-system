@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 
 import {
   eventCenteredRespondRequestSchema,
@@ -12,8 +12,10 @@ import {
   normalizeInterviewRespondError
 } from "@/server/services/interview/respond-error";
 import { respondEventCenteredInterview } from "@/server/services/interview/event-centered-interview.service";
+import { drainEventCenteredBackgroundFactsQueue } from "@/server/services/interview/event-centered-background-facts.service";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 150;
 
 function formatSseEvent(event: string, data: unknown) {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -37,6 +39,25 @@ export async function POST(request: Request) {
 
   try {
     const user = await requireCurrentUserFromRequest(request);
+    type BackgroundFactsTask = { traceId: string; sessionId: string } | null;
+    let settleBackgroundFactsTask: (task: BackgroundFactsTask) => void = () => undefined;
+    let backgroundFactsTaskSettled = false;
+    const backgroundFactsTask = new Promise<BackgroundFactsTask>((resolve) => {
+      settleBackgroundFactsTask = (task) => {
+        if (backgroundFactsTaskSettled) return;
+        backgroundFactsTaskSettled = true;
+        resolve(task);
+      };
+    });
+    after(async () => {
+      const task = await backgroundFactsTask;
+      if (!task) return;
+      await drainEventCenteredBackgroundFactsQueue({
+        userId: user.id,
+        sessionId: task.sessionId,
+        maxTasks: 4
+      }).catch(() => undefined);
+    });
     const encoder = new TextEncoder();
     const streamAbortController = new AbortController();
     const abortFromRequest = () => streamAbortController.abort(request.signal.reason);
@@ -65,7 +86,11 @@ export async function POST(request: Request) {
           send("session", {
             session: eventCenteredWorkspaceSessionSchema.parse(result.workspace)
           });
+          settleBackgroundFactsTask(
+            "backgroundFactsTask" in result ? result.backgroundFactsTask ?? null : null
+          );
         } catch (error) {
+          settleBackgroundFactsTask(null);
           if (!streamAbortController.signal.aborted) {
             const issue = normalizeInterviewRespondError({ error, requestId });
             logInterviewRespondError({
@@ -84,6 +109,7 @@ export async function POST(request: Request) {
             });
           }
         } finally {
+          settleBackgroundFactsTask(null);
           request.signal.removeEventListener("abort", abortFromRequest);
           if (!closed) {
             closed = true;

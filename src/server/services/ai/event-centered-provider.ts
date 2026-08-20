@@ -8,6 +8,7 @@ export const EVENT_CENTERED_GENERATIVE_MODEL_ENV =
   "EVENT_CENTERED_GENERATIVE_MODEL" as const;
 export const EVENT_CENTERED_CANDIDATE_PROVIDER = "openai" as const;
 export const EVENT_CENTERED_CANDIDATE_MODEL = "deepseek-v4-flash" as const;
+export const EVENT_CENTERED_COMPLETE_RESPONSE_MODEL = "deepseek-v4-pro" as const;
 export const EVENT_CENTERED_CANDIDATE_BASE_URL = "https://api.deepseek.com" as const;
 export const EVENT_CENTERED_CANDIDATE_BASE_URL_HOST = "api.deepseek.com" as const;
 
@@ -19,7 +20,9 @@ export type EventCenteredCandidateConfigurationCode =
 
 export type EventCenteredCandidateProviderSummary = {
   provider: typeof EVENT_CENTERED_CANDIDATE_PROVIDER;
-  model: typeof EVENT_CENTERED_CANDIDATE_MODEL;
+  model:
+    | typeof EVENT_CENTERED_CANDIDATE_MODEL
+    | typeof EVENT_CENTERED_COMPLETE_RESPONSE_MODEL;
   baseUrlHost: typeof EVENT_CENTERED_CANDIDATE_BASE_URL_HOST;
 };
 
@@ -48,10 +51,21 @@ function normalizedProvider(env: NodeJS.ProcessEnv) {
   return env.AI_PROVIDER?.trim().replace(/^['"]|['"]$/g, "").toLowerCase() ?? "openai";
 }
 
+function completeResponseV16Requested(env: NodeJS.ProcessEnv) {
+  return env.INTERVIEW_EVENT_CENTERED_STRATEGY?.trim().toLowerCase() ===
+    "complete_response_v1_6";
+}
+
+function expectedEventCenteredModel(env: NodeJS.ProcessEnv) {
+  return completeResponseV16Requested(env)
+    ? EVENT_CENTERED_COMPLETE_RESPONSE_MODEL
+    : EVENT_CENTERED_CANDIDATE_MODEL;
+}
+
 function candidateRequested(env: NodeJS.ProcessEnv) {
   return getEventCenteredProductScope({
     INTERVIEW_EVENT_CENTERED_SCOPE: env.INTERVIEW_EVENT_CENTERED_SCOPE
-  }) === "thought_only" ||
+  }) === "thought_only" || completeResponseV16Requested(env) ||
     readEventCenteredGenerativeModel(env) !== null;
 }
 
@@ -72,8 +86,9 @@ export function resolveEventCenteredCandidateProviderConfig(
     );
   }
 
+  const expectedModel = expectedEventCenteredModel(env);
   const model = readEventCenteredGenerativeModel(env) ?? config.model;
-  if (model !== EVENT_CENTERED_CANDIDATE_MODEL) {
+  if (model !== expectedModel) {
     throw new EventCenteredCandidateConfigurationError(
       "EVENT_CENTERED_CANDIDATE_MODEL_MISMATCH"
     );
@@ -93,13 +108,13 @@ export function resolveEventCenteredCandidateProviderConfig(
     runtimeConfig: {
       provider: EVENT_CENTERED_CANDIDATE_PROVIDER,
       config: {
-        model: EVENT_CENTERED_CANDIDATE_MODEL,
+        model: expectedModel,
         baseUrl: EVENT_CENTERED_CANDIDATE_BASE_URL
       }
     } as const,
     summary: {
       provider: EVENT_CENTERED_CANDIDATE_PROVIDER,
-      model: EVENT_CENTERED_CANDIDATE_MODEL,
+      model: expectedModel,
       baseUrlHost: EVENT_CENTERED_CANDIDATE_BASE_URL_HOST
     } satisfies EventCenteredCandidateProviderSummary
   };

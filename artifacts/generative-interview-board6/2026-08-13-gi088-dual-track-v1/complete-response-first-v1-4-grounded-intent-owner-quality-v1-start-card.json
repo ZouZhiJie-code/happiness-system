@@ -1,0 +1,183 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner-quality-v1",
+  "status": "ready",
+  "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+  "candidateIdentity": {
+    "version": "2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner",
+    "parentProductionIdentity": "2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner-quality-v1",
+    "productionStrategyVersion": "2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner",
+    "runtime": {
+      "model": "deepseek-v4-pro",
+      "maxTokens": 1280,
+      "maxAttempts": 1,
+      "timeoutMs": 45000,
+      "thinking": "disabled",
+      "temperature": 0.2,
+      "responseFormat": null,
+      "reasoningEffort": null,
+      "callsPerCase": 1,
+      "recentTurnLimit": 8
+    },
+    "inputAdapter": "full_checkpoint_to_plain_visible_response_last_8_complete_turns_v1",
+    "visibleProjection": "provider_text_byte_preserving_single_bubble_v1",
+    "changedFactor": "intent_known_new_target_evidence_preflight_before_output",
+    "candidateFingerprint": "c8a022f8298d708ed22abb6a82c3cfefb260beca64c26a1e8e1f4fcd4f3cee7c"
+  },
+  "parentEvidence": {
+    "identity": "2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner-quality-v1",
+    "startSha256": "d88f2ef751f0182ce9aed0e576713ad2cbf9ac666dca600f45cfc54b2cb83434",
+    "receiptSha256": "484c41705c5cf2abd0906f804d372583e2fad6e581e19b19ef0ddb6b2e3e4790",
+    "stageLedgerSha256": "69dd67a39e7e52026d3036dd7102f19d2f89c2e05973f9d73f65088b123004ea",
+    "technicalCases": 8,
+    "contractValidCases": 6,
+    "multipleQuestionMarkGateCases": 2
+  },
+  "dataset": {
+    "version": "2026-08-19.gi088-complete-response-first-eight-full-context-v1",
+    "fingerprint": "1ea88517dfa6f5d8346929d4f80842427096c4d9f175ff6ce2129d2ebbd4eadd",
+    "sourceVersion": "2026-08-16.gi088-real-problem-regression-v1.2",
+    "sourceFingerprint": "cf04a7584d74bb7cabb235fc0cc001ac6953fb01a90364d5690284c927c85eb1",
+    "privacyLevel": "private_sensitive",
+    "developmentCount": 3,
+    "regressionCount": 5
+  },
+  "cases": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-01",
+      "split": "development",
+      "hardGate": false,
+      "sourceFingerprint": "bd813c06a6acbef1fe917f87af53d5464ef9c2317463dc86c2d060630f9bc23b",
+      "generationInputFingerprint": "c544b98e5f03765adc4829c6aacf56e3eab8988444f3414f9ad81fffe6f56cf3",
+      "requestFingerprint": "e9ed4e9811656cc7229f22ef6384d5bb9ca8770e8084c5ba69197d31f66882b1"
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-REAL-05",
+      "split": "development",
+      "hardGate": false,
+      "sourceFingerprint": "e202adf9abe595f6f5413543901397a3335b1a623bb2416f9e941d45432654e1",
+      "generationInputFingerprint": "b09c7a472e27ec05c384344b68a1b4a003aa6c0a618e8551ee11cd5ff2b1c997",
+      "requestFingerprint": "2e53bf8620a84bf45d18dfc4cbe0ff281bb8bd1da98f576194d1d392244a59d2"
+    },
+    {
+      "order": 3,
+      "caseId": "RPR-REAL-11",
+      "split": "development",
+      "hardGate": false,
+      "sourceFingerprint": "5d0e7754e534304896f2212c317b8db55691b4c062128b6f022be8fbc675339c",
+      "generationInputFingerprint": "1040d69bf440c72f3898fa3eab67fd5bc14ba3c5909ead0228aaef2e14f53415",
+      "requestFingerprint": "c6da84b991a5a258e9457b1eca34d4f9b4f774d2a3f16667e9abf5d011da8862"
+    },
+    {
+      "order": 4,
+      "caseId": "RPR-REAL-13",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "aa6d91e160f110fb00ad93ceb1b7cf5b89476d73a2c02d0ec088d470b13429f2",
+      "generationInputFingerprint": "9799767e2fd83d4c9ab2498971152bb7ea52f407be687233ddd43e204941bcd6",
+      "requestFingerprint": "d9743f68fd589f07e97bb0b297b2fff4175df0805b01e23151d0306d8ee71c53"
+    },
+    {
+      "order": 5,
+      "caseId": "RPR-REAL-22",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "f9e3f08f99516df9cba966f350b7c2d95a6c1a20c59ef24a458471f48343b943",
+      "generationInputFingerprint": "03e7c4eb3686b54dd0a41a65f3b561160abdf27ec0884634f285f5e4aee469c2",
+      "requestFingerprint": "1ec8ad6d6a81e732b3b19ad869a13b99219464826c56d4471b2283bd7ebd48e6"
+    },
+    {
+      "order": 6,
+      "caseId": "RPR-CF-03",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "ea1f6d699f46f4e71a585452e14a5ef2f3c5562741dd78ff9dce482b2090488e",
+      "generationInputFingerprint": "13654a258da7809d4dde55e33579e00362f2efc0f8c77e9fe4deebc8139984d8",
+      "requestFingerprint": "1802ad87e37c81cffd4b463ddfad4f2f0685ca3a05ba8f44751b3000aca446dd"
+    },
+    {
+      "order": 7,
+      "caseId": "RPR-REAL-21",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "caeb002aa3cb9e266059a98989ca6da3d1ab8e7d1ee20169c49c60a7d0a16e7c",
+      "generationInputFingerprint": "e3c3a76ad940c48c7607400f753b0bd54b2db51c56edaccad5833b310dc03c31",
+      "requestFingerprint": "6f66a1c159edb3efad15f1ca9c838b396f8bb86ead64a55aa51f81fc9337a6cd"
+    },
+    {
+      "order": 8,
+      "caseId": "RPR-REAL-19",
+      "split": "regression",
+      "hardGate": true,
+      "sourceFingerprint": "6385f5687671aabb0decfe3bcd3e9b81b2d58b8f5713e505f068b46d93137048",
+      "generationInputFingerprint": "95ad439517fddaa23e23b62481486aa1d6870bb741ae5d384915680cbfffc5fe",
+      "requestFingerprint": "4262fbe38441dd8315387d13e296eb899cec676abaec4f567bbc90b28b7ee1d0"
+    }
+  ],
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "maxTokens": 1280,
+    "maxAttempts": 1,
+    "timeoutMs": 45000,
+    "thinking": "disabled",
+    "temperature": 0.2,
+    "responseFormat": null,
+    "reasoningEffort": null,
+    "callsPerCase": 1,
+    "recentTurnLimit": 8,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "budget": {
+    "authorized": 8,
+    "development": 3,
+    "regression": 5,
+    "callsPerCase": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "stopPolicy": {
+    "ordinarySemanticQualityStopsCalls": false,
+    "ordinaryContractFailureStopsCalls": false,
+    "consecutiveTechnicalFailures": 2,
+    "severeProgramGateFailure": 1,
+    "severeProgramIssues": [
+      "VISIBLE_RESPONSE_INTERNAL_LANGUAGE_LEAK",
+      "VISIBLE_RESPONSE_STRUCTURED_WRAPPER_LEAK",
+      "EXPLICIT_STOP_STILL_OPEN",
+      "PRODUCTION_REQUEST_CONTRACT_MISMATCH"
+    ]
+  },
+  "publicBoundary": {
+    "startAndReceiptContainUserOrModelBody": false,
+    "onlyIdentifiersHashesMetricsAndSafeCodes": true
+  },
+  "inputHashes": {
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "executionPlanSha256": "adddafd96379fd7bf75a122b3c37df2542895f84ae6f23ffd6e68a5e66cf71c9",
+    "fixturesSha256": "4b668a3feee85c5020505e771e7194efcf078baf585950c8f2a70343222521b6",
+    "semanticCandidateSha256": "bd9a52cce22469e6079c3e55cf8b5156c24e55c9984fd6b99474c101d529b404",
+    "productionCandidateSha256": "50f3552d5159b7eedb544fd21393ce3a325b37b939354fa04d730adbcd23bfcb",
+    "completeResponseRuntimeSha256": "e4f7cf99e6aabe500140c8bea2166823de1a965134b1c9cd07d1cda48a179c3a",
+    "parentCompleteResponseRuntimeSha256": "08d8f44c903eef4e18f70f8c8e234bae5dc8b4ddb5bfd6876521b2e6449109ea",
+    "aiContractSha256": "545a7133ddbe365d2f714e9f3998f2d9dbd621540e6334dad43229e907666604",
+    "generativeStrategySha256": "ddd82f5251ed460148afdef630e41531408eb7d128c1c32fe9d51b809d756e38",
+    "aiServiceSha256": "1bcddf6a9a9c91934a7ca88973b2827c80ca6e758e8d246bf6b5377d7d703a01",
+    "releaseStrategySha256": "d189327413e34028efb67527893ae5f162d88ee2e234b8914427c6d549efd1ea",
+    "interviewServiceSha256": "f26d857d61cc31c43577ef75800285d451d0a8faa744aa0a23582744d7dba3fd",
+    "structuredOutputSha256": "9f0b5791a19a6d29d9e533f499d5ade0252c4dcd0b43be03133db135667c1c50",
+    "providerSha256": "932baf57ada773942695c9ec6cef5f7ae53eb93a8a296672f8cf566f465a3dc0",
+    "providerContractSha256": "8ee44101394828e1e34438fff50ee96cb9b4493f60d97b6e8a2310756843a523",
+    "parentStartSha256": "d88f2ef751f0182ce9aed0e576713ad2cbf9ac666dca600f45cfc54b2cb83434",
+    "parentReceiptSha256": "484c41705c5cf2abd0906f804d372583e2fad6e581e19b19ef0ddb6b2e3e4790",
+    "parentStageLedgerSha256": "69dd67a39e7e52026d3036dd7102f19d2f89c2e05973f9d73f65088b123004ea",
+    "packageSha256": "eaeddeb808a9d41fd9d4a1f208a47849caace478ec4bf5bc68f5209239213e81",
+    "runnerSha256": "7eb8ab50e6c77c86de161853fb56c2d1b56adb2b02568993f84b31db3af69a81"
+  },
+  "planFingerprint": "ece2a81622bc5bec4664afd22dda3939675d772485cce1c95671ae6210d08741"
+}

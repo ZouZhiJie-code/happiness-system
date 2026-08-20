@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage-quality-v1",
+  "planFingerprint": "c16f0089b70b4f108b9d5a58714ad2ac05c59a17d71d586653e559b46969b6e9",
+  "status": "codex_seven_pass_one_minor_awaiting_product_review",
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technical": {
+    "valid": 8,
+    "http200": 8,
+    "finishStop": 8,
+    "thinkingDisabled": 8,
+    "under15Seconds": 8,
+    "tokenCeilingTriggered": 0,
+    "medianLatencyMs": 2915,
+    "maxLatencyMs": 5152,
+    "maxCompletionTokens": 91
+  },
+  "quality": {
+    "codex": {
+      "pass": 7,
+      "minor": 1,
+      "fail": 0,
+      "reviewSha256": "9090aeabea4b154875253915222ed3931145aeb4a39f1c998c382906107e0146"
+    },
+    "productOwnerDecision": "pending",
+    "gatePassed": false
+  },
+  "next": {
+    "productReviewRequired": true,
+    "passPath": "new_identity_independent_stability_replay",
+    "minorOrFailPath": "reopen_model_capability_single_factor"
+  },
+  "release": {
+    "pageIntegration": "not_run",
+    "backgroundStateCall": "not_run",
+    "preview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deploy": "not_run",
+    "production": "event_centered_baseline"
+  }
+}
