@@ -15,6 +15,7 @@ import {
 } from "../src/server/services/evaluation/gi088/access";
 import { Gi088PrismaFoundationStore } from "../src/server/services/evaluation/gi088/foundation-prisma-store";
 import { Gi088EvaluationFoundationService } from "../src/server/services/evaluation/gi088/foundation-service";
+import type { Gi088EarlyStopReasonCode } from "../src/server/services/evaluation/gi088/types";
 
 const TARGET_RUN_ID = "b816d468-e3c3-4459-a822-04f95b1e78cd";
 const STOP_REASON = "evaluation_system_redesign_before_first_call" as const;
@@ -234,7 +235,8 @@ async function main() {
       await service.earlyStop({
         ownerUserId: before.ownerUserId,
         runId: TARGET_RUN_ID,
-        reasonCode: STOP_REASON,
+        // This fixed historical audit identity predates the normalized reason-code union.
+        reasonCode: STOP_REASON as Gi088EarlyStopReasonCode,
         reason: STOP_REASON,
         confirmation: true,
         clientOperationId:
@@ -246,9 +248,11 @@ async function main() {
         session: sessionBefore,
         counts: countsBefore
       });
+      const earlyStopBefore = sessionBefore.batch.earlyStop;
       if (
-        sessionBefore.batch.earlyStop?.reasonCode === STOP_REASON &&
-        sessionBefore.batch.earlyStop.reason === STOP_REASON
+        earlyStopBefore &&
+        String(earlyStopBefore.reasonCode) === STOP_REASON &&
+        earlyStopBefore.reason === STOP_REASON
       ) {
         disposition = "already_applied";
       } else {
@@ -268,9 +272,11 @@ async function main() {
 
     assertNoTargetRecordDeletion(countsBefore, countsAfter);
     const earlyStopAfter = sessionAfter.batch.earlyStop;
-    const exactRedesignReasonApplied =
-      earlyStopAfter?.reasonCode === STOP_REASON &&
-      earlyStopAfter.reason === STOP_REASON;
+    const exactRedesignReasonApplied = Boolean(
+      earlyStopAfter &&
+      String(earlyStopAfter.reasonCode) === STOP_REASON &&
+      earlyStopAfter.reason === STOP_REASON
+    );
     if (
       after.status !== "early_stopped" ||
       !after.sealedAt ||
