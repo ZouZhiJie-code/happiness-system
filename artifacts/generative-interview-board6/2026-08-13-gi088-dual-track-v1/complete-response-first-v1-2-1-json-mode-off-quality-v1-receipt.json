@@ -1,0 +1,517 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off-quality-v1",
+  "planFingerprint": "1eafcd2c6e7e7b25dc2c7a68fa6b4813be70c2dae99860c40be0b4d76495e6db",
+  "candidateFingerprint": "1b61f9eef1b612f87167c7b608b773b7a3fe77f695f929d53ca88bba4394f9a8",
+  "datasetFingerprint": "1ea88517dfa6f5d8346929d4f80842427096c4d9f175ff6ce2129d2ebbd4eadd",
+  "stages": {
+    "development": "complete",
+    "regression": "complete"
+  },
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "stopReason": null,
+  "medianLatencyMs": 5402,
+  "maxLatencyMs": 11488,
+  "results": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-01",
+      "split": "development",
+      "status": "contract_failure",
+      "requestFingerprint": "fb4fece1a92e37002ec246b957f67a75def755d1b6d66bd8f02c9f43bf4f56b8",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "INVALID_SCHEMA",
+        "PRIVATE_DETAIL_SHA256:4573f47ef6f807326a6efaa18808397ac1781c2d7266ee65d311802bca36f4f6",
+        "PRODUCTION_TURN_NULL",
+        "PRODUCTION_ENVELOPE_NULL",
+        "PRODUCTION_VISIBLE_RESPONSE_EMPTY"
+      ],
+      "errorCode": "INVALID_SCHEMA",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": null,
+        "factCount": 0,
+        "correctionKind": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 1
+      },
+      "totalLatencyMs": 5579,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 921,
+        "completionTokens": 202,
+        "totalTokens": 1123,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 281
+      }
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-REAL-05",
+      "split": "development",
+      "status": "contract_failure",
+      "requestFingerprint": "9987d386db513cc1a2c725a883dbd8bfc143208fbdeb2132ee45d41ad97d551f",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "INVALID_SCHEMA",
+        "PRIVATE_DETAIL_SHA256:4573f47ef6f807326a6efaa18808397ac1781c2d7266ee65d311802bca36f4f6",
+        "PRODUCTION_TURN_NULL",
+        "PRODUCTION_ENVELOPE_NULL",
+        "PRODUCTION_VISIBLE_RESPONSE_EMPTY"
+      ],
+      "errorCode": "INVALID_SCHEMA",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": null,
+        "factCount": 0,
+        "correctionKind": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 1
+      },
+      "totalLatencyMs": 4097,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 928,
+        "completionTokens": 191,
+        "totalTokens": 1119,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 288
+      }
+    },
+    {
+      "order": 3,
+      "caseId": "RPR-REAL-11",
+      "split": "development",
+      "status": "contract_failure",
+      "requestFingerprint": "eb749440c78aac7eb685d44c1522770b9fbca967fed84d932443944499e162fa",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "INVALID_SCHEMA",
+        "PRIVATE_DETAIL_SHA256:bdc4ad54628001113248ab42d796bad971fcee19aa959a380444e11ef44969e0",
+        "PRODUCTION_TURN_NULL",
+        "PRODUCTION_ENVELOPE_NULL",
+        "PRODUCTION_VISIBLE_RESPONSE_EMPTY"
+      ],
+      "errorCode": "INVALID_SCHEMA",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": null,
+        "factCount": 0,
+        "correctionKind": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 1
+      },
+      "totalLatencyMs": 3089,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 887,
+        "completionTokens": 131,
+        "totalTokens": 1018,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 247
+      }
+    },
+    {
+      "order": 4,
+      "caseId": "RPR-REAL-13",
+      "split": "regression",
+      "status": "contract_failure",
+      "requestFingerprint": "599b34537ca2d1d29cfd9999325aad7cb77a62275f3f0c9fd00dbf830012a6ef",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "INVALID_SCHEMA",
+        "PRIVATE_DETAIL_SHA256:4573f47ef6f807326a6efaa18808397ac1781c2d7266ee65d311802bca36f4f6",
+        "PRODUCTION_TURN_NULL",
+        "PRODUCTION_ENVELOPE_NULL",
+        "PRODUCTION_VISIBLE_RESPONSE_EMPTY"
+      ],
+      "errorCode": "INVALID_SCHEMA",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": null,
+        "factCount": 0,
+        "correctionKind": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 0
+      },
+      "totalLatencyMs": 5225,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 850,
+        "completionTokens": 218,
+        "totalTokens": 1068,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 210
+      }
+    },
+    {
+      "order": 5,
+      "caseId": "RPR-REAL-22",
+      "split": "regression",
+      "status": "contract_failure",
+      "requestFingerprint": "e2abe8ba04724e22024dd5bf834604634daf658516606fcdbb18a9f61d3101dd",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "INVALID_SCHEMA",
+        "PRIVATE_DETAIL_SHA256:4573f47ef6f807326a6efaa18808397ac1781c2d7266ee65d311802bca36f4f6",
+        "PRODUCTION_TURN_NULL",
+        "PRODUCTION_ENVELOPE_NULL",
+        "PRODUCTION_VISIBLE_RESPONSE_EMPTY"
+      ],
+      "errorCode": "INVALID_SCHEMA",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": null,
+        "factCount": 0,
+        "correctionKind": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 0
+      },
+      "totalLatencyMs": 6662,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 880,
+        "completionTokens": 303,
+        "totalTokens": 1183,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 240
+      }
+    },
+    {
+      "order": 6,
+      "caseId": "RPR-CF-03",
+      "split": "regression",
+      "status": "contract_failure",
+      "requestFingerprint": "e7c39f21fd2c349639b07b9026ff2b66d0544b3ee859033fe1a41cd797667509",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "INVALID_SCHEMA",
+        "PRIVATE_DETAIL_SHA256:7661db2a8b0b93d3710a001332f328e830d90acaff764ef26c636d78d97137f0",
+        "PRODUCTION_TURN_NULL",
+        "PRODUCTION_ENVELOPE_NULL",
+        "PRODUCTION_VISIBLE_RESPONSE_EMPTY"
+      ],
+      "errorCode": "INVALID_SCHEMA",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": null,
+        "factCount": 0,
+        "correctionKind": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 0
+      },
+      "totalLatencyMs": 3810,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 840,
+        "completionTokens": 168,
+        "totalTokens": 1008,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 200
+      }
+    },
+    {
+      "order": 7,
+      "caseId": "RPR-REAL-21",
+      "split": "regression",
+      "status": "contract_failure",
+      "requestFingerprint": "9e4dbaab994a1f93c149dcdf1f617a99bb41df106f84dc721a908930e6861093",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "INVALID_SCHEMA",
+        "PRIVATE_DETAIL_SHA256:7661db2a8b0b93d3710a001332f328e830d90acaff764ef26c636d78d97137f0",
+        "PRODUCTION_TURN_NULL",
+        "PRODUCTION_ENVELOPE_NULL",
+        "PRODUCTION_VISIBLE_RESPONSE_EMPTY"
+      ],
+      "errorCode": "INVALID_SCHEMA",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": null,
+        "factCount": 0,
+        "correctionKind": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 7
+      },
+      "totalLatencyMs": 11488,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 1714,
+        "completionTokens": 542,
+        "totalTokens": 2256,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 1074
+      }
+    },
+    {
+      "order": 8,
+      "caseId": "RPR-REAL-19",
+      "split": "regression",
+      "status": "contract_failure",
+      "requestFingerprint": "02257e563e0091673e120067862bd382a7a6437ec23c5d6781275697df8d9a65",
+      "responseHash": null,
+      "validationIssueCodes": [
+        "INVALID_SCHEMA",
+        "PRIVATE_DETAIL_SHA256:4573f47ef6f807326a6efaa18808397ac1781c2d7266ee65d311802bca36f4f6",
+        "PRODUCTION_TURN_NULL",
+        "PRODUCTION_ENVELOPE_NULL",
+        "PRODUCTION_VISIBLE_RESPONSE_EMPTY"
+      ],
+      "errorCode": "INVALID_SCHEMA",
+      "technicalGatePassed": false,
+      "severeProgramGateFailed": false,
+      "requestContract": {
+        "temperature": 0.2,
+        "maxTokens": 1280,
+        "timeoutMs": 45000,
+        "responseFormat": null,
+        "thinking": "disabled",
+        "reasoningEffortPresent": false
+      },
+      "technicalChecks": {
+        "oneProviderCall": true,
+        "oneCallArchitecture": true,
+        "targetModel": true,
+        "finishStop": true,
+        "finishLength": false,
+        "nonEmpty": false,
+        "noInternalLeak": true,
+        "thinkingDisabled": true,
+        "reasoningEffortAbsent": true,
+        "maxTokens1280": true,
+        "hardTimeout45s": true,
+        "single15sTargetPassed": true
+      },
+      "observation": {
+        "interaction": null,
+        "factCount": 0,
+        "correctionKind": null,
+        "visibleCharacterCount": 0,
+        "paragraphCount": 0,
+        "questionMarkCount": 0,
+        "visibleHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+        "recentTurnCount": 3
+      },
+      "totalLatencyMs": 6040,
+      "finishReason": "stop",
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200,
+      "tokenUsage": {
+        "promptTokens": 1264,
+        "completionTokens": 244,
+        "totalTokens": 1508,
+        "promptCacheHitTokens": 640,
+        "promptCacheMissTokens": 624
+      }
+    }
+  ],
+  "privateBoundary": {
+    "publicReceiptContainsUserOrModelBody": false,
+    "rawInputsOutputsAndReviews": "git_ignored_private_directory"
+  }
+}

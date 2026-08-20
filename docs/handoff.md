@@ -7,9 +7,9 @@
 
 ## 1. 当前交接结论
 
-GI-088 已进入[完整回应优先 v1.2.1 JSON 模式单因素验证](./plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md)。父 v1.2 已完成 `8/8` 调用：八题均 HTTP 200、`finishReason=stop`、低于 15 秒且未触发 Token 上限，中位 `3497.5ms`、最长 `6376ms`；`4/8` 通过最小合同，另 `4/8` 收到非空但不完整的 JSON，均报 `Unexpected end of JSON input`，因此 v1.2 技术 No-Go。
+GI-088 已进入[完整回应优先 v1.3 纯文本可见负责人](./plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md)。父 v1.2.1 已完成 `8/8` 调用：八题均 HTTP 200、`finishReason=stop`、正文非空、低于 15 秒且未触发 Token 上限，中位 `5402ms`、最长 `11488ms`；合同有效 `0/8`。六条缺少完整顶层 `response` 结构，另外两条混写自然语言或放错 `correction` 层级，因此 v1.2.1 技术 No-Go。
 
-v1.2.1 只改变一个行为因素：Provider 请求省略 `response_format=json_object`。模型仍按同一 Prompt 生成同一严格 JSON，本地继续使用同一 Schema、投影与质量门；模型、Thinking、Temperature、`1280` Token、同一八题、速度门、单气泡与原子提交保持固定。新预算为 `8` 次，隔离策略为 `complete_response_v1_2_1`。解析失败时保存原始响应只增强私有诊断，不改变候选行为。Production 在产品负责人页面验收前继续使用 `event_centered + baseline`。
+v1.3 让首个调用只生成一至两个短段落的纯文本完整回应，继续使用 v1.1 的“先选择未答新信息目标”方法。程序保存用户原话并校验中文、段落、内部词泄漏、一个问题或零问题、明确停止；后台状态整理退出首屏关键路径，后续最多使用一次独立调用。模型、Thinking、Temperature、`1280` Token、同一八题和速度门保持固定。新预算为 `8` 次，隔离策略为 `complete_response_v1_3`。Production 在产品负责人页面验收前继续使用 `event_centered + baseline`。
 
 GI-088 完整回应优先 v1.1 已完成。运行身份 `2026-08-19.gi088-complete-response-first-v1-1-quality-v1` 按 `3` 条开发题＋`5` 条冻结回归题消费 `8/8`；八题均为 `technical_valid / stop`，中位耗时 `3406ms`、最长 `4621ms`，`1280` Token 上限未触发截断。重试、恢复和回退均为 `0`。
 
@@ -17,7 +17,7 @@ Codex 原文初评为 `7 pass / 1 minor / 0 fail`。唯一 minor 是硬门长上
 
 v1.1 候选身份为 `2026-08-19.gi088-complete-response-first-v1-1-new-information-target`。唯一变化是生成完整回应前先选择一项完整原文尚未回答、会带来实际新进展的信息目标；继续或深挖进入新层，负担但未停止时提供低负担入口，每轮最多一处有依据且可纠正的解释与一个主问题。
 
-当前先完成 v1.2.1 同一 `3＋5` 八题技术稳定性验证；达到 `8/8` 合同有效后，按“完整相关原文 → 实际 AI 输出 → Codex 初评”交付八题，等待产品负责人逐题裁决。页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 继续使用 `event_centered + baseline`。
+当前先完成 v1.3 同一 `3＋5` 八题纯文本复验；达到 `8/8` 技术有效后，按“完整相关原文 → 实际 AI 输出 → Codex 初评”交付八题，等待产品负责人逐题裁决。页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 继续使用 `event_centered + baseline`。
 
 v2.9 候选身份为 `2026-08-19.gi088-response-first-v2-9-separated-open-gap-high`，运行族为 `2026-08-19.gi088-response-first-v2-9-two-turn-causal-quality-v1`。本轮只处理一个概念根因：把用户原文已经支持的认识与仍待共同弄清的开放目标分开，并在生成问题前完成当前分支全部用户消息的覆盖判断。
 
@@ -267,14 +267,14 @@ v1.1 离线批次已经完成，当前停止在产品负责人八题原文复核
 
 ## 6. 下一会话阅读顺序
 
-1. [完整回应优先 v1.2.1 JSON 模式单因素验证](./plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md)
+1. [完整回应优先 v1.3 纯文本可见负责人](./plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md)
 2. [AGENTS.md](../AGENTS.md)
 3. [项目知识导航](./README.md)
 4. 涉及生成式访谈状态时读取[生成式访谈重构总 Map](./generative-interview-refactor-map.md)
 5. 涉及评测规则时读取[AI 评测总规范](./ai-evaluation-standard.md)和当前专项
 6. 需要核对历史根因时读取[GI-088 全链路复盘](./retrospectives/2026-08-10-gi088-end-to-end-iteration-retrospective.md)
 7. 最后读取当前专项明确链接的[证据包](../artifacts/README.md)
-8. 需要核对本轮父结果时读取[v1.2 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md)，需要核对对话方法时读取[完整回应优先 v1.1 新信息目标](./plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md)
+8. 需要核对本轮父结果时读取[v1.2.1 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-handoff.md)，需要核对对话方法时读取[完整回应优先 v1.1 新信息目标](./plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md)
 
 ## 7. 稳定合同入口
 

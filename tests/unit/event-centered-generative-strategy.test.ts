@@ -15,11 +15,23 @@ import { GENERATIVE_MVP_SMOKE_CASES } from "@/features/interview/event-centered/
 import {
   getEventCenteredStrategyMode,
   isCompleteResponseFirstEventCenteredStrategyEnabled,
+  isCompleteResponseFirstV121EventCenteredStrategyEnabled,
   isCompleteResponseFirstV12EventCenteredStrategyEnabled,
   isGenerativeEventCenteredStrategyEnabled
 } from "@/features/interview/event-centered/generative-release";
 
 describe("event-centered generative strategy assets", () => {
+  it("v1.2.1 只在显式隔离策略下开启", () => {
+    const mode = getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "complete_response_v1_2_1"
+    });
+    expect(mode).toBe("complete_response_v1_2_1");
+    expect(isGenerativeEventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV121EventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV12EventCenteredStrategyEnabled(mode)).toBe(false);
+    expect(isCompleteResponseFirstEventCenteredStrategyEnabled(mode)).toBe(false);
+  });
+
   it("每个角度与模式注入 ask、用户成果、AI 综合和典型失败四个真实质量示例", () => {
     expect(EVENT_CENTERED_FEW_SHOT_EXAMPLES).toHaveLength(32);
     for (const angle of ["feeling", "thought", "relationship", "action"] as const) {

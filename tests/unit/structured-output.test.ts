@@ -70,6 +70,35 @@ describe("structured output", () => {
     expect(attempts).toEqual(["mock-provider:false:INVALID_SCHEMA", "mock-provider:false:INVALID_SCHEMA"]);
   });
 
+  it("解析失败时保留 Provider 原始正文和实际技术指标", async () => {
+    const attempts: Array<{
+      errorCode: string | null;
+      responseText: string | null | undefined;
+      latencyMs: number | null;
+    }> = [];
+    const result = await completeStructuredOutput({
+      provider: createProvider(['{"value":"没有结束']),
+      stage: "generate",
+      schema: responseSchema,
+      messages: [],
+      maxAttempts: 1,
+      onAttempt: (attempt) => {
+        attempts.push({
+          errorCode: attempt.errorCode,
+          responseText: attempt.responseText,
+          latencyMs: attempt.latencyMs
+        });
+      }
+    });
+
+    expect(result).toBeNull();
+    expect(attempts).toEqual([{
+      errorCode: "INVALID_JSON",
+      responseText: '{"value":"没有结束',
+      latencyMs: 12
+    }]);
+  });
+
   it("surfaces the upstream provider error code when the provider returns a structured http failure", async () => {
     const attempts: string[] = [];
     const provider: AIProvider = {

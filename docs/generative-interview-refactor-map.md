@@ -7,15 +7,15 @@
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 完整回应优先 v1.2 运行 8/8、4/8 合同有效，JSON 传输技术 No-Go；v1.2.1 JSON 模式单因素验证实施中；Production baseline`
+当前讨论位置：`GI-088 完整回应优先 v1.2.1 运行 8/8、合同有效 0/8，结构化首调技术 No-Go；v1.3 纯文本可见负责人实施中；Production baseline`
 
-下一建议板块：`完成 v1.2.1 同一 3＋5 复验；技术与质量门通过后部署隔离 Preview 交付真实页面验收`
+下一建议板块：`完成 v1.3 同一 3＋5 纯文本复验；质量门通过后接入后台状态并部署隔离 Preview`
 
-当前专项：[完整回应优先 v1.2.1 JSON 模式单因素验证](./plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md)
+当前专项：[完整回应优先 v1.3 纯文本可见负责人](./plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md)
 
 Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 
-本次同步范围：`封存 v1.2 运行 8/8、4/8 合同有效及 JSON 传输 No-Go；新增 v1.2.1 单因素、8 次预算与 Preview 停止门`
+本次同步范围：`封存 v1.2.1 运行 8/8、合同有效 0/8 及结构 No-Go；新增 v1.3 纯文本首调、8 次预算与页面停止门`
 
 网页端实现同步：第二轮验收基线已于 `2026-08-13` 发布 Production，项目主链使用 `event_centered + baseline`；GI-088 真人评测、模型质量裁决和生成式能力发布继续沿本 Map 的既有流程推进。
 
@@ -23,7 +23,22 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 
 工作方法状态：[`生成式访谈 AI 产品工作方法 v1.0`](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)为`已冻结`；产品负责人已于 `2026-08-06` 独立确认
 
-## 2026-08-20｜GI-088 完整回应优先 v1.2.1 JSON 模式单因素实施卡
+## 2026-08-20｜GI-088 完整回应优先 v1.3 纯文本可见负责人实施卡
+
+| 项目 | 本轮确认值 |
+|---|---|
+| 当前专项 | [完整回应优先 v1.3 纯文本可见负责人](./plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md) |
+| 父证据 | v1.2.1 调用 `8/8`；全部 HTTP 200／stop、正文非空、低于 15 秒且未截断；合同 `0/8`，结构化首调技术 No-Go |
+| 架构选择 | 首个调用只生成一至两个短段落的纯文本完整回应；后台状态整理退出首屏关键路径，后续最多一次独立调用 |
+| 隔离策略 | `INTERVIEW_EVENT_CENTERED_STRATEGY=complete_response_v1_3`；Production 保持 `event_centered + baseline` |
+| 固定因素 | v1.1 未答新信息目标方法、完整上下文、`deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`maxTokens=1280`、一次尝试、45 秒 |
+| 预算与停止门 | 新预算 `0/8`；普通语义问题完成整批；严重泄漏、忽略停止／纠正、连续技术失败或预算失控时停止 |
+| 当前状态 | `已确认·实施中`；实现、八题结果、页面、Preview 与发布待验证 |
+| 发布边界 | 离线质量通过后接入后台状态和页面；产品负责人页面验收通过后切换 Production，并保留 baseline 回退 |
+
+v1.2.1 No-Go 证据见[结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-handoff.md)、[回执](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-receipt.json)和[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-stage-ledger-v1.json)。
+
+## 2026-08-20｜GI-088 完整回应优先 v1.2.1 JSON 模式单因素结果卡
 
 | 项目 | 本轮确认值 |
 |---|---|
@@ -32,9 +47,10 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 | 唯一变化 | Provider 请求省略 `response_format=json_object`；模型仍按同一 Prompt 输出同一严格 JSON，本地继续使用同一 Schema 与投影 |
 | 隔离策略 | `INTERVIEW_EVENT_CENTERED_STRATEGY=complete_response_v1_2_1`；Production 保持 `event_centered + baseline` |
 | 固定因素 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`maxTokens=1280`、一次尝试、45 秒、同一 `3＋5` 与单气泡原子提交 |
-| 预算与停止门 | 新预算 `0/8`；连续两次技术失败、严重泄漏、忽略停止／纠正或预算失控时停止；技术稳定后整批原文评审 |
-| 当前状态 | `已确认·实施中`；实现、八题结果、页面、Preview 与发布待验证 |
-| 发布边界 | 产品负责人页面验收通过前保持 Production baseline；通过后按已授权范围部署并验证回退 |
+| 预算与停止门 | 实际消费 `8/8`；重试、恢复、回退 `0`；整批因合同 `0/8` 结束 |
+| 实际结果 | `8/8` HTTP 200／stop、正文非空；合同 `0/8`，全部 `INVALID_SCHEMA`；中位 `5402ms`、最长 `11488ms`，最高 completion `542/1280` |
+| 当前状态 | `No-Go`；关闭 Provider JSON 模式未恢复结构稳定性，由 v1.3 纯文本首调接续 |
+| 发布边界 | 页面、Preview 和 Production 变更均未进入；Production baseline |
 
 v1.2 No-Go 证据见[结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md)、[回执](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-receipt.json)和[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-stage-ledger-v1.json)。
 

@@ -7,9 +7,9 @@
 
 产品决策状态：`当前运行合同 v1 已确认；继承 GI-067 / GI-068～080 冻结结论；GI-081～088 的旧候选、结果和运行身份只承担历史证据职责`
 
-落地验证状态：`v1.2 运行 8/8、4/8 合同有效，JSON 传输技术 No-Go；v1.2.1 JSON 模式单因素已确认·实施中；Production baseline`
+落地验证状态：`v1.2.1 运行 8/8、合同有效 0/8，结构化首调技术 No-Go；v1.3 纯文本可见负责人已确认·实施中；Production baseline`
 
-Production：`项目主链保持 event_centered + baseline；隔离 complete_response_v1_2_1 合同、接入与 Preview 待验证`
+Production：`项目主链保持 event_centered + baseline；隔离 complete_response_v1_3 合同、接入与 Preview 待验证`
 
 工作方法：[生成式访谈 AI 产品工作方法 v1.0](./00-generative-interview-ai-product-working-method.md)（`已冻结`）
 
@@ -25,7 +25,20 @@ Production：`项目主链保持 event_centered + baseline；隔离 complete_res
 
 > 本文是生成式访谈实现层的唯一当前入口。当前职责和现行规则只在这里维护；总 Map、Handoff、评测文档和问题台账只保存状态、证据与本页链接。GI-081～088 的诊断过程统一归入历史证据。
 
-## 完整回应优先 v1.2.1 JSON 模式单因素卡｜2026-08-20
+## 完整回应优先 v1.3 纯文本可见负责人卡｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 接入身份 | `2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner` |
+| 当前专项 | [v1.3 纯文本可见负责人](../../plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md) |
+| 父结果 | v1.2.1 调用 `8/8`，全部 HTTP 200／stop、正文非空且未截断；合同 `0/8`，结构化首调技术 No-Go |
+| 可见责任 | 首个调用只输出一至两个短段落的完整中文回应；自然承接后选择未答新层、低负担入口或自然停止；最多一个问题 |
+| 程序责任 | 保存原话；校验中文、段落、内部词泄漏、问号和停止；从纯文本确定一个问题或零问题 |
+| 后台状态 | 最多一次独立调用；只整理事实、纠正和开放方向，失败不阻断、不追加、不改写可见回应 |
+| 运行配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、一次尝试、45 秒硬门 |
+| 当前状态 | `已确认·实施中`；新预算 `0/8`，结果、页面、Preview 与发布待验证，Production baseline |
+
+## 完整回应优先 v1.2.1 JSON 模式单因素结果卡｜2026-08-20
 
 | 项目 | 当前合同 |
 |---|---|
@@ -34,8 +47,9 @@ Production：`项目主链保持 event_centered + baseline；隔离 complete_res
 | 父结果 | v1.2 调用 `8/8`，全部 HTTP 200／stop、低于 15 秒且未触发 Token 上限；合同 `4/8` 有效，另 `4/8` 收到非空但不完整的 JSON，技术 No-Go |
 | 唯一变化 | Provider 请求省略 `response_format=json_object`；模型输出 Schema、本地解析与状态投影保持固定 |
 | 运行配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、一次尝试、45 秒硬门 |
-| 质量门 | 同一 `3＋5` 新预算 `0/8`；达到 `8/8` 技术与合同有效后，逐题展示完整原文和实际输出 |
-| 当前状态 | `已确认·实施中`；结果、页面、Preview 与发布待验证，Production baseline |
+| 预算与质量门 | 同一 `3＋5` 实际消费 `8/8`；合同 `0/8`，未进入逐题语义评审 |
+| 实际结果 | `8/8` HTTP 200／stop、正文非空；合同 `0/8`，全部 `INVALID_SCHEMA`；中位 `5402ms`、最长 `11488ms` |
+| 当前状态 | `No-Go`；由 v1.3 纯文本首调接续，Preview 未进入，Production baseline |
 
 ## 完整回应优先 v1.2 最小生产合同结果卡｜2026-08-20
 

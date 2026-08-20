@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v89",
-  "status": "complete_response_first_v1_2_1_json_mode_off_in_progress",
-  "currentQueueStage": "complete_response_first_v1_2_1_transport_stability",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v90",
+  "status": "complete_response_first_v1_3_visible_text_owner_in_progress",
+  "currentQueueStage": "complete_response_first_v1_3_visible_quality",
   "semanticQualityDecisionPresentation": {
     "status": "product_owner_confirmed",
     "productJudgment": "每个语义质量判断先逐例展示与判断直接相关的用户输入和 AI 实际输出；Codex 只作初评，产品负责人基于原文作最终裁决。",
@@ -151,19 +151,19 @@
     "stopPoint": "v1_2_no_go_v1_2_1_json_mode_single_factor_confirmed"
   },
   "completeResponseFirstV121": {
-    "status": "confirmed_in_progress_results_pending",
-    "confirmedFact": "父 v1.2 已证明八题速度、HTTP、finishReason、Thinking 和 Token 均稳定，但 4/8 JSON 解析失败。",
-    "productJudgment": "继续执行到可页面验收水平；本轮授权覆盖同一八题 8 次调用，语义裁决继续基于完整原文和实际输出。",
-    "codexAssessment": "唯一行为变化是取消 Provider response_format=json_object；Prompt、Schema、模型、Thinking、Temperature、Token、输入和本地严格校验保持固定。解析失败原文进入 0600 私有诊断。",
+    "status": "no_go_all_eight_invalid_schema",
+    "confirmedFact": "v1.2.1 已完成同一八题 8/8。八次均 HTTP 200、finishReason=stop、Thinking 关闭、正文非空、低于 15 秒且未触发 Token 上限；中位 5402ms、最长 11488ms、最高 completion 542/1280。合同有效 0/8，全部为 INVALID_SCHEMA。",
+    "productJudgment": "继续执行到可页面验收水平；首个可见调用改为纯文本完整回应，后台状态退出首屏关键路径。语义裁决继续基于完整原文和实际输出。",
+    "codexAssessment": "省略 Provider JSON 模式后，8/8 都收到正文，但模型仍漏掉顶层字段、混写自然语言或放错 correction 层级。JSON 模式单因素未解决结构稳定性，继续修补可见调用的 JSON 价值不足。",
     "openHypotheses": [
-      "Provider JSON 模式是否是四次 Unexpected end 的主要触发因素。",
-      "省略 API JSON 模式后，模型能否仍稳定遵循同一最小 JSON Schema。"
+      "纯文本首个调用能否恢复 v1.1 的完整返回和质量方向。",
+      "后台状态调用退出首屏后，是否能在不阻断用户体验的前提下支持连续回合。"
     ],
     "execution": {
       "candidate": "2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off",
       "strategy": "complete_response_v1_2_1",
       "callsAuthorized": 8,
-      "callsConsumed": 0,
+      "callsConsumed": 8,
       "concurrency": 1,
       "retries": 0,
       "recoveryCalls": 0,
@@ -174,9 +174,41 @@
     "evidence": {
       "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md",
       "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-receipt.json",
-      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md"
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-stage-ledger-v1.json"
     },
-    "stopPoint": "eight_case_transport_and_quality_gate_before_preview"
+    "stopPoint": "v1_2_1_no_go_superseded_by_v1_3_visible_text_owner"
+  },
+  "completeResponseFirstV13": {
+    "status": "confirmed_in_progress_results_pending",
+    "confirmedFact": "v1.1 纯文本方法曾实现 8/8 完整返回并获 Codex 7 pass / 1 minor / 0 fail；v1.2 与 v1.2.1 共 16 次结构化首调暴露持续结构不稳定。",
+    "productJudgment": "继续优化到页面可验收和验收后可发布水平；首个可见调用只负责纯文本完整回应，每个语义判断继续展示原文与实际输出。",
+    "codexAssessment": "用户体验的关键路径只保留一条纯文本完整回应；程序只判断停止、问号、隐私、预算和写入，后台状态调用随后独立接入。",
+    "openHypotheses": [
+      "同一方法改为生产纯文本后能否达到 8/8 技术有效和离线质量门。",
+      "单气泡纯文本能否在约 5 秒内同时完成承接与推进。"
+    ],
+    "execution": {
+      "candidate": "2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner",
+      "strategy": "complete_response_v1_3",
+      "callsAuthorized": 8,
+      "callsConsumed": 0,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md",
+      "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-receipt.json",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-handoff.md"
+    },
+    "stopPoint": "eight_case_visible_quality_gate_before_page_integration"
   },
   "responseFirstV29": {
     "status": "correction_gate_product_pass_continuation_product_fail_no_go",

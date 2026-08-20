@@ -39,4 +39,3 @@ v1.2 已经把模型输出从旧完整事件状态收缩为“完整回应＋互
 - [公开回执](./complete-response-first-v1-2-production-contract-quality-v1-receipt.json)
 - [阶段账](./complete-response-first-v1-2-production-contract-stage-ledger-v1.json)
 - [v1.2 执行计划](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md)
-

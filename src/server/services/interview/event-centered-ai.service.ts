@@ -56,6 +56,16 @@ import {
   validateEventCenteredCompleteResponseFirstV12Output,
   type EventCenteredCompleteResponseFirstV12Output
 } from "@/features/interview/event-centered/complete-response-first-v1-2";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_PROMPT_VERSION,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_VERSION,
+  buildEventCenteredCompleteResponseFirstV121Messages,
+  eventCenteredCompleteResponseFirstV121OutputSchema,
+  projectEventCenteredCompleteResponseFirstV121Turn,
+  validateEventCenteredCompleteResponseFirstV121Output,
+  type EventCenteredCompleteResponseFirstV121Output
+} from "@/features/interview/event-centered/complete-response-first-v1-2-1";
 import { isEventCenteredThoughtOnlyScope } from "@/features/interview/event-centered-release";
 import { createPromptEnvelope } from "@/features/ai-quality/prompt-manifest";
 import type { AIProvider } from "@/server/services/ai/ai-provider";
@@ -4067,6 +4077,101 @@ export async function generateEventCenteredCompleteResponseV12AI(
     validationIssues: [],
     qualityDiagnostics: [],
     strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_VERSION,
+    angleCardVersion: EVENT_CENTERED_ANGLE_CARD_VERSION,
+    fewShotVersion: EVENT_CENTERED_FEW_SHOT_VERSION,
+    fewShotIds: [],
+    architecture: "one_call",
+    completeResponseText: output.response,
+    completeResponseEnvelope: output
+  };
+}
+
+/** v1.2.1 保持同一 Prompt 与严格 Schema，只省略 Provider JSON 模式。 */
+export async function generateEventCenteredCompleteResponseV121AI(
+  input: EventCenteredGenerativeGenerationInput
+): Promise<EventCenteredGenerativeGenerationResult> {
+  const provider = input.provider === undefined
+    ? await getEventCenteredAIProvider()
+    : input.provider;
+  const attempts: StructuredOutputAttempt[] = [];
+  const messages = buildEventCenteredCompleteResponseFirstV121Messages(input);
+  const envelope = createPromptEnvelope({
+    promptKey: "interview.event_centered.complete_response_first_v1_2_1",
+    promptVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_PROMPT_VERSION,
+    messages
+  });
+  const promptLineage = [{
+    promptKey: envelope.promptKey,
+    promptVersion: envelope.promptVersion,
+    resolvedPromptHash: envelope.resolvedPromptHash
+  }];
+  const output = await completeStructuredOutput<EventCenteredCompleteResponseFirstV121Output>({
+    provider,
+    stage: "question",
+    schema: eventCenteredCompleteResponseFirstV121OutputSchema,
+    messages: envelope.messages,
+    temperature: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.temperature,
+    maxTokens: input.maxTokens ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.maxTokens,
+    maxAttempts: input.maxAttempts ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.maxAttempts,
+    timeoutMs: input.timeoutMs ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.timeoutMs,
+    thinking: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_RUNTIME.thinking,
+    signal: input.signal,
+    onAttempt: (attempt) => {
+      attempts.push(attempt);
+    }
+  });
+
+  if (!output) {
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues: attemptIssues(attempts),
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_VERSION
+    });
+  }
+
+  const validationIssues = validateEventCenteredCompleteResponseFirstV121Output({
+    generationInput: input,
+    output
+  });
+  if (validationIssues.length > 0) {
+    for (let index = attempts.length - 1; index >= 0; index -= 1) {
+      const attempt = attempts[index];
+      if (!attempt?.success) continue;
+      attempts[index] = {
+        ...attempt,
+        success: false,
+        errorCode: "OUTPUT_VALIDATION_FAILED",
+        errorMessage: validationIssues.join(";")
+      };
+      break;
+    }
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues,
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_VERSION
+    });
+  }
+
+  return {
+    turn: projectEventCenteredCompleteResponseFirstV121Turn({
+      generationInput: input,
+      output
+    }),
+    semanticArtifact: null,
+    outputOrigin: "llm",
+    attempts,
+    promptLineage,
+    validationIssues: [],
+    qualityDiagnostics: [],
+    strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_1_VERSION,
     angleCardVersion: EVENT_CENTERED_ANGLE_CARD_VERSION,
     fewShotVersion: EVENT_CENTERED_FEW_SHOT_VERSION,
     fewShotIds: [],

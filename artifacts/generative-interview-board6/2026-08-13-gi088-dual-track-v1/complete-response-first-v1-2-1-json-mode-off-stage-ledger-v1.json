@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off-quality-v1",
+  "planFingerprint": "1eafcd2c6e7e7b25dc2c7a68fa6b4813be70c2dae99860c40be0b4d76495e6db",
+  "status": "no_go",
+  "budget": {
+    "authorized": 8,
+    "consumed": 8,
+    "completed": 8,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technical": {
+    "http200": 8,
+    "finishStop": 8,
+    "thinkingDisabled": 8,
+    "nonEmptyProviderBody": 8,
+    "tokenCeilingTriggered": 0,
+    "medianLatencyMs": 5402,
+    "maxLatencyMs": 11488,
+    "maxCompletionTokens": 542
+  },
+  "contract": {
+    "valid": 0,
+    "failed": 8,
+    "invalidSchema": 8,
+    "missingTopLevelResponseShape": 6
+  },
+  "quality": {
+    "codexDecision": "not_reviewed_due_to_contract_instability",
+    "productOwnerDecision": "not_requested",
+    "reason": "eight_provider_bodies_preserved_privately_but_zero_entered_visible_contract"
+  },
+  "next": {
+    "candidate": "2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner",
+    "changedFactor": "visible_call_structured_json_to_plain_text",
+    "status": "confirmed_in_progress",
+    "budgetAuthorized": 8
+  },
+  "release": {
+    "pageDeployment": "not_run",
+    "preview": "not_run",
+    "production": "event_centered_baseline"
+  }
+}

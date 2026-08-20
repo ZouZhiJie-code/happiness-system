@@ -22,7 +22,7 @@
 - Production 正式域名为 `https://dailylight.chat`；`2026-08-16` 已验证公开首页返回 `200`。
 - 仓库当前批准的 Production 主链为 `event_centered + baseline`；生成式访谈能力继续关闭。
 - 网页端用户路径为 `访谈记录 → 当天时间线事件卡片 → 今日日记`。
-- GI-088 完整回应优先 v1.2 已完成 `8/8`，八次均 HTTP 200／stop、低于 15 秒且未触发 Token 上限；`4/8` 合同有效，另 `4/8` 的非空 JSON 正文不完整并报 `Unexpected end of JSON input`，形成技术 No-Go。当前进入 v1.2.1 单因素验证，只取消 Provider JSON 模式；新预算 `0/8`、结果待验证；Production 保持 `event_centered + baseline`。
+- GI-088 完整回应优先 v1.2.1 已完成 `8/8`，八次均 HTTP 200／stop、正文非空、低于 15 秒且未触发 Token 上限；合同有效 `0/8`，关闭 Provider JSON 模式仍无法稳定生成最小结构。当前进入 v1.3 纯文本可见负责人，新预算 `0/8`、结果待验证；Production 保持 `event_centered + baseline`。
 - 文档治理两阶段及授权清理已经完成；[最终治理记录](./maintenance/2026-08-16-document-governance-cleanup-preview.md)保留全量台账、清理结果和仍受保护的独立成果。
 
 当前任务、工作区血缘、验证门和停止点统一从 [Handoff](./handoff.md) 读取；专项数字与裁决从对应 Map 和证据包读取。
@@ -44,7 +44,8 @@
 | 需要回答的问题 | 权威入口 |
 |---|---|
 | 完整回应优先 v1.1 八题技术结果与 Codex 初评 | [完整回应优先 v1.1 离线结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md) |
-| v1.2 为什么因 JSON 传输 No-Go、v1.2.1 为什么只关闭 Provider JSON 模式 | [v1.2 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md)、[v1.2.1 当前专项](./plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md) |
+| v1.2.1 为什么停止结构化首调、v1.3 为什么改为纯文本完整回应 | [v1.2.1 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-1-json-mode-off-quality-v1-handoff.md)、[v1.3 当前专项](./plans/2026-08-20-gi088-complete-response-first-v1-3-visible-text-owner.md) |
+| v1.2 为什么因 JSON 传输 No-Go、v1.2.1 如何验证 JSON 模式因素 | [v1.2 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md)、[v1.2.1 单因素计划](./plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md) |
 | v1.1 生产旧合同为何 No-Go、v1.2 为什么改成最少状态 | [v1.1 生产合同交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-handoff.md)、[v1.2 最小合同计划](./plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md) |
 | v1.1 怎样在完整回应前先选择尚未回答的新信息目标 | [完整回应优先 v1.1 新信息目标](./plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md) |
 | 完整回应优先 v1 的技术、速度和两项质量失败 | [完整回应优先 v1 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md) |

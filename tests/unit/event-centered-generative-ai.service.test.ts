@@ -18,6 +18,7 @@ import {
   createSemanticPlanArtifactHash,
   EVENT_CENTERED_GENERATIVE_SEMANTIC_PLAN_ARTIFACT_VERSION,
   EVENT_CENTERED_GENERATIVE_SEMANTIC_PLAN_PROMPT_VERSION,
+  generateEventCenteredCompleteResponseV121AI,
   generateEventCenteredCompleteResponseV12AI,
   generateEventCenteredGenerativeSemanticPlanAI,
   generateEventCenteredGenerativeTurnAI,
@@ -739,6 +740,42 @@ describe("event-centered generative architecture", () => {
       .join("\n");
     expect(prompt).toContain("我明白了，你仍然很在意比较。");
     expect(prompt).not.toContain('"semanticPlan"');
+  });
+
+  it("v1.2.1 保持同一最小结构，并省略 Provider JSON 模式", async () => {
+    mocks.completeStructuredOutput.mockResolvedValue({
+      response: "我们可以从还没出现具体结果时开始看。你平时也会默默衡量自己吗？",
+      interaction: {
+        kind: "ask",
+        question: "你平时也会默默衡量自己吗？"
+      },
+      facts: [],
+      correction: {
+        kind: "none",
+        supersededAssistantMessageId: null
+      }
+    });
+
+    const result = await generateEventCenteredCompleteResponseV121AI(baseInput({
+      rawText: "继续和我聊聊吧，帮我深挖一下。",
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test" }
+    }));
+
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off"
+    );
+    const request = mocks.completeStructuredOutput.mock.calls[0]?.[0];
+    expect(request).toEqual(expect.objectContaining({
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      temperature: 0.2,
+      thinking: "disabled"
+    }));
+    expect("responseFormat" in request).toBe(false);
   });
 
   it("唯一分流顺序先判断用户成果和 AI 综合，再考虑继续提问", async () => {
