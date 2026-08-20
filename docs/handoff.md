@@ -9,14 +9,15 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 远程工程门通过，Preview 核心主链部分通过，Production blocked。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 已合入 main，Preview 通过至“需更新”，两测试文件本地修复门通过、远程待验证，Production blocked。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
 - 分支：`codex/production-evidence-hardening-20260819`
-- 最新 main 父节点：`138b595`
+- 最新 main 节点：`77de8d1`
 - Production 发布头：`a86a4ba`
-- main 合并提交：`305f209`
+- 阶段 1 main 合并提交：`305f209`
+- 阶段 2 main 合并提交：`77de8d1`
 - 正式 deployment：`dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY／PROMOTED）
 - 回退 deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY）
 - Production 模式：`event_centered + baseline`
@@ -35,7 +36,10 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 
 - 分支已 rebase 到 `origin/main@305f209`，24 个阶段 2 文件边界清楚，Prisma 变更为 `0`。
 - rebase 后类型检查、目标 Lint、文档和差异检查通过；guard `9/9`，浏览器 `11/11`，`AIRequestLog=0`、12 条 Trace 四类违规 `0`、临时 Schema 残留 `0`。
-- 历史完整三连跑继续保留原始运行身份；PR #41 两套远程 CI／E2E 已通过，Preview 已通过事件卡和日记 draft。编辑／保存／需更新续跑因验收输入错误后 TLS 阻断保持 `not_run`；Stage 2 Production 等待 `PEH-020` 与 `PEH-022` 完成。
+- 历史完整三连跑继续保留原始运行身份；PR #41 最终 head 两套远程 CI／E2E 已通过并合入 main `77de8d1`。最终 Preview 已通过编辑、保存和事件卡变化后的“需更新”；日记更新前受到 TLS 阻断，更新与人工片段保护保持 `not_run`。
+- main run `32337995170` 出现一个 GI-088 工作台异步单例失败；Stage 5 同一提交的 push run `32338658277` 全绿，PR run attempt 1 又在同一文件等待结构化错误时单例波动，failed-only attempt 2 已主动取消。首次本地修复后的全量运行在 `361/377` 文件进度处又暴露跨日期会话标题与地址 effect 的单次时序差；旧版与修复后的精确用例均完成 `50/50 P4`，修复仍依据实际失败等待地址栏两个字段同时更新。
+- GI payload 已恢复真实首次选择路径，fake digest 只作为测试替身；该 payload `50/50 P4`、完整 GI 文件 `20/20 P4`、混合压力 `270/270 P4` 通过。`PEH-023` 本地工程门已通过：连续三轮全量均为 `3216` 通过、`82` 跳过、`0` 失败，零模型 E2E `11/11`，临时 Schema 残留 `0`；只修改两个测试文件，产品源码 `0`，远程结果待验证。
+- Stage 2 Production 等待 `PEH-020`、剩余 `PEH-022` 和 `PEH-023` 同时完成。正式域名继续使用阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
 
 实施并行覆盖数据口径、零模型 E2E 与评测资产；Production 发布按阶段 1 → 2 → 4 串行。GI-088 原工作区的状态冲突已经按最终证据收口，`175` 项成果由检查点 `199aa94` 封存并推送；原分支、worktree 与私有现场继续保留，清理仍等待最终单独确认。该封存不开放新的模型调用，也不改变本轮 Production 范围。
 
