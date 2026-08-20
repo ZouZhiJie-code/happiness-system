@@ -21,9 +21,6 @@ export async function PATCH(request: Request) {
     const user = await requireCurrentUserFromRequest(request);
     const parsed = aiQualityConsentSchema.safeParse(await request.json());
     if (!parsed.success) return NextResponse.json({ error: "INVALID_CONSENT_REQUEST" }, { status: 400 });
-    if (!parsed.data.participate) {
-      return NextResponse.json({ error: "AI_QUALITY_PARTICIPATION_REQUIRED" }, { status: 409 });
-    }
     return NextResponse.json(await updateAIQualityConsent(user.id, parsed.data.participate));
   } catch (error) {
     return NextResponse.json(

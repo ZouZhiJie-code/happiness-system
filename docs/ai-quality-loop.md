@@ -117,13 +117,13 @@ GET/PUT/DELETE /api/ai-feedback/:traceId
 GET/PATCH /api/ai-feedback/consent
 ```
 
-当前质量改进政策版本为 `2026-07-19`。注册和登录会写入或校准版本化合规时间；产品默认参与质量评估与持续改进。兼容接口仍支持读取状态，提交退出请求会返回：
+当前质量改进政策版本为 `2026-07-19`。注册会写入版本化合规时间；登录只为从未撤回的旧账号校准默认状态。设置页支持随时参加或停止参与。提交退出请求会返回：
 
 ```text
-409 AI_QUALITY_PARTICIPATION_REQUIRED
+200 {"policyVersion":"2026-07-19","decisionRequired":false,"participated":false}
 ```
 
-登录、注册页的合规声明承接这一用途说明，设置页不提供退出开关。
+退出会撤回当前有效反馈并退役对应 Few-shot；后续登录持续保留退出状态。登录、注册页的合规声明和设置页共同承接用途说明与用户控制。
 
 ## 4. 自动评估
 

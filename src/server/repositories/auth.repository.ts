@@ -57,10 +57,10 @@ export function ensureAIQualityParticipation(userId: string, policyVersion: stri
   return prisma.user.updateMany({
     where: {
       id: userId,
+      aiQualityConsentRevokedAt: null,
       OR: [
         { aiQualityConsentVersion: { not: policyVersion } },
-        { aiQualityConsentAt: null },
-        { aiQualityConsentRevokedAt: { not: null } }
+        { aiQualityConsentAt: null }
       ]
     },
     data: {

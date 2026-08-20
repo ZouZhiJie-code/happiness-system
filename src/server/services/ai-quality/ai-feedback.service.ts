@@ -17,7 +17,6 @@ export class AIFeedbackError extends Error {
       | "TRACE_NOT_FOUND"
       | "CONSENT_REQUIRED"
       | "INVALID_FEEDBACK_TAG"
-      | "AI_QUALITY_PARTICIPATION_REQUIRED"
   ) {
     super(code);
   }
@@ -35,9 +34,6 @@ export async function getAIQualityConsentState(userId: string) {
 }
 
 export async function updateAIQualityConsent(userId: string, participate: boolean) {
-  if (!participate) {
-    throw new AIFeedbackError("AI_QUALITY_PARTICIPATION_REQUIRED");
-  }
   const user = await recordAIQualityConsentDecision(userId, participate);
   return {
     policyVersion: CURRENT_PRIVACY_POLICY_VERSION,

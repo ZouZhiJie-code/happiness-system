@@ -91,7 +91,9 @@ describe("AI feedback API", () => {
 
   it("exposes and updates versioned quality consent", async () => {
     getAIQualityConsentState.mockResolvedValue({ policyVersion: "2026-07-19", decisionRequired: true, participated: false });
-    updateAIQualityConsent.mockResolvedValue({ policyVersion: "2026-07-19", decisionRequired: false, participated: true });
+    updateAIQualityConsent
+      .mockResolvedValueOnce({ policyVersion: "2026-07-19", decisionRequired: false, participated: true })
+      .mockResolvedValueOnce({ policyVersion: "2026-07-19", decisionRequired: false, participated: false });
 
     const getResponse = await getConsent(new Request("http://localhost/api/ai-feedback/consent"));
     const patchResponse = await patchConsent(
@@ -111,6 +113,12 @@ describe("AI feedback API", () => {
         body: JSON.stringify({ participate: false })
       })
     );
-    expect(optOutResponse.status).toBe(409);
+    expect(optOutResponse.status).toBe(200);
+    await expect(optOutResponse.json()).resolves.toEqual({
+      policyVersion: "2026-07-19",
+      decisionRequired: false,
+      participated: false
+    });
+    expect(updateAIQualityConsent).toHaveBeenLastCalledWith("user-1", false);
   });
 });

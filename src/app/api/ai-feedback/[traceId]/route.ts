@@ -16,7 +16,7 @@ function errorResponse(error: unknown) {
   if (error instanceof AIFeedbackError) {
     const status = error.code === "TRACE_NOT_FOUND"
       ? 404
-      : error.code === "CONSENT_REQUIRED" || error.code === "AI_QUALITY_PARTICIPATION_REQUIRED"
+      : error.code === "CONSENT_REQUIRED"
         ? 409
         : 400;
     return NextResponse.json({ error: error.code }, { status });

@@ -104,10 +104,18 @@ describe("AI feedback service", () => {
     });
   });
 
-  it("keeps AI quality participation enabled through the public service", async () => {
-    await expect(updateAIQualityConsent("user-1", false)).rejects.toEqual(
-      expect.objectContaining({ code: "AI_QUALITY_PARTICIPATION_REQUIRED" })
-    );
-    expect(recordAIQualityConsentDecision).not.toHaveBeenCalled();
+  it("persists consent withdrawal through the public service", async () => {
+    recordAIQualityConsentDecision.mockResolvedValue({
+      ...currentConsent,
+      aiQualityConsentAt: null,
+      aiQualityConsentRevokedAt: new Date("2026-08-19T00:00:00.000Z")
+    });
+
+    await expect(updateAIQualityConsent("user-1", false)).resolves.toEqual({
+      policyVersion: CURRENT_PRIVACY_POLICY_VERSION,
+      decisionRequired: false,
+      participated: false
+    });
+    expect(recordAIQualityConsentDecision).toHaveBeenCalledWith("user-1", false);
   });
 });
