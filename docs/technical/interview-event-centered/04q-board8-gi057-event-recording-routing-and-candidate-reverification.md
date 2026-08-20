@@ -121,7 +121,7 @@
 - 回应等待中位数：`50.877s`；P90：`77.999s`。两项均超过 GI-051 的条件发布线；运行降级也超过最多 `2` 次，因此候选自动发布门为 `No-Go`。
 - 感受 2 在明确停止后需要重新选择角度，按 GI-051 记为轨迹失败；该结果与日志保存成功分开记录。
 - 1 次语义计划校验失败、2 次来源安全拦截均由 baseline 承接；首条事件回合曾出现数据库冷启动事务超时，已将事件理解提交和日志生成预留事务超时提升至 `60s`，后续日志闭环全部完成。
-- 脱敏执行证据见 Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`），只读报告见 JSON（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.json`） 与 Markdown（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）。
+- 脱敏执行证据见 [Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/preview-execution-evidence.md)，只读报告见 [JSON](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/board8-preview-candidate-audit.json) 与 [Markdown](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/board8-preview-candidate-audit.md)。
 
 当前候选存在速度、来源契约拦截、语义计划校验和角度重选四类信号。下一步由产品负责人判断共同根因修复范围；若确认多个独立根因，按 GI-054 重新打开方案。
 
@@ -133,4 +133,4 @@
 2. 生成式问题由 baseline 稳定承接，形成 `optional + baseline` 条件发布并拆出专项修复。
 3. 主链、数据或恢复失败，回到安全档位并重新打开板块 8。
 
-GI-057 当前处于“独立 Preview 已完成、自动发布门 No-Go、等待修复范围判断与产品负责人人工裁决”的阶段。候选血缘、执行证据和历史阻塞记录见 GI-057 候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）、Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`） 和 独立 Preview 阻塞记录（本机历史证据，公开精简包未收录：`preview-blocked.md`）。
+GI-057 当前处于“独立 Preview 已完成、自动发布门 No-Go、等待修复范围判断与产品负责人人工裁决”的阶段。候选血缘、执行证据和历史阻塞记录见 [GI-057 候选血缘](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/candidate-lineage.md)、[Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/preview-execution-evidence.md) 和 [独立 Preview 阻塞记录](../../../artifacts/generative-interview-board8/2026-08-03-gi057-candidate/preview-blocked.md)。

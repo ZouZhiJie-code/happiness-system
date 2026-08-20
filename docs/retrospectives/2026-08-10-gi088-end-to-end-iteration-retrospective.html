@@ -1,0 +1,1457 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="GI-088 从 v0 到 v8r1 的产品、模型、程序、评测与协作全链路可视化复盘。"
+    />
+    <title>GI-088 全链路实操复盘｜可视化总览</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f7f0e5;
+        --paper-strong: #fffaf2;
+        --ink: #2b211a;
+        --muted: #75675c;
+        --line: #d9c9b8;
+        --accent: #9a542c;
+        --accent-soft: #f0d8bf;
+        --accent-deep: #68351f;
+        --green: #496948;
+        --green-soft: #dfead9;
+        --amber: #9a681f;
+        --amber-soft: #f4e3b8;
+        --red: #9b3f35;
+        --red-soft: #f2d6d1;
+        --blue: #456578;
+        --blue-soft: #dce8ee;
+        --shadow: 0 16px 42px rgba(72, 47, 30, 0.1);
+        --radius-lg: 28px;
+        --radius-md: 18px;
+        --radius-sm: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+          ui-sans-serif,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          "PingFang SC",
+          "Hiragino Sans GB",
+          "Microsoft YaHei",
+          sans-serif;
+        line-height: 1.68;
+      }
+
+      a {
+        color: var(--accent-deep);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 4px;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 3px solid rgba(154, 84, 44, 0.32);
+        outline-offset: 3px;
+      }
+
+      .shell {
+        width: min(1480px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .hero {
+        padding: 64px 0 42px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper-strong);
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: var(--accent);
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 900px;
+        margin-bottom: 18px;
+        font-family: Georgia, "Songti SC", "STSong", serif;
+        font-size: clamp(2.3rem, 5vw, 5rem);
+        font-weight: 500;
+        line-height: 1.08;
+        letter-spacing: -0.045em;
+        overflow-wrap: anywhere;
+      }
+
+      .hero-copy {
+        max-width: 980px;
+        color: var(--muted);
+        font-size: clamp(1rem, 1.6vw, 1.25rem);
+        overflow-wrap: anywhere;
+      }
+
+      .hero-note {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        max-width: 100%;
+        margin-top: 18px;
+        padding: 9px 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #fffdf8;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .hero-note::before {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--amber);
+        content: "";
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .action-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 9px 16px;
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        background: var(--accent);
+        color: white;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .action-link.secondary {
+        background: transparent;
+        color: var(--accent-deep);
+      }
+
+      .jumpbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        border-bottom: 1px solid var(--line);
+        background: rgba(247, 240, 229, 0.95);
+        backdrop-filter: blur(14px);
+      }
+
+      .jumpbar-inner {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 10px 0;
+        scrollbar-width: thin;
+      }
+
+      .jumpbar a {
+        flex: none;
+        padding: 7px 12px;
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .jumpbar a:hover {
+        background: var(--accent-soft);
+        color: var(--accent-deep);
+      }
+
+      main {
+        padding: 34px 0 96px;
+      }
+
+      section {
+        scroll-margin-top: 76px;
+        margin-top: 72px;
+      }
+
+      section:first-child {
+        margin-top: 0;
+      }
+
+      .section-heading {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 0.5fr);
+        gap: 28px;
+        align-items: end;
+        margin-bottom: 26px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .section-heading h2 {
+        margin-bottom: 0;
+        font-family: Georgia, "Songti SC", "STSong", serif;
+        font-size: clamp(1.8rem, 3.2vw, 3rem);
+        font-weight: 500;
+        letter-spacing: -0.035em;
+        line-height: 1.15;
+      }
+
+      .section-heading p {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .metric {
+        min-height: 150px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: var(--paper-strong);
+      }
+
+      .metric-value {
+        display: block;
+        margin-bottom: 9px;
+        color: var(--accent-deep);
+        font-family: Georgia, serif;
+        font-size: clamp(2rem, 4vw, 3.3rem);
+        line-height: 1;
+      }
+
+      .metric-label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 800;
+      }
+
+      .metric small {
+        color: var(--muted);
+      }
+
+      .headline-conclusion {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .headline-card {
+        padding: 28px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--paper-strong);
+        box-shadow: var(--shadow);
+      }
+
+      .headline-card strong {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--accent-deep);
+        font-size: 1.12rem;
+      }
+
+      .headline-card p:last-child {
+        margin-bottom: 0;
+      }
+
+      .headline-card.warning {
+        border-color: #d9ad82;
+        background: #fff7ea;
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 22px;
+      }
+
+      .filter-button {
+        min-height: 40px;
+        padding: 7px 13px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--paper-strong);
+        color: var(--muted);
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .filter-button[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: white;
+      }
+
+      .search {
+        min-width: min(100%, 280px);
+        min-height: 42px;
+        margin-left: auto;
+        padding: 8px 13px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--paper-strong);
+        color: var(--ink);
+      }
+
+      .timeline {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .timeline-card {
+        position: relative;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: var(--paper-strong);
+      }
+
+      .timeline-card[data-hidden="true"],
+      .risk-card[data-hidden="true"] {
+        display: none;
+      }
+
+      .timeline-top {
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+
+      .version {
+        color: var(--accent-deep);
+        font-family: Georgia, serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+      }
+
+      .status {
+        display: inline-flex;
+        padding: 4px 9px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .status.go {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .status.no-go {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .status.partial {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .status.diagnostic {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .timeline-card h3 {
+        margin-bottom: 8px;
+        font-size: 1.05rem;
+      }
+
+      .timeline-card p {
+        margin-bottom: 10px;
+        color: var(--muted);
+      }
+
+      .timeline-card p:last-child {
+        margin-bottom: 0;
+      }
+
+      .lesson {
+        padding-top: 10px;
+        border-top: 1px dashed var(--line);
+        color: var(--ink) !important;
+        font-weight: 650;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(120px, 1fr));
+        gap: 10px;
+        align-items: stretch;
+        overflow-x: auto;
+        padding-bottom: 8px;
+      }
+
+      .flow-step {
+        position: relative;
+        min-width: 140px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: var(--paper-strong);
+      }
+
+      .flow-step + .flow-step::before {
+        position: absolute;
+        top: 50%;
+        left: -10px;
+        width: 10px;
+        border-top: 2px solid var(--accent);
+        content: "";
+      }
+
+      .flow-step span {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--accent);
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+
+      .flow-step strong {
+        display: block;
+        margin-bottom: 7px;
+      }
+
+      .flow-step p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .root-stack {
+        display: grid;
+        gap: 10px;
+        margin-top: 22px;
+      }
+
+      .root-layer {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 18px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+      }
+
+      .root-layer:nth-child(1) {
+        margin-inline: 9%;
+        background: #fff9f1;
+      }
+
+      .root-layer:nth-child(2) {
+        margin-inline: 6%;
+        background: #fff6e7;
+      }
+
+      .root-layer:nth-child(3) {
+        margin-inline: 3%;
+        background: #f7eadb;
+      }
+
+      .root-layer:nth-child(4) {
+        background: #ead5c4;
+      }
+
+      .root-layer strong {
+        color: var(--accent-deep);
+      }
+
+      .root-layer p {
+        margin-bottom: 0;
+      }
+
+      .risk-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .risk-card {
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: var(--paper-strong);
+      }
+
+      .risk-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 12px;
+      }
+
+      .pill {
+        display: inline-flex;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-size: 0.74rem;
+        font-weight: 800;
+      }
+
+      .pill.p0 {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .pill.p1 {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .pill.win {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .risk-card h3 {
+        margin-bottom: 9px;
+        font-size: 1.05rem;
+      }
+
+      .risk-card p {
+        color: var(--muted);
+      }
+
+      .risk-card p:last-child {
+        margin-bottom: 0;
+      }
+
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+
+      .compare-column {
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--paper-strong);
+      }
+
+      .compare-column.old {
+        background: #fff5ee;
+      }
+
+      .compare-column.new {
+        border-color: #a7bea2;
+        background: #f3f8ef;
+      }
+
+      .compare-column h3 {
+        margin-bottom: 18px;
+        font-family: Georgia, "Songti SC", serif;
+        font-size: 1.45rem;
+      }
+
+      .compare-column ol {
+        margin: 0;
+        padding-left: 1.3rem;
+      }
+
+      .compare-column li + li {
+        margin-top: 12px;
+      }
+
+      .gate-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .gate {
+        padding: 18px;
+        border-top: 4px solid var(--accent);
+        border-radius: 0 0 var(--radius-md) var(--radius-md);
+        background: var(--paper-strong);
+      }
+
+      .gate span {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--accent);
+        font-size: 0.8rem;
+        font-weight: 900;
+      }
+
+      .gate strong {
+        display: block;
+        margin-bottom: 7px;
+      }
+
+      .gate p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .ownership-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--paper-strong);
+      }
+
+      .ownership-table th,
+      .ownership-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .ownership-table th {
+        color: var(--accent-deep);
+        font-size: 0.86rem;
+      }
+
+      .current-state {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+      }
+
+      .state-card {
+        padding: 26px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--paper-strong);
+      }
+
+      .state-card h3 {
+        margin-bottom: 12px;
+        font-family: Georgia, "Songti SC", serif;
+        font-size: 1.45rem;
+      }
+
+      .state-card ul {
+        margin-bottom: 0;
+        padding-left: 1.2rem;
+      }
+
+      .state-card li + li {
+        margin-top: 8px;
+      }
+
+      .state-card.accepted {
+        background: #f3f8ef;
+      }
+
+      details {
+        border-bottom: 1px solid var(--line);
+        padding: 15px 0;
+      }
+
+      summary {
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+      details p {
+        margin: 10px 0 0;
+        color: var(--muted);
+      }
+
+      footer {
+        padding: 34px 0 52px;
+        border-top: 1px solid var(--line);
+        background: var(--paper-strong);
+        color: var(--muted);
+      }
+
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 20px;
+        align-items: end;
+      }
+
+      .empty-state {
+        grid-column: 1 / -1;
+        padding: 28px;
+        border: 1px dashed var(--line);
+        border-radius: var(--radius-md);
+        color: var(--muted);
+        text-align: center;
+      }
+
+      @media (max-width: 1100px) {
+        .metric-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .risk-grid,
+        .gate-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .shell {
+          width: min(100% - 20px, 1480px);
+        }
+
+        .hero {
+          padding-top: 42px;
+        }
+
+        h1 {
+          font-size: clamp(2rem, 9vw, 2.55rem);
+          letter-spacing: -0.035em;
+          word-break: break-all;
+        }
+
+        .section-heading,
+        .headline-conclusion,
+        .compare,
+        .current-state,
+        .footer-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .metric-grid,
+        .timeline,
+        .risk-grid,
+        .gate-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .search {
+          width: 100%;
+          margin-left: 0;
+        }
+
+        .root-layer,
+        .root-layer:nth-child(n) {
+          grid-template-columns: 1fr;
+          margin-inline: 0;
+        }
+
+        .ownership-table {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+
+      @media print {
+        .jumpbar,
+        .toolbar,
+        .hero-actions {
+          display: none;
+        }
+
+        body,
+        .hero,
+        footer {
+          background: white;
+        }
+
+        .timeline-card,
+        .risk-card,
+        .headline-card,
+        .state-card {
+          break-inside: avoid;
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="shell">
+        <p class="eyebrow">GI-088 · END-TO-END RETROSPECTIVE</p>
+        <h1>一张图看懂：我们怎样把高质量访谈，从“模型会说”推进到“系统可靠交付”</h1>
+        <p class="hero-copy">
+          这份可视化覆盖 v0～v8r1 的 14 个阶段，串起模型、平台、状态、用户控制、评测工作台和协作方式。重点帮助你快速看到：哪些坑最贵、为什么自动测试没拦住、以后怎样减少真人评测被小问题报废。
+        </p>
+        <div class="hero-note">当前：v8r2 底座硬化任务执行中，最终真人通过仍待新批次确认</div>
+        <div class="hero-actions">
+          <a class="action-link" href="#overview">从全景结论开始</a>
+          <a
+            class="action-link secondary"
+            href="./2026-08-10-gi088-end-to-end-iteration-retrospective.md"
+            >阅读 959 行详细文档</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <nav class="jumpbar" aria-label="页面章节">
+      <div class="shell jumpbar-inner">
+        <a href="#overview">全景</a>
+        <a href="#timeline">版本时间线</a>
+        <a href="#causal">因果链</a>
+        <a href="#risks">踩坑地图</a>
+        <a href="#workflow">新版流程</a>
+        <a href="#ownership">职责划分</a>
+        <a href="#current">当前状态</a>
+        <a href="#lessons">经验清单</a>
+      </div>
+    </nav>
+
+    <main class="shell">
+      <section id="overview">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 · 全景结论</p>
+            <h2>最大的浪费来自真人评测被底座问题污染</h2>
+          </div>
+          <p>模型费用可计算，评测者的沉浸、上下文和重新进入状态更昂贵。</p>
+        </div>
+
+        <div class="metric-grid" aria-label="核心数字">
+          <article class="metric">
+            <span class="metric-value">14</span>
+            <span class="metric-label">阶段性版本</span>
+            <small>v0～v8r1，跨两天密集迭代</small>
+          </article>
+          <article class="metric">
+            <span class="metric-value">66</span>
+            <span class="metric-label">v1 调用</span>
+            <small>其中技术失败 19、程序保护 10</small>
+          </article>
+          <article class="metric">
+            <span class="metric-value">17</span>
+            <span class="metric-label">v1 手动重试</span>
+            <small>故障处理直接打断真人访谈</small>
+          </article>
+          <article class="metric">
+            <span class="metric-value">11/12</span>
+            <span class="metric-label">Pro 首次可见</span>
+            <small>v7r4 空内容为 0，模型路径保留</small>
+          </article>
+          <article class="metric">
+            <span class="metric-value">10/10</span>
+            <span class="metric-label">v8 首次成功</span>
+            <small>统一问前决策获得产品通过</small>
+          </article>
+          <article class="metric">
+            <span class="metric-value">A1</span>
+            <span class="metric-label">最终批次阻断</span>
+            <small>一个“累”的词面误判让 v8r1 失去证据资格</small>
+          </article>
+        </div>
+
+        <div class="headline-conclusion">
+          <article class="headline-card">
+            <strong>最终产品判断</strong>
+            <p>
+              Thinking high 的内容方向成立，官方 V4 Pro 的可靠性达到继续使用条件，单一回答焦点和统一问前决策已经得到真人正向证据。
+            </p>
+          </article>
+          <article class="headline-card warning">
+            <strong>当前最大风险</strong>
+            <p>
+              高影响程序规则、结果落账、陈旧标签页和评测证据治理仍可能让有效模型结果失效。v8r2 先硬化底座，再重新开放最终 12 项。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="timeline">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">02 · 版本时间线</p>
+            <h2>14 个阶段，各自解决了什么，又暴露了什么</h2>
+          </div>
+          <p>可按类型筛选，也可以搜索“空内容、状态、Ark、问号”等关键词。</p>
+        </div>
+
+        <div class="toolbar" aria-label="时间线筛选">
+          <button class="filter-button timeline-filter" data-filter="all" aria-pressed="true">全部</button>
+          <button class="filter-button timeline-filter" data-filter="model" aria-pressed="false">模型与平台</button>
+          <button class="filter-button timeline-filter" data-filter="product" aria-pressed="false">产品策略</button>
+          <button class="filter-button timeline-filter" data-filter="foundation" aria-pressed="false">程序与底座</button>
+          <button class="filter-button timeline-filter" data-filter="evaluation" aria-pressed="false">评测治理</button>
+          <input
+            id="timeline-search"
+            class="search"
+            type="search"
+            placeholder="搜索版本或问题"
+            aria-label="搜索版本或问题"
+          />
+        </div>
+
+        <div id="timeline-grid" class="timeline" aria-live="polite"></div>
+      </section>
+
+      <section id="causal">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">03 · 第一性原理</p>
+            <h2>一个小问题为什么能报废一张昂贵的评测页</h2>
+          </div>
+          <p>v8r1 的意图误判把整条因果链完整暴露出来。</p>
+        </div>
+
+        <div class="flow" aria-label="小规则阻断完整评测的因果链">
+          <article class="flow-step">
+            <span>STEP 1</span>
+            <strong>产品语义有空白</strong>
+            <p>“累”究竟指事件负担，还是要求停止访谈。</p>
+          </article>
+          <article class="flow-step">
+            <span>STEP 2</span>
+            <strong>工程选表面规则</strong>
+            <p>宽泛词面容易编码，也容易批量测试。</p>
+          </article>
+          <article class="flow-step">
+            <span>STEP 3</span>
+            <strong>测试证明规则执行</strong>
+            <p>旧规则被稳定执行，测试数量持续增长。</p>
+          </article>
+          <article class="flow-step">
+            <span>STEP 4</span>
+            <strong>静态门全绿</strong>
+            <p>构建、指纹、Preview 和 0/12 回读通过。</p>
+          </article>
+          <article class="flow-step">
+            <span>STEP 5</span>
+            <strong>自然表达命中反例</strong>
+            <p>“跟奶奶解释很累”描述事件体验。</p>
+          </article>
+          <article class="flow-step">
+            <span>STEP 6</span>
+            <strong>程序取得接管权</strong>
+            <p>有效模型回应被改写成暂停。</p>
+          </article>
+          <article class="flow-step">
+            <span>STEP 7</span>
+            <strong>最终批次失效</strong>
+            <p>A1 提前终止，其余 11 项不再值得继续。</p>
+          </article>
+        </div>
+
+        <div class="root-stack" aria-label="四层根因">
+          <article class="root-layer">
+            <strong>表层症状</strong>
+            <p>空正文、超时、程序保护、误暂停、重复重试、页面卡住。</p>
+          </article>
+          <article class="root-layer">
+            <strong>直接机制</strong>
+            <p>上游不稳定、本地截止、合同冲突、词面规则越权、校验顺序错误、revision 竞争。</p>
+          </article>
+          <article class="root-layer">
+            <strong>系统根因</strong>
+            <p>模型与程序职责不稳、候选与 run 耦合、结果缺少独立账本、高影响控制缺少证据。</p>
+          </article>
+          <article class="root-layer">
+            <strong>过程根因</strong>
+            <p>产品反例复核晚于实现，评测页开门过早，单因素拆得过细，问题台账建立较晚。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="risks">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">04 · 踩坑地图</p>
+            <h2>把问题按产品、模型、程序、评测和协作重新归类</h2>
+          </div>
+          <p>P0 直接让真人劳动失效，P1 显著增加成本或降低证据可信度。</p>
+        </div>
+
+        <div class="toolbar" aria-label="风险筛选">
+          <button class="filter-button risk-filter" data-filter="all" aria-pressed="true">全部</button>
+          <button class="filter-button risk-filter" data-filter="product" aria-pressed="false">产品规则</button>
+          <button class="filter-button risk-filter" data-filter="model" aria-pressed="false">模型平台</button>
+          <button class="filter-button risk-filter" data-filter="transaction" aria-pressed="false">事务状态</button>
+          <button class="filter-button risk-filter" data-filter="evaluation" aria-pressed="false">评测工具</button>
+          <button class="filter-button risk-filter" data-filter="collaboration" aria-pressed="false">协作方式</button>
+        </div>
+
+        <div id="risk-grid" class="risk-grid"></div>
+      </section>
+
+      <section id="workflow">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">05 · 新版流程</p>
+            <h2>以后怎样减少“页面做好了，第一条就报废”</h2>
+          </div>
+          <p>把程序可确定问题前移，把真人注意力留给内容与体验。</p>
+        </div>
+
+        <div class="compare">
+          <article class="compare-column old">
+            <h3>这次真实走过的路径</h3>
+            <ol>
+              <li>从一个真实 Bad Case 提炼局部规则。</li>
+              <li>快速实现、测试、生成版本和指纹。</li>
+              <li>部署新页面并创建空白批次。</li>
+              <li>真人进入页面，同时承担聊天、诊断和复核。</li>
+              <li>新的底座问题先于本轮主要因素出现。</li>
+              <li>提前结束，重新建候选和页面。</li>
+            </ol>
+          </article>
+          <article class="compare-column new">
+            <h3>建议冻结的新路径</h3>
+            <ol>
+              <li>恢复唯一事实源，更新问题台账和授权包。</li>
+              <li>先做产品原则的语义近邻与反例校准。</li>
+              <li>用真实失败输出完成零模型回放。</li>
+              <li>用真实评测库完成事务、并发和断线故障注入。</li>
+              <li>供应商特殊能力先做一条最小兼容探针。</li>
+              <li>版本与工作台开门后，才进入最小真人定向验收。</li>
+              <li>已知 P0/P1 清零后，再运行最终独立 12 项。</li>
+            </ol>
+          </article>
+        </div>
+
+        <div class="gate-grid" aria-label="七道开门门槛">
+          <article class="gate"><span>GATE 0</span><strong>事实源</strong><p>当前候选、run、问题队列与授权边界一致。</p></article>
+          <article class="gate"><span>GATE 1</span><strong>产品反例</strong><p>否定、转述、撤回、内容加控制全部校准。</p></article>
+          <article class="gate"><span>GATE 2</span><strong>零模型回放</strong><p>状态、来源、阶段和控制误接管为 0。</p></article>
+          <article class="gate"><span>GATE 3</span><strong>故障注入</strong><p>结果零丢失，陈旧提交零调用，刷新最终收敛。</p></article>
+          <article class="gate"><span>GATE 4</span><strong>兼容探针</strong><p>新供应商能力先证明参数组合可用。</p></article>
+          <article class="gate"><span>GATE 5</span><strong>测量仪器</strong><p>版本、指纹、草稿、回看、错误和导出完整。</p></article>
+          <article class="gate"><span>GATE 6</span><strong>定向真人</strong><p>只验证真人才能判断的一个主要因素。</p></article>
+          <article class="gate"><span>GATE 7</span><strong>最终 12 项</strong><p>P0/P1 清零后形成发布证据。</p></article>
+        </div>
+      </section>
+
+      <section id="ownership">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">06 · 职责划分</p>
+            <h2>模型、程序、人工和产品负责人各自管什么</h2>
+          </div>
+          <p>职责稳定后，规则才不会在语义和工程之间反复摇摆。</p>
+        </div>
+
+        <table class="ownership-table">
+          <thead>
+            <tr>
+              <th>主体</th>
+              <th>负责</th>
+              <th>保留边界</th>
+              <th>主要验证</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>产品负责人</strong></td>
+              <td>用户结果、停止权、回答负担、优先级、最终 Go/No-Go</td>
+              <td>先确认场景和代价，再冻结原则</td>
+              <td>产品讨论、真实体验、最终裁决</td>
+            </tr>
+            <tr>
+              <td><strong>模型</strong></td>
+              <td>理解、焦点、未解部分、认识增量、具体低负担入口</td>
+              <td>不维护编号、历史来源和调用额度</td>
+              <td>定向真人、质量复核</td>
+            </tr>
+            <tr>
+              <td><strong>程序</strong></td>
+              <td>状态、来源、次数、原子提交、恢复、用户明确控制</td>
+              <td>高影响控制需要明确对象和证据</td>
+              <td>零模型回放、故障注入</td>
+            </tr>
+            <tr>
+              <td><strong>真人复核</strong></td>
+              <td>同一回答焦点、内容质量、程序介入是否合理</td>
+              <td>只评价实际可见内容和自己看到的快照</td>
+              <td>轨迹后复核、抽检、修订历史</td>
+            </tr>
+            <tr>
+              <td><strong>Codex</strong></td>
+              <td>独立九维、技术完整、阻断、血缘、根因与实现验证</td>
+              <td>和产品负责人判断分开保存</td>
+              <td>盲态评分、代码审计、证据收口</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="current">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">07 · 当前状态</p>
+            <h2>当前该继续做什么，哪些范围已经明确接受</h2>
+          </div>
+          <p>这里区分进行项、回归项、接受边界和持续关闭范围。</p>
+        </div>
+
+        <div class="current-state">
+          <article class="state-card">
+            <h3>v8r2 当前进行项</h3>
+            <ul>
+              <li>高精度用户控制与意图误停修复。</li>
+              <li>Provider 结果独立落账和可重入最终提交。</li>
+              <li>陈旧回答、陈旧评价和多标签页保护。</li>
+              <li>程序介入复核、人工修订与 No-Go 资格。</li>
+              <li>候选与 run 分离、历史只读和可验证导出。</li>
+              <li>行为文件清单、分层指纹和部署证明。</li>
+            </ul>
+          </article>
+          <article class="state-card accepted">
+            <h3>已接受边界</h3>
+            <ul>
+              <li>约 400 条消息、约 200 次用户提交满足实际场景。</li>
+              <li>本轮不投入极端长轨迹存储重构。</li>
+              <li>产品界面继续不显示固定轨迹轮次上限。</li>
+              <li>Production 保持 legacy + baseline。</li>
+              <li>隐藏推理正文继续隔离。</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="lessons">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">08 · 经验清单</p>
+            <h2>以后每次开新候选前，都可以先过这组问题</h2>
+          </div>
+          <p>点击展开，作为产品和工程共同复核清单。</p>
+        </div>
+
+        <details open>
+          <summary>1. 真人时间是否只用于真人才能判断的问题？</summary>
+          <p>状态、事务、并发、刷新、导出和版本问题都应在页面开放前通过零模型或 fake Provider 验证。</p>
+        </details>
+        <details>
+          <summary>2. 高影响程序动作是否有说话人、作用对象、肯否、转述和撤回证据？</summary>
+          <p>停止、生成、切换和跳过都需要高精度门。证据不足时继续访谈并进入复核。</p>
+        </details>
+        <details>
+          <summary>3. 当前规则控制的是用户结果，还是一个容易实现的表面信号？</summary>
+          <p>问号、关键词和单字段可以用于观测；语义目标需要完整语境、人工复核或模型判断。</p>
+        </details>
+        <details>
+          <summary>4. Provider 结果是否先落账，再提交业务状态？</summary>
+          <p>已经付费返回的结果需要独立事实源，CAS 冲突只能重试保存，不能重新调用模型。</p>
+        </details>
+        <details>
+          <summary>5. 用户提交和人工评价是否绑定了所见快照？</summary>
+          <p>陈旧标签页需要零调用拒绝；人工评价只能覆盖评测者实际看过的内容。</p>
+        </details>
+        <details>
+          <summary>6. 供应商特殊能力是否先通过最小兼容探针？</summary>
+          <p>先确认参数组合、错误形态和隐私边界，再投入完整服务、UI 和部署。</p>
+        </details>
+        <details>
+          <summary>7. 当前批次的采集状态、目标触发和质量资格是否分开？</summary>
+          <p>sealed 代表数据终态，gate 代表通过资格，产品 Go 代表最终裁决。</p>
+        </details>
+        <details>
+          <summary>8. 当前授权是否已经组成可连续执行的授权包？</summary>
+          <p>代码、Preview、模型预算、数据库、Production 和停止点写清后，范围内持续推进。</p>
+        </details>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell footer-grid">
+        <div>
+          <strong>GI-088 全链路实操复盘</strong>
+          <p>版本 2026-08-10.gi088-end-to-end-retrospective-v1 · 正式内容保持脱敏</p>
+        </div>
+        <a href="./2026-08-10-gi088-end-to-end-iteration-retrospective.md">返回详细 Markdown</a>
+      </div>
+    </footer>
+
+    <script>
+      const timelineData = [
+        {
+          version: "v0",
+          title: "输出预算把可见答案挤没了",
+          type: ["model", "evaluation"],
+          status: "no-go",
+          statusLabel: "历史 No-Go",
+          result: "9 次正式调用；A2 high 同轮三次耗尽 1600 Token，最终正文为空。",
+          lesson: "长上下文需要把推理 Token 与可见答案空间分账。",
+        },
+        {
+          version: "v1",
+          title: "首次看清 high 的内容优势与技术代价",
+          type: ["model", "evaluation"],
+          status: "partial",
+          statusLabel: "8/12 提前结束",
+          result: "66 次调用：37 有效、10 保护、19 技术失败、17 手动重试；high 6/8 更好。",
+          lesson: "内容质量、技术完整和端到端体验必须分账。",
+        },
+        {
+          version: "v2",
+          title: "评测底座补齐，根因探针保持克制",
+          type: ["evaluation", "model", "foundation"],
+          status: "diagnostic",
+          statusLabel: "诊断完成",
+          result: "支持 early stop、部分导出和分阶段诊断；JSON 探针 No-Go，Thinking 探针 inconclusive。",
+          lesson: "探针可以排除方向，黑盒内部原因需要及时收口。",
+        },
+        {
+          version: "v3",
+          title: "空内容恢复尚未触发，阶段边界先阻断",
+          type: ["model", "foundation"],
+          status: "partial",
+          statusLabel: "1/12 提前结束",
+          result: "8 次调用，空内容 0；off/high 均在阶段 2 机会用尽后被保护。",
+          lesson: "真人开门前要先回放完整状态机。",
+        },
+        {
+          version: "v4",
+          title: "阶段转场成立，30 秒误截断健康正文",
+          type: ["product", "foundation", "model"],
+          status: "partial",
+          statusLabel: "转场单例通过",
+          result: "A1 共 10 次调用；两次 high 在 30 秒 hard total 被中止。",
+          lesson: "响应头、正文空闲和总时长需要分阶段校准。",
+        },
+        {
+          version: "v5",
+          title: "严格单问号成为过度修复",
+          type: ["product", "evaluation"],
+          status: "no-go",
+          statusLabel: "页面未形成真人价值",
+          result: "High-only 页面已 Ready，产品原则随后从一个问号修正为单一回答焦点。",
+          lesson: "产品语义反例审查要早于完整实现和部署。",
+        },
+        {
+          version: "v6",
+          title: "单一回答焦点获得真人通过",
+          type: ["product", "evaluation"],
+          status: "go",
+          statusLabel: "2/4 提前通过",
+          result: "11 条可见提问：9 条自然同焦点、2 条偏重、独立多任务 0。",
+          lesson: "问号做观测，回答负担由 answerTarget 与人工语义复核判断。",
+        },
+        {
+          version: "v7",
+          title: "连续性底座成立，官方 Flash 稳定性未过门",
+          type: ["foundation", "model", "evaluation"],
+          status: "no-go",
+          statusLabel: "2/2 完成 · No-Go",
+          result: "11 个用户轮次、19 次调用；8 空内容、1 超时、1 程序保护。",
+          lesson: "模型输出变化，程序维护确定状态；运行实况要及时写回。",
+        },
+        {
+          version: "v7r1",
+          title: "Prefix 与 JSON Output 接口不兼容",
+          type: ["model"],
+          status: "no-go",
+          statusLabel: "兼容探针 No-Go",
+          result: "官方接口在生成前拒绝 json_object 与 Prefix 组合，Preview 停止。",
+          lesson: "供应商特殊能力先做一条最小兼容探针。",
+        },
+        {
+          version: "v7r2",
+          title: "Ark 小探针有方向，真人可靠性未过门",
+          type: ["model", "foundation"],
+          status: "no-go",
+          statusLabel: "2/2 完成 · No-Go",
+          result: "15 次提交、20 次调用；首次直接成功 10/15，最终保护 2。",
+          lesson: "小探针选方向，连续真人轨迹判稳定性。",
+        },
+        {
+          version: "v7r3",
+          title: "确定性状态交给程序维护",
+          type: ["foundation"],
+          status: "go",
+          statusLabel: "零模型回放通过",
+          result: "真实失败输出回放通过；程序合并来源、纯停止零调用。",
+          lesson: "程序问题优先用真实失败输出做零模型修复。",
+        },
+        {
+          version: "v7r4",
+          title: "V4 Pro 可靠性达到继续使用条件",
+          type: ["model", "foundation", "evaluation"],
+          status: "partial",
+          statusLabel: "模型 Go · 整批 No-Go",
+          result: "12 次提交、13 次调用；首次可见 11/12、空内容 0、程序保护 2。",
+          lesson: "模型可靠性与程序成功率分开裁决。",
+        },
+        {
+          version: "v8",
+          title: "统一问前决策获得产品通过",
+          type: ["product", "foundation"],
+          status: "go",
+          statusLabel: "1/4 提前通过",
+          result: "10/10 首次成功；7 条提问全部同一焦点、低负担。",
+          lesson: "问题价值、已有答案和低负担入口需要统一决策。",
+        },
+        {
+          version: "v8r1",
+          title: "最终 12 项在 A1 被意图误停",
+          type: ["product", "foundation", "evaluation"],
+          status: "no-go",
+          statusLabel: "最终批次阻断",
+          result: "事件里的“解释很累”被升级成停止访谈，有效模型回应被覆盖。",
+          lesson: "高影响程序接管需要明确说话人、对象、肯否和有效性。",
+        },
+      ];
+
+      const riskData = [
+        { level: "P0", category: "product", title: "表面信号越权", body: "问号和疲惫词面取得流程接管权，合法表达被拦截或改写。", lesson: "产品结果先冻结，高影响控制需要完整证据。" },
+        { level: "P1", category: "product", title: "单因素拆得过细", body: "局部修复持续生成新页面，v5 几乎未形成真人价值。", lesson: "因果实验单变量，确定性底座问题合并修复。" },
+        { level: "P1", category: "model", title: "黑盒根因追踪过深", body: "多轮小探针只能排除部分因素，无法解释供应商内部停止原因。", lesson: "收口到项目可控根因，及时转向恢复或模型对照。" },
+        { level: "P1", category: "model", title: "特殊能力先开发后探针", body: "Prefix 方案完整实现后才发现接口拒绝参数组合。", lesson: "一条兼容调用先于完整产品链。" },
+        { level: "P0", category: "transaction", title: "付费结果可能丢失", body: "人工分类推进批次 revision，Provider 有效结果使用旧 revision 保存失败。", lesson: "结果先落独立账本，finalizer 可重入提交。" },
+        { level: "P0", category: "transaction", title: "Provider 初始化留下假调用", body: "预约之后初始化失败，轨迹停在 processing，调用数也失真。", lesson: "初始化前移，预算只数 dispatched。" },
+        { level: "P0", category: "transaction", title: "陈旧标签页串轮", body: "回答和评价缺少所见快照锚点，可以提交到新一轮或覆盖新内容。", lesson: "回答、提问复核和轨迹评价分别绑定快照。" },
+        { level: "P1", category: "evaluation", title: "评测者同时做三份工作", body: "聊天、故障诊断和逐轮质检反复切换，深聊沉浸被打断。", lesson: "聊天保持沉浸，轨迹后集中复核。" },
+        { level: "P1", category: "evaluation", title: "运行实况与文档滞后", body: "README 仍显示 0/2，真实 run 已完成；旧标签也曾出现在新页面。", lesson: "run 是运行事实源，收口时自动同步脱敏结果。" },
+        { level: "P0", category: "evaluation", title: "任务目标未触发仍可能被计分", body: "部分轨迹完成了对话，却没有发生纠正、拒答或独立事件条件。", lesson: "采集、目标触发、质量和 gate 四本账。" },
+        { level: "P1", category: "collaboration", title: "讨论直接变成计划", body: "产品原则尚未确认，回答已经进入字段、版本和执行步骤。", lesson: "先讨论现象、原因、影响、方案和代价。" },
+        { level: "P1", category: "collaboration", title: "授权拆得过碎", body: "同一授权范围内频繁暂停，用户感觉任务持续未完成。", lesson: "授权按执行包冻结，范围内连续推进。" },
+        { level: "P1", category: "collaboration", title: "结论缺少产品摘要", body: "技术字段先出现，用户仍不知道当前能否继续测和其他问题怎样排队。", lesson: "先说发生了什么、意味着什么、下一步和其余队列。" },
+        { level: "P1", category: "collaboration", title: "历史问题一度丢失", body: "Bad Case 分散在版本 README、导出和侧边讨论中。", lesson: "每次真人收口立即更新唯一问题台账。" },
+      ];
+
+      const timelineGrid = document.querySelector("#timeline-grid");
+      const timelineSearch = document.querySelector("#timeline-search");
+      let timelineFilter = "all";
+
+      function renderTimeline() {
+        const query = timelineSearch.value.trim().toLowerCase();
+        const visible = timelineData.filter((item) => {
+          const typeMatch = timelineFilter === "all" || item.type.includes(timelineFilter);
+          const text = `${item.version} ${item.title} ${item.result} ${item.lesson}`.toLowerCase();
+          return typeMatch && (!query || text.includes(query));
+        });
+
+        timelineGrid.innerHTML = visible.length
+          ? visible
+              .map(
+                (item) => `
+                  <article class="timeline-card">
+                    <div class="timeline-top">
+                      <span class="version">${item.version}</span>
+                      <span class="status ${item.status}">${item.statusLabel}</span>
+                    </div>
+                    <h3>${item.title}</h3>
+                    <p>${item.result}</p>
+                    <p class="lesson">经验：${item.lesson}</p>
+                  </article>`,
+              )
+              .join("")
+          : '<div class="empty-state">当前筛选下暂无版本。可以清空搜索或切回“全部”。</div>';
+      }
+
+      document.querySelectorAll(".timeline-filter").forEach((button) => {
+        button.addEventListener("click", () => {
+          timelineFilter = button.dataset.filter;
+          document.querySelectorAll(".timeline-filter").forEach((item) => {
+            item.setAttribute("aria-pressed", String(item === button));
+          });
+          renderTimeline();
+        });
+      });
+
+      timelineSearch.addEventListener("input", renderTimeline);
+
+      const riskGrid = document.querySelector("#risk-grid");
+      let riskFilter = "all";
+
+      function renderRisks() {
+        const visible = riskData.filter((item) => riskFilter === "all" || item.category === riskFilter);
+        riskGrid.innerHTML = visible
+          .map(
+            (item) => `
+              <article class="risk-card">
+                <div class="risk-meta">
+                  <span class="pill ${item.level.toLowerCase()}">${item.level}</span>
+                  <span class="pill">${categoryLabel(item.category)}</span>
+                </div>
+                <h3>${item.title}</h3>
+                <p>${item.body}</p>
+                <p class="lesson">经验：${item.lesson}</p>
+              </article>`,
+          )
+          .join("");
+      }
+
+      function categoryLabel(category) {
+        return {
+          product: "产品规则",
+          model: "模型平台",
+          transaction: "事务状态",
+          evaluation: "评测工具",
+          collaboration: "协作方式",
+        }[category];
+      }
+
+      document.querySelectorAll(".risk-filter").forEach((button) => {
+        button.addEventListener("click", () => {
+          riskFilter = button.dataset.filter;
+          document.querySelectorAll(".risk-filter").forEach((item) => {
+            item.setAttribute("aria-pressed", String(item === button));
+          });
+          renderRisks();
+        });
+      });
+
+      renderTimeline();
+      renderRisks();
+    </script>
+  </body>
+</html>

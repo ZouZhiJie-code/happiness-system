@@ -1,0 +1,138 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T06",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "deep_companionship",
+    "activeAngle": "relationship",
+    "lastCompletedAngle": "relationship",
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "active",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": null,
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": null,
+    "currentMicrogoal": null
+  },
+  "facts": [],
+  "recentTurns": [],
+  "currentQuestion": null,
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "他会上说得很直接，我很难堪，可会后又认真帮我改了很久。",
+      "visibleResponse": null,
+      "finalAction": null,
+      "selectedTarget": null,
+      "cognitiveAction": null,
+      "evidenceUsed": [],
+      "factDeltas": [],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 278,
+          "tokenUsage": {
+            "promptTokens": 2629,
+            "completionTokens": 370,
+            "totalTokens": 2999,
+            "promptCacheHitTokens": 896,
+            "promptCacheMissTokens": 1733
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"他在会上说得很直接\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他会上说得很直接\"\n      },\n      {\n        \"statement\": \"我很难堪\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"我很难堪\"\n      },\n      {\n        \"statement\": \"会后又认真帮我改了很久\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"会后又认真帮我改了很久\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"public_criticism_private_help_connection\",\n    \"evidenceRefs\": [\"new:1\", \"new:3\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"理解用户如何看待公开批评与私下帮助之间的关系\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"公开批评让你难堪，私下帮助又让你感受到他的用心\",\n    \"question\": \"这两种互动放在一起，你更在意的是他公开的态度，还是私下的帮助？\"\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 180,
+          "tokenUsage": {
+            "promptTokens": 2683,
+            "completionTokens": 374,
+            "totalTokens": 3057,
+            "promptCacheHitTokens": 1152,
+            "promptCacheMissTokens": 1531
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"他在会上说得很直接，让我难堪。\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他会上说得很直接，我很难堪\"\n      },\n      {\n        \"statement\": \"会后又认真帮我改了很久。\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"会后又认真帮我改了很久\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"surface_tension\",\n    \"selectedTarget\": \"公开否定与私下帮助的对比\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\"],\n    \"microgoalDelta\": {\n      \"operation\": \"start\",\n      \"statement\": \"理解用户对公开否定与私下帮助之间张力的感受\",\n      \"supportEvidenceRefs\": [\"new:1\", \"new:2\"]\n    },\n    \"expectedValue\": \"明确用户如何看待这两种互动之间的不一致\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"他公开让你难堪，私下又认真帮你，这两种做法放在一起让你感到矛盾。\",\n    \"question\": \"你更在意他公开的否定，还是更看重他私下的帮助？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 7588,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5312,
+          "completionTokens": 744,
+          "totalTokens": 6056,
+          "promptCacheHitTokens": 2048,
+          "promptCacheMissTokens": 3264
+        },
+        "estimatedCost": 0.0006710144
+      },
+      "validationIssues": [
+        "opening_question_must_anchor_before_comparison"
+      ],
+      "runtimeError": "MODEL_OUTPUT_UNAVAILABLE"
+    }
+  ],
+  "awaitingReply": false,
+  "completed": true,
+  "completionReason": "runtime_incomplete",
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

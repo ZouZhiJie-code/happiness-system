@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -119,10 +119,7 @@ describe("Board 7 MVP four-angle smoke", () => {
     })).toThrow("GENERATIVE_MVP_FOUR_ANGLE_SMOKE_APPROVAL_INVALID");
   });
 
-  it.skipIf(!existsSync(resolve(
-    process.cwd(),
-    "artifacts/generative-interview-board7/2026-08-02/board7-mvp-four-angle-smoke-v1-approval.json"
-  )))("检入的本轮产品授权只绑定当前四角度范围", () => {
+  it("检入的本轮产品授权只绑定当前四角度范围", () => {
     const approval = JSON.parse(readFileSync(resolve(
       process.cwd(),
       "artifacts/generative-interview-board7/2026-08-02/board7-mvp-four-angle-smoke-v1-approval.json"

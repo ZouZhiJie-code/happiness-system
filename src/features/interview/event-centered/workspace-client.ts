@@ -3,6 +3,7 @@ import type {
   EventCenteredWorkspaceSession
 } from "@/types/event-centered-dialogue";
 import type {
+  EventCenteredSessionListView,
   EventCenteredSessionTabRecord,
   EventCenteredTurnConfirmation
 } from "@/types/event-centered-interview";
@@ -27,6 +28,43 @@ export class EventCenteredWorkspaceRequestError extends Error {
 
 export function createEventCenteredClientTurnId() {
   return globalThis.crypto?.randomUUID?.() ?? `event-turn_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+export function createEventCenteredStartOperationId() {
+  return globalThis.crypto?.randomUUID?.() ?? `event-start_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+const START_OPERATION_REUSE_MS = 5_000;
+
+function getOrCreateEventCenteredStartOperationId(
+  entryDate: string,
+  recordMode: "capture" | "chat"
+) {
+  if (typeof window === "undefined") return createEventCenteredStartOperationId();
+  const key = `daily-light:event-start:${entryDate}:${recordMode}`;
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(key) ?? "null") as {
+      id?: unknown;
+      createdAt?: unknown;
+    } | null;
+    if (
+      stored &&
+      typeof stored.id === "string" &&
+      typeof stored.createdAt === "number" &&
+      Date.now() - stored.createdAt < START_OPERATION_REUSE_MS
+    ) {
+      return stored.id;
+    }
+  } catch {
+    // 浏览器禁用本地存储时继续依靠服务端数量限制与数据库唯一约束。
+  }
+  const id = createEventCenteredStartOperationId();
+  try {
+    window.localStorage.setItem(key, JSON.stringify({ id, createdAt: Date.now() }));
+  } catch {
+    // 同上：存储不可用时仍可正常创建。
+  }
+  return id;
 }
 
 export function createEventJournalOperationId() {
@@ -78,11 +116,15 @@ export async function getEventCenteredWorkspace(sessionId: string) {
   return payload as EventCenteredWorkspaceSession;
 }
 
-export async function startEventCenteredWorkspace(entryDate: string) {
+export async function startEventCenteredWorkspace(
+  entryDate: string,
+  recordMode: "capture" | "chat",
+  clientOperationId = getOrCreateEventCenteredStartOperationId(entryDate, recordMode)
+) {
   const response = await fetch("/api/interview/event-centered/session/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ entryDate })
+    body: JSON.stringify({ entryDate, recordMode, clientOperationId })
   });
   const payload = await readJson(response);
   if (!response.ok) {
@@ -91,6 +133,24 @@ export async function startEventCenteredWorkspace(entryDate: string) {
     );
   }
   return payload as EventCenteredWorkspaceSession;
+}
+
+export async function getEventCenteredSessionList(input: {
+  limit?: number;
+  cursor?: string | null;
+} = {}) {
+  const params = new URLSearchParams({ limit: String(input.limit ?? 30) });
+  if (input.cursor) params.set("cursor", input.cursor);
+  const response = await fetch(`/api/interview/event-centered/sessions?${params.toString()}`, {
+    cache: "no-store"
+  });
+  const payload = await readJson(response);
+  if (!response.ok) {
+    throw new EventCenteredWorkspaceRequestError(
+      issueFromPayload(payload, "EVENT_CENTERED_SESSION_LIST_READ_FAILED", "记录列表暂时无法读取。")
+    );
+  }
+  return payload as EventCenteredSessionListView;
 }
 
 export async function ensureBoard8Gi066ReviewSession() {

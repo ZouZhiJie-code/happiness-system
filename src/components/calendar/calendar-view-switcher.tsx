@@ -6,9 +6,9 @@ import { prefetchCalendarView } from "@/features/calendar/calendar-client";
 import type { CalendarView } from "@/features/calendar/view-state";
 
 const CALENDAR_VIEW_ITEMS: Array<{ value: CalendarView; label: string; ariaLabel: string }> = [
-  { value: "month", label: "月", ariaLabel: "切换到月视图" },
+  { value: "day", label: "日", ariaLabel: "切换到日视图" },
   { value: "week", label: "周", ariaLabel: "切换到周视图" },
-  { value: "day", label: "日", ariaLabel: "切换到日视图" }
+  { value: "month", label: "月", ariaLabel: "切换到月视图" }
 ];
 
 export function CalendarViewSwitcher({

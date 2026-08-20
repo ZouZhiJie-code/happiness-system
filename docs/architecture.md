@@ -1,6 +1,6 @@
 # Architecture
 
-最后更新：`2026-08-05`
+最后更新：`2026-08-12`
 
 ## 1. 系统概览
 
@@ -57,6 +57,12 @@
   - 月度记录分析查询接口
 - `src/app/api/daily-journal/*`
   - 当天整合日志的查询、生成、草稿更新与正式保存接口
+- `src/app/api/journal/day`
+  - 归档工作区读取当天事件卡片、今日日记和状态
+- `src/app/api/journal/daily/*`
+  - 今日日记生成、自动暂存与正式保存接口
+- `src/app/api/journal/period/*`
+  - 周报/月报读取、生成、自动暂存与正式保存接口
 - `src/app/api/journal-entry/[id]`
   - 当前日志正文编辑主路由
 - `src/app/api/joy-entry/[id]`
@@ -200,7 +206,7 @@
 - `InterviewSession`
   - 维度级会话，包含当前状态、当前事件、日志引用
   - 从 `2026-05-02` 起新增 `entryDate` 作为日志归属日期真相；`startedAt` 只表示会话实际创建时间
-  - plain `/interview` 在没有显式 `sessionId` / `entryDate` 时，只允许静默复用 `entryDate === 今天` 的会话；跨天挂载的 live session 也不能继续被默认入口复用
+  - plain `/interview` 在没有显式 `sessionId` / `entryDate` 时，只允许静默复用 `entryDate` 等于运行时日期的会话；跨天挂载的 live session 也不能继续被默认入口复用
 - `InterviewEvent`
   - 单个事件级访谈单元，记录 `snapshotData`、`progressData` 和事件级状态
 - `InterviewMessage`
@@ -272,6 +278,27 @@
 - 正文是按已有维度组织的章节合集，不补空维度
 - `sourceSignature` 用于判断维度日志保存后，日级日志是否进入 `stale` 状态
 - 如果来源维度日志后来不再是 `saved`、保存后的更新时间变化，或同一天新增了新的 `saved` 维度日志，当前签名都会不一致，日级日志会进入 `stale`
+
+`JournalDailyEntry`、`JournalDailyEntryRevision` 和 `JournalDailyEntryGeneration` 承载事件中心的今日日记：
+
+- `JournalDailyEntry` 以 `userId + entryDate` 唯一标识当天成果，保存 `title / content / paragraphs / status / sourceSignature / sourceSnapshot / contentRevision`
+- `sourceEntryIds` 与 `sourceEventIds` 记录参与生成的事件卡片；每个正文段落在 `paragraphs` 中保留来源编号
+- `JournalDailyEntryRevision` 保存生成、编辑和正式保存版本，`JournalDailyEntryGeneration` 保存客户端操作编号、输入输出快照、尝试次数、失败码和完成状态
+- 首次生成、来源更新、自动暂存和正式保存都校验来源签名与内容版本；重复请求按 `clientOperationId` 幂等重放，冲突返回 `409`
+- 事件卡片新增或变更后，已有今日日记进入 `stale`；用户主动更新时保留已有人工编辑，并将来源和版本推进到新修订
+- `GET /api/journal/day` 提供当天事件卡片、今日日记和主动作，`/api/journal/daily*` 承接生成、暂存与保存
+
+`DailyJournalEntry` 继续服务旧五维整合日志，`JournalDailyEntry` 服务事件卡片到今日日记的新链路。两套数据按各自 API、来源和发布边界独立演进。
+
+`JournalPeriodReport`、`JournalPeriodReportRevision` 和 `JournalPeriodReportGeneration` 承载周报/月报：
+
+- `JournalPeriodReport` 以 `userId + periodKind + periodStart` 唯一标识一个周期，`periodKind` 为 `week` 或 `month`，同时保存 `periodEnd`
+- 报告保存 `title / content / status / sourceSignature / contentRevision`，并保留当前唯一主动作、统计信息和来源素材投影
+- `JournalPeriodReportRevision` 保存编辑版本与段落来源，`JournalPeriodReportGeneration` 保存生成任务、客户端操作编号、失败信息和重试状态
+- 周报按天选材，优先使用当天有效的已保存 `DailyJournalEntry`，缺少时回退到 `JournalEventEntry`
+- 月报按周选材，优先使用完全落在本月且有效的已保存周报，缺少时回退到日报与事件卡片
+- 通过 `sourceEventIds`、`upstreamSourceIds` 和段落 `sourceIds` 去重并保留来源签名；来源变化进入 `stale`，编辑版本和来源变化都受版本校验保护
+- 前端展示状态统一为 `empty / ungenerated / generating / draft / saved / stale / update_failed`，数据库报告状态继续使用 `draft / saved / modified`；生成底座只写入带来源的确定性标题和正文段落
 
 `DailyHappinessScore` 是独立幸福 8 要素日评分表：
 - `userId + date` 唯一
@@ -393,7 +420,18 @@
   - badge、surface、marker 和主次按钮层级由 `src/features/calendar/presentation.ts` 统一投影，不再由各组件各自拼样式
   - 色温已经回收到全局暖纸张/墨色系统，不再维持蓝灰后台式分叉
   - 文案改为工作台短句，不再保留 `DAY / WEEK` 这类模板化英文眉题
-  - shell / toolbar 会补 `aria-busy`，loading 用 `status`，error 用 inline `alert`，主要 CTA 有完整可访问名称
+- shell / toolbar 会补 `aria-busy`，loading 用 `status`，error 用 inline `alert`，主要 CTA 有完整可访问名称
+
+### 3.6.1 Daily Light 旧 UI Preview 的历史工作区结构
+
+`2026-08-12` 旧 UI Preview 曾按以下边界完成工程收口；这些结构继续作为当前新前端的联调参考，产品验收和 Production 授权保持开放：
+
+- 事件中心入口以 `/interview?mode=event-centered&entryDate=YYYY-MM-DD` 为标准地址；当天没有会话时只渲染空工作台，点击【帮我记】或【陪我聊】后才调用会话创建接口
+- `recordMode` 随会话启动请求保存，刷新时按 `entryDate` 恢复同一天的事件；事件完成后进入当天事件卡片，卡片来源变化会推动引用它的报告进入 `stale`
+- `EventCenteredInterviewHeader` 将三阶段进度、当前阶段和保存状态挂在 `SiteHeader` 上下文区；正文区域只承载对话消息和输入框，避免重复占用聊天空间
+- `InterviewMessageBubble` 统一 AI 理解、AI 提问和用户消息的视觉合同；生成记录下方复用反馈、`regenerate_response` 和版本切换接口，三项轻量菜单支持键盘导航、Esc 关闭和焦点恢复
+- `/calendar?view=day|week|month&date=YYYY-MM-DD` 统一使用归档侧栏 + 报告画布；`JournalArchiveWorkspaceFallback` 为 loading、error 和 empty 保留同一版式，数据加载完成后只替换内容层
+- 日报读取 `JournalDailyJournalView`，周报/月报读取 `JournalPeriodReportView`；前端通过数据适配层切换演示数据与真实接口，写入仍携带来源签名、内容版本和操作编号
 
 ### 3.7 记录分析页现实
 
@@ -687,30 +725,36 @@ joy 场景下，如果连续没有形成可信开心片段，会建议跳到 `im
 
 事件中心离线评测与线上链路隔离：策略回放读取 `DEEPSEEK_API_KEY / DEEPSEEK_MODEL / DEEPSEEK_BASE_URL`，独立 Judge 读取 `EVENT_CENTERED_JUDGE_DEEPSEEK_API_KEY / EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL / EVENT_CENTERED_JUDGE_DEEPSEEK_BASE_URL`，并兼容 `DEEPSEEK_JUDGE_*` 别名。超时读取 `EVENT_CENTERED_EVALUATION_TIMEOUT_MS`，兼容 `EVENT_CENTERED_JUDGE_TIMEOUT_MS`。这些凭据只允许在本地或隔离评测进程使用，API key 不进入浏览器、用户 Trace、报告内容或生产请求路径。
 
-当前产品状态（`2026-08-09`）：GI-066 的自动技术通过和真人 `No-Go` 继续作为历史证据。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结。板块 6 继续资产化评测；GI-087 作为 GI-088 基础候选保留。GI-088 v0 的正式批次因 A2 high 连续三次耗尽 `1600` completion Token 停止，v1 已省略应用层 `max_tokens`并建立全新批次。板块 7 正式接入继续等待板块 6，板块 8 等待新候选验证。Production 保持 `legacy + baseline`。
+当前产品状态（`2026-08-10`）：GI-066 的自动技术通过和真人 `No-Go` 继续作为历史证据。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结。板块 6 继续资产化评测；GI-087 作为 GI-088 基础候选保留。GI-088 v0～v7r4 保留历史证据，v8 以 `1/4 early_stopped` 获产品通过。v8r1 A1 确认控制意图误停的单例阻断，其 run 按 A2 活动、已完成 `1` 条轨迹和 `2` 次有效 Provider 调用只读保留。v8r2 已完成 P0／P1、八项 Preview 开门差额、最终初始化幂等和全绿静态门；最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`；全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，运行配置为 `deepseek-v4-pro / Thinking high / json_object / provider_default`。旧预发布 v8r2 零内容 run 已行政 `early_stopped`，其 `0/12`、零调用、零真人和质量未评测只作为脱敏排除记录。当前工作流暂停等待产品负责人完成 12 项真人验收；真人质量与发布未裁决，约 `200` 轮以上容量优化继续排除在本轮范围外。板块 7 正式接入与板块 8 继续等待，Production 保持 `legacy + baseline`。
 
 ### 5.8 GI-088 私有 Preview 评测运行器
 
 GI-088 用一套独立运行器承接真人交互开发评测。它只在 Vercel Preview、显式启用开关、管理员与专用评测名单同时命中时可用。Production 的页面和接口统一返回 `404`。
 
-核心数据流是：
+v8r2 冻结候选将评测运行、Provider 调用和人工复核拆成可追溯的三个事实层。核心数据流是：
 
 ```text
 产品负责人在 Preview 工作台输入真实内容
-→ 服务端按 clientTurnId 幂等预留试次
-→ 精确指纹与 batch 作用域通过后请求 DeepSeek
-→ 严格 Schema、来源和单轮一问程序保护
-→ 保存原始最终输出、可核查语义 Trace 和 Provider 安全摘要
-→ 产品负责人结束轨迹、裁决两组并封存整批
+→ 服务端按 runId、clientOperationId、clientTurnId 与 baseAssistantMessageId 校验幂等和对话锚点
+→ 调用前检查 Provider 与精确执行身份，通过事务预留 turn、operation 和 call ledger
+→ ledger 从 reserved 条件推进到 dispatched 后请求 DeepSeek
+→ Provider 结果先按 callId 幂等落账，再由可重入 finalizer 完成结构校验、程序状态和可见回答提交
+→ 并发人工复核、刷新或 CAS 冲突只重试落账与 finalizer，复用已经保存的 Provider 结果
+→ 可见提问、程序介入、轨迹评价和修订历史分别留痕，collection status 与 gate status 分开计算
+→ 终态 run 生成 v0.6 不可变导出；payload 的 canonical SHA256 写入独立 receipt
 ```
 
-运行器使用与主应用相同的专属 Preview 物理库，应用登录数据位于 `gi088_app_preview` schema，评测批次、技术冒烟和保留期审计位于 `gi088_evaluation_v0` schema。独立 Prisma Client 只跟踪进 `/api/preview/gi088/**` 的 Preview 函数。
+运行器使用与主应用相同的专属 Preview 物理库，应用登录数据位于 `gi088_app_preview` schema，评测 run、调用账本、幂等操作、程序介入、人工修订、操作事件、导出快照、技术冒烟和保留期审计位于 `gi088_evaluation_v0` schema。独立 Prisma Client 只进入 `/api/preview/gi088/**` 的 Preview 函数。历史 v1～v8r1 继续读取旧 run JSON；v8r2 使用 `runOrdinal` 支持同一冻结候选的多次独立运行，并保证同一评测人、同一候选同一时间最多一个 running run。
 
-v1 的 off 与 high 共用 Prompt、Interview Skill、任务结构、Schema、输入和网页流程，应用层共同省略 `max_tokens`；off 使用温度 `0.2`，high 使用 `reasoning_effort=high`。每次应用、数据集、运行器或参数变更都会生成新执行指纹，旧授权自动失效。
+v8r2 继续使用官方 `deepseek-v4-pro`、Thinking high 与 `json_object`。每次实际调用把 provider、base URL host、model、endpoint、payload 合同和运行参数写入 `effectiveConfig` 与 `requestHash`；候选、数据集、Runner、Experience 与行为源码分别进入分层指纹。最终行为 commit 已冻结为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 已冻结为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`，对应 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`。当前代码指纹与历史 run 不一致时，历史 run 保持只读查看和导出，写入与模型调用继续受当前指纹限制。
+
+控制意图使用版本化的多通道决策：用户内容与继续、停止、生成、纠正、跳过和切换等控制动作分别保存，动作携带说话人、目标、否定、转述、证据片段和优先级。只有指向当前访谈、由用户本人直接表达且满足高精度门的停止动作可以由程序执行；模糊负担表达继续进入正常访谈。当前实现已完成停止误判主链回归；明确继续已作为独立 `continue_interview` 候选进入 Trace，并可撤销同一句中更早的停止、生成或切换动作。程序介入全部进入 `Gi088ProgramIntervention` 并等待人工复核。
+
+八项 Preview 开门差额已经实现并验证：明确继续写入 Trace；Provider preflight 失败先保存原话和 no-call Turn；单次请求身份完整落账；`finalization_failed` 由 session 只读对账；首次导出冻结快照并供重复下载逐字节复用；技术阻断评价绑定同轨迹失败事实；完整错误目录映射到 typed issue；operation event 严格校验 run／task／turn 血缘，Public session 提供真实 run revision。`POST /compare` 继续作为历史兼容占位。最终初始化已验证每次创建新 run 使用新的 `clientOperationId`，避免旧终态 run 被幂等重放。最终 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，线上 Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`；全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。旧预发布 v8r2 零内容 run 已行政 `early_stopped`，只作为脱敏排除记录。历史 v1 的 off/high 双分支、旧错误码和旧导出继续按其冻结版本只读解释。当前证据包见 [v8r2 资产入口](../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)。
 
 ## 6. joy 维度为什么是当前标品
 
-joy 已经实现的核心不是“有一个 prompt”，而是以下整套机制：
+joy 已经实现的核心覆盖以下整套机制，并由槽位、完成规则和正文质量门共同承接：
 
 ### 6.1 joy 专属槽位
 
@@ -730,7 +774,7 @@ joy 已经实现的核心不是“有一个 prompt”，而是以下整套机制
 
 ### 6.2 完成规则
 
-当前 joy 的关键完成标准不是“聊完一件事”，而是：
+当前 joy 的关键完成标准聚焦于以下结果：
 - 找到可信 `joyMoment`
 - 说清 `joySource`
 - `meaning_track` 至少确认 `stateShift` 或 `meaningNeed`，最终沉淀出 `manualClue`
@@ -773,7 +817,7 @@ fulfillment 已经从“普通完成感复盘”收束为“今天为什么不�
 - `fulfillmentType`
 - `tags`
 
-`valueSignal` 在产品中文里固定称为“值得感标准”。它不是抽象价值观口号，而是从具体推进、积累或贡献证据里长出来的判断。
+`valueSignal` 在产品中文里固定称为“值得感标准”。这项判断从具体推进、积累或贡献证据里形成，避免停留在抽象价值观口号。
 
 ### 7.2 完成规则
 

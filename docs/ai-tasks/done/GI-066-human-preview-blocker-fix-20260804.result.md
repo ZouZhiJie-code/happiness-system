@@ -42,10 +42,10 @@
 
 ## 证据
 
-- 候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）
-- 10×3 报告（本机历史证据，公开精简包未收录：`report.md`）
-- 8+2 证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）
-- Board8 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）
+- [候选血缘](../../../artifacts/generative-interview-board8/2026-08-04-gi066-fix-scripted-deepseek-official-preview-v3/candidate-lineage.md)
+- [10×3 报告](../../../artifacts/generative-interview-board8/2026-08-04-gi066-fix-thought-stability/report.md)
+- [8+2 证据](../../../artifacts/generative-interview-board8/2026-08-04-gi066-fix-scripted-deepseek-official-preview-v3/preview-execution-evidence.md)
+- [Board8 审计](../../../artifacts/generative-interview-board8/2026-08-04-gi066-fix-scripted-deepseek-official-preview-v3/board8-preview-candidate-audit.md)
 
 ## 剩余风险
 

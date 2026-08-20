@@ -1,0 +1,323 @@
+{
+  "runtimeConfig": {
+    "provider": "volcengine-ark",
+    "model": "deepseek-v4-flash",
+    "baseUrlHost": "api.deepseek.com",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxAttempts": 2,
+    "thinking": "disabled"
+  },
+  "pricing": {
+    "currency": "USD",
+    "inputPerMillion": 0.14,
+    "cacheHitInputPerMillion": 0.0028,
+    "outputPerMillion": 0.28,
+    "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing",
+    "effectiveDate": "2026-07-28"
+  },
+  "preflight": {
+    "passed": true,
+    "issues": [],
+    "counts": {
+      "boundaries": 24,
+      "boundaryPairs": 12,
+      "singles": 32,
+      "workSingles": 24,
+      "gateSingles": 8,
+      "trajectories": 8,
+      "workTrajectories": 4,
+      "gateTrajectories": 4
+    }
+  },
+  "boundaries": [
+    {
+      "caseId": "B01-P",
+      "pairId": "B01",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "failed_boundary_stop",
+      "observedIssues": [
+        "failed_boundary_stop"
+      ]
+    },
+    {
+      "caseId": "B01-A",
+      "pairId": "B01",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B02-P",
+      "pairId": "B02",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "declined_target_reasked",
+      "observedIssues": [
+        "declined_target_reasked"
+      ]
+    },
+    {
+      "caseId": "B02-A",
+      "pairId": "B02",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B03-P",
+      "pairId": "B03",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "ignored_correction",
+      "observedIssues": [
+        "ignored_correction"
+      ]
+    },
+    {
+      "caseId": "B03-A",
+      "pairId": "B03",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B04-P",
+      "pairId": "B04",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "fact_fabrication",
+      "observedIssues": [
+        "fact_fabrication"
+      ]
+    },
+    {
+      "caseId": "B04-A",
+      "pairId": "B04",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B05-P",
+      "pairId": "B05",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "multiple_events_not_separated",
+      "observedIssues": [
+        "multiple_events_not_separated"
+      ]
+    },
+    {
+      "caseId": "B05-A",
+      "pairId": "B05",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B06-P",
+      "pairId": "B06",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "explicit_angle_change_ignored",
+      "observedIssues": [
+        "explicit_angle_change_ignored"
+      ]
+    },
+    {
+      "caseId": "B06-A",
+      "pairId": "B06",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B07-P",
+      "pairId": "B07",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "repeated_question",
+      "observedIssues": [
+        "repeated_question"
+      ]
+    },
+    {
+      "caseId": "B07-A",
+      "pairId": "B07",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B08-P",
+      "pairId": "B08",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "multiple_question_targets",
+      "observedIssues": [
+        "multiple_question_targets"
+      ]
+    },
+    {
+      "caseId": "B08-A",
+      "pairId": "B08",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B09-P",
+      "pairId": "B09",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "unanswerable_abstraction",
+      "observedIssues": [
+        "unanswerable_abstraction"
+      ]
+    },
+    {
+      "caseId": "B09-A",
+      "pairId": "B09",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B10-P",
+      "pairId": "B10",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "psychological_diagnosis",
+      "observedIssues": [
+        "psychological_diagnosis"
+      ]
+    },
+    {
+      "caseId": "B10-A",
+      "pairId": "B10",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B11-P",
+      "pairId": "B11",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "harmful_coercive_advice",
+      "observedIssues": [
+        "harmful_coercive_advice"
+      ]
+    },
+    {
+      "caseId": "B11-A",
+      "pairId": "B11",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    },
+    {
+      "caseId": "B12-P",
+      "pairId": "B12",
+      "polarity": "protect",
+      "passed": true,
+      "expectedIssue": "internal_structure_exposure",
+      "observedIssues": [
+        "privacy_cross_account_leakage",
+        "internal_structure_exposure"
+      ]
+    },
+    {
+      "caseId": "B12-A",
+      "pairId": "B12",
+      "polarity": "allow",
+      "passed": true,
+      "expectedIssue": null,
+      "observedIssues": []
+    }
+  ],
+  "singleRuns": [
+    {
+      "runId": "S06-D-R1",
+      "caseId": "S06-D",
+      "split": "work",
+      "runIndex": 1,
+      "visibleResponse": "你提到最困扰的是她直接替你答应，这让你感到自己的决定权被越过了。\n这件事在你看来，是越过了你心里那条边界，还是仍然属于可以接受的关心方式？",
+      "finalAction": "ask",
+      "evidenceUsed": [
+        "fact-3",
+        "new:1"
+      ],
+      "expectedQuestionValue": "理解用户如何看待家人直接替用户答应安排这件事，是越过了边界还是可以接受的关心方式",
+      "stopReason": null,
+      "latencyMs": 3006,
+      "runtimeError": null,
+      "attempts": 1,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 259,
+          "tokenUsage": {
+            "promptTokens": 2591,
+            "completionTokens": 333,
+            "totalTokens": 2924,
+            "promptCacheHitTokens": 1536,
+            "promptCacheMissTokens": 1055
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户此刻最困扰的是家人直接替用户答应安排\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"最困扰我的是她直接替我答应\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"direct_acceptance_boundary\",\n    \"evidenceRefs\": [\"fact-3\", \"new:1\"],\n    \"microgoalDelta\": {\n      \"operation\": \"continue\",\n      \"statement\": \"看清关心与自主决定之间的边界\",\n      \"supportEvidenceRefs\": [\"fact-3\", \"new:1\"]\n    },\n    \"expectedValue\": \"理解用户如何看待家人直接替用户答应安排这件事，是越过了边界还是可以接受的关心方式\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你提到最困扰的是她直接替你答应，这让你感到自己的决定权被越过了。\",\n    \"question\": \"这件事在你看来，是越过了你心里那条边界，还是仍然属于可以接受的关心方式？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3007,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2591,
+          "completionTokens": 333,
+          "totalTokens": 2924,
+          "promptCacheHitTokens": 1536,
+          "promptCacheMissTokens": 1055
+        },
+        "estimatedCost": 0.00024524080000000003
+      },
+      "validationIssues": [],
+      "versions": {
+        "strategy": "1.8.0",
+        "angleCard": "1.0.0",
+        "fewShot": "1.0.0",
+        "examples": [
+          "relationship-deep-positive",
+          "relationship-deep-boundary"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "incidentVersion": "2026-08-06.board7a-real-output-ab-preflight-incidents-v1",
+  "packageFingerprint": "32703f687342868a359f3b682b216f0a8965b0608096781f535f4303adc68248",
+  "status": "resolved",
+  "resolvedAt": "2026-08-06T15:05:34.510Z",
+  "incidents": [
+    {
+      "occurredAt": "2026-08-06T14:48:39.176Z",
+      "stage": "provider_configuration_preflight",
+      "errorCode": "EVENT_CENTERED_CANDIDATE_API_KEY_MISSING",
+      "generationRequestsUsed": 0,
+      "technicalRetriesUsed": 0,
+      "resolution": "after explicit product-owner authorization, the existing encrypted published DeepSeek credential was read once and injected into the isolated evaluation process; the database connection closed before generation and the run completed with 18 requests and 0 retries"
+    }
+  ]
+}

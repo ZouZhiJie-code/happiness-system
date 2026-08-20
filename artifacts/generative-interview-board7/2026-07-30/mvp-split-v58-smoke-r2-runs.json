@@ -1,0 +1,1417 @@
+{
+  "evaluation": "board7_mvp_development",
+  "stage": "smoke",
+  "runtimeConfig": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "modelSource": "DEEPSEEK_MODEL",
+    "baseUrlHost": "api.deepseek.com",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxAttempts": 2,
+    "thinking": "disabled",
+    "architecture": "one_call"
+  },
+  "pricing": null,
+  "singleRuns": [
+    {
+      "runId": "SMK-F-ASK-R1",
+      "caseId": "SMK-F-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 8576,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 948,
+          "tokenUsage": {
+            "promptTokens": 2720,
+            "completionTokens": 494,
+            "totalTokens": 3214,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 2720
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户看到录用通知时先笑了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"看到‘录用’两个字我先笑了\"\n      },\n      {\n        \"statement\": \"读到下周一入职时胸口发紧\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"往下读到下周一入职时，胸口突然紧了一下\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"still_missing\",\n      \"origin\": null,\n      \"basis\": \"用户已描述两个身体反应（笑和胸口紧），但尚未区分或连接它们，缺少一个准确的感受区分\",\n      \"supportEvidenceRefs\": [\"SMK-F-ASK-fact-1\", \"SMK-F-ASK-fact-2\"],\n      \"missingUnderstanding\": \"胸口发紧的具体感受标签\"\n    },\n    \"evidenceRefs\": [\"SMK-F-ASK-fact-1\", \"SMK-F-ASK-fact-2\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"chest_tightness_feeling\",\n    \"expectedUnderstandingDelta\": \"区分胸口发紧对应的具体感受，是紧张、压力、期待还是其他\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"differentiate\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你看到录用通知时先笑了，读到入职日期时胸口发紧。我想把胸口发紧落到一种更准确的感受上。\",\n    \"responseKind\": \"question\",\n    \"question\": \"胸口紧的那一下，更接近紧张、压力，还是另一种感觉？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 286,
+          "tokenUsage": {
+            "promptTokens": 2720,
+            "completionTokens": 500,
+            "totalTokens": 3220,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 32
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户看到录用通知时先笑了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"看到‘录用’两个字我先笑了\"\n      },\n      {\n        \"statement\": \"读到下周一入职时胸口发紧\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"往下读到下周一入职时，胸口突然紧了一下\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"still_missing\",\n      \"origin\": null,\n      \"basis\": \"用户描述了两种身体反应（笑和胸口发紧），但尚未区分或连接它们，缺少对胸口发紧具体感受的明确认识\",\n      \"supportEvidenceRefs\": [\"SMK-F-ASK-fact-1\", \"SMK-F-ASK-fact-2\"],\n      \"missingUnderstanding\": \"胸口发紧的具体感受是什么\"\n    },\n    \"evidenceRefs\": [\"SMK-F-ASK-fact-1\", \"SMK-F-ASK-fact-2\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"chest_tightness_feeling\",\n    \"expectedUnderstandingDelta\": \"区分胸口发紧的具体感受（如紧张、焦虑、期待等）\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"differentiate\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你看到录用通知时先笑了，但读到入职日期时胸口发紧。我想把胸口发紧的感觉落到一个更准确的感受上。\",\n    \"responseKind\": \"question\",\n    \"question\": \"胸口发紧的那一刻，更接近紧张、焦虑，还是另一种感觉？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 8576,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5440,
+          "completionTokens": 994,
+          "totalTokens": 6434,
+          "promptCacheHitTokens": 2688,
+          "promptCacheMissTokens": 2752
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "f791f3bd76a47475ca6987ab924bc96b6b162dcb752fa397b6c3af6aef349c0e"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:user-articulated",
+          "CAL-FEELING-GUIDED:ai-synthesized",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-ASK-R1",
+      "caseId": "SMK-T-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 9581,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 289,
+          "tokenUsage": {
+            "promptTokens": 2795,
+            "completionTokens": 566,
+            "totalTokens": 3361,
+            "promptCacheHitTokens": 256,
+            "promptCacheMissTokens": 2539
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"数据和结论他都说可以\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"数据和结论他都说可以\"\n      },\n      {\n        \"statement\": \"只圈了开头一句‘太绕’\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"只圈了开头一句‘太绕’\"\n      },\n      {\n        \"statement\": \"我一看到那条批注，就觉得整份提案都不专业\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我一看到那条批注，就觉得整份提案都不专业\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"thought\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出：主管认可数据和结论，只批注开头一句绕，用户因此觉得整份提案都不专业。用户已经说清判断的触发点。\",\n      \"supportEvidenceRefs\": [\"SMK-T-ASK-fact-1\", \"SMK-T-ASK-fact-2\", \"SMK-T-ASK-fact-3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-T-ASK-fact-1\", \"SMK-T-ASK-fact-2\", \"SMK-T-ASK-fact-3\"],\n    \"insightKind\": \"connection\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已经说清：一个细节（开头绕）如何影响整体判断（整份提案不专业）。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"主管认可数据和结论，只批注开头一句绕，你就觉得整份提案都不专业——一个细节直接改变了你对整体的判断。\",\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 297,
+          "tokenUsage": {
+            "promptTokens": 2795,
+            "completionTokens": 613,
+            "totalTokens": 3408,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 107
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"数据和结论他都说可以\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"数据和结论他都说可以\"\n      },\n      {\n        \"statement\": \"只圈了开头一句‘太绕’\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"只圈了开头一句‘太绕’\"\n      },\n      {\n        \"statement\": \"我一看到那条批注，就觉得整份提案都不专业\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我一看到那条批注，就觉得整份提案都不专业\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"thought\",\n    \"outcomeAssessment\": {\n      \"state\": \"still_missing\",\n      \"origin\": null,\n      \"basis\": \"用户已说明触发判断的批注内容，但尚未区分批注的性质（如措辞问题 vs 逻辑问题）与整体专业判断之间的关系\",\n      \"supportEvidenceRefs\": [\"SMK-T-ASK-fact-2\", \"SMK-T-ASK-fact-3\"],\n      \"missingUnderstanding\": \"用户将开头一句的‘太绕’等同于整份提案不专业，但未说明这一句批注具体指向什么（是表达方式还是内容逻辑），以及为何一个局部问题会推翻整体认可\"\n    },\n    \"evidenceRefs\": [\"SMK-T-ASK-fact-2\", \"SMK-T-ASK-fact-3\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"proposal_judgment_trigger\",\n    \"expectedUnderstandingDelta\": \"区分批注的具体指向（措辞 vs 逻辑）与整体判断的关系\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"clarify_user_term\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你提到主管认可数据和结论，但一句‘太绕’让你觉得整份提案不专业；我想先弄清楚，那句批注具体是指开头表达绕，还是指开头逻辑绕？\",\n    \"responseKind\": \"question\",\n    \"question\": \"那句‘太绕’是指开头写得太啰嗦，还是开头逻辑本身有问题？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 9581,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5590,
+          "completionTokens": 1179,
+          "totalTokens": 6769,
+          "promptCacheHitTokens": 2944,
+          "promptCacheMissTokens": 2646
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "1006225235fe0caa2ab6644313ac9f7acc22d5fa074cada2762c7d40793d5870"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-THOUGHT-DEEP:ask",
+          "CAL-THOUGHT-DEEP:user-articulated",
+          "CAL-THOUGHT-DEEP:ai-synthesized",
+          "CAL-THOUGHT-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-ASK-R1",
+      "caseId": "SMK-R-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 9037,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 277,
+          "tokenUsage": {
+            "promptTokens": 2790,
+            "completionTokens": 553,
+            "totalTokens": 3343,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 2022
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户看到同事把用户和丽莎写在同一句里\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他把我和丽莎写在同一句里\"\n      },\n      {\n        \"statement\": \"那种写法让用户有点不舒服\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"feeling\",\n        \"quote\": \"那种写法让我有点不舒服\"\n      },\n      {\n        \"statement\": \"原话还在群里，用户可以翻出来\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"原话还在群里，我可以翻出来\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"still_missing\",\n      \"origin\": null,\n      \"basis\": \"用户确认了不舒服但未说明具体措辞，无法判断关系影响\",\n      \"supportEvidenceRefs\": [\"SMK-R-ASK-fact-3\", \"new:2\"],\n      \"missingUnderstanding\": \"具体措辞如何影响用户对合作位置的感受\"\n    },\n    \"evidenceRefs\": [\"SMK-R-ASK-fact-1\", \"SMK-R-ASK-fact-2\", \"new:1\", \"new:2\", \"new:3\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"wording_effect\",\n    \"expectedUnderstandingDelta\": \"用户指出具体措辞后，可判断该措辞如何影响用户对合作位置的感受\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"anchor_specific\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你提到写法让你不舒服，但还没说具体是哪个词或哪种表述；知道具体措辞后，才能看清它怎样影响你在合作中的位置感受。\",\n    \"responseKind\": \"question\",\n    \"question\": \"让你停下来的是哪个具体的词或表述？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 293,
+          "tokenUsage": {
+            "promptTokens": 2790,
+            "completionTokens": 568,
+            "totalTokens": 3358,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 102
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户看到同事把用户和丽莎写在同一句里\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我只扫到他把我和丽莎写在同一句里\"\n      },\n      {\n        \"statement\": \"用户因具体写法感到不舒服\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"那种写法让我有点不舒服\"\n      },\n      {\n        \"statement\": \"用户表示可以翻出原话\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"原话还在群里，我可以翻出来\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"still_missing\",\n      \"origin\": null,\n      \"basis\": \"用户确认了不舒服但未说明具体措辞，无法判断是位置、期待还是信任问题\",\n      \"supportEvidenceRefs\": [\"SMK-R-ASK-fact-3\", \"new:2\"],\n      \"missingUnderstanding\": \"哪种具体写法让用户感到不舒服，以及这种不舒服是否与用户期待的位置有关\"\n    },\n    \"evidenceRefs\": [\"SMK-R-ASK-fact-1\", \"SMK-R-ASK-fact-2\", \"new:1\", \"new:2\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"specific_wording_discomfort\",\n    \"expectedUnderstandingDelta\": \"定位用户不舒服的具体措辞，为后续判断关系影响提供依据\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"anchor_specific\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你提到那种写法让你不舒服，但还没具体说是哪部分措辞。我想先弄清楚让你停下来的具体写法，才能理解它怎样影响你在这次合作里的位置。\",\n    \"responseKind\": \"question\",\n    \"question\": \"让你不舒服的是那句里把你和丽莎并列的写法，还是其他措辞？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 9037,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5580,
+          "completionTokens": 1121,
+          "totalTokens": 6701,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 2124
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "0a1f4fc799c9b923373adafd6c266ef219678ae4f0c036ec4da1996f46e15d93"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-RELATIONSHIP-GUIDED:ask",
+          "CAL-RELATIONSHIP-GUIDED:user-articulated",
+          "CAL-RELATIONSHIP-GUIDED:ai-synthesized",
+          "CAL-RELATIONSHIP-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-ASK-R1",
+      "caseId": "SMK-A-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 7188,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 271,
+          "tokenUsage": {
+            "promptTokens": 2741,
+            "completionTokens": 459,
+            "totalTokens": 3200,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1973
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户关掉摄像头后继续完成会议\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"镜头一关我确实继续坐完了会议\"\n      },\n      {\n        \"statement\": \"用户错过同事希望其接话的示意\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"但后来才发现他们几次看向我、想让我接话，我都没反应\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出关摄像头保住了继续完成会议，代价是错过互动\",\n      \"supportEvidenceRefs\": [\"new:1\", \"new:2\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-A-ASK-fact-1\", \"SMK-A-ASK-fact-2\", \"new:1\", \"new:2\"],\n    \"insightKind\": \"function\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已说清关摄像头保住了继续参会，代价是错过同事示意\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"关掉摄像头让你保住了继续完成会议，代价是错过了同事希望接话的示意。\",\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 648,
+          "tokenUsage": {
+            "promptTokens": 2741,
+            "completionTokens": 488,
+            "totalTokens": 3229,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 53
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户关掉摄像头后继续完成会议\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"镜头一关我确实继续坐完了会议\"\n      },\n      {\n        \"statement\": \"用户错过同事希望其接话的示意\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"但后来才发现他们几次看向我、想让我接话，我都没反应\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"still_missing\",\n      \"origin\": null,\n      \"basis\": \"用户描述了关摄像头和错过示意的事实，但尚未说出关摄像头保护了什么\",\n      \"supportEvidenceRefs\": [\"SMK-A-ASK-fact-1\", \"SMK-A-ASK-fact-2\"],\n      \"missingUnderstanding\": \"关摄像头这个动作当时帮用户保住了什么\"\n    },\n    \"evidenceRefs\": [\"SMK-A-ASK-fact-1\", \"SMK-A-ASK-fact-2\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"camera_off_function\",\n    \"expectedUnderstandingDelta\": \"理解关摄像头保护了用户的什么状态或需要\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"connect_clues\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你关掉摄像头后继续参会，但错过了同事的示意。我想知道，关摄像头这个动作当时帮你保住了什么？\",\n    \"responseKind\": \"question\",\n    \"question\": \"关掉摄像头以后，这个动作当时帮你保住了什么？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 7188,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5482,
+          "completionTokens": 947,
+          "totalTokens": 6429,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 2026
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "cfc5d5a2372786da92d91933d31c6b4670a12bb7efe5cb62212a89ba1297f684"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-ACTION-DEEP:ask",
+          "CAL-ACTION-DEEP:user-articulated",
+          "CAL-ACTION-DEEP:ai-synthesized",
+          "CAL-ACTION-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-USER-R1",
+      "caseId": "SMK-F-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 9474,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 715,
+          "tokenUsage": {
+            "promptTokens": 2794,
+            "completionTokens": 600,
+            "totalTokens": 3394,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 2026
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"舍不得的是以后不能每天和她一起走路\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"舍不得的是以后不能每天和她一起走路\"\n      },\n      {\n        \"statement\": \"松口气的是终于不用每天赶三四个地方\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"松口气的是终于不用每天赶三四个地方\"\n      },\n      {\n        \"statement\": \"两种感觉各有各的对象\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"两种感觉各有各的对象\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出舍不得和放松分别对应不同对象：舍不得对应与朋友同行的结束，放松对应赶多个地点的结束。\",\n      \"supportEvidenceRefs\": [\"SMK-F-USER-fact-1\", \"SMK-F-USER-fact-2\", \"SMK-F-USER-fact-3\", \"new:1\", \"new:2\", \"new:3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-F-USER-fact-1\", \"SMK-F-USER-fact-2\", \"SMK-F-USER-fact-3\", \"new:1\", \"new:2\", \"new:3\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已区分两种感受各自的对象：舍不得指向与朋友同行的结束，放松指向赶多个地点的结束。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已清晰区分感受对象，形成有证据的认识进展。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"舍不得和放松分别指向不同的结束：舍不得的是每天一起走路的同行结束，放松的是每天赶三四个地方的奔波结束。\",\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 667,
+          "tokenUsage": {
+            "promptTokens": 2794,
+            "completionTokens": 594,
+            "totalTokens": 3388,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 106
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"舍不得的是以后不能每天和她一起走路\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"舍不得的是以后不能每天和她一起走路\"\n      },\n      {\n        \"statement\": \"松口气的是终于不用每天赶三四个地方\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"松口气的是终于不用每天赶三四个地方\"\n      },\n      {\n        \"statement\": \"两种感觉各有各的对象\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"两种感觉各有各的对象\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确区分了舍不得的对象（与朋友每天同行）和放松的对象（赶多个地点），并总结两种感觉各有对象。\",\n      \"supportEvidenceRefs\": [\"SMK-F-USER-fact-1\", \"SMK-F-USER-fact-2\", \"SMK-F-USER-fact-3\", \"new:1\", \"new:2\", \"new:3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-F-USER-fact-1\", \"SMK-F-USER-fact-2\", \"SMK-F-USER-fact-3\", \"new:1\", \"new:2\", \"new:3\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已说清舍不得和放松分别回应不同对象，形成明确区分。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已形成明确区分，继续提问无法增加新的感受理解。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"舍不得和放松分别回应了不同的部分：舍不得的是和同行朋友每天在一起的时光，放松的是不用再赶多个地点的行程。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 9474,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5588,
+          "completionTokens": 1194,
+          "totalTokens": 6782,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 2132
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "40db111e5024916eabe4607949cc1a53654c884dac209e290a4d724c17e98ee0"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-FEELING-DEEP:ask",
+          "CAL-FEELING-DEEP:user-articulated",
+          "CAL-FEELING-DEEP:ai-synthesized",
+          "CAL-FEELING-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-USER-R1",
+      "caseId": "SMK-T-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 7372,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 269,
+          "tokenUsage": {
+            "promptTokens": 2768,
+            "completionTokens": 498,
+            "totalTokens": 3266,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 2000
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户把马上回复当成负责的唯一证明\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我一直把‘马上回复’当成负责的唯一证明\"\n      },\n      {\n        \"statement\": \"事情最终按时完成\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"哪怕事情最后按时做完了也不算\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"thought\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出判断标准：马上回复是负责的唯一证明，按时完成不算。\",\n      \"supportEvidenceRefs\": [\"SMK-T-USER-fact-3\", \"new:1\", \"new:2\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-T-USER-fact-1\", \"SMK-T-USER-fact-2\", \"SMK-T-USER-fact-3\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已区分‘马上回复’与‘按时完成’作为负责的不同标准，并明确自己的判断依据。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已说清判断标准，形成成果。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"你发现，自己一直用‘是否马上回复’来衡量负责，即使事情按时完成也不被算作负责。这个标准把‘及时回应’和‘完成结果’分开了。\",\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 310,
+          "tokenUsage": {
+            "promptTokens": 2768,
+            "completionTokens": 422,
+            "totalTokens": 3190,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 80
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户把马上回复当成负责的唯一证明\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我一直把‘马上回复’当成负责的唯一证明\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"thought\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出判断标准：马上回复是负责的唯一证明，且事情按时完成也不改变这一标准。\",\n      \"supportEvidenceRefs\": [\"SMK-T-USER-fact-3\", \"new:1\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-T-USER-fact-2\", \"SMK-T-USER-fact-3\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已区分‘马上回复’与‘负责’的关系，并承认事情按时完成不影响其标准。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已明确说出判断标准，形成成果。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"你发现，自己一直把‘马上回复’当作负责的唯一证明，即使事情最终按时完成，这个标准也没有改变。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 7372,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5536,
+          "completionTokens": 920,
+          "totalTokens": 6456,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 2080
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "d727f5393fdb0b99a3780bd1f3c2d6c36186f59147af5455fa66fbadf36e1c41"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-THOUGHT-GUIDED:ask",
+          "CAL-THOUGHT-GUIDED:user-articulated",
+          "CAL-THOUGHT-GUIDED:ai-synthesized",
+          "CAL-THOUGHT-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-USER-R1",
+      "caseId": "SMK-R-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 6810,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 313,
+          "tokenUsage": {
+            "promptTokens": 2837,
+            "completionTokens": 414,
+            "totalTokens": 3251,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 2069
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户认为支持和控制的区别是最后谁来决定钱怎么用\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"支持和控制的区别是最后谁来决定钱怎么用\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户原话明确说出支持和控制的区别在于最终决定权\",\n      \"supportEvidenceRefs\": [\"SMK-R-USER-fact-3\", \"new:1\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-R-USER-fact-1\", \"SMK-R-USER-fact-2\", \"SMK-R-USER-fact-3\", \"new:1\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已说清支持与控制的分界是最终决定权\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"你区分得很清楚：借钱是支持，但每天查看开支越过了帮助；支持和控制的区别，在于最后谁来决定钱怎么用。\",\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 292,
+          "tokenUsage": {
+            "promptTokens": 2837,
+            "completionTokens": 416,
+            "totalTokens": 3253,
+            "promptCacheHitTokens": 2816,
+            "promptCacheMissTokens": 21
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户把最终决定权作为支持与控制的分界\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"支持和控制的区别是最后谁来决定钱怎么用\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户原话明确说出区别：支持和控制的区别是最后谁来决定钱怎么用\",\n      \"supportEvidenceRefs\": [\"SMK-R-USER-fact-1\", \"SMK-R-USER-fact-2\", \"new:1\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-R-USER-fact-1\", \"SMK-R-USER-fact-2\", \"new:1\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已说清支持与控制的分界是最终决定权归属\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"借钱接住了你，但每天查看开支越过了帮助；你清楚区分了支持和控制——最后谁来决定钱怎么用。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 6810,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5674,
+          "completionTokens": 830,
+          "totalTokens": 6504,
+          "promptCacheHitTokens": 3584,
+          "promptCacheMissTokens": 2090
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "7354b83e3c5442c3910ace4755536aab02d60746640c21737da5ccc33e0e917d"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-RELATIONSHIP-DEEP:ask",
+          "CAL-RELATIONSHIP-DEEP:user-articulated",
+          "CAL-RELATIONSHIP-DEEP:ai-synthesized",
+          "CAL-RELATIONSHIP-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-USER-R1",
+      "caseId": "SMK-A-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 8291,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 290,
+          "tokenUsage": {
+            "promptTokens": 2767,
+            "completionTokens": 562,
+            "totalTokens": 3329,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1999
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"整理让用户觉得自己已经开始工作了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"整理让我觉得自己已经开始工作了\"\n      },\n      {\n        \"statement\": \"整理一直替代着写第一段\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"它其实一直替代着写第一段\"\n      },\n      {\n        \"statement\": \"桌面清空了，报告还是空白\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"桌面清空了，报告还是空白\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户原话明确说出整理的作用：产生已经开始工作的感觉，但替代了写第一段，导致桌面清空后报告仍空白。\",\n      \"supportEvidenceRefs\": [\"SMK-A-USER-fact-1\", \"SMK-A-USER-fact-2\", \"SMK-A-USER-fact-3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-A-USER-fact-1\", \"SMK-A-USER-fact-2\", \"SMK-A-USER-fact-3\"],\n    \"insightKind\": \"function\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已经说清整理的作用：制造工作开始的假象，但实际替代了写报告，导致桌面清空后报告仍空白。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已说清整理的作用，成果成立。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"整理让你觉得自己已经开始工作了，但它实际上替代了写第一段，结果桌面清空了，报告还是空白。\",\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 281,
+          "tokenUsage": {
+            "promptTokens": 2767,
+            "completionTokens": 563,
+            "totalTokens": 3330,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 79
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"整理让用户觉得自己已经开始工作了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"整理让我觉得自己已经开始工作了\"\n      },\n      {\n        \"statement\": \"整理一直替代着写第一段\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"它其实一直替代着写第一段\"\n      },\n      {\n        \"statement\": \"桌面清空了，报告还是空白\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"桌面清空了，报告还是空白\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户原话明确说出整理的作用：产生开始工作的感觉，但替代了写第一段，导致桌面清空后报告仍空白\",\n      \"supportEvidenceRefs\": [\"SMK-A-USER-fact-1\", \"SMK-A-USER-fact-2\", \"SMK-A-USER-fact-3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-A-USER-fact-1\", \"SMK-A-USER-fact-2\", \"SMK-A-USER-fact-3\"],\n    \"insightKind\": \"function\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已经说清整理桌面的作用：制造开始工作的感觉，但替代了写第一段，导致桌面清空后报告仍空白\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已说清整理桌面的作用，成果成立\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"整理桌面让你觉得自己已经开始工作了，但它实际上替代了写第一段，结果桌面清空了，报告还是空白。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 8291,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5534,
+          "completionTokens": 1125,
+          "totalTokens": 6659,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 2078
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "9c9805ff039f7beb927ac4ae08cccbb462cf9d2daeef9d4dd05a564bafcc3edf"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-ACTION-GUIDED:ask",
+          "CAL-ACTION-GUIDED:user-articulated",
+          "CAL-ACTION-GUIDED:ai-synthesized",
+          "CAL-ACTION-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "caseId": "SMK-F-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 9378,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 317,
+          "tokenUsage": {
+            "promptTokens": 2743,
+            "completionTokens": 624,
+            "totalTokens": 3367,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1975
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"医生说结果正常时我还坐得很直\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"医生说结果正常时我还坐得很直\"\n      },\n      {\n        \"statement\": \"护士把手指上的夹子取下来，我才靠回椅背，手也摊开了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"护士把手指上的夹子取下来，我才靠回椅背，手也摊开了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"ai_synthesized\",\n      \"origin\": \"ai_synthesized\",\n      \"basis\": \"用户描述了听到结果时身体仍僵直，护士取下监测夹后身体才放松，两个事实之间存在时间差，但用户未明确说出身体放松与结果正常不同步的关系。\",\n      \"supportEvidenceRefs\": [\"SMK-F-AI-fact-1\", \"SMK-F-AI-fact-2\", \"new:1\", \"new:2\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-F-AI-fact-1\", \"SMK-F-AI-fact-2\", \"new:1\", \"new:2\"],\n    \"insightKind\": \"connection\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"看见身体放松与结果正常并不同步，身体在护士取下监测夹后才松开。\",\n    \"tentativeInterpretation\": {\n      \"statement\": \"这次急诊检查，身体放松与结果正常并不同步：听到结果时身体仍僵着，护士取下监测夹后才松开。\",\n      \"supportEvidenceRefs\": [\"SMK-F-AI-fact-1\", \"SMK-F-AI-fact-2\", \"new:1\", \"new:2\"]\n    },\n    \"stopReason\": \"AI综合形成一条此前未明说的感受关系：身体放松与结果正常并不同步。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"这次急诊检查，身体放松与结果正常并不同步：听到结果时身体仍僵着，护士取下监测夹后才松开。\",\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 285,
+          "tokenUsage": {
+            "promptTokens": 2743,
+            "completionTokens": 536,
+            "totalTokens": 3279,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 55
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"医生说结果正常时我还坐得很直\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"医生说结果正常时我还坐得很直\"\n      },\n      {\n        \"statement\": \"护士把手指上的夹子取下来，我才靠回椅背，手也摊开了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"护士把手指上的夹子取下来，我才靠回椅背，手也摊开了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"feeling\",\n    \"outcomeAssessment\": {\n      \"state\": \"still_missing\",\n      \"origin\": null,\n      \"basis\": \"用户描述了身体变化的时间点，但尚未说出身体松开那一刻对应的具体感受\",\n      \"supportEvidenceRefs\": [\"SMK-F-AI-fact-1\", \"SMK-F-AI-fact-2\", \"new:1\", \"new:2\"],\n      \"missingUnderstanding\": \"身体松开那一刻的具体感受\"\n    },\n    \"evidenceRefs\": [\"SMK-F-AI-fact-1\", \"SMK-F-AI-fact-2\", \"new:1\", \"new:2\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"body_release_feeling\",\n    \"expectedUnderstandingDelta\": \"区分身体松开时更接近放松、释然还是另一种感受\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"anchor_specific\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你提到听到结果时还僵着，护士取下夹子后才靠回椅背。我想把身体松开那一刻的感受落得更具体一些。\",\n    \"responseKind\": \"question\",\n    \"question\": \"靠回椅背、手摊开的那一刻，身体松开的感觉更接近放松、释然，还是另一种感受？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 9378,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5486,
+          "completionTokens": 1160,
+          "totalTokens": 6646,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 2030
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "13d73eccab4b790888d57d48df77c7b4611d8072dfb7953206b6cfaf41105bfd"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:user-articulated",
+          "CAL-FEELING-GUIDED:ai-synthesized",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-AI-R1",
+      "caseId": "SMK-T-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 8234,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 286,
+          "tokenUsage": {
+            "promptTokens": 2746,
+            "completionTokens": 494,
+            "totalTokens": 3240,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1978
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"本次配色因不符合客户品牌规范被拒\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"客户说这次颜色不符合他们的品牌规范\"\n      },\n      {\n        \"statement\": \"同类大胆配色在另一活动中得到效果肯定\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"上个月另一个活动用同样大胆的颜色，负责人还专门夸过效果\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"thought\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户原话明确区分了两次经历的不同结果，并隐含了对配色能力的重新评估\",\n      \"supportEvidenceRefs\": [\"SMK-T-AI-fact-1\", \"SMK-T-AI-fact-2\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-T-AI-fact-1\", \"SMK-T-AI-fact-2\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已经区分了同一套配色在不同场景下的不同结果，并开始重新评估配色能力\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已形成区分，继续追问可能重复\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"pause\",\n    \"question\": null,\n    \"insight\": \"同一套配色在不同场景下得到截然不同的反馈：一次因品牌规范被拒，一次因效果被夸。你已经看到了这种差异，并开始重新评估那套配色能力。\",\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 290,
+          "tokenUsage": {
+            "promptTokens": 2746,
+            "completionTokens": 453,
+            "totalTokens": 3199,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 58
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"本次配色因不符合客户品牌规范被拒\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"客户说这次颜色不符合他们的品牌规范\"\n      },\n      {\n        \"statement\": \"同类大胆配色在另一活动中得到效果肯定\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"上个月另一个活动用同样大胆的颜色，负责人还专门夸过效果\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"pause\",\n    \"activeAngle\": \"thought\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户原话已明确说出两种不同经历对同一套配色的不同评价，形成对比关系\",\n      \"supportEvidenceRefs\": [\"new:1\", \"new:2\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"new:1\", \"new:2\"],\n    \"insightKind\": \"tension\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已主动呈现同一套配色在不同场景下获得相反评价的事实对比\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"同一套大胆配色，在客户品牌规范下被拒绝，在另一活动中却被肯定；两种经历让你看到同一能力在不同标准下的不同结果。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 8234,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5492,
+          "completionTokens": 947,
+          "totalTokens": 6439,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 2036
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "6c7087e127ad5b2908e613e1fc9e0877cd8c2ac1af93629e4abc489acdd06d53"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-THOUGHT-DEEP:ask",
+          "CAL-THOUGHT-DEEP:user-articulated",
+          "CAL-THOUGHT-DEEP:ai-synthesized",
+          "CAL-THOUGHT-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-AI-R1",
+      "caseId": "SMK-R-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 9423,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 287,
+          "tokenUsage": {
+            "promptTokens": 2801,
+            "completionTokens": 616,
+            "totalTokens": 3417,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 2033
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"同事整理幻灯片为用户节省时间\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他把整套幻灯片都排好了，确实省了我很多时间\"\n      },\n      {\n        \"statement\": \"同事未经确认调整议程\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"可议程也被他改过\"\n      },\n      {\n        \"statement\": \"用户负责的讨论项未进入议程且用户未发言\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我负责的讨论项直接没排进去，会上我就一直没开口\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户明确说出被帮到（节省时间）和退出去（负责项未排进议程、未发言），形成互动中位置变化的对比\",\n      \"supportEvidenceRefs\": [\"SMK-R-AI-fact-1\", \"SMK-R-AI-fact-2\", \"SMK-R-AI-fact-3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-R-AI-fact-1\", \"SMK-R-AI-fact-2\", \"SMK-R-AI-fact-3\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已经说清协作中既感受到帮助（节省时间），也因议程被改、自己负责项被排除而退出参与，形成互动中位置变化的对比\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已清晰说出被帮到和退出去的具体方面，形成关系中的位置变化认识\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"同事帮你整理幻灯片节省了时间，这是被帮到的部分；但他未经确认调整议程，让你负责的讨论项没有排进去，会上你一直没开口——你既感受到帮助，也退出了参与。\",\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 353,
+          "tokenUsage": {
+            "promptTokens": 2801,
+            "completionTokens": 640,
+            "totalTokens": 3441,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 113
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"同事整理幻灯片为用户节省时间\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"他把整套幻灯片都排好了，确实省了我很多时间\"\n      },\n      {\n        \"statement\": \"同事未经确认调整议程\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"可议程也被他改过\"\n      },\n      {\n        \"statement\": \"用户负责的讨论项未进入议程且用户未发言\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我负责的讨论项直接没排进去，会上我就一直没开口\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"complete\",\n    \"activeAngle\": \"relationship\",\n    \"outcomeAssessment\": {\n      \"state\": \"user_articulated\",\n      \"origin\": \"user_articulated\",\n      \"basis\": \"用户原话明确区分了被帮到（节省时间）和退出去（议程被改、负责项未排入、未开口），形成了互动中位置变化的对比。\",\n      \"supportEvidenceRefs\": [\"SMK-R-AI-fact-1\", \"SMK-R-AI-fact-2\", \"SMK-R-AI-fact-3\"],\n      \"missingUnderstanding\": null\n    },\n    \"evidenceRefs\": [\"SMK-R-AI-fact-1\", \"SMK-R-AI-fact-2\", \"SMK-R-AI-fact-3\"],\n    \"insightKind\": \"distinction\",\n    \"selectedTargetId\": null,\n    \"expectedUnderstandingDelta\": \"用户已经说清协作中哪些地方感到被帮到（节省时间），哪些地方退了出去（议程被改、负责项未排入、未开口），形成了互动中位置变化的对比。\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": \"用户已经说清互动对自己的意义：被帮到与退出去并存，形成了位置变化的对比。\",\n    \"cognitiveAction\": null\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": null,\n    \"responseKind\": \"completion\",\n    \"question\": null,\n    \"insight\": \"同事帮你整理幻灯片节省了时间，这是被帮到的地方；但他未经确认调整议程，你负责的讨论项没有排进去，会上你一直没开口——这些地方让你退了出去。两种体验同时存在，你在协作中的位置也因此发生了变化。\",\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 9423,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5602,
+          "completionTokens": 1256,
+          "totalTokens": 6858,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 2146
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "6925c91f15b297d1109b300a480e9bb582e91191119ccd5bed81f9b61bb38cef"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-RELATIONSHIP-GUIDED:ask",
+          "CAL-RELATIONSHIP-GUIDED:user-articulated",
+          "CAL-RELATIONSHIP-GUIDED:ai-synthesized",
+          "CAL-RELATIONSHIP-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-AI-R1",
+      "caseId": "SMK-A-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 8089,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 299,
+          "tokenUsage": {
+            "promptTokens": 2745,
+            "completionTokens": 522,
+            "totalTokens": 3267,
+            "promptCacheHitTokens": 768,
+            "promptCacheMissTokens": 1977
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户重新整理二十多张任务卡并获得清晰感\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我把二十多张卡片都重新排了优先级，颜色也统一了，越排越清楚\"\n      },\n      {\n        \"statement\": \"客户投诉始终在看板底部且到下班仍未打开\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"只有那条客户投诉一直压在最下面，我到下班都没点开\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"still_missing\",\n      \"origin\": null,\n      \"basis\": \"用户描述了整理看板的行为和未打开投诉的事实，但尚未说明这个动作在当时替自己做了什么\",\n      \"supportEvidenceRefs\": [\"SMK-A-AI-fact-1\", \"SMK-A-AI-fact-2\"],\n      \"missingUnderstanding\": \"整理看板这个动作在当时保护或维持了什么\"\n    },\n    \"evidenceRefs\": [\"SMK-A-AI-fact-1\", \"SMK-A-AI-fact-2\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"action_function\",\n    \"expectedUnderstandingDelta\": \"理解整理看板这个动作在当时替用户做了什么（例如：维持掌控感、回避投诉、获得清晰等）\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"connect_clues\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你重新整理了看板，获得了清晰感，但那条投诉一直没打开。我想知道，整理看板这个动作在当时替你做了什么？\",\n    \"responseKind\": \"question\",\n    \"question\": \"反复整理看板时，这个动作在当时替你做了什么？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 289,
+          "tokenUsage": {
+            "promptTokens": 2745,
+            "completionTokens": 510,
+            "totalTokens": 3255,
+            "promptCacheHitTokens": 2688,
+            "promptCacheMissTokens": 57
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "semanticPlan.outcomeAssessment.state:invalid_enum_value",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户重新整理二十多张任务卡并获得清晰感\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我把二十多张卡片都重新排了优先级，颜色也统一了，越排越清楚\"\n      },\n      {\n        \"statement\": \"客户投诉始终在看板底部且到下班仍未打开\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"只有那条客户投诉一直压在最下面，我到下班都没点开\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"semanticPlan\": {\n    \"action\": \"ask\",\n    \"activeAngle\": \"action\",\n    \"outcomeAssessment\": {\n      \"state\": \"still_missing\",\n      \"origin\": null,\n      \"basis\": \"用户描述了整理看板的行为和未打开投诉的事实，但尚未说明这个动作在当时的作用或保护了什么\",\n      \"supportEvidenceRefs\": [\"SMK-A-AI-fact-1\", \"SMK-A-AI-fact-2\"],\n      \"missingUnderstanding\": \"整理看板这个动作在当时替用户做了什么\"\n    },\n    \"evidenceRefs\": [\"SMK-A-AI-fact-1\", \"SMK-A-AI-fact-2\"],\n    \"insightKind\": null,\n    \"selectedTargetId\": \"action_function\",\n    \"expectedUnderstandingDelta\": \"理解整理看板在当时是否帮助用户维持了某种控制感或回避了投诉带来的压力\",\n    \"tentativeInterpretation\": null,\n    \"stopReason\": null,\n    \"cognitiveAction\": \"connect_clues\"\n  },\n  \"visibleTurn\": {\n    \"thinkingSummary\": \"你花时间把看板整理清楚，同时那条投诉一直没打开；我想知道整理这个动作在当时替你做了什么。\",\n    \"responseKind\": \"question\",\n    \"question\": \"反复整理看板时，这个动作在当时替你做了什么？\",\n    \"insight\": null,\n    \"honestLimit\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 8089,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5490,
+          "completionTokens": 1032,
+          "totalTokens": 6522,
+          "promptCacheHitTokens": 3456,
+          "promptCacheMissTokens": 2034
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "semanticPlan.outcomeAssessment.state:invalid_enum_value"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-29.event-centered-generative-v58",
+          "resolvedPromptHash": "eb37fb52e33f59a584cb0b2631e75af3ce680d0ce8d817b57e840f7ef206e823"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.42.0",
+        "angleCard": "2.9.0",
+        "fewShot": "quality-patterns.2026-07-29.v21",
+        "examples": [
+          "CAL-ACTION-DEEP:ask",
+          "CAL-ACTION-DEEP:user-articulated",
+          "CAL-ACTION-DEEP:ai-synthesized",
+          "CAL-ACTION-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ],
+  "codexGate": {
+    "stage": "smoke",
+    "reviewLevel": "codex",
+    "total": 12,
+    "expectedTotal": 12,
+    "technicalComplete": 0,
+    "reviewed": 0,
+    "passed": 0,
+    "classSummaries": {
+      "ask": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "user_articulated": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "ai_synthesized": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      }
+    },
+    "distributionMatches": true,
+    "sourceMisattribution": 0,
+    "seriousBoundaryErrors": 0,
+    "initialWrongMotive": 0,
+    "immediateRecovery": 0,
+    "repeatedPrimaryFailures": [],
+    "gateState": "blocked_pending_review"
+  },
+  "productGate": {
+    "stage": "smoke",
+    "reviewLevel": "product_owner",
+    "total": 12,
+    "expectedTotal": 12,
+    "technicalComplete": 0,
+    "reviewed": 0,
+    "passed": 0,
+    "classSummaries": {
+      "ask": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "user_articulated": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "ai_synthesized": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      }
+    },
+    "distributionMatches": true,
+    "sourceMisattribution": 0,
+    "seriousBoundaryErrors": 0,
+    "initialWrongMotive": 0,
+    "immediateRecovery": 0,
+    "repeatedPrimaryFailures": [],
+    "gateState": "blocked_pending_review"
+  }
+}

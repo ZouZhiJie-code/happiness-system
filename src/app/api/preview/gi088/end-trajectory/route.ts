@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 const inputSchema = z
   .object({
+    runId: z.string().uuid(),
     taskId: z.string().trim().min(1).max(20),
     branch: z.literal("high"),
     feeling: z.enum(["better", "same", "worse"]),
@@ -22,7 +23,10 @@ const inputSchema = z
       "not_triggered",
       "blocked_by_technical_failure"
     ]),
-    reason: z.string().trim().min(1).max(2_000)
+    reason: z.string().trim().min(1).max(2_000),
+    reviewSnapshotFingerprint: z.string().length(64),
+    clientOperationId: z.string().trim().min(1).max(160),
+    revisionReason: z.string().trim().min(1).max(1_000).optional()
   })
   .strict();
 

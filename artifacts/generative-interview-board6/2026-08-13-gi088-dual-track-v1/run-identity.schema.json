@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dailylight.chat/schemas/ai-evaluation-run-identity-v1.json",
+  "title": "Daily Light AI 评测运行身份证 v1",
+  "type": "object",
+  "required": [
+    "runId",
+    "productDecision",
+    "candidate",
+    "standardVersion",
+    "specialtyVersion",
+    "dataset",
+    "rubricVersion",
+    "judge",
+    "environment",
+    "startedAt",
+    "technicalResult",
+    "qualityResult",
+    "experienceResult",
+    "humanDisagreements",
+    "finalDecision"
+  ],
+  "properties": {
+    "runId": { "type": "string", "minLength": 1 },
+    "productDecision": { "type": "string", "minLength": 1 },
+    "candidate": { "type": "object" },
+    "standardVersion": { "type": "string", "minLength": 1 },
+    "specialtyVersion": { "type": "string", "minLength": 1 },
+    "dataset": { "type": "object" },
+    "rubricVersion": { "type": "string", "minLength": 1 },
+    "judge": { "type": "object" },
+    "environment": { "type": "object" },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "technicalResult": { "type": "object" },
+    "qualityResult": { "type": "object" },
+    "experienceResult": { "type": "object" },
+    "humanDisagreements": { "type": "array" },
+    "finalDecision": { "type": "object" }
+  },
+  "additionalProperties": false
+}

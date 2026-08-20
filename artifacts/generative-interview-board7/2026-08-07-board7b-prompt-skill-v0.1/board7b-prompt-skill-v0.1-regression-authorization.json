@@ -1,0 +1,13 @@
+{
+  "authorizationVersion": "2026-08-07.board7b-prompt-skill-authorization-v0.1",
+  "decision": "approved",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.1",
+  "candidateFingerprint": "b17e662434188d6f5938bc283f17abf38a76a95aa482e7d67686a1093bd709c3",
+  "authorizationScope": "eight_case_hidden_regression",
+  "authorizedModelCallBudget": 8,
+  "authorizedEnvironment": "isolated_local_evaluation",
+  "approvedBy": "product_owner_conversation",
+  "approvedAt": "2026-08-07T07:59:49Z",
+  "productionChangeAuthorized": false,
+  "confirmationText": "产品负责人已在当前主会话明确授权。授权仅覆盖当前候选指纹的八次隐藏回归；质量重试与自动技术重试均为零。"
+}

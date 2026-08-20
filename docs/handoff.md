@@ -1,6 +1,6 @@
 # 当前阶段 Handoff
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-12`
 
 ## 1. 交接结论
 
@@ -10,22 +10,56 @@ Daily Light 已具备完整的五维访谈、维度日志、当天整合日志�
 https://dailylight.chat
 ```
 
+`2026-08-11` 产品负责人已确认下一轮网页端体验交接：每条【帮我记】或【陪我聊】记录完成后形成当天时间线事件卡片；用户只在日记页一键生成、查看或更新唯一的今日日记。访谈页不展示日志生成或更新。当前新前端处于构建中，等待产品负责人验收；`2026-08-12` 的旧 UI Preview、页面实现和测试结果作为历史工程证据保留。模型评测和 Production 继续沿用既有授权边界。
+
+日志成果专项已经完成 9 条真人轨迹的今日日记 Prompt v3 评价，9/9 通过当前人工门槛；其中 6 条完成“记录卡 v3 → 今日日记 v3”完整回归，记录卡 v3 的证据范围限定为这 6 条。`dev28＋hidden12` 与 Judge 20 槽位已经形成未执行骨架，私有正文、真人身份映射和隐藏集填充继续留在本地；当前先等待新前端产品验收，再开展固定六案例页面联调和正式评测运行。完整结论见[九条真人轨迹阶段性总结](../artifacts/journal-generation-evaluation/nine-human-trajectory-summary.md)。
+
+## 1.1 2026-08-12 旧 UI Preview 历史工程证据
+
+这组旧候选结果用于后续新前端联调参考，不代表当前新前端已通过产品验收：
+
+- `/interview?mode=event-centered&entryDate=YYYY-MM-DD` 在当天没有会话时先展示“当天工作台”空状态；用户点击【帮我记】或【陪我聊】后才创建会话，已有事件按日期隔离恢复。
+- 三阶段进度、当前阶段和保存状态进入顶部导航上下文区域；聊天正文保留给消息与输入框。
+- “理解”和“提问”统一使用 dailylight.chat 的 AI 气泡；用户气泡、输入框、焦点、发送和键盘行为沿用现有访谈样式。
+- 每条 AI 回复提供赞、踩和重新生成；重新生成菜单包含“更简单一点 / 更具体一点 / 换一个角度”，支持版本切换、Esc 关闭和焦点恢复。
+- `/calendar` 的 day / week / month 统一采用归档侧栏 + 报告画布；加载、错误和空状态使用同一骨架，日报、周报和月报接入真实合同。
+
+历史独立 UI Preview：
+
+```text
+https://xingfuxitong-myks9m13t-zouzhijies-projects.vercel.app
+deployment: dpl_8yNo4LoHehdowfuCtsdm4BU3w417 (Ready)
+```
+
+历史页面入口：
+
+```text
+/interview?mode=event-centered&entryDate=2026-08-12
+/calendar?view=day&date=2026-08-12
+/calendar?view=week&date=2026-08-12
+/calendar?view=month&date=2026-08-12
+```
+
+Preview 使用独立验收数据库，`INTERVIEW_EVENT_CENTERED_MODE=event_centered`、`INTERVIEW_EVENT_CENTERED_STRATEGY=baseline`，GI-088 评测开关关闭；Production `https://dailylight.chat` 保持现行版本和配置。
+
+历史验证记录：高保真改动专项 `36/36` 通过，TypeScript 类型检查、Lint（0 errors）和差异检查通过；远程 Vercel Preview 构建为 `Ready`，并完成了空工作台、访谈启动、事件保存、日报/周报/月报结构的浏览器核验。当前新前端完成产品验收后，再按固定六案例 Preview 契约开展新一轮页面联调。
+
 AI 质量链路已经从“收集案例”推进到“验证候选、全量发布、按版本观察七天、支持人工回滚”。访谈意图识别已于 `2026-07-21` 全量启用；小流量阶段的运营重点是持续收集真实用户 Trace 与反馈，优先记录意图识别问题，并由管理员按需运行评估和候选生成，再对通过验证的候选执行发布。
 
 事件中心当前采用“理清想法”单角度 MVP。GI-066 的 DeepSeek 官方预检、严格 `10×3` 和单角度自动 `8+2` 已通过，继续作为历史技术证据；最新真人实聊因提问目标偏移、重要线索遗漏、同义重复和纠正后错误重规划判定为 `No-Go`，候选失效，剩余人工批次停止。
 
-`GI-067 / GI-068～074` 已冻结板块 4 七个产品批次，`GI-075～080` 已冻结板块 5 六类规则，方法 `v1.0` 已冻结。板块 6 当前建设正式评测资产；GI-081 已归档为临时 Prompt 诊断基线，GI-087 作为 GI-088 基础候选保留。GI-088 v0～v6 保留 Token、恢复、阶段转场和单一回答焦点的分阶段证据；v7 两条 Thinking high 连续性真人轨迹已封存，并暴露可见正文可靠性阻断；v7r1 因 Prefix 与 JSON Output 接口冲突判定 No-Go。v7r2 已完成火山 Ark Flash 本地接入、定向自动验证和 Production build，当前等待受控 Preview 部署、页面回读与 `0/2` 空白批次；随后由产品负责人执行两条真人连续性轨迹。v8 与板块 8 继续等待该可靠性门。Production 继续保持 `legacy + baseline`。
+`GI-067 / GI-068～074` 已冻结板块 4 七个产品批次，`GI-075～080` 已冻结板块 5 六类规则，方法 `v1.0` 已冻结。板块 6 当前建设正式评测资产；GI-081 已归档为临时 Prompt 诊断基线，GI-087 作为 GI-088 基础候选保留。GI-088 v0～v7r4 继续保存诊断、恢复、状态、平台和真人证据。v8 A1 完成 `10` 次提交后以 `1/4 early_stopped` 收口，产品负责人裁决为 `通过 / direct_use / target triggered`；Codex 保留“礼貌回应＋明确停止”多一次调用的轻微问题。v8r1 A1 随后确认控制误停单例阻断，其原 run 按 `running`、A2 活动、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid` 只读保留。v8r2 已完成 P0／P1、八项 Preview 开门差额、最终初始化幂等和全绿静态门；行为 commit `5281bc53f2b04be9c31adb6d7f4710ac818883a8`、Execution fingerprint `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c` 与 READY Preview 已形成。全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，当前等待 12 项真人验收。旧预发布零内容 run 已行政停止并脱敏排除。候选质量、板块 7 正式接入、板块 8 与发布范围均未裁决；约 `200` 轮以上容量优化继续排除。Production 保持 `legacy + baseline`。
 
 ## 2. 当前生产事实
 
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容入口：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并废弃
-- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结，板块 6 正在建设正式评测资产，GI-088 v7r2 等待受控 Preview 回读和 `0/2` 空白批次，v8 与板块 8 继续等待；`optional + generative` 继续保持关闭
+- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结，板块 6 正在建设正式评测资产；GI-088 v8r1 因 A1 单例阻断退出最终通过候选。v8r2 最终初始化幂等、不可变版本、静态门和私有 Preview 已收口，当前 deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 为 `READY`，Vercel Linux 远程构建的两套 Prisma Client 已通过登录存储验收；当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 保持 `running 0/12 / gate=pending / high_only / high / calls=0`，等待产品负责人完成 12 项真人验收。质量、板块 7 正式接入、板块 8 和发布范围继续等待裁决，`optional + generative` 保持关闭
 - Vercel production 的 `APP_URL` 为 `https://dailylight.chat`
-- `2026-07-21` 历史 production deployment：`redacted-deployment-id`，状态为 `Ready`
-- `2026-07-21` 历史 production alias：`https://xingfuxitong-dhg8kgt7f-example-team.vercel.app`
-- `2026-07-21` 已完成访谈意图识别全量发布：正式环境采用 `enforce`，上一正式版本 `redacted-deployment-id` 与 `legacy` 档位共同保留为 P0 问题的即时回退入口。
+- `2026-07-21` 历史 production deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`
+- `2026-07-21` 历史 production alias：`https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`
+- `2026-07-21` 已完成访谈意图识别全量发布：正式环境采用 `enforce`，上一正式版本 `dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc` 与 `legacy` 档位共同保留为 P0 问题的即时回退入口。
 - `2026-07-20` 已合并 UserTurn 可靠提交改造（PR #36，`ce1e2afbefe98eb79a21faf3d02869fe377085f4`）；`InterviewUserTurn` 与 AI 候选审核理由两条 migration 已应用到 production，公开 smoke 和同 `clientTurnId` 的重放校验通过。
 - 访谈维度选择页的内容层会完整伸展到可用视口，页面底部背景保持连续。
 - 本地验收快捷登录在 production 返回 `404`
@@ -200,13 +234,11 @@ AI 质量发布与效果观察专项验证：
 
 ### 7.0 当前交付顺序
 
-1. v7 两条 Thinking high 连续性轨迹已封存；可见正文可靠性阻断进入 v7r1／v7r2 单变量验证。
-2. v7r1 的 Prefix 与 JSON Output 无法同时满足三项冻结条件，固定裁决为 No-Go。
-3. v7r2 使用火山 Ark Flash 作为唯一平台变量，本地实现、定向测试、Typecheck、Prisma、Lint 和 Production build 已通过。
-4. 下一步依次完成受控 Preview 部署、页面回读和 `0/2` 空白批次，此后由产品负责人执行两条真人连续性轨迹。
-5. v7r2 通过真人可靠性门后，v8 再验证统一问前决策的四条真人轨迹。
-6. 候选阻断清零后运行新的 `12` 项 Thinking high 独立批次，再由板块 6B 扩建复标资产、Judge 说明、人工评分卡和正式准入报告。
-7. 板块 7 正式接入与板块 8 的 `4＋2` 继续等待；真人 Go 后再等待 Production 单独授权。
+0. Daily Light 新前端正在构建；完成产品验收后接入固定六案例 Preview，验证五条只读回放和 v7r4 A1 编辑更新流程。`dev28＋hidden12` 与 Judge 20 保持未执行骨架，页面 Preview 通过后再启动填充、运行和准入；Production 继续等待独立决策。
+1. v8r1 run 保持只读；专用评测库快照已经确认 A1 完成、A2 活动、两次 Provider 调用均有效。完整用户内容继续只保存在私有运行目录。
+2. v8r2 已在同一个开发周期收口高精度控制决策、调用结果落账、陈旧快照保护、人工证据治理、run 生命周期、工作台恢复和八项 Preview 开门差额。
+3. 最终初始化幂等、全量验证、行为清单、不可变 commit `5281bc53f2b04be9c31adb6d7f4710ac818883a8`、Execution fingerprint `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c` 和私有 Preview 已收口；当前 deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 为 `READY`，虚构账号登录返回 `401 INVALID_CREDENTIALS` 且 deployment error logs 为 `0`，全新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 回读为 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`。
+4. 当前工作流暂停等待产品负责人完成 12 项 Thinking high 真人验收。旧预发布 v8r2 零内容 run 已行政 `early_stopped` 并作为脱敏排除记录；真人质量与发布未裁决，约 `200` 轮以上容量优化继续排除。板块 7 正式接入与板块 8 继续等待，Production 保持 `legacy + baseline`。
 
 ### 7.1 上线后收集真实反馈
 
@@ -235,7 +267,7 @@ AI 质量发布与效果观察专项验证：
 ## 8. 仍需持续关注
 
 - 板块 5 已冻结 GI-075～080 六类规则，落地验证仍待板块 7 正式候选承接。
-- 板块 6 当前先完成 GI-088 分阶段候选与定向真人复测，再运行新的 `12` 项、`24` 条完整独立评测，并继续建设可运行、可复标的正式资产；板块 7 正式接入等待板块 6，板块 8 等待新候选。
+- 板块 6 的 GI-088 v8r2 意图控制、评测底座、最终初始化幂等、不可变版本和 `READY` Preview 已收口；当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 保持 `ordinal=2 / revision=0 / running / 0/12 / gate=pending / high_only / high / calls=0`，等待产品负责人完成 `12` 项 Thinking high 独立最终评测。真人质量与发布未裁决，板块 7 正式接入和板块 8 继续等待。
 - GI-066 自动层通过、真人体验 `No-Go` 和候选失效三类状态继续分开保存；Production 授权前保持 `legacy + baseline`。
 - 小流量下样本增长较慢，低于 5 条时以真实对话判断为主
 - Few-shot 依赖持续有效的点赞与 85 分以上评估
@@ -257,7 +289,10 @@ AI 质量发布与效果观察专项验证：
 - 生成式访谈当前状态与依赖：`docs/generative-interview-refactor-map.md`
 - GI-067 七批次架构与冻结结论：`docs/technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md`
 - GI-074 评测体系与下游交接：`docs/technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md`
-- GI-088 当前真人交互评测入口：`artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/README.md`
+- GI-088 当前真人验收与正式证据：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md`
+- GI-088 v8r2 已完成实施合同：`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md`
+- GI-088 v8r2 执行结果：`docs/ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.result.md`
+- GI-088 v8r1 事故与部署时快照：`artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md`
 - 事件中心公共产品协议：`docs/technical/interview-event-centered/04-four-angle-common-interview-protocol.md`
 - 历史板块 7 Preview 候选：`docs/technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md`
 - 前端设计规范：`DESIGN.md`、`docs/design/ui-conventions.md`

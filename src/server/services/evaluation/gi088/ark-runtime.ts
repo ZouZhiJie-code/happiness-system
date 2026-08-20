@@ -2,7 +2,7 @@ import { OpenAIProvider } from "@/server/services/ai/openai.provider";
 import { AIProviderError } from "@/server/services/ai/ai-provider";
 import {
   GI088_ARK_FLASH_RUNTIME_POLICY,
-  GI088_TIMEOUT_POLICY
+  GI088_V7R3_TIMEOUT_POLICY
 } from "@/server/services/evaluation/gi088/candidate";
 
 export type Gi088ArkRuntimeConfigurationCode =
@@ -70,6 +70,6 @@ export function createGi088ArkProvider(
     apiKey: resolved.apiKey,
     baseUrl: resolved.baseUrl,
     model: resolved.model,
-    timeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs
+    timeoutMs: GI088_V7R3_TIMEOUT_POLICY.hardTimeoutMs
   });
 }

@@ -66,8 +66,8 @@ GI-064 使用同一组产品规则，候选血缘升级为策略 `5.62.0`、Prom
 
 该候选及其场景专用修复整体作废，相关产物只保留为失败证据：
 
-- 用户裁决与失败重置报告（本机历史证据，公开精简包未收录：`candidate-v3290-failure-reset-report.md`）
-- 结构化逐项裁决（本机历史证据，公开精简包未收录：`candidate-v3290-user-adjudication.json`）
+- [用户裁决与失败重置报告](../../../artifacts/generative-interview-board7/2026-07-29/candidate-v3290-failure-reset-report.md)
+- [结构化逐项裁决](../../../artifacts/generative-interview-board7/2026-07-29/candidate-v3290-user-adjudication.json)
 
 后文第 1–10 节继续保存 `3.29.0` 的历史实现与原冻结记录，用于追溯失败原因。当前开发与评测以本节规格为准。
 
@@ -239,9 +239,9 @@ Provider v3 首批已经在第 3 项触发多原因停止；以上门槛继续�
 
 证据：
 
-- 第 3 轮 Codex 初评（本机历史证据，公开精简包未收录：`architecture-ab-v3-qh01-r3-codex-review.md`）
-- 第 3 轮结构化初评（本机历史证据，公开精简包未收录：`architecture-ab-v3-qh01-r3-codex-review.json`）
-- 第 3 轮真实运行报告（本机历史证据，公开精简包未收录：`architecture-ab-v3-qh01-r3-report.md`）
+- [第 3 轮 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-29/architecture-ab-v3-qh01-r3-codex-review.md)
+- [第 3 轮结构化初评](../../../artifacts/generative-interview-board7/2026-07-29/architecture-ab-v3-qh01-r3-codex-review.json)
+- [第 3 轮真实运行报告](../../../artifacts/generative-interview-board7/2026-07-29/architecture-ab-v3-qh01-r3-report.md)
 
 ### 0.10 当前保留的实现资产
 
@@ -277,9 +277,9 @@ Provider v3 首批已经在第 3 项触发多原因停止；以上门槛继续�
 
 证据：
 
-- 第二轮 Codex 初评（本机历史证据，公开精简包未收录：`mvp-quality-repair-v1-smoke-r2-codex-review.md`）
-- 第二轮真实用户可见评审包（本机历史证据，公开精简包未收录：`mvp-quality-repair-v1-smoke-r2-review.md`）
-- 第二轮结构化结果（本机历史证据，公开精简包未收录：`mvp-quality-repair-v1-smoke-r2.json`）
+- [第二轮 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-29/mvp-quality-repair-v1-smoke-r2-codex-review.md)
+- [第二轮真实用户可见评审包](../../../artifacts/generative-interview-board7/2026-07-29/mvp-quality-repair-v1-smoke-r2-review.md)
+- [第二轮结构化结果](../../../artifacts/generative-interview-board7/2026-07-29/mvp-quality-repair-v1-smoke-r2.json)
 
 ### 0.12 产品定义冻结与 v62 实施状态
 
@@ -291,11 +291,11 @@ Provider v3 首批已经在第 3 项触发多原因停止；以上门槛继续�
 - Few-shot：`quality-patterns.2026-07-30.v23`；
 - 质量卡与开发数据集：`2026-07-30.v2`。
 
-联合测试 `177/177`、静态硬边界 `24/24`、TypeScript 类型检查、定向 lint 和差异格式检查均通过。严格冒烟案例确认包版本为 `2026-07-30.v2`，案例指纹为 `1fbf5707f4c829ee4a94131f03e1748b5acd2252b096dff00bc295dd099ad5ae`，并已获产品负责人批准：严格冒烟案例确认包 v2（本机历史证据，公开精简包未收录：`board7-smoke-case-confirmation-v2.md`）。
+联合测试 `177/177`、静态硬边界 `24/24`、TypeScript 类型检查、定向 lint 和差异格式检查均通过。严格冒烟案例确认包版本为 `2026-07-30.v2`，案例指纹为 `1fbf5707f4c829ee4a94131f03e1748b5acd2252b096dff00bc295dd099ad5ae`，并已获产品负责人批准：[严格冒烟案例确认包 v2](../../../artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v2.md)。
 
 v62 已完成唯一一次 Strict12 真实模型运行：技术完整 `11/12`；Codex 初评通过 `3/12`、边缘 `1/12`、失败 `8/12`，边缘按失败后有效通过 `3/12`，其中 ask `1/4`、用户成果 `2/4`、AI 综合 `0/4`。通过项为 `SMK-R-PARTIAL-ASK / SMK-T-USER / SMK-A-CLOSED`。`SMK-T-ASK` 出现来源误标，`SMK-A-PARTIAL-ASK` 出现表达结构硬失败，`SMK-F-CLOSED / SMK-R-CLOSED` 与四条 AI 综合案例出现过度追问；严重事实错误 `1`、强推断 `1`、来源误判 `1`。
 
-证据保留在 结构化运行结果（本机历史证据，公开精简包未收录：`board7-v62-final-smoke-runs.json`）、运行报告（本机历史证据，公开精简包未收录：`board7-v62-final-smoke-report.md`）、Codex 初评（本机历史证据，公开精简包未收录：`board7-v62-final-smoke-codex-review.json`）与用户裁决包（本机历史证据，公开精简包未收录：`board7-v62-final-smoke-user-review.md`）。本轮定位到目标完成标准未完整进入运行时状态的输入契约断点；产品定义保持冻结，落地验证失败。下一步只形成离线修复清单，并判断目标完成表达是否需要用户确认；新的模型运行、开发稳定性、隐藏集、工作集、正式准入、一次/两次调用 A/B 和 Prompt 调优全部暂停。
+证据保留在 [结构化运行结果](../../../artifacts/generative-interview-board7/2026-07-30/board7-v62-final-smoke-runs.json)、[运行报告](../../../artifacts/generative-interview-board7/2026-07-30/board7-v62-final-smoke-report.md)、[Codex 初评](../../../artifacts/generative-interview-board7/2026-07-30/board7-v62-final-smoke-codex-review.json)与[用户裁决包](../../../artifacts/generative-interview-board7/2026-07-30/board7-v62-final-smoke-user-review.md)。本轮定位到目标完成标准未完整进入运行时状态的输入契约断点；产品定义保持冻结，落地验证失败。下一步只形成离线修复清单，并判断目标完成表达是否需要用户确认；新的模型运行、开发稳定性、隐藏集、工作集、正式准入、一次/两次调用 A/B 和 Prompt 调优全部暂停。
 
 ### 0.13 v63 离线输入契约修复
 
@@ -317,7 +317,7 @@ v62 的真实模型失败证据继续保留。v63 已完成针对运行时输入
 
 状态扩展写入现有 JSON，无需数据库迁移；界面、Provider 输出协议、Production 入口、模型、配置和数据保持原状。相关 `9` 个测试文件 `202/202`、Strict12 模拟请求 `12/12`、静态硬边界 `24/24`、TypeScript 类型检查、定向 lint 与差异格式检查均通过。
 
-严格冒烟案例确认包 v3（本机历史证据，公开精简包未收录：`board7-smoke-case-confirmation-v3.md`） 指纹为 `3d82475acb485e102dc6c8ac277b73d9a9fe379fd6a8eede6c119b0a82a784d7`。案例内容与指纹变化后，旧 v2 批准失效；随后 v3 获得本轮运行授权，真实基线结果见 `0.14`。
+[严格冒烟案例确认包 v3](../../../artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v3.md) 指纹为 `3d82475acb485e102dc6c8ac277b73d9a9fe379fd6a8eede6c119b0a82a784d7`。案例内容与指纹变化后，旧 v2 批准失效；随后 v3 获得本轮运行授权，真实基线结果见 `0.14`。
 
 ### 0.14 v63 真实基线与停止结论
 
@@ -330,7 +330,7 @@ v63 仅执行了这一轮真实模型基线：架构 `one_call`、模型 `deepse
 
 本轮已触发停止条件。Codex 严格初评未达到 `12/12`，当前不进入用户逐条裁决。新的模型运行、Prompt 调优和一次/两次调用 A/B 暂停；开发稳定性、全新隐藏集、工作集、正式准入和板块 8 继续阻断。Production 入口、模型、配置和数据保持原状。
 
-证据：严格冒烟确认包 v3（本机历史证据，公开精简包未收录：`board7-smoke-case-confirmation-v3.md`）、v63 结构化运行结果（本机历史证据，公开精简包未收录：`board7-v63-baseline-smoke-runs.json`）、运行报告（本机历史证据，公开精简包未收录：`board7-v63-baseline-smoke-report.md`）、前 8 条 Codex 初评（本机历史证据，公开精简包未收录：`board7-v63-baseline-first8-codex-review.md`）、后 4 条 AI 综合 Codex 初评（本机历史证据，公开精简包未收录：`board7-v63-baseline-smoke-ai-synthesis-codex-review.md`）、统一 Codex 初评（本机历史证据，公开精简包未收录：`board7-v63-baseline-smoke-codex-report.md`）。
+证据：[严格冒烟确认包 v3](../../../artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v3.md)、[v63 结构化运行结果](../../../artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-smoke-runs.json)、[运行报告](../../../artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-smoke-report.md)、[前 8 条 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-first8-codex-review.md)、[后 4 条 AI 综合 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-smoke-ai-synthesis-codex-review.md)、[统一 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-smoke-codex-report.md)。
 
 ### 0.15 v64 产品规则与 Strict12 v4
 
@@ -338,7 +338,7 @@ v63 原始运行与正式 `1/12` 报告继续保留。按 v64 新确认的用户
 
 Strict12 v4 固定为：ask 使用 `SMK-F-PARTIAL-ASK / SMK-T-ASK / SMK-R-CLEAN-ASK / SMK-A-PARTIAL-ASK`；用户成果使用 `SMK-F-CLOSED / SMK-T-USER / SMK-R-PARTIAL-ASK / SMK-A-CLOSED`；AI 综合继续覆盖四角度。`SMK-R-CLOSED` 替换同为关系角度、引导模式、用户成果的 `AB-RG-01`，进入常规 stability 开发回归；稳定性集合继续保持 `8` 个案例 × `2` 次与 `ask 4 / user_articulated 6 / ai_synthesized 6`。F、R、A 三个 AI 综合故事改为只提供分散事实，避免用户原话提前给出目标关系。F/A 的安全换入口只写入确认包第二层，不进入模型输入。
 
-v64 首版确认资产采用策略 `5.46.0`、角度卡 `2.12.0`、Few-shot `quality-patterns.2026-07-30.v25`、Prompt `2026-07-30.event-centered-generative-v64`、质量卡 `2026-07-30.v4`、开发数据集 `2026-07-30.v3`、确认包 `2026-07-30.v4`。Strict12 v4 案例确认包（本机历史证据，公开精简包未收录：`board7-smoke-case-confirmation-v4.md`） 的案例指纹为 `dc0089c7747d23eff35c139f40e1c96fa28d20a29121f253890f54725c7de846`。产品终审发现案例有效性问题后，v4 已退出当前批准候选，原文件和指纹继续作为作废审计证据。
+v64 首版确认资产采用策略 `5.46.0`、角度卡 `2.12.0`、Few-shot `quality-patterns.2026-07-30.v25`、Prompt `2026-07-30.event-centered-generative-v64`、质量卡 `2026-07-30.v4`、开发数据集 `2026-07-30.v3`、确认包 `2026-07-30.v4`。[Strict12 v4 案例确认包](../../../artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v4.md) 的案例指纹为 `dc0089c7747d23eff35c139f40e1c96fa28d20a29121f253890f54725c7de846`。产品终审发现案例有效性问题后，v4 已退出当前批准候选，原文件和指纹继续作为作废审计证据。
 
 本轮只完成案例资产、确认包与离线测试。产品定义重新冻结，落地验证继续阻断；真实模型运行需要新的单独授权。Production 入口、模型、配置和数据保持原状。
 
@@ -350,7 +350,7 @@ v64 首版确认资产采用策略 `5.46.0`、角度卡 `2.12.0`、Few-shot `qua
 2. `SMK-R-PARTIAL-ASK` 把“两件事都被越过、无法排序”写进用户原话，可信事实只保存用户已经明确表达的边界。
 3. `SMK-R-AI` 的可信事实删除“未经确认”，仅保存当前自然对话能够逐句追溯的三项结果。
 
-当前确认包升级为 `2026-07-30.v5`：Strict12 v5 案例确认包（本机历史证据，公开精简包未收录：`board7-smoke-case-confirmation-v5.md`），案例指纹 `79885a71f4eb8c3a355d933f2776422219464423e910df9fa29ef56f5a0cb24f`，批准状态 `pending`。v4 md/json 的文件哈希保持不变。相关 `4` 个直接测试文件 `38/38` 通过；本轮未调用真实模型。
+当前确认包升级为 `2026-07-30.v5`：[Strict12 v5 案例确认包](../../../artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v5.md)，案例指纹 `79885a71f4eb8c3a355d933f2776422219464423e910df9fa29ef56f5a0cb24f`，批准状态 `pending`。v4 md/json 的文件哈希保持不变。相关 `4` 个直接测试文件 `38/38` 通过；本轮未调用真实模型。
 
 运行护栏同步收口：CLI 当前只开放 `rules / case-confirmation / development`；其余模型模式与两次调用保持暂停。`development` 按“目录预检 → Provider 校验 → 预算预留 → 调用”推进；实际输出与人工裁决使用同一 `runFingerprint`，旧结果无法进入 v64 门。定向失败返回 `1`，定向全部通过但尚未完成 Strict12 全量门时返回 `2`。最终离线验证达到测试文件 `243/243`、用例 `2228/2228`、旧链路 `580/580`，类型检查和差异检查通过；真实模型调用 `0` 次，预算账本文件不存在。Production 入口、模型、配置和数据保持原状，板块 7 继续验证阻断，板块 8 继续等待。
 
@@ -362,7 +362,7 @@ R2 的共同失败集中在证据充分后仍继续提问。v65 仅调整 Prompt
 
 Prompt 单变量假设已经判定无效并触发停止条件。剩余 `2` 条定向额度和 `2` 次全量额度停止消耗；模型运行、Prompt 调优、开发稳定性、隐藏集、工作集与准入暂停。`GI-009` 重新打开，下一步只复核语义理解与动作决策、用户可见表达的任务拆分，以及两次调用的状态传递、表达约束、失败恢复、延迟和成本。轻量检查点、成果来源、纠正链路、硬检查、可靠提交、状态与 Trace 继续保留。
 
-证据：R1 作废审计（本机历史证据，公开精简包未收录：`board7-v64-strict12-v5-baseline-r1-audited-report.md`）、R2 委托终审报告（本机历史证据，公开精简包未收录：`board7-v64-strict12-v5-baseline-r2-reviewed-report.md`）、v65 定向终审报告（本机历史证据，公开精简包未收录：`board7-v65-targeted-r1-reviewed-report.md`）。
+证据：[R1 作废审计](../../../artifacts/generative-interview-board7/2026-07-30/board7-v64-strict12-v5-baseline-r1-audited-report.md)、[R2 委托终审报告](../../../artifacts/generative-interview-board7/2026-07-30/board7-v64-strict12-v5-baseline-r2-reviewed-report.md)、[v65 定向终审报告](../../../artifacts/generative-interview-board7/2026-07-30/board7-v65-targeted-r1-reviewed-report.md)。
 
 ### 0.18 极简两段式理解小卡实施状态
 
@@ -404,7 +404,7 @@ Prompt 单变量假设已经判定无效并触发停止条件。剩余 `2` 条�
 
 失败同时覆盖必要范围、成果来源和问题入口，满足 `GI-045` 的“多个无关原因”停止条件。本轮不使用第二次完整运行额度，不进行 Prompt 单变量调优。下一步只复核三项产品规则，优先判断理解小卡能否减少字段和判断负担；规则确认前隐藏集、工作集、准入与板块 8 继续阻断。
 
-证据：原始结果（本机历史证据，公开精简包未收录：`meaning-card-candidate-runs.json`）、Codex 裁决（本机历史证据，公开精简包未收录：`meaning-card-candidate-codex-review.json`）、评审后结果（本机历史证据，公开精简包未收录：`meaning-card-candidate-reviewed-runs.json`）、评审后报告（本机历史证据，公开精简包未收录：`meaning-card-candidate-reviewed-report.md`）、真实回放评审包（本机历史证据，公开精简包未收录：`meaning-card-candidate-reviewed-review.md`）。
+证据：[原始结果](../../../artifacts/generative-interview-board7/2026-08-01/meaning-card-candidate-runs.json)、[Codex 裁决](../../../artifacts/generative-interview-board7/2026-08-01/meaning-card-candidate-codex-review.json)、[评审后结果](../../../artifacts/generative-interview-board7/2026-08-01/meaning-card-candidate-reviewed-runs.json)、[评审后报告](../../../artifacts/generative-interview-board7/2026-08-01/meaning-card-candidate-reviewed-report.md)、[真实回放评审包](../../../artifacts/generative-interview-board7/2026-08-01/meaning-card-candidate-reviewed-review.md)。
 
 ### 0.20 Provider v3 首批实现与兼容状态（5.47.0 历史候选）
 
@@ -456,7 +456,7 @@ v3 checkpoint 恢复只重跑第二段；v1 / v2 checkpoint 使用已经可靠�
 
 两类失败分别位于提问准入的作答入口和停止回应的表达视角，无法用一次共同根因的单变量修正同时解释。依据 `GI-045` 停止条件，本轮立即停止新的模型运行、Prompt 调优和同版本冻结复跑；累计 `12/12` 门、隐藏集、工作集、准入和板块 8 继续阻断。首批结束时，下一步进入“低负担作答入口”与停止回应人称规则复核；后续确认见 `0.22`。两段式职责切分、v3 兼容层、客观硬检查和严重错误为零的证据继续保留。
 
-证据：案例确认包（本机历史证据，公开精简包未收录：`minimal-two-stage-v3-case-confirmation.md`）、原始运行（本机历史证据，公开精简包未收录：`minimal-two-stage-v3-batch-1.json`）、Codex 裁决（本机历史证据，公开精简包未收录：`minimal-two-stage-v3-batch-1-codex-review.json`）、评审后结果（本机历史证据，公开精简包未收录：`minimal-two-stage-v3-batch-1-reviewed.json`）、评审后报告（本机历史证据，公开精简包未收录：`minimal-two-stage-v3-batch-1-reviewed-report.md`）、真实回放评审包（本机历史证据，公开精简包未收录：`minimal-two-stage-v3-batch-1-reviewed-human-review.md`）。
+证据：[案例确认包](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-case-confirmation.md)、[原始运行](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-batch-1.json)、[Codex 裁决](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-batch-1-codex-review.json)、[评审后结果](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-batch-1-reviewed.json)、[评审后报告](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-batch-1-reviewed-report.md)、[真实回放评审包](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-batch-1-reviewed-human-review.md)。
 
 ### 0.22 两条产品规则重新冻结与 5.48.0 离线候选
 
@@ -502,7 +502,7 @@ v3 checkpoint 恢复只重跑第二段；v1 / v2 checkpoint 使用已经可靠�
 
 第二段 v70 已统一示例与根级输出契约。源头修复定向验证 `132/132`、最终事件中心 `38` 个测试文件 `734/734` 与 TypeScript 类型检查通过；该结果只证明离线结构修正成立，v70/v70 尚未进行真实模型验证。如需再次运行，先重新确认最小范围、预算与单独授权。
 
-证据：run-1 原始结果（本机历史证据，公开精简包未收录：`provider-v31-repair-probe-run-1.json`）、run-1 报告（本机历史证据，公开精简包未收录：`provider-v31-repair-probe-run-1-report.md`）、恢复评审后结果（本机历史证据，公开精简包未收录：`provider-v31-repair-probe-recovery-1-reviewed.json`）、恢复评审后报告（本机历史证据，公开精简包未收录：`provider-v31-repair-probe-recovery-1-reviewed-report.md`）、预算审计（本机历史证据，公开精简包未收录：`board7-provider-v31-repair-probe-budget.json`）。
+证据：[run-1 原始结果](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-run-1.json)、[run-1 报告](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-run-1-report.md)、[恢复评审后结果](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-recovery-1-reviewed.json)、[恢复评审后报告](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-recovery-1-reviewed-report.md)、[预算审计](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v31-repair-probe-budget.json)。
 
 ### 0.24 v70/v70 root-visible probe 终局执行
 
@@ -519,7 +519,7 @@ v3 checkpoint 恢复只重跑第二段；v1 / v2 checkpoint 使用已经可靠�
 
 本轮保留两段职责和现有决策结构，只新增落地验证证据。v69、v63 和更早结果继续保存原裁决；隐藏集、工作集、板块 8 与新的模型调用继续阻断。Production 保持 `legacy + baseline`，入口、模型、配置和生产数据维持原状。
 
-证据：终局运行报告（本机历史证据，公开精简包未收录：`provider-v70-root-visible-probe-run-1-report.md`）、终局结构化结果（本机历史证据，公开精简包未收录：`provider-v70-root-visible-probe-run-1.json`）、Codex 终局评审包（本机历史证据，公开精简包未收录：`provider-v70-root-visible-probe-run-1-human-review.md`）、独立预算账本（本机历史证据，公开精简包未收录：`board7-provider-v70-root-visible-probe-budget.json`）。
+证据：[终局运行报告](../../../artifacts/generative-interview-board7/2026-08-01/provider-v70-root-visible-probe-run-1-report.md)、[终局结构化结果](../../../artifacts/generative-interview-board7/2026-08-01/provider-v70-root-visible-probe-run-1.json)、[Codex 终局评审包](../../../artifacts/generative-interview-board7/2026-08-01/provider-v70-root-visible-probe-run-1-human-review.md)、[独立预算账本](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v70-root-visible-probe-budget.json)。
 
 ### 0.25 GI-047 与 Provider v4 语义骨架候选
 
@@ -537,15 +537,15 @@ Provider v4 的最小根级输出为 `understanding / decision.state / semanticF
 
 本轮实现收口六项根因：第二段只接收 `semanticFrame / questionIntent / limitReason / sourceEvidence`，其中每条 `sourceEvidence` 仅含 `ref / sourceText`；缺少逐字 `quote` 的旧事实退出 v4 可引用集合；v1 / v2 / v3 checkpoint 恢复时统一重跑第一段升级到 v4；同一目标复用来源时同时要求 `decision.state` 与 `questionIntent.gap` 一致；兼容 `origin` 解除 `answerStatus` 绑定并仅作为旧 schema 标签；v64、v65 与 `GI-009` 历史血缘保持只读隔离，不参与 v4 派生、恢复或质量计数。
 
-板块 4 的语义骨架投影复核、板块 6 的双层判尺与 runner 适配均已完成。六例确认矩阵为四角度 + 纠正 + 材料有限；离线案例确认包（本机历史证据，公开精简包未收录：`semantic-frame-v4-offline-case-confirmation.md`） 指纹为 `ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62`。运行策略固定为 `modelRunAllowed=false`，本轮预算 `0`、模型调用 `0`。
+板块 4 的语义骨架投影复核、板块 6 的双层判尺与 runner 适配均已完成。六例确认矩阵为四角度 + 纠正 + 材料有限；[离线案例确认包](../../../artifacts/generative-interview-board7/2026-08-01/semantic-frame-v4-offline-case-confirmation.md) 指纹为 `ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62`。运行策略固定为 `modelRunAllowed=false`，本轮预算 `0`、模型调用 `0`。
 
 离线验证结果为事件中心 unit `30` 个测试文件、`622` 个用例通过；生成式 eval `6` 个测试文件、`56` 个用例通过；TypeScript 类型检查通过；ESLint `0 error / 4 existing warnings`；差异格式检查通过。六例随后完成产品确认，当前等待首轮独立预算授权；真实模型、正式质量门、隐藏集、工作集和板块 8 继续阻断，Production 保持 `legacy + baseline`。
 
 ### 0.27 v71 首轮六例运行授权门
 
-六例已于 `2026-08-01` 完成产品确认，数据集路径、案例指纹与 v71 最终候选保持冻结。首轮运行授权卡（本机历史证据，公开精简包未收录：`board7-provider-v71-semantic-frame-first-pass-approval.md`）当前为 `pending`，模型调用 `0`。本轮采用 `two_call + deepseek-v4-flash`，固定 `temperature=0.2`、`max tokens=1500`、`timeout=12s`、`thinking=off`；名义生成请求 `12` 次、技术极限 `24` 次，最多 `1` 次 `/models` 只读预检单列。
+六例已于 `2026-08-01` 完成产品确认，数据集路径、案例指纹与 v71 最终候选保持冻结。首轮[运行授权卡](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v71-semantic-frame-first-pass-approval.md)当前为 `pending`，模型调用 `0`。本轮采用 `two_call + deepseek-v4-flash`，固定 `temperature=0.2`、`max tokens=1500`、`timeout=12s`、`thinking=off`；名义生成请求 `12` 次、技术极限 `24` 次，最多 `1` 次 `/models` 只读预检单列。
 
-pending 预算账本（本机历史证据，公开精简包未收录：`board7-provider-v71-semantic-frame-first-pass-budget.json`）已经生成，scopeFingerprint 为 `960eae47ec6b0026e44fed960520fc92b3cc6c6faf22f4aceae778140c28ed98`；程序化护栏拒绝未授权运行，`v71 live` 入口保持关闭，模型调用 `0`。
+[pending 预算账本](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v71-semantic-frame-first-pass-budget.json)已经生成，scopeFingerprint 为 `960eae47ec6b0026e44fed960520fc92b3cc6c6faf22f4aceae778140c28ed98`；程序化护栏拒绝未授权运行，`v71 live` 入口保持关闭，模型调用 `0`。
 
 有效但低质量的结果不重试，首轮六例结束即停。失败后先完成归因并重新审批，成功后也只允许建立下一轮独立预算。用户另行明确授权本卡前，板块 7、板块 8 与后续质量门继续阻断，Production 保持 `legacy + baseline`。
 
@@ -867,7 +867,7 @@ npm run eval:event-centered:generative -- --mode=model --split=gate --confirm-mo
 - 适用范围：v72 候选与下一份定向候选；Production 保持 `legacy + baseline`。
 - 依据与案例：`SF4-A-EFFECT-01 / SF4-CORRECTION-READY-01 / SF4-LIMITED-01` 三类语义失败，以及六例统一 `Prompt must contain the word 'json'` 技术失败。
 - 影响板块：4、6、7、8
-- 专项文档：本文、[04n｜Provider v5 规格](./04n-board7-semantic-skeleton-v1-spec.md)、[04j｜生成式质量评测 v1](./04j-generative-quality-evaluation-v1.md)、Codex 双层验收（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md`）
+- 专项文档：本文、[04n｜Provider v5 规格](./04n-board7-semantic-skeleton-v1-spec.md)、[04j｜生成式质量评测 v1](./04j-generative-quality-evaluation-v1.md)、[Codex 双层验收](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md)
 - 确认日期：`2026-08-02`
 
 ## 10. 当前板块状态、影响复核与下一步
@@ -885,7 +885,7 @@ npm run eval:event-centered:generative -- --mode=model --split=gate --confirm-mo
 
 首轮用户授权已执行。`SF4-F-READY-01` 的第一段成功；第二段两次都生成了自然成果句，但顶层成功状态使用 `expressible`，与服务端接受的 `ok / cannot_express` 协议不一致，连续触发 `INVALID_SCHEMA`。账本在 `1` 次预检和 `3` 次生成请求后封存，后续 `5` 例、隐藏集、工作集、准入与板块 8均未继续。
 
-本轮需要复核两项现有实现：第二段成功状态的 Prompt 与结构协议对齐，以及“用户已直接表达的理解”到兼容 `origin` 的系统投影。前者已完成离线契约补强并通过回归；后者仍是产品/策略复核项。完整证据见 首轮运行报告（本机历史证据，公开精简包未收录：`board7-provider-v71-semantic-frame-first-pass-report.md`）。Production 继续 `legacy + baseline`。
+本轮需要复核两项现有实现：第二段成功状态的 Prompt 与结构协议对齐，以及“用户已直接表达的理解”到兼容 `origin` 的系统投影。前者已完成离线契约补强并通过回归；后者仍是产品/策略复核项。完整证据见 [首轮运行报告](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v71-semantic-frame-first-pass-report.md)。Production 继续 `legacy + baseline`。
 
 ### 0.28 `2026-08-02` v72 成果归属与统一回应根因修复
 
@@ -897,7 +897,7 @@ v71 的技术中止来自两个重复职责：第一段没有交付下游必需�
 4. 旧两条 `status=expressible` 原始回应已通过离线归一回放；旧 v71 报告和 `aborted` 账本保持原样。
 5. checkpoint 升级为 `event-centered-semantic-plan.v5`，并保存 `decisionOrigin`；现有状态、可靠提交、纠正、轻量检查点和 Trace 继续复用。
 
-候选版本为策略 `5.50.0`、semantic Prompt `2026-08-02.event-centered-generative-v72-semantic-origin`、visible Prompt `2026-08-02.event-centered-generative-v72-visible-response`、Few-shot `quality-patterns.2026-08-02.v29`、角度卡 `2.12.0`。新的六例确认包补齐一条真正由 AI 连接两侧事实的行动案例，指纹为 `481c86765c4d7f1866887705b5af2e032975dc2818c27e9792dedefe3fee2229`：确认包（本机历史证据，公开精简包未收录：`semantic-frame-v5-offline-case-confirmation.md`）。
+候选版本为策略 `5.50.0`、semantic Prompt `2026-08-02.event-centered-generative-v72-semantic-origin`、visible Prompt `2026-08-02.event-centered-generative-v72-visible-response`、Few-shot `quality-patterns.2026-08-02.v29`、角度卡 `2.12.0`。新的六例确认包补齐一条真正由 AI 连接两侧事实的行动案例，指纹为 `481c86765c4d7f1866887705b5af2e032975dc2818c27e9792dedefe3fee2229`：[确认包](../../../artifacts/generative-interview-board7/2026-08-02/semantic-frame-v5-offline-case-confirmation.md)。
 
 本轮事件中心与生成式评测 `35` 个测试文件、`679/679` 用例通过，TypeScript 与 ESLint 通过，模型请求 `0`。六例确认后仍需建立新预算并获得独立授权；隐藏集、工作集、准入与板块 8继续阻断，Production 保持 `legacy + baseline`。
 
@@ -916,4 +916,4 @@ v2 使用 `1` 次预检和 `18` 次生成请求跑完六例。第一段六次请
 3. 当前不进行第二轮模型调用、Prompt 调优、隐藏集或工作集；
 4. 多个产品原因收敛并形成新版本、案例指纹和授权后，才允许恢复定向验证。
 
-完整证据：v72 原始报告（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-v2-report.md`）、Codex 双层验收（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md`）、基础设施空跑审计（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-infrastructure-void.md`）。Production 保持 `legacy + baseline`。
+完整证据：[v72 原始报告](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-report.md)、[Codex 双层验收](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md)、[基础设施空跑审计](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-infrastructure-void.md)。Production 保持 `legacy + baseline`。

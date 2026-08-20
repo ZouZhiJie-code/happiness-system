@@ -1,0 +1,874 @@
+{
+  "evaluation": "GI-066 10×3 判断地图稳定性小门",
+  "candidate": {
+    "strategyVersion": "5.65.0",
+    "angleCardVersion": "2.18.0",
+    "fewShotVersion": "quality-patterns.2026-08-04.v35",
+    "promptVersion": "2026-08-04.event-centered-thought-pilot-v85-gi066-fix",
+    "visiblePromptVersion": "2026-08-04.event-centered-thought-pilot-v85-gi066-fix-visible",
+    "semanticArtifactVersion": "event-centered-semantic-plan.v17",
+    "dialogueSnapshotVersion": 4
+  },
+  "provider": {
+    "provider": "openai",
+    "model": "deepseek-v4-flash",
+    "baseUrlHost": "api.deepseek.com",
+    "latencyMs": 2022,
+    "reachable": true
+  },
+  "startedAt": "2026-08-04T14:13:13.209Z",
+  "completedAt": "2026-08-04T14:15:52.876Z",
+  "summary": {
+    "total": 30,
+    "passedCount": 27,
+    "actionCorrectCount": 30,
+    "directionCorrectCount": 27,
+    "issueDistribution": {
+      "direction_mismatch": 3
+    },
+    "verdict": "pass"
+  },
+  "results": [
+    {
+      "scenarioId": "D01",
+      "repetition": 1,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_basis",
+      "actualDirection": "judgment_basis",
+      "operation": "specific_instance",
+      "planHash": "gi066-710f004b",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 347,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 360,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D01",
+      "repetition": 2,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_basis",
+      "actualDirection": "judgment_basis",
+      "operation": "specific_instance",
+      "planHash": "gi066-710f004b",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 406,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 322,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D01",
+      "repetition": 3,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_basis",
+      "actualDirection": "judgment_basis",
+      "operation": "specific_instance",
+      "planHash": "gi066-710f004b",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 370,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 368,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D02",
+      "repetition": 1,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "current_judgment",
+      "actualDirection": "current_judgment",
+      "operation": "specific_instance",
+      "planHash": "gi066-4aeab645",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 354,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 369,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D02",
+      "repetition": 2,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "current_judgment",
+      "actualDirection": "current_judgment",
+      "operation": "specific_instance",
+      "planHash": "gi066-715fd0b1",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 363,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 377,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D02",
+      "repetition": 3,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "current_judgment",
+      "actualDirection": "current_judgment",
+      "operation": "specific_instance",
+      "planHash": "gi066-4aeab645",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 891,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 343,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D03",
+      "repetition": 1,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_criterion",
+      "actualDirection": "judgment_criterion",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-93705b03",
+      "expressionRepairApplied": true,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 342,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 342,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 383,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D03",
+      "repetition": 2,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_criterion",
+      "actualDirection": "judgment_criterion",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-25a21bf2",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 652,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 355,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D03",
+      "repetition": 3,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_criterion",
+      "actualDirection": "judgment_criterion",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-25a21bf2",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 357,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 813,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D04",
+      "repetition": 1,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "evidence_tension",
+      "actualDirection": "evidence_tension",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-1199ef81",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 364,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 373,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D04",
+      "repetition": 2,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "evidence_tension",
+      "actualDirection": "evidence_tension",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-53860a4d",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 333,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 374,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D04",
+      "repetition": 3,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "evidence_tension",
+      "actualDirection": "evidence_tension",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-53860a4d",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 377,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 342,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D05",
+      "repetition": 1,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "tradeoff_condition",
+      "actualDirection": "tradeoff_condition",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-e5a6d330",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 340,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 363,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D05",
+      "repetition": 2,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "tradeoff_condition",
+      "actualDirection": "tradeoff_condition",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-822f4b91",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 337,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 355,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D05",
+      "repetition": 3,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "tradeoff_condition",
+      "actualDirection": "tradeoff_condition",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-822f4b91",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 368,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 331,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D06",
+      "repetition": 1,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "default_assumption",
+      "actualDirection": "default_assumption",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-15aaaaaf",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 363,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 372,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D06",
+      "repetition": 2,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "default_assumption",
+      "actualDirection": "default_assumption",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-15aaaaaf",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 468,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 817,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D06",
+      "repetition": 3,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "default_assumption",
+      "actualDirection": "default_assumption",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-15aaaaaf",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 455,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 400,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D07",
+      "repetition": 1,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_calibration",
+      "actualDirection": "judgment_calibration",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-889cdf3b",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 379,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 372,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D07",
+      "repetition": 2,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_calibration",
+      "actualDirection": "judgment_calibration",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-b6b5d181",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 379,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 372,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D07",
+      "repetition": 3,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_calibration",
+      "actualDirection": "judgment_calibration",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-889cdf3b",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 374,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 442,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D08",
+      "repetition": 1,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_calibration",
+      "actualDirection": "judgment_criterion",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-f806cb6f",
+      "expressionRepairApplied": false,
+      "status": "failed",
+      "issues": [
+        "direction_mismatch"
+      ],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 346,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 379,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D08",
+      "repetition": 2,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_calibration",
+      "actualDirection": "judgment_criterion",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-25a21bf2",
+      "expressionRepairApplied": false,
+      "status": "failed",
+      "issues": [
+        "direction_mismatch"
+      ],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 341,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 833,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D08",
+      "repetition": 3,
+      "expectedAction": "ask",
+      "actualAction": "ask",
+      "expectedDirection": "judgment_calibration",
+      "actualDirection": "judgment_criterion",
+      "operation": "single_variable_contrast",
+      "planHash": "gi066-f806cb6f",
+      "expressionRepairApplied": false,
+      "status": "failed",
+      "issues": [
+        "direction_mismatch"
+      ],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 376,
+          "errorCode": null,
+          "errorMessage": null
+        },
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 339,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D09",
+      "repetition": 1,
+      "expectedAction": "transition",
+      "actualAction": "transition",
+      "expectedDirection": null,
+      "actualDirection": null,
+      "operation": null,
+      "planHash": "gi066-6163d1cc",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 388,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D09",
+      "repetition": 2,
+      "expectedAction": "transition",
+      "actualAction": "transition",
+      "expectedDirection": null,
+      "actualDirection": null,
+      "operation": null,
+      "planHash": "gi066-6163d1cc",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 856,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D09",
+      "repetition": 3,
+      "expectedAction": "transition",
+      "actualAction": "transition",
+      "expectedDirection": null,
+      "actualDirection": null,
+      "operation": null,
+      "planHash": "gi066-6163d1cc",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 833,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D10",
+      "repetition": 1,
+      "expectedAction": "stop",
+      "actualAction": "stop",
+      "expectedDirection": null,
+      "actualDirection": null,
+      "operation": null,
+      "planHash": "gi066-85fe3a6e",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 346,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D10",
+      "repetition": 2,
+      "expectedAction": "stop",
+      "actualAction": "stop",
+      "expectedDirection": null,
+      "actualDirection": null,
+      "operation": null,
+      "planHash": "gi066-85fe3a6e",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 330,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    },
+    {
+      "scenarioId": "D10",
+      "repetition": 3,
+      "expectedAction": "stop",
+      "actualAction": "stop",
+      "expectedDirection": null,
+      "actualDirection": null,
+      "operation": null,
+      "planHash": "gi066-85fe3a6e",
+      "expressionRepairApplied": false,
+      "status": "passed",
+      "issues": [],
+      "attempts": [
+        {
+          "provider": "openai",
+          "success": true,
+          "latencyMs": 335,
+          "errorCode": null,
+          "errorMessage": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+{
+  "singleRuns": [
+    {
+      "runId": "SMK-F-ASK-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "思路层准确承接先笑、后胸口发紧的变化，问题只区分这一刻的具体感受，容易回答且不会把混合感受压成二选一。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "target_selection",
+        "visibleEvidence": "模型草稿仍沿已经回答的判断触发目标提问，硬检查拦截后没有形成任何用户可见回应。",
+        "finalVerdict": null,
+        "rootCause": "模型没有把上一问已经取得的批注内容与下一步判断依据区分开，所选目标被系统识别为已关闭方向。",
+        "resolution": "重新定义这一类深聊的目标推进关系：已获得触发内容后，下一问只补该内容为何足以代表整体专业性的具体判断标准。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": "target_selection",
+        "secondaryReason": "answer_burden",
+        "visibleEvidence": "用户已经明确原话可查，AI 却跳过原话，直接询问‘在合作中的位置或期待受到什么影响’，问题抽象且提前假定已经存在位置或期待层面的影响。",
+        "finalVerdict": null,
+        "rootCause": "方向选择没有优先使用用户主动提供的低负担、高信息量锚点，直接跳到关系解释层。",
+        "resolution": "先请用户贴出或概述群消息的具体原话，再依据措辞判断关系意义。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": "target_selection",
+        "secondaryReason": "ask_stop_timing",
+        "visibleEvidence": "AI 原样重复上一问‘关掉摄像头帮你保住了什么’，用户上一轮已经回答这个动作让自己继续坐完会议。",
+        "finalVerdict": null,
+        "rootCause": "模型没有把用户回答映射为当前目标已获得部分答案，也没有把下一问推进到让用户得以继续参会的具体变化。",
+        "resolution": "关闭原问题目标；如仍需追问，只补关镜头后哪种压力或负担下降，从而支持用户继续参会。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应忠实连接舍不得与朋友同行、放松与停止赶行程两个用户结论，没有加入新的动机、收益或长期判断。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应准确整理‘马上回复是唯一证明’与‘按时完成仍不算’之间的用户判断规则，‘回复速度代替结果完成’属于忠实连接，没有替用户评价对错。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应保留借钱的实际支持、查看开支越界和最终决定权这一用户明确分界，没有推断哥哥的动机。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应忠实连接整理带来的开始感、整理替代下笔和报告仍为空白，没有贴标签或添加空泛收益。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "AI 用结果正常与监测设备取下后的身体变化，综合出‘听到好消息’和‘身体放松’不同步这一具体关系，范围只限本次急诊事件。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "plan_expression_alignment",
+        "visibleEvidence": "两条反馈已经足以形成场景适配关系，模型仍重复追问用户怎样看配色能力；硬检查拦截后也没有用户可见结果。",
+        "finalVerdict": null,
+        "rootCause": "模型把可以直接综合的证据冲突继续当作待回答缺口，成果判断和当前目标关闭状态没有对齐。",
+        "resolution": "直接形成‘两次反馈评价的是配色与不同场景的匹配，单次拒绝不能单独代表整套能力’这一事件内综合并暂停。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-AI-R1",
+      "review": {
+        "initialVerdict": "borderline",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": "expression_naturalness",
+        "secondaryReason": "context_or_assumption",
+        "visibleEvidence": "回应连接了被帮忙与失去参与两个事实，具备认识增量；‘被排除’略强于用户原话，‘协作里的位置既被支持也被绕开’表达抽象，读起来仍有模型分析腔。",
+        "finalVerdict": null,
+        "rootCause": "模型已经找到正确关系，但在可见表达里使用了强结论和抽象位置语言。",
+        "resolution": "保留帮助与失去参与的连接，改成具体自然的表达，例如‘他替你省下了制作时间，也在改议程时拿走了你参与这部分讨论的机会’。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:41:13.000Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "target_selection",
+        "visibleEvidence": "模型重复上一问‘整理看板替你做了什么’，也在思路层提前提供‘获得掌控或回避’两个候选动机；已有两条证据仍未形成计划要求的 AI 综合。",
+        "finalVerdict": null,
+        "rootCause": "行动作用的成果门仍偏保守，模型把可直接综合的行为对照留成确认式追问。",
+        "resolution": "直接综合整理带来的可控清晰感与投诉持续被留在行动之外，并停止当前微目标。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ]
+}

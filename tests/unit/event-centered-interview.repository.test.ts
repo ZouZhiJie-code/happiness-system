@@ -19,6 +19,10 @@ const { state, mockPrisma } = vi.hoisted(() => {
     status: "active" | "completed" | "abandoned";
     startedAt: Date;
     completedAt: Date | null;
+    startOperationId?: string | null;
+    sidebarTitle?: string | null;
+    lastActivityAt?: Date;
+    recordMode?: "capture" | "chat" | null;
     journalEvent: JournalEvent | null;
   };
   type JournalEvent = {
@@ -105,6 +109,7 @@ const { state, mockPrisma } = vi.hoisted(() => {
         if (where.id && candidate.id !== where.id) return false;
         if (where.userId && candidate.userId !== where.userId) return false;
         if (where.mode && candidate.mode !== where.mode) return false;
+        if (where.startOperationId && candidate.startOperationId !== where.startOperationId) return false;
         if (where.status && candidate.status !== where.status) return false;
         if (where.parentSessionId === null && candidate.parentSessionId !== null) return false;
         if (where.entryDate && candidate.entryDate.getTime() !== where.entryDate.getTime()) return false;
@@ -112,8 +117,46 @@ const { state, mockPrisma } = vi.hoisted(() => {
       });
       return session ? withRouteProjection(session) : null;
     }),
-    findMany: vi.fn(async ({ where }: any) =>
-      state.sessions
+    findMany: vi.fn(async ({ where, take, select }: any) => {
+      if (where?.userId && where?.mode === "event_centered" && where?.parentSessionId === null && select?.lastActivityAt) {
+        return state.sessions
+          .filter((session) => {
+            if (session.userId !== where.userId || session.mode !== where.mode || session.parentSessionId !== null) return false;
+            const cursorOr = where.AND?.[0]?.OR;
+            if (!cursorOr) return true;
+            return cursorOr.some((condition: any) => {
+              if (condition.lastActivityAt?.lt) return session.lastActivityAt! < condition.lastActivityAt.lt;
+              if (condition.lastActivityAt && condition.id?.lt) {
+                return session.lastActivityAt!.getTime() === condition.lastActivityAt.getTime() && session.id < condition.id.lt;
+              }
+              return false;
+            });
+          })
+          .sort((left, right) => {
+            const activity = right.lastActivityAt!.getTime() - left.lastActivityAt!.getTime();
+            return activity || right.id.localeCompare(left.id);
+          })
+          .slice(0, take)
+          .map((session) => ({
+            id: session.id,
+            entryDate: session.entryDate,
+            recordMode: session.recordMode ?? null,
+            sidebarTitle: session.sidebarTitle ?? null,
+            startedAt: session.startedAt,
+            lastActivityAt: session.lastActivityAt ?? session.startedAt,
+            status: session.status,
+            journalEvent: session.journalEvent
+              ? {
+                  status: session.journalEvent.status,
+                  entry: (() => {
+                    const entry = state.journalEventEntries.find((candidate) => candidate.eventId === session.journalEvent!.id);
+                    return entry ? { title: entry.title ?? "" } : null;
+                  })()
+                }
+              : null
+          }));
+      }
+      return state.sessions
         .filter((session) => {
           if (!where?.OR) return true;
           return where.OR.some((condition: any) =>
@@ -124,14 +167,14 @@ const { state, mockPrisma } = vi.hoisted(() => {
           id: session.id,
           parentSessionId: session.parentSessionId,
           forkMessageSequence: session.forkMessageSequence
-        }))
-    ),
+        }));
+    }),
     create: vi.fn(({ data }: any) => {
       const session: Session = {
         ...data,
         parentSessionId: data.parentSessionId ?? null,
         forkMessageSequence: data.forkMessageSequence ?? null,
-        startedAt: new Date("2026-07-22T01:00:00.000Z"),
+        startedAt: data.startedAt ?? data.lastActivityAt ?? new Date(),
         completedAt: null,
         journalEvent: null
       };
@@ -144,6 +187,20 @@ const { state, mockPrisma } = vi.hoisted(() => {
       return Promise.resolve(session);
     }),
     updateMany: vi.fn(async ({ where, data }: any) => {
+      if (!where.OR) {
+        let count = 0;
+        for (const session of state.sessions) {
+          if (where.userId && session.userId !== where.userId) continue;
+          if (where.mode && session.mode !== where.mode) continue;
+          if (where.parentSessionId === null && session.parentSessionId !== null) continue;
+          if (where.status?.in && !where.status.in.includes(session.status)) continue;
+          if (where.startedAt?.lt && !(session.startedAt < where.startedAt.lt)) continue;
+          if (where.journalEvent?.is === null && session.journalEvent !== null) continue;
+          Object.assign(session, data);
+          count += 1;
+        }
+        return { count };
+      }
       const rootId = where.OR[0].id;
       let count = 0;
       for (const session of state.sessions) {
@@ -154,7 +211,14 @@ const { state, mockPrisma } = vi.hoisted(() => {
         }
       }
       return { count };
-    })
+    }),
+    count: vi.fn(async ({ where }: any) => state.sessions.filter((session) => {
+      if (where.userId && session.userId !== where.userId) return false;
+      if (where.mode && session.mode !== where.mode) return false;
+      if (where.parentSessionId === null && session.parentSessionId !== null) return false;
+      if (where.status?.in && !where.status.in.includes(session.status)) return false;
+      return true;
+    }).length)
   };
   mockPrisma.interviewEvent = {
     create: vi.fn(({ data }: any) => {
@@ -195,8 +259,9 @@ const { state, mockPrisma } = vi.hoisted(() => {
           ...message,
           userTurn: message.userTurnId
             ? {
-                rawText: state.turns.find((turn) => turn.id === message.userTurnId)?.rawText ?? null,
-                clientTurnId: state.turns.find((turn) => turn.id === message.userTurnId)?.clientTurnId ?? null
+              rawText: state.turns.find((turn) => turn.id === message.userTurnId)?.rawText ?? null,
+                clientTurnId: state.turns.find((turn) => turn.id === message.userTurnId)?.clientTurnId ?? null,
+                action: state.turns.find((turn) => turn.id === message.userTurnId)?.action ?? "reply"
               }
             : null
         }));
@@ -327,6 +392,7 @@ const { state, mockPrisma } = vi.hoisted(() => {
   mockPrisma.$transaction = vi.fn(async (operation: any) => {
     return Array.isArray(operation) ? Promise.all(operation) : operation(mockPrisma);
   });
+  mockPrisma.$queryRaw = vi.fn(async () => [{ id: "user-1" }]);
 
   return { state, mockPrisma };
 });
@@ -356,6 +422,7 @@ import {
   getEventCenteredGenerativePlanCheckpoint,
   getEventCenteredInterviewWorkspaceData,
   getEventCenteredSessionIdentity,
+  listEventCenteredSessions,
   listEventCenteredSessionTabsByDate,
   persistEventCenteredGenerativePlanCheckpoint,
   reserveEventCenteredUserAction,
@@ -385,19 +452,120 @@ describe("event-centered interview aggregate", () => {
     resolveJournalDayMode.mockResolvedValue({ kind: "unclaimed", entryDate: "2026-07-22" });
   });
 
-  it("reuses one blank root and keeps eventId null before the first expression", async () => {
+  it("allows two independent blank roots and keeps eventId null before the first expression", async () => {
     const first = await startEventCenteredInterviewSession(startInput);
     const second = await startEventCenteredInterviewSession(startInput);
 
-    expect(second.rootSessionId).toBe(first.rootSessionId);
+    expect(second.rootSessionId).not.toBe(first.rootSessionId);
     expect(first).toMatchObject({
       mode: "event_centered",
       eventId: null,
       conversationSchemaVersion: 4,
       latestMessageSequence: 0
     });
-    expect(state.sessions).toHaveLength(1);
+    expect(state.sessions).toHaveLength(2);
     expect(state.journalEvents).toHaveLength(0);
+
+    await expect(startEventCenteredInterviewSession(startInput)).rejects.toMatchObject({
+      code: "EVENT_CENTERED_UNFINISHED_LIMIT_REACHED",
+      unfinishedCount: 2,
+      unfinishedLimit: 2
+    });
+  });
+
+  it("replays the same start operation without consuming a second unfinished slot", async () => {
+    const operationInput = { ...startInput, clientOperationId: "start-operation-1", recordMode: "capture" as const };
+
+    const first = await startEventCenteredInterviewSession(operationInput);
+    const replay = await startEventCenteredInterviewSession(operationInput);
+
+    expect(replay.rootSessionId).toBe(first.rootSessionId);
+    expect(state.sessions).toHaveLength(1);
+    expect(state.sessions[0]?.startOperationId).toBe("start-operation-1");
+  });
+
+  it("rotates six stored openings across both modes and replays the same operation with the same opening", async () => {
+    const openingQuestions = [
+      "先从这件事开始吧。刚刚发生了什么？",
+      "想从哪件事说起？先讲讲当时发生了什么。",
+      "从你最想说的那一部分开始吧。",
+      "先说一个具体的时刻。那时发生了什么？",
+      "这件事里，哪个瞬间最留在你脑海里？",
+      "把这件事慢慢说给我听就好。"
+    ];
+    const createdSessionIds: string[] = [];
+
+    for (let index = 0; index < openingQuestions.length + 1; index += 1) {
+      const session = await startEventCenteredInterviewSession({
+        userId: "user-1",
+        entryDate: "2026-07-22",
+        recordMode: index % 2 === 0 ? "capture" : "chat",
+        clientOperationId: `rotating-opening-${index}`,
+        openingQuestions
+      });
+      createdSessionIds.push(session.rootSessionId);
+      const opening = state.messages.find((message) => message.sessionId === session.rootSessionId)?.content ?? "";
+      expect(opening).toContain(openingQuestions[index % openingQuestions.length]);
+      state.sessions.find((candidate) => candidate.id === session.rootSessionId)!.status = "completed";
+    }
+
+    const replay = await startEventCenteredInterviewSession({
+      userId: "user-1",
+      entryDate: "2026-07-22",
+      recordMode: "capture",
+      clientOperationId: "rotating-opening-6",
+      openingQuestions
+    });
+    expect(replay.rootSessionId).toBe(createdSessionIds[6]);
+    expect(state.sessions).toHaveLength(7);
+  });
+
+  it("projects cross-date sidebar titles and expires blank records after 24 hours", async () => {
+    const expressed = await startEventCenteredInterviewSession({ ...startInput, clientOperationId: "sidebar-expressed" });
+    await reserveEventCenteredUserTurn({
+      userId: "user-1",
+      rootSessionId: expressed.rootSessionId,
+      clientTurnId: "sidebar-title-turn",
+      rawText: "  今天开会时，我把卡了很久的问题说清楚了。  ",
+      inputMode: "text",
+      baseMessageSequence: 0,
+      baseBranchSessionId: expressed.activeBranchSessionId
+    });
+    const blank = await startEventCenteredInterviewSession({ ...startInput, entryDate: "2026-07-21", clientOperationId: "sidebar-blank" });
+    const beforeExpiry = await listEventCenteredSessions({ userId: "user-1", limit: 30 });
+
+    expect(beforeExpiry.unfinishedCount).toBe(2);
+    expect(beforeExpiry.items.find((item) => item.rootSessionId === expressed.rootSessionId)).toMatchObject({
+      title: "今天开会时，我把卡了很久的问题说清楚了",
+      lifecycle: "unfinished",
+      hasUserMessage: true
+    });
+    expect(beforeExpiry.items.find((item) => item.rootSessionId === blank.rootSessionId)).toMatchObject({
+      entryDate: "2026-07-21",
+      title: "新记录",
+      lifecycle: "blank",
+      hasUserMessage: false
+    });
+
+    const blankSession = state.sessions.find((session) => session.id === blank.rootSessionId)!;
+    const afterExpiry = await listEventCenteredSessions({
+      userId: "user-1",
+      limit: 30,
+      now: new Date(blankSession.startedAt.getTime() + 25 * 60 * 60 * 1000)
+    });
+    expect(afterExpiry.unfinishedCount).toBe(1);
+    expect(afterExpiry.items.find((item) => item.rootSessionId === blank.rootSessionId)).toMatchObject({
+      lifecycle: "abandoned",
+      readOnly: true
+    });
+  });
+
+  it("uses chat as the compatibility record mode when the caller omits it", async () => {
+    await startEventCenteredInterviewSession({ ...startInput, recordMode: null });
+
+    expect(mockPrisma.interviewSession.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ recordMode: "chat" })
+    });
   });
 
   it("当天事件标签保留已退出记录，并只返回安全标题元数据", async () => {
@@ -573,14 +741,17 @@ describe("event-centered interview aggregate", () => {
     expect(state.turns).toHaveLength(0);
   });
 
-  it("does not create a blank event session when the day belongs to the legacy route", async () => {
+  it("allows a new event session while keeping legacy history read-only", async () => {
     resolveJournalDayMode.mockResolvedValueOnce({
       kind: "clean",
       ownership: { primaryMode: "dimension_legacy" }
     });
 
-    await expect(startEventCenteredInterviewSession(startInput)).rejects.toThrow("JOURNAL_DAY_MODE_CONFLICT");
-    expect(state.sessions).toHaveLength(0);
+    await expect(startEventCenteredInterviewSession(startInput)).resolves.toMatchObject({
+      mode: "event_centered",
+      entryDate: "2026-07-22"
+    });
+    expect(state.sessions).toHaveLength(1);
   });
 
   it("stores reliable event actions with their parameters and leaves exit transition to the service", async () => {
@@ -659,6 +830,12 @@ describe("event-centered interview aggregate", () => {
     ]);
     expect(state.journalEvents[0]?.status).toBe("active");
     expect(state.sessions[0]?.status).toBe("active");
+
+    const workspace = await getEventCenteredInterviewWorkspaceData(
+      "user-1",
+      session.rootSessionId
+    );
+    expect(workspace?.messages.map((message) => message.content)).not.toContain("退出这件事");
 
     const replay = await reserveEventCenteredUserAction({
       userId: "user-1",

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "board7_gi009_two_call_targeted_delegated_acceptance.v1",
+  "sourceRunsPath": "artifacts/generative-interview-board7/2026-07-30/board7-gi009-two-call-targeted-runs.json",
+  "reviewDelegation": {
+    "delegatedBy": "product_owner",
+    "delegatedTo": "codex",
+    "delegatedAt": "2026-07-31T01:25:57Z",
+    "statement": "产品负责人在当前会话明确授权 Codex 同时完成初评与代行产品负责人最终裁决；本文件记录 delegated acceptance，不代表真实用户亲自逐条填写。"
+  },
+  "singleRuns": [
+    {
+      "runId": "SMK-R-PARTIAL-ASK-R1",
+      "runFingerprint": "126da1669f897d497a688cb760566241942b807bdbe6ce8e5a76d6991bff1a73",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-31T01:25:57Z",
+        "primaryReason": "context_or_assumption",
+        "secondaryReason": null,
+        "visibleEvidence": "成果遗漏用户明确的‘帮拿快递本身没问题’，未保留接受帮助与房间/桌面边界并存关系。",
+        "finalVerdict": "fail",
+        "rootCause": "第一段语义计划漏选关键共存证据，responseCore 因此缩窄用户原意。",
+        "resolution": "定向门未达到 2/2，停止 Strict12，重新讨论语义计划如何选取必须保留的共存证据。",
+        "reviewedBy": "product_owner",
+        "reviewedAt": "2026-07-31T01:25:57Z"
+      },
+      "severeErrors": []
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "runFingerprint": "6045d7a4884ec95a6f3feaae3ec7566b935aaaab5437cbe83ccf3f862bfae9b9",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-31T01:25:57Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "两个身体节点支持结果确认与身体放松不同步的时间连接。",
+        "finalVerdict": "pass",
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": "product_owner",
+        "reviewedAt": "2026-07-31T01:25:57Z"
+      },
+      "severeErrors": []
+    }
+  ]
+}

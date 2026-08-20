@@ -1,66 +1,22 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-
-import { authLocalUserIdStorageKey } from "@/features/auth/auth-local";
-import { interviewSessionStorageKey } from "@/features/interview/dimensions";
-
-const locationState = { href: "http://localhost/settings" };
-
-vi.stubGlobal("location", locationState);
-
-vi.mock("@/components/ai-feedback/ai-quality-consent-settings", () => ({
-  AIQualityConsentSettings: () => <div>AI 质量设置</div>
-}));
+import { render, screen } from "@testing-library/react";
 
 import { SettingsAccountPanel } from "@/components/auth/settings-account-panel";
 
-describe("settings account panel", () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    locationState.href = "http://localhost/settings";
-  });
-
-  it("logs out from the main settings page and clears scoped local state", async () => {
-    window.localStorage.setItem(authLocalUserIdStorageKey, "user-1");
-    window.localStorage.setItem(
-      `${interviewSessionStorageKey}::user-1`,
-      JSON.stringify({ joy: { sessionId: "session-1" } })
-    );
-
-    global.fetch = vi
-      .fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ authenticated: false, user: null }), { status: 200 })) as typeof fetch;
-
-    render(
-      <SettingsAccountPanel
-        user={{
-          id: "user-1",
-          username: "daily_light_01"
-        }}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "退出当前账号" }));
-
-    await waitFor(() => {
-      expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBeNull();
-    });
-    expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-1`)).toBeNull();
-    expect(locationState.href).toBe("/login");
-  });
-
-  it("shows the AI quality review entry to administrators", () => {
+describe("settings internal tools", () => {
+  it("shows administrator tools without another logout action", () => {
     render(
       <SettingsAccountPanel
         user={{ id: "admin-1", username: "admin" }}
+        showAdminAnalyticsEntry
         showAdminAIQualityEntry
+        showAdminAIRuntimeEntry
       />
     );
 
-    expect(screen.getByRole("link", { name: "AI 质量改进中心" })).toHaveAttribute(
-      "href",
-      "/admin/ai-quality"
-    );
-    expect(screen.queryByText("AI 质量设置")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "数据分析" })).toHaveAttribute("href", "/admin/analytics");
+    expect(screen.getByRole("link", { name: "AI 质量改进" })).toHaveAttribute("href", "/admin/ai-quality");
+    expect(screen.getByRole("link", { name: "AI 运行配置" })).toHaveAttribute("href", "/settings/ai-runtime");
+    expect(screen.queryByRole("button", { name: /退出/ })).not.toBeInTheDocument();
   });
 });

@@ -42,7 +42,7 @@ export function CalendarChromeProvider({ children }: { children: ReactNode }) {
       return "month" as CalendarView;
     }
 
-    return normalizeCalendarView(searchParams.get("view"));
+    return normalizeCalendarView(searchParams.get("view") ?? searchParams.get("scope"));
   }, [isCalendarPage, searchParams]);
 
   const [optimisticView, setOptimisticView] = useState<CalendarView | null>(null);
@@ -164,6 +164,7 @@ export function resolveCalendarActiveView(input: {
 export function resolveCalendarUrlView(searchParams: { get: (key: string) => string | null }) {
   return normalizeCalendarSearchParams({
     view: searchParams.get("view"),
+    scope: searchParams.get("scope"),
     date: searchParams.get("date"),
     today: getTodayEntryDate()
   }).view;

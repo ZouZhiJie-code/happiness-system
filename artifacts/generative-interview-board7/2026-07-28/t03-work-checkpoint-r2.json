@@ -1,0 +1,478 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T03",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "checkpoint_two",
+    "activeAngle": null,
+    "lastCompletedAngle": "thought",
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "completed",
+        "questionOpportunityCount": 2,
+        "currentOutcomeId": null,
+        "answeredTargets": [
+          "羡慕与拒绝的关联",
+          "羡慕与当前判断的关联"
+        ],
+        "askedTargets": [
+          "羡慕与拒绝的关联",
+          "羡慕与当前判断的关联"
+        ],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": null,
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": "3.2.0",
+    "currentMicrogoal": null
+  },
+  "facts": [
+    {
+      "id": "T03-fact-1",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-1",
+      "createdByRevisionId": null,
+      "statement": "用户自己拒绝了某个机会",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-1",
+          "factId": "T03-fact-1",
+          "sourceTurnId": "evaluation-turn-1",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-1",
+          "role": "direct_expression",
+          "quote": "我明明自己拒绝了",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-2",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-2",
+      "createdByRevisionId": null,
+      "statement": "看到同事接手后感到羡慕",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-2",
+          "factId": "T03-fact-2",
+          "sourceTurnId": "evaluation-turn-2",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-2",
+          "role": "direct_expression",
+          "quote": "看到同事接手还是很羡慕",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-3",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-3",
+      "createdByRevisionId": null,
+      "statement": "用户怀疑自己是否选错了",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "stated_interpretation",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-3",
+          "factId": "T03-fact-3",
+          "sourceTurnId": "evaluation-turn-3",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-3",
+          "role": "direct_expression",
+          "quote": "感觉自己是不是选错了",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-4",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-4",
+      "createdByRevisionId": null,
+      "statement": "用户还不确定是后悔",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-4",
+          "factId": "T03-fact-4",
+          "sourceTurnId": "evaluation-turn-4",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-4",
+          "role": "direct_expression",
+          "quote": "我还不确定是后悔",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-5",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-5",
+      "createdByRevisionId": null,
+      "statement": "用户只是羡慕",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-5",
+          "factId": "T03-fact-5",
+          "sourceTurnId": "evaluation-turn-5",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-5",
+          "role": "direct_expression",
+          "quote": "只是羡慕",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-6",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-6",
+      "createdByRevisionId": null,
+      "statement": "用户当时手上有两个项目都在赶进度",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-6",
+          "factId": "T03-fact-6",
+          "sourceTurnId": "evaluation-turn-6",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-6",
+          "role": "direct_expression",
+          "quote": "我当时手上有两个项目都在赶进度",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-7",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-7",
+      "createdByRevisionId": null,
+      "statement": "用户拒绝是因为觉得再带团队会撑不住",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "stated_interpretation",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-7",
+          "factId": "T03-fact-7",
+          "sourceTurnId": "evaluation-turn-7",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-7",
+          "role": "direct_expression",
+          "quote": "拒绝是因为我觉得再带团队会撑不住",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-8",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-8",
+      "createdByRevisionId": null,
+      "statement": "用户还说不上选错",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-8",
+          "factId": "T03-fact-8",
+          "sourceTurnId": "evaluation-turn-8",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-8",
+          "role": "direct_expression",
+          "quote": "我还说不上选错",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "recentTurns": [
+    {
+      "user": "我明明自己拒绝了，看到同事接手还是很羡慕，感觉自己是不是选错了。",
+      "assistantUnderstanding": "你拒绝了机会，但看到同事接手后感到羡慕，这让你怀疑自己的选择。",
+      "assistantQuestion": "这种羡慕是让你觉得当初拒绝的决定可能错了，还是另有原因？"
+    },
+    {
+      "user": "我还不确定是后悔，只是羡慕。",
+      "assistantUnderstanding": "你还不确定是后悔，只是羡慕，但羡慕本身似乎让你对当初的决定产生了怀疑。",
+      "assistantQuestion": "这种羡慕具体是怎样让你觉得当初拒绝的决定可能错了？"
+    },
+    {
+      "user": "我当时手上有两个项目都在赶进度，所以拒绝是因为我觉得再带团队会撑不住。我还说不上选错，只是看到他接手会羡慕。",
+      "assistantUnderstanding": "你拒绝是因为当时手上有两个项目赶进度，担心再带团队会撑不住。",
+      "assistantQuestion": null
+    }
+  ],
+  "currentQuestion": null,
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "我明明自己拒绝了，看到同事接手还是很羡慕，感觉自己是不是选错了。",
+      "visibleResponse": "你拒绝了机会，但看到同事接手后感到羡慕，这让你怀疑自己的选择。\n这种羡慕是让你觉得当初拒绝的决定可能错了，还是另有原因？",
+      "finalAction": "ask",
+      "selectedTarget": "羡慕与拒绝的关联",
+      "cognitiveAction": "connect_clues",
+      "evidenceUsed": [
+        "T03-fact-1",
+        "T03-fact-2"
+      ],
+      "factDeltas": [
+        {
+          "id": "T03-fact-1",
+          "statement": "用户自己拒绝了某个机会",
+          "quote": "我明明自己拒绝了"
+        },
+        {
+          "id": "T03-fact-2",
+          "statement": "看到同事接手后感到羡慕",
+          "quote": "看到同事接手还是很羡慕"
+        },
+        {
+          "id": "T03-fact-3",
+          "statement": "用户怀疑自己是否选错了",
+          "quote": "感觉自己是不是选错了"
+        }
+      ],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 231,
+          "tokenUsage": {
+            "promptTokens": 2561,
+            "completionTokens": 375,
+            "totalTokens": 2936,
+            "promptCacheHitTokens": 1792,
+            "promptCacheMissTokens": 769
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户自己拒绝了某个机会\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我明明自己拒绝了\"\n      },\n      {\n        \"statement\": \"看到同事接手后感到羡慕\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"看到同事接手还是很羡慕\"\n      },\n      {\n        \"statement\": \"用户怀疑自己是否选错了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"stated_interpretation\",\n        \"quote\": \"感觉自己是不是选错了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"羡慕与拒绝的关联\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"理解羡慕情绪是否源于对拒绝决定的后悔，还是其他因素\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你拒绝了机会，但看到同事接手后感到羡慕，这让你怀疑自己的选择。\",\n    \"question\": \"这种羡慕是让你觉得当初拒绝的决定可能错了，还是另有原因？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3169,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2561,
+          "completionTokens": 375,
+          "totalTokens": 2936,
+          "promptCacheHitTokens": 1792,
+          "promptCacheMissTokens": 769
+        },
+        "estimatedCost": 0.00021767760000000004
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    },
+    {
+      "index": 2,
+      "rawText": "我还不确定是后悔，只是羡慕。",
+      "visibleResponse": "你还不确定是后悔，只是羡慕，但羡慕本身似乎让你对当初的决定产生了怀疑。\n这种羡慕具体是怎样让你觉得当初拒绝的决定可能错了？",
+      "finalAction": "ask",
+      "selectedTarget": "羡慕与当前判断的关联",
+      "cognitiveAction": "connect_clues",
+      "evidenceUsed": [
+        "T03-fact-2",
+        "T03-fact-5"
+      ],
+      "factDeltas": [
+        {
+          "id": "T03-fact-4",
+          "statement": "用户还不确定是后悔",
+          "quote": "我还不确定是后悔"
+        },
+        {
+          "id": "T03-fact-5",
+          "statement": "用户只是羡慕",
+          "quote": "只是羡慕"
+        }
+      ],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 154,
+          "tokenUsage": {
+            "promptTokens": 2744,
+            "completionTokens": 319,
+            "totalTokens": 3063,
+            "promptCacheHitTokens": 1792,
+            "promptCacheMissTokens": 952
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户还不确定是后悔\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"我还不确定是后悔\"\n      },\n      {\n        \"statement\": \"用户只是羡慕\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"只是羡慕\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"connect_clues\",\n    \"selectedTarget\": \"羡慕与当前判断的关联\",\n    \"evidenceRefs\": [\"T03-fact-2\", \"new:2\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"明确羡慕如何影响用户对拒绝决定的判断\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你还不确定是后悔，只是羡慕，但羡慕本身似乎让你对当初的决定产生了怀疑。\",\n    \"question\": \"这种羡慕具体是怎样让你觉得当初拒绝的决定可能错了？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3426,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2744,
+          "completionTokens": 319,
+          "totalTokens": 3063,
+          "promptCacheHitTokens": 1792,
+          "promptCacheMissTokens": 952
+        },
+        "estimatedCost": 0.0002276176
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    },
+    {
+      "index": 3,
+      "rawText": "我当时手上有两个项目都在赶进度，所以拒绝是因为我觉得再带团队会撑不住。我还说不上选错，只是看到他接手会羡慕。",
+      "visibleResponse": "你拒绝是因为当时手上有两个项目赶进度，担心再带团队会撑不住。\n用户拒绝机会是因为当时手上有两个项目赶进度，担心再带团队会撑不住，这一判断与具体工作负荷事实相连。",
+      "finalAction": "complete",
+      "selectedTarget": null,
+      "cognitiveAction": null,
+      "evidenceUsed": [],
+      "factDeltas": [
+        {
+          "id": "T03-fact-6",
+          "statement": "用户当时手上有两个项目都在赶进度",
+          "quote": "我当时手上有两个项目都在赶进度"
+        },
+        {
+          "id": "T03-fact-7",
+          "statement": "用户拒绝是因为觉得再带团队会撑不住",
+          "quote": "拒绝是因为我觉得再带团队会撑不住"
+        },
+        {
+          "id": "T03-fact-8",
+          "statement": "用户还说不上选错",
+          "quote": "我还说不上选错"
+        }
+      ],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 282,
+          "tokenUsage": {
+            "promptTokens": 2901,
+            "completionTokens": 441,
+            "totalTokens": 3342,
+            "promptCacheHitTokens": 1920,
+            "promptCacheMissTokens": 981
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户当时手上有两个项目都在赶进度\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我当时手上有两个项目都在赶进度\"\n      },\n      {\n        \"statement\": \"用户拒绝是因为觉得再带团队会撑不住\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"stated_interpretation\",\n        \"quote\": \"拒绝是因为我觉得再带团队会撑不住\"\n      },\n      {\n        \"statement\": \"用户还说不上选错\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"我还说不上选错\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"complete\",\n    \"cognitiveAction\": null,\n    \"selectedTarget\": null,\n    \"evidenceRefs\": [],\n    \"microgoalDelta\": null,\n    \"expectedValue\": null,\n    \"stopReason\": \"当前判断（拒绝是因为撑不住）与具体事实（两个项目赶进度）已建立可信联系，最低成果达成。\",\n    \"outcomeCandidate\": {\n      \"angle\": \"thought\",\n      \"statement\": \"用户拒绝机会是因为当时手上有两个项目赶进度，担心再带团队会撑不住，这一判断与具体工作负荷事实相连。\",\n      \"supportEvidenceRefs\": [\"T03-fact-1\", \"new:1\", \"new:2\"]\n    }\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你拒绝是因为当时手上有两个项目赶进度，担心再带团队会撑不住。\",\n    \"question\": null\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3656,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2901,
+          "completionTokens": 441,
+          "totalTokens": 3342,
+          "promptCacheHitTokens": 1920,
+          "promptCacheMissTokens": 981
+        },
+        "estimatedCost": 0.000266196
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    }
+  ],
+  "awaitingReply": false,
+  "completed": true,
+  "completionReason": "当前判断（拒绝是因为撑不住）与具体事实（两个项目赶进度）已建立可信联系，最低成果达成。",
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

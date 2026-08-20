@@ -1,0 +1,196 @@
+{
+  "singleRuns": [
+    {
+      "runId": "SMK-F-ASK-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "思路层只承接笑与胸口紧的变化，问题补一个准确感受，清楚且容易回答。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": "answer_burden",
+        "secondaryReason": "target_selection",
+        "visibleEvidence": "问题要求用户同时衡量认可部分和批评部分各占多大分量，表达抽象且一次承担两个判断。",
+        "finalVerdict": null,
+        "rootCause": "模型选中了‘权重比较’这一抽象目标，没有贴住开头那句具体批注。",
+        "resolution": "问题应锚定‘太绕’这句批注，只问它具体让用户怀疑提案的哪一部分。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": null,
+        "visibleEvidence": "两次草稿都选择了正确的具体原话问题，但事实 kind 使用 reaction、offer 等兼容枚举外取值，最终没有可见结果。",
+        "finalVerdict": null,
+        "rootCause": "事实类型兼容层缺少模型常用同义值。",
+        "resolution": "在系统兼容层归一 reaction、offer、user_offer，不改变产品协议和可见问题。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": "target_selection",
+        "secondaryReason": "ask_stop_timing",
+        "visibleEvidence": "问题重复上一问‘关掉摄像头帮你保住什么’，用户已经回答它让自己继续坐完会议。",
+        "finalVerdict": null,
+        "rootCause": "评测输入用通用目标编号，模型和硬检查未能识别当前目标已经得到回答。",
+        "resolution": "评测为每个案例提供真实目标编号，并要求下一问推进到让继续参会成为可能的具体变化。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "忠实保留舍不得与同行关系、放松与停止赶路两个用户结论，没有添加解释。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "准确整理马上回复这一唯一标准，以及按时完成未被计入负责判断。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "完整保留实际支持与最终用钱决定权这一用户明确分界，没有推断哥哥动机。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "忠实连接整理带来的开始感、替代下笔和报告空白，没有添加收益或标签。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "用结果告知与设备取下两个时点综合出身体结束更晚的关系，来源正确且范围只限本次事件。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": "context_or_assumption",
+        "secondaryReason": "plan_expression_alignment",
+        "visibleEvidence": "‘能力本身没有变’超出两次反馈能证明的范围，且这个 AI 综合被标成 user_articulated。",
+        "finalVerdict": null,
+        "rootCause": "模型把事实对照当作用户已经说出的结论，并把场景适配扩大为整体能力背书。",
+        "resolution": "只综合两次反馈评价的是不同场景匹配关系，并标为 ai_synthesized。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "answer_burden",
+        "visibleEvidence": "已有帮助、未经确认改议程和用户未发言三条证据，模型仍追问抽象的‘处在什么位置’，没有形成关系综合。",
+        "finalVerdict": null,
+        "rootCause": "模型跳过 AI 综合检查，问题也使用了禁止的抽象位置语言。",
+        "resolution": "先形成帮助推进工作、同时减少用户参与共同决定位置的单一 AI 综合。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:34:00.000Z",
+        "primaryReason": "insight_value",
+        "secondaryReason": "plan_expression_alignment",
+        "visibleEvidence": "回应只并列整理看板更清楚和投诉未打开，没有说出行动在本次事件里的作用，并将其标成 user_articulated。",
+        "finalVerdict": null,
+        "rootCause": "模型把事实整理误当深聊成果，同时混淆成果来源。",
+        "resolution": "形成整理恢复可控清晰感、同时把不确定投诉留在行动之外的 AI 综合，并标为 ai_synthesized。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ]
+}

@@ -61,7 +61,7 @@ Prompt、Interview Skill 和输出合同均未改变。执行指纹变化来自�
 
 产品负责人原授权 A1、A2、A3 共 `3` 项定向真人复测，整批模型调用总账上限为 `40`。完成 A1 两条轨迹后，产品负责人确认 Thinking 关闭与 Thinking high 均出现同类阻断，单组证据已经足以停止。本批已在 A2 开始前按 `sufficient_evidence` 提前结束，终态为 `1/12`；其余 `11` 项标记为未执行。
 
-私有 Preview deployment 为 `redacted-deployment-id`，入口为 `https://xingfuxitong-fpxzwohws-example-team.vercel.app/preview/gi088-evaluation`。页面零调用验收为 `200`，未登录 session API 为 `401`；Production 页面与 session API 均为 `404`。打开页面并完成应用登录后，系统按 v3 评测版本为当前评测账号创建独立空白批次。
+私有 Preview deployment 为 `dpl_6ByMq3r9E8LvyTwZh3R87usLpro3`，入口为 `https://xingfuxitong-fpxzwohws-zouzhijies-projects.vercel.app/preview/gi088-evaluation`。页面零调用验收为 `200`，未登录 session API 为 `401`；Production 页面与 session API 均为 `404`。打开页面并完成应用登录后，系统按 v3 评测版本为当前评测账号创建独立空白批次。
 
 本组共消费 `8/40` 次模型调用：off `4` 次、high `4` 次；`EMPTY_CONTENT=0`，自动恢复 `0`，手动重试 `0`。两边前三轮均有效，第 4 轮都命中 `MODEL_OUTPUT_PROTECTED / NEW_ANSWER_OPPORTUNITY_UNAVAILABLE`。产品负责人仍判断 high 的提问、总结和回应整体更好，两条轨迹均为 `better / minor_issue / target triggered`。
 

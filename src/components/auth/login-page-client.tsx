@@ -19,9 +19,9 @@ export function LoginPageClient({ nextPath = null }: LoginPageClientProps) {
   return (
     <AuthFormShell
       eyebrow="登录"
-      title="登录 Daily Light，继续今天的记录。"
-      description="访谈、日志、日历和画像都会保存在你的个人数据空间。"
-      footer="请使用注册时设置的用户名与密码。"
+      title="回来继续记录"
+      description="登录后，你可以接着聊，也可以回到过去的日记。"
+      footer="使用注册时设置的用户名和密码。"
     >
       <LoginForm
         nextPath={nextPath}
@@ -48,8 +48,8 @@ export function LoginPageClient({ nextPath = null }: LoginPageClientProps) {
                 : payload?.error === "INVALID_CREDENTIALS"
                   ? "用户名或密码不正确"
                   : payload?.error === "AUTH_STORAGE_NOT_READY"
-                    ? "登录暂时不可用，请先完成数据库初始化"
-                  : "登录失败，请重试";
+                    ? "登录暂时不可用，请稍后再试"
+                    : "登录失败，请重试";
             setError(nextError);
             throw new Error(nextError);
           }
@@ -58,11 +58,11 @@ export function LoginPageClient({ nextPath = null }: LoginPageClientProps) {
             setLocalAuthUserId(payload.user.id);
           }
           setError(null);
-          router.push(normalizeAuthRedirectPath(nextPath));
+          router.replace(normalizeAuthRedirectPath(nextPath));
           router.refresh();
         }}
       />
-      {error ? <p role="alert" className="mt-4 text-sm leading-7 text-[#8a5440]">{error}</p> : null}
+      {error ? <p role="alert" className="mt-4 text-sm leading-7 text-[var(--color-danger)]">{error}</p> : null}
     </AuthFormShell>
   );
 }

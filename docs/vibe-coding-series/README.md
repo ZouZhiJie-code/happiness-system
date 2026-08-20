@@ -7,10 +7,11 @@
 1. [我原来以为，Vibe Coding 就是让 AI 写代码](https://my.feishu.cn/docx/BN8wdqKVNoEXWvxzB94cZ7uGntd)
 2. [AI 写得越来越快，项目为什么越来越难接着做](https://my.feishu.cn/docx/NpEodYJWro1iVzxbEnNch2S3ncc)
 3. [功能能跑起来以后，怎么知道它真的做对了](https://my.feishu.cn/docx/GpQwd6s7jojQSIxCS0BctPp7nUe)
+4. [一次生成式访谈评测，为什么从 8 张校准卡一直走到 v8r2](./04-生成式访谈评测实战复盘.md)
 
 ## 贯穿案例
 
-三篇文章都沿着 Daily Light 的 AI 访谈主链路展开。
+四篇文章都沿着 Daily Light 的 AI 访谈主链路展开。
 
 `产品想法 → 提示词原型 → 单次访谈 → 状态与日志问题 → 结构化访谈系统 → 评测与发布闭环`
 

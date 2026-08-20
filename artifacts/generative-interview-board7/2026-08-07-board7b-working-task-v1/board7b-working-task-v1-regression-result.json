@@ -1,0 +1,192 @@
+{
+  "resultVersion": "2026-08-08.board7b-working-task-regression-result-v1",
+  "evidenceIdentity": "six_case_candidate_screening",
+  "reviewStatus": "awaiting_product_owner_review",
+  "candidateVersion": "2026-08-07.board7b-working-task-v1",
+  "candidateFingerprint": "e45f431f21819b668422c5da64678ad22fb6ef3f3eee285aa9e9c8fb533321aa",
+  "datasetFingerprint": "f2046402a854743d215219a78b35a7447b6bb335c13308d457ef5dbb8cfcd41d",
+  "sourceLineageFingerprint": "7f234016d361fd3cc082b4cd6f91bd3ad48df00c63cfd641baf406d08e8f8eac",
+  "requestSetFingerprint": "b83d8ae3c34d36f91454b4d27546509872d727474fd98bc7bf2de5ed93d9bfeb",
+  "evaluationPolicyFingerprint": "901b7fd29af40b930a6272cc7464d7fafd23c5076b0199da0cef1b5c783e7194",
+  "executionFingerprint": "6b909f50b9c98fb1b8fa2d9265010ccf58870bc4bea714482c231fb6b1247c5b",
+  "runFingerprint": "2881fb9d0e1b48f4c8325dfdbe4a813925513a6320cc04f79c27717e0638cfc2",
+  "rawResultFingerprint": "3c0ea3963b754d34c25e4132a48bbd14889554ed7c1b5e67f4badf7c3650cd68",
+  "authorization": {
+    "authorizationId": "dcc0d775-589e-4884-b943-9a0b30dbacd1",
+    "status": "consumed_once",
+    "baseModelCalls": 6,
+    "manualTechnicalRetriesUsed": 0
+  },
+  "execution": {
+    "startedAt": "2026-08-08T03:35:37.518Z",
+    "completedAt": "2026-08-08T03:35:59.083Z",
+    "completedCases": 6,
+    "valid": 5,
+    "protectedFailures": 1,
+    "modelContractFailures": 0,
+    "technicalFailures": 0,
+    "qualityRetries": 0,
+    "automaticTechnicalRetries": 0
+  },
+  "calls": [
+    {
+      "callNumber": 1,
+      "caseId": "AUT1",
+      "sourceType": "real_history_checkpoint",
+      "status": "valid",
+      "action": "ask",
+      "workingTask": {
+        "continuity": "new",
+        "targetRef": null,
+        "summary": "在秋招最后一个月窗口期内，用户需要决定毕业去向，但面临行业、公司、业务方向不确定，且实践少、作品集准备压力大，感到焦虑。当前共同任务是帮助用户梳理决策思路，降低不确定性。",
+        "evidenceRefs": ["U1"]
+      },
+      "nextInquiry": {
+        "answerTarget": "用户目前最优先考虑的是哪个方面：是尽快确定行业/公司/业务方向，还是先确保能通过简历筛选找到工作？",
+        "taskEffect": "帮助用户明确当前最紧迫的决策点，以便后续围绕该重点展开讨论，降低焦虑。",
+        "evidenceRefs": ["U1"]
+      },
+      "visible": {
+        "understanding": "听起来你现在既在为长远的方向发愁，也在为眼前的简历筛选着急，时间又紧，确实会让人焦虑。",
+        "response": "如果现在只能先抓住一头，你更想先解决哪个：是先把行业、公司、业务的大方向定下来，还是先确保作品集能帮你通过筛选、拿到面试机会？"
+      },
+      "validationIssues": [],
+      "errorCode": null,
+      "latencyMs": 213,
+      "tokenUsage": { "promptTokens": 2205, "completionTokens": 420, "totalTokens": 2625 }
+    },
+    {
+      "callNumber": 2,
+      "caseId": "AUT2",
+      "sourceType": "real_history_checkpoint",
+      "status": "valid",
+      "action": "ask",
+      "workingTask": {
+        "continuity": "continue",
+        "targetRef": "task-b3389aee207c",
+        "summary": "弄清秋招窗口内，长期方向和当前拿到 offer、准备作品集怎样共同影响求职选择",
+        "evidenceRefs": ["U1", "U2"]
+      },
+      "nextInquiry": {
+        "answerTarget": "当前作品集准备中，最担心的是哪一部分？",
+        "taskEffect": "了解作品集准备的具体难点，有助于判断当前最需要支持的环节，并继续围绕拿到 offer 这一优先目标推进",
+        "evidenceRefs": ["U2"]
+      },
+      "visible": {
+        "understanding": "你提到现在优先想先拿到 offer，所以正在准备作品集。",
+        "response": "那在作品集准备上，你现在最担心的是哪一部分？"
+      },
+      "validationIssues": [],
+      "errorCode": null,
+      "latencyMs": 206,
+      "tokenUsage": { "promptTokens": 2664, "completionTokens": 341, "totalTokens": 3005 }
+    },
+    {
+      "callNumber": 3,
+      "caseId": "H1",
+      "sourceType": "real_history_checkpoint",
+      "status": "valid",
+      "action": "acknowledge",
+      "workingTask": {
+        "continuity": "continue",
+        "targetRef": "task-43504596135c",
+        "summary": "理解学习一天后，一起吃晚饭带来的爽与轻松体验",
+        "evidenceRefs": [
+          "b85e7448-49c5-49c8-8e46-d2c869b83654",
+          "f2e61352-f816-428a-9fd9-22d8dff6acf6",
+          "1228fecf-1a8a-47ec-9b4f-d6d01e300981"
+        ]
+      },
+      "nextInquiry": null,
+      "visible": {
+        "understanding": null,
+        "response": "你说得对，爽和轻松本来就是并存的，不需要分开。我记住了，这顿晚饭带给你的是一种混合的满足感。"
+      },
+      "validationIssues": [],
+      "errorCode": null,
+      "latencyMs": 220,
+      "tokenUsage": { "promptTokens": 2898, "completionTokens": 428, "totalTokens": 3326 }
+    },
+    {
+      "callNumber": 4,
+      "caseId": "H2",
+      "sourceType": "real_history_checkpoint",
+      "status": "valid",
+      "action": "acknowledge",
+      "workingTask": {
+        "continuity": "continue",
+        "targetRef": "task-194a1c99c864",
+        "summary": "弄清续费信息勾起的过去经历，怎样让用户再次陷入烦躁和内耗",
+        "evidenceRefs": ["b19e235e-3768-4827-b927-2e5c261859f0"]
+      },
+      "nextInquiry": null,
+      "visible": {
+        "understanding": null,
+        "response": "你说得对，场合确实不重要，重要的是这件事又让你想起了过去的事，那种烦躁和内耗又回来了。"
+      },
+      "validationIssues": [],
+      "errorCode": null,
+      "latencyMs": 207,
+      "tokenUsage": { "promptTokens": 2933, "completionTokens": 359, "totalTokens": 3292 }
+    },
+    {
+      "callNumber": 5,
+      "caseId": "PAUSE",
+      "sourceType": "synthetic_guardrail",
+      "status": "protected_failure",
+      "action": "pause",
+      "workingTask": {
+        "continuity": "continue",
+        "targetRef": "task-0cc2c04c259c",
+        "summary": "理解今天持续的低落感",
+        "evidenceRefs": ["PAUSE-U1"]
+      },
+      "nextInquiry": null,
+      "visible": {
+        "understanding": null,
+        "response": "好，那就不想了。今天先到这里，随时想聊的时候我都在。"
+      },
+      "validationIssues": [
+        "WORKING_TASK_TARGET_REF_CANNOT_BE_DISPOSED",
+        "CONTINUED_WORKING_TASK_CANNOT_BE_DISPOSED"
+      ],
+      "errorCode": "PROGRAM_PROTECTION_REJECTED",
+      "latencyMs": 225,
+      "tokenUsage": { "promptTokens": 2554, "completionTokens": 292, "totalTokens": 2846 }
+    },
+    {
+      "callNumber": 6,
+      "caseId": "INDEP",
+      "sourceType": "synthetic_guardrail",
+      "status": "valid",
+      "action": "ask",
+      "workingTask": {
+        "continuity": "new",
+        "targetRef": null,
+        "summary": "用户正在同时犹豫周末爬山地点和是否换手机，两件事独立，需要先选择一项来聊。",
+        "evidenceRefs": ["U1"]
+      },
+      "nextInquiry": {
+        "answerTarget": "用户更想先聊哪一件事：周末爬山地点还是换手机？",
+        "taskEffect": "用户的选择将决定当前共同任务聚焦于哪一项，另一项保留为可返回任务。",
+        "evidenceRefs": ["U1"]
+      },
+      "visible": {
+        "understanding": "听起来你手头有两件各自让你犹豫的事，一件是周末爬山去哪儿，另一件是换不换手机，而且它们彼此独立。",
+        "response": "你想先聊哪一件呢？"
+      },
+      "validationIssues": [],
+      "errorCode": null,
+      "latencyMs": 198,
+      "tokenUsage": { "promptTokens": 2121, "completionTokens": 367, "totalTokens": 2488 }
+    }
+  ],
+  "manualTechnicalRetries": [],
+  "screeningGate": {
+    "unresolvedTechnicalFailures": 0,
+    "invalidStructureOrSourceFailures": 1,
+    "singleCaseBlocks": "awaiting_product_owner_review",
+    "ordinaryQualityIssues": "see_codex_review",
+    "realTrajectoryEligibility": "stopped_by_invalid_structure"
+  }
+}

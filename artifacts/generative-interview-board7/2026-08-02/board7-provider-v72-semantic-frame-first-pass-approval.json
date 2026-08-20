@@ -1,0 +1,30 @@
+{
+  "approvalType": "board7_provider_v72_semantic_frame_first_pass_run",
+  "approvalVersion": "board7-provider-v72-semantic-frame-first-pass-approval-v1",
+  "decision": "approved",
+  "approvedBy": "product_owner",
+  "approvedAt": "2026-08-02T08:32:45Z",
+  "confirmationText": "没问题，继续；确认并授权冻结六例首轮真实模型验证",
+  "taskId": "codex-board7-v72-semantic-frame-first-pass-2026-08-02",
+  "budgetVersion": "board7-provider-v72-semantic-frame-first-pass-budget-v1",
+  "scopeFingerprint": "7fdeac24757870f363bd1dc8ea5a74364478aa747ea96e24542d1c16c5dbaf38",
+  "datasetVersion": "2026-08-02.board7-semantic-frame-v5-offline-confirmation-v1",
+  "caseFingerprint": "481c86765c4d7f1866887705b5af2e032975dc2818c27e9792dedefe3fee2229",
+  "caseIds": [
+    "SF4-F-READY-01",
+    "SF4-T-ASK-01",
+    "SF4-R-COEXIST-01",
+    "SF4-A-EFFECT-01",
+    "SF4-CORRECTION-READY-01",
+    "SF4-LIMITED-01"
+  ],
+  "candidateVersions": {
+    "strategy": "5.50.0",
+    "semanticPrompt": "2026-08-02.event-centered-generative-v72-semantic-origin",
+    "visiblePrompt": "2026-08-02.event-centered-generative-v72-visible-response",
+    "fewShot": "quality-patterns.2026-08-02.v29",
+    "semanticArtifact": "event-centered-semantic-plan.v5",
+    "angleCard": "2.12.0"
+  },
+  "model": "deepseek-v4-flash"
+}

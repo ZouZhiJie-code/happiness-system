@@ -48,7 +48,7 @@ GI-085 已经把剩余失败定位到 `focus → openPart → visible`。继续�
 
 运行结果：结构有效 `6/8`、程序保护 `1/8`、技术失败 `1/8`、模型合同失败 `0`、质量重试 `0`、自动技术重试 `0`。P1 Thinking 关闭组因用户可见回应包含两个回答选项而触发 `ASK_QUESTION_COUNT_INVALID:2`；P3 Thinking high 返回 `EMPTY_CONTENT`，该配对按冻结口径保持开放。
 
-产品负责人已完成透明评审（本机历史证据，公开精简包未收录：`board7b-thinking-capability-v1-transparent-review.md`）：P1、P2、P4 判相当，P3 因 high 组技术失败判关闭组更好。Codex 独立九维初评（本机历史证据，公开精简包未收录：`board7b-thinking-capability-v1-codex-review.md`）已经完成。
+产品负责人已完成[透明评审](./board7b-thinking-capability-v1-transparent-review.md)：P1、P2、P4 判相当，P3 因 high 组技术失败判关闭组更好。Codex [独立九维初评](./board7b-thinking-capability-v1-codex-review.md)已经完成。
 
 当前停止点：GI-086 固定门判定 `No-Go for Thinking stability validation`。该结果只支持当前路线止损，Thinking 的通用模型能力和真实使用效果继续保持开放；下一步返回任务结构讨论。
 

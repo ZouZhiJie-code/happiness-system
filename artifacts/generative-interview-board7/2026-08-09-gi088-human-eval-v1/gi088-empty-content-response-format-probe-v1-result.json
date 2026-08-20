@@ -3,7 +3,7 @@
   "status": "completed_candidate_rejected_root_cause_open_6_of_6",
   "probeVersion": "2026-08-09.gi088-empty-content-response-format-probe-v1",
   "probeFingerprint": "7c0fbbb98bc9c3804a5614e90acd0ecb4b13f023e3b96ddf68820a241c6c9b65",
-  "authorizationId": "redacted-operational-id",
+  "authorizationId": "7c6d9421-9595-4ba2-8c52-0afeb890f7e3",
   "completedAt": "2026-08-09T10:22:19.247Z",
   "source": {
     "evaluationVersion": "2026-08-09.gi088-human-eval-v1",

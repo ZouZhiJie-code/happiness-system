@@ -1,0 +1,1580 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>生成式访谈 AI 产品工作方法实操复盘</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="生成式访谈 AI 产品工作方法实操复盘" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;zh-CN&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;生成式访谈 AI 产品工作方法实操复盘&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 14px);
+  --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
+  --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --red: light-dark(rgb(224 46 42), rgb(255 103 100));
+  --purple: light-dark(rgb(146 79 247), rgb(173 123 249));
+  --yellow: light-dark(rgb(255 195 0), rgb(255 210 64));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: var(--border-radius-lg, 12.5px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive &gt; .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align=&quot;right&quot;]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align=&quot;center&quot;]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: superellipse(1.5);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: superellipse(1.5);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed=&quot;true&quot;],
+    [aria-selected=&quot;true&quot;],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: 16px !important;
+  height: 16px !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;section id=&quot;gi-method-retro-viz&quot; aria-labelledby=&quot;gi-retro-title&quot;&gt;
+  &lt;style&gt;
+    #gi-method-retro-viz {
+      color: var(--foreground);
+      background: transparent;
+      display: grid;
+      gap: 1rem;
+    }
+    #gi-method-retro-viz .retro-header {
+      display: grid;
+      gap: 0.35rem;
+    }
+    #gi-method-retro-viz .retro-header h1,
+    #gi-method-retro-viz .retro-header p {
+      margin: 0;
+    }
+    #gi-method-retro-viz .retro-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    #gi-method-retro-viz [data-panel][hidden] {
+      display: none;
+    }
+    #gi-method-retro-viz [data-panel] {
+      display: grid;
+      gap: 1rem;
+    }
+    #gi-method-retro-viz .timeline-grid,
+    #gi-method-retro-viz .pit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+    #gi-method-retro-viz .timeline-grid .btn,
+    #gi-method-retro-viz .pit-grid .btn {
+      text-align: left;
+      white-space: normal;
+    }
+    #gi-method-retro-viz .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    #gi-method-retro-viz .detail-grid h3,
+    #gi-method-retro-viz .detail-grid p {
+      margin: 0;
+    }
+    #gi-method-retro-viz .detail-grid &gt; div {
+      display: grid;
+      gap: 0.35rem;
+      align-content: start;
+    }
+    #gi-method-retro-viz .flow {
+      display: grid;
+      grid-template-columns: repeat(9, auto);
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+    }
+    #gi-method-retro-viz .flow-step {
+      display: grid;
+      gap: 0.25rem;
+      text-align: center;
+      min-width: 0;
+    }
+    #gi-method-retro-viz .flow-arrow {
+      color: var(--muted-foreground);
+    }
+    #gi-method-retro-viz .method-compare {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+    #gi-method-retro-viz .method-column {
+      display: grid;
+      gap: 0.6rem;
+      align-content: start;
+    }
+    #gi-method-retro-viz .method-column h3,
+    #gi-method-retro-viz .method-column ul {
+      margin: 0;
+    }
+    #gi-method-retro-viz .compare-arrow {
+      align-self: center;
+      color: var(--muted-foreground);
+    }
+    #gi-method-retro-viz .checklist {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.65rem 1rem;
+    }
+    #gi-method-retro-viz .progress-row {
+      display: grid;
+      gap: 0.4rem;
+    }
+    #gi-method-retro-viz progress {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+    #gi-method-retro-viz .category-note {
+      margin: 0;
+    }
+    @media (max-width: 640px) {
+      #gi-method-retro-viz,
+      #gi-method-retro-viz .card {
+        min-width: 0;
+      }
+      #gi-method-retro-viz .card {
+        overflow-wrap: anywhere;
+      }
+      #gi-method-retro-viz .viz-grid,
+      #gi-method-retro-viz .timeline-grid,
+      #gi-method-retro-viz .pit-grid,
+      #gi-method-retro-viz .detail-grid,
+      #gi-method-retro-viz .checklist {
+        grid-template-columns: 1fr;
+      }
+      #gi-method-retro-viz .flow {
+        grid-template-columns: 1fr;
+        justify-items: stretch;
+      }
+      #gi-method-retro-viz .flow-arrow {
+        text-align: center;
+        transform: rotate(90deg);
+      }
+      #gi-method-retro-viz .method-compare {
+        grid-template-columns: 1fr;
+      }
+      #gi-method-retro-viz .compare-arrow {
+        justify-self: center;
+        transform: rotate(90deg);
+      }
+    }
+  &lt;/style&gt;
+
+  &lt;header class=&quot;retro-header&quot;&gt;
+    &lt;h1 id=&quot;gi-retro-title&quot;&gt;生成式访谈实操复盘&lt;/h1&gt;
+    &lt;p class=&quot;text-muted&quot;&gt;从概念纠偏到方法 v1.0，再到 GI-075～080&lt;/p&gt;
+  &lt;/header&gt;
+
+  &lt;div class=&quot;viz-grid&quot; aria-label=&quot;复盘摘要&quot;&gt;
+    &lt;article class=&quot;card viz-stat&quot;&gt;
+      &lt;span class=&quot;text-muted&quot;&gt;明确坑点&lt;/span&gt;
+      &lt;strong class=&quot;viz-stat-value&quot;&gt;15&lt;/strong&gt;
+      &lt;span&gt;另有 2 项治理风险&lt;/span&gt;
+    &lt;/article&gt;
+    &lt;article class=&quot;card viz-stat&quot;&gt;
+      &lt;span class=&quot;text-muted&quot;&gt;系统根因&lt;/span&gt;
+      &lt;strong class=&quot;viz-stat-value&quot;&gt;5&lt;/strong&gt;
+      &lt;span&gt;抽象、职责、单位、继承、工具&lt;/span&gt;
+    &lt;/article&gt;
+    &lt;article class=&quot;card viz-stat&quot;&gt;
+      &lt;span class=&quot;text-muted&quot;&gt;当前成果&lt;/span&gt;
+      &lt;strong class=&quot;viz-stat-value&quot;&gt;6/6&lt;/strong&gt;
+      &lt;span&gt;GI-075～080 已冻结&lt;/span&gt;
+    &lt;/article&gt;
+  &lt;/div&gt;
+
+  &lt;nav class=&quot;retro-tabs&quot; aria-label=&quot;复盘视图&quot;&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn btn-primary&quot; data-tab=&quot;timeline&quot; aria-pressed=&quot;true&quot;&gt;演进时间线&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn&quot; data-tab=&quot;pits&quot; aria-pressed=&quot;false&quot;&gt;坑点地图&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn&quot; data-tab=&quot;loop&quot; aria-pressed=&quot;false&quot;&gt;方法闭环&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn&quot; data-tab=&quot;checklist&quot; aria-pressed=&quot;false&quot;&gt;下次会话检查&lt;/button&gt;
+  &lt;/nav&gt;
+
+  &lt;section data-panel=&quot;timeline&quot; aria-labelledby=&quot;timeline-heading&quot;&gt;
+    &lt;h2 id=&quot;timeline-heading&quot;&gt;从一次次追问到工作方法冻结&lt;/h2&gt;
+    &lt;div class=&quot;timeline-grid&quot; id=&quot;retro-timeline-grid&quot;&gt;&lt;/div&gt;
+    &lt;article class=&quot;card&quot; id=&quot;retro-timeline-detail&quot; aria-live=&quot;polite&quot;&gt;&lt;/article&gt;
+  &lt;/section&gt;
+
+  &lt;section data-panel=&quot;pits&quot; aria-labelledby=&quot;pits-heading&quot; hidden&gt;
+    &lt;h2 id=&quot;pits-heading&quot;&gt;踩坑 → 用户纠正 → 制度化处理&lt;/h2&gt;
+    &lt;div class=&quot;viz-controls&quot;&gt;
+      &lt;label class=&quot;form-label&quot; for=&quot;retro-category&quot;&gt;类型
+        &lt;select class=&quot;form-select&quot; id=&quot;retro-category&quot;&gt;
+          &lt;option value=&quot;all&quot;&gt;全部&lt;/option&gt;
+          &lt;option value=&quot;语言严谨性&quot;&gt;语言严谨性&lt;/option&gt;
+          &lt;option value=&quot;产品判断&quot;&gt;产品判断&lt;/option&gt;
+          &lt;option value=&quot;讨论流程&quot;&gt;讨论流程&lt;/option&gt;
+          &lt;option value=&quot;文档治理&quot;&gt;文档治理&lt;/option&gt;
+        &lt;/select&gt;
+      &lt;/label&gt;
+    &lt;/div&gt;
+    &lt;p class=&quot;text-muted category-note&quot; id=&quot;retro-pit-count&quot;&gt;&lt;/p&gt;
+    &lt;div class=&quot;pit-grid&quot; id=&quot;retro-pit-grid&quot;&gt;&lt;/div&gt;
+    &lt;article class=&quot;card&quot; id=&quot;retro-pit-detail&quot; aria-live=&quot;polite&quot;&gt;&lt;/article&gt;
+    &lt;h3&gt;单独记录的治理风险&lt;/h3&gt;
+    &lt;div class=&quot;table-responsive&quot;&gt;
+      &lt;table class=&quot;table table-sm&quot;&gt;
+        &lt;thead&gt;
+          &lt;tr&gt;&lt;th&gt;编号&lt;/th&gt;&lt;th&gt;风险&lt;/th&gt;&lt;th&gt;预防动作&lt;/th&gt;&lt;/tr&gt;
+        &lt;/thead&gt;
+        &lt;tbody&gt;
+          &lt;tr&gt;&lt;td&gt;R01&lt;/td&gt;&lt;td&gt;固定板块的启动 Prompt 会随项目推进过期&lt;/td&gt;&lt;td&gt;会话开始时从总 Map 动态读取当前板块和专项&lt;/td&gt;&lt;/tr&gt;
+          &lt;tr&gt;&lt;td&gt;R02&lt;/td&gt;&lt;td&gt;&lt;code&gt;AGENT.md&lt;/code&gt; 与 &lt;code&gt;AGENTS.md&lt;/code&gt; 名称接近&lt;/td&gt;&lt;td&gt;修改前解析文件声明，修改后回读当前事实源&lt;/td&gt;&lt;/tr&gt;
+        &lt;/tbody&gt;
+      &lt;/table&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section data-panel=&quot;loop&quot; aria-labelledby=&quot;loop-heading&quot; hidden&gt;
+    &lt;h2 id=&quot;loop-heading&quot;&gt;问题怎样变成可验证的产品闭环&lt;/h2&gt;
+    &lt;div class=&quot;flow&quot; role=&quot;img&quot; aria-label=&quot;板块 5 产品行为进入板块 6 评测，再进入板块 7 候选、板块 8 真人裁决，并回流总 Map&quot;&gt;
+      &lt;div class=&quot;flow-step&quot;&gt;&lt;span class=&quot;viz-badge&quot;&gt;板块 5&lt;/span&gt;&lt;strong&gt;产品行为&lt;/strong&gt;&lt;/div&gt;
+      &lt;span class=&quot;flow-arrow&quot; aria-hidden=&quot;true&quot;&gt;→&lt;/span&gt;
+      &lt;div class=&quot;flow-step&quot;&gt;&lt;span class=&quot;viz-badge&quot;&gt;板块 6&lt;/span&gt;&lt;strong&gt;评测资产&lt;/strong&gt;&lt;/div&gt;
+      &lt;span class=&quot;flow-arrow&quot; aria-hidden=&quot;true&quot;&gt;→&lt;/span&gt;
+      &lt;div class=&quot;flow-step&quot;&gt;&lt;span class=&quot;viz-badge&quot;&gt;板块 7&lt;/span&gt;&lt;strong&gt;候选与 Trace&lt;/strong&gt;&lt;/div&gt;
+      &lt;span class=&quot;flow-arrow&quot; aria-hidden=&quot;true&quot;&gt;→&lt;/span&gt;
+      &lt;div class=&quot;flow-step&quot;&gt;&lt;span class=&quot;viz-badge&quot;&gt;板块 8&lt;/span&gt;&lt;strong&gt;真人裁决&lt;/strong&gt;&lt;/div&gt;
+      &lt;span class=&quot;flow-arrow&quot; aria-hidden=&quot;true&quot;&gt;→&lt;/span&gt;
+      &lt;div class=&quot;flow-step&quot;&gt;&lt;span class=&quot;viz-badge&quot;&gt;总 Map&lt;/span&gt;&lt;strong&gt;证据回流&lt;/strong&gt;&lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div class=&quot;method-compare&quot; aria-label=&quot;v0.1 到 v1.0 的变化&quot;&gt;
+      &lt;article class=&quot;card method-column&quot;&gt;
+        &lt;h3&gt;v0.1 暴露的问题&lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;计数与状态合同字段不足&lt;/li&gt;
+          &lt;li&gt;内部概念先于用户场景&lt;/li&gt;
+          &lt;li&gt;每个选择后暂停推进&lt;/li&gt;
+          &lt;li&gt;候选可能重开冻结结论&lt;/li&gt;
+          &lt;li&gt;客观边界也提交产品选择&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/article&gt;
+      &lt;span class=&quot;compare-arrow&quot; aria-hidden=&quot;true&quot;&gt;→&lt;/span&gt;
+      &lt;article class=&quot;card method-column&quot;&gt;
+        &lt;h3&gt;v1.0 制度化处理&lt;/h3&gt;
+        &lt;ul&gt;
+          &lt;li&gt;补齐单位、作用域、提交点和恢复关系&lt;/li&gt;
+          &lt;li&gt;场景 → 体验差异 → 概念 → 选项卡&lt;/li&gt;
+          &lt;li&gt;同一议题连续推进并显示进度&lt;/li&gt;
+          &lt;li&gt;选项形成前检查冻结兼容性&lt;/li&gt;
+          &lt;li&gt;客观边界直接继承，高影响取舍进入卡片&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/article&gt;
+    &lt;/div&gt;
+
+    &lt;div class=&quot;table-responsive&quot;&gt;
+      &lt;table class=&quot;table table-sm&quot;&gt;
+        &lt;thead&gt;
+          &lt;tr&gt;&lt;th&gt;责任主体&lt;/th&gt;&lt;th&gt;承担的判断或动作&lt;/th&gt;&lt;/tr&gt;
+        &lt;/thead&gt;
+        &lt;tbody&gt;
+          &lt;tr&gt;&lt;td&gt;产品负责人&lt;/td&gt;&lt;td&gt;用户价值、产品边界、冻结、Go/No-Go 与发布&lt;/td&gt;&lt;/tr&gt;
+          &lt;tr&gt;&lt;td&gt;模型&lt;/td&gt;&lt;td&gt;焦点、认识增量、下一问价值、回答负担和自然表达&lt;/td&gt;&lt;/tr&gt;
+          &lt;tr&gt;&lt;td&gt;程序&lt;/td&gt;&lt;td&gt;模式、计数、单轮一问、来源、安全、隔离和恢复&lt;/td&gt;&lt;/tr&gt;
+          &lt;tr&gt;&lt;td&gt;Judge&lt;/td&gt;&lt;td&gt;依据校准判尺评价开放语义质量并给出证据&lt;/td&gt;&lt;/tr&gt;
+          &lt;tr&gt;&lt;td&gt;真人 Preview&lt;/td&gt;&lt;td&gt;裁决真实价值、被理解感、负担、风险和发布资格&lt;/td&gt;&lt;/tr&gt;
+        &lt;/tbody&gt;
+      &lt;/table&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section data-panel=&quot;checklist&quot; aria-labelledby=&quot;checklist-heading&quot; hidden&gt;
+    &lt;h2 id=&quot;checklist-heading&quot;&gt;下一次产品讨论的十项检查&lt;/h2&gt;
+    &lt;div class=&quot;card progress-row&quot;&gt;
+      &lt;div class=&quot;viz-row&quot;&gt;&lt;strong id=&quot;retro-check-value&quot;&gt;0 / 10&lt;/strong&gt;&lt;span class=&quot;text-muted&quot;&gt;已完成&lt;/span&gt;&lt;/div&gt;
+      &lt;progress id=&quot;retro-check-progress&quot; max=&quot;10&quot; value=&quot;0&quot;&gt;0 / 10&lt;/progress&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;checklist&quot; id=&quot;retro-checklist&quot;&gt;&lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;script&gt;
+    (() =&gt; {
+      const root = document.getElementById(&#x27;gi-method-retro-viz&#x27;);
+      if (!root) return;
+
+      const timeline = [
+        { date: &#x27;第一轮&#x27;, title: &#x27;概念严谨性纠偏&#x27;, body: &#x27;用户追问“普通判断”“只记录”“复核方”和“展示版本”的真实含义。&#x27;, result: &#x27;新概念需要定义、来源、使用者、触发条件、作用和状态。&#x27; },
+        { date: &#x27;早期冻结&#x27;, title: &#x27;板块状态需要版本关系&#x27;, body: &#x27;板块 5 曾冻结，随后上游 GI-068～074 完成重构并重新提供当前输入。&#x27;, result: &#x27;GI-025～029 保留历史身份，GI-075～080 承担当前口径。&#x27; },
+        { date: &#x27;计数讨论&#x27;, title: &#x27;四问无认识与材料有限&#x27;, body: &#x27;用户区分提问质量、次数保护和经历材料是否足够。&#x27;, result: &#x27;上限控制最坏负担，材料有限允许诚实暂停。&#x27; },
+        { date: &#x27;职责追问&#x27;, title: &#x27;谁接收“负担信号”&#x27;, body: &#x27;用户要求说明信号的输入、消费者、动作和状态后果。&#x27;, result: &#x27;程序计数、模型判断、Judge 提供证据、真人裁决体验。&#x27; },
+        { date: &#x27;流程纠偏&#x27;, title: &#x27;Plan 模式需要真实卡片&#x27;, body: &#x27;正文 A/B/C 无法替代选项卡和自由输入。&#x27;, result: &#x27;高影响取舍使用 Plan 选项卡；能力缺失时保持结论开放。&#x27; },
+        { date: &#x27;方向纠偏&#x27;, title: &#x27;回到模型主导语义判断&#x27;, body: &#x27;板块 5 一度下钻成逐场景规则表，用户要求继承板块 4。&#x27;, result: &#x27;原则进协议，客观边界进程序，长尾案例进评测。&#x27; },
+        { date: &#x27;2026-08-05&#x27;, title: &#x27;方法 v0.1 建立&#x27;, body: &#x27;形成六步板块决策、固定输入输出、职责、证据闭环和版本治理。&#x27;, result: &#x27;以“阶段 1～2 问题计数”承担首次真实试运行。&#x27; },
+        { date: &#x27;2026-08-06&#x27;, title: &#x27;v1.0 冻结&#x27;, body: &#x27;试运行补齐合同字段、场景先行、连续推进、冻结兼容和客观边界分流。&#x27;, result: &#x27;方法 v1.0 获产品负责人确认，GI-075～080 随后完成。&#x27; },
+        { date: &#x27;2026-08-10&#x27;, title: &#x27;进入下游验证&#x27;, body: &#x27;板块 5 完成 6/6，板块 6 继续建设评测资产。&#x27;, result: &#x27;GI-084 历史 No-Go 与 GI-088 当前批次共同提供模型语义空间和用户任务单位的证据。&#x27; }
+      ];
+
+      const pits = [
+        { id: &#x27;P01&#x27;, category: &#x27;语言严谨性&#x27;, title: &#x27;普通判断&#x27;, issue: &#x27;判断对象和适用范围缺失。&#x27;, correction: &#x27;用户要求解释什么判断才算普通判断。&#x27;, fix: &#x27;直接写焦点、认识增量、下一问价值和回答负担。&#x27; },
+        { id: &#x27;P02&#x27;, category: &#x27;语言严谨性&#x27;, title: &#x27;只记录&#x27;, issue: &#x27;记录对象、位置、消费者和生命周期缺失。&#x27;, correction: &#x27;用户追问记录到哪里以及后续处理。&#x27;, fix: &#x27;GI-078、079 明确原话、有效状态、完整提交和恢复。&#x27; },
+        { id: &#x27;P03&#x27;, category: &#x27;语言严谨性&#x27;, title: &#x27;复核方&#x27;, issue: &#x27;项目中缺少该角色来源。&#x27;, correction: &#x27;用户直接追问“哪里来的复核方”。&#x27;, fix: &#x27;使用已定义的自动检查、Judge、真人和产品负责人职责。&#x27; },
+        { id: &#x27;P04&#x27;, category: &#x27;语言严谨性&#x27;, title: &#x27;展示与再生成混淆&#x27;, issue: &#x27;展示三个版本和最多再生成两次表达混在一起。&#x27;, correction: &#x27;用户要求说明真实用户动作。&#x27;, fix: &#x27;GI-077 将回复版本移出事件中心目标 MVP。&#x27; },
+        { id: &#x27;P05&#x27;, category: &#x27;语言严谨性&#x27;, title: &#x27;数字上限&#x27;, issue: &#x27;上限缺少明确单位。&#x27;, correction: &#x27;用户建议改为次数上限。&#x27;, fix: &#x27;GI-075 使用用户回答机会；后续继续统一术语。&#x27; },
+        { id: &#x27;P06&#x27;, category: &#x27;产品判断&#x27;, title: &#x27;上限承担质量保证&#x27;, issue: &#x27;次数保护与形成认识的成功标准混合。&#x27;, correction: &#x27;用户指出经历材料不足时允许停止深挖。&#x27;, fix: &#x27;上限控制负担，模型判断价值，材料有限自然暂停。&#x27; },
+        { id: &#x27;P07&#x27;, category: &#x27;语言严谨性&#x27;, title: &#x27;负担信号&#x27;, issue: &#x27;接收者、动作和状态后果缺失。&#x27;, correction: &#x27;用户追问谁接收以及信号有什么作用。&#x27;, fix: &#x27;拆成程序计数、模型判断、Judge 证据和真人裁决。&#x27; },
+        { id: &#x27;P08&#x27;, category: &#x27;讨论流程&#x27;, title: &#x27;正文模拟选项卡&#x27;, issue: &#x27;Plan 模式未提供预期交互。&#x27;, correction: &#x27;用户要求 ABC 卡片和自由输入。&#x27;, fix: &#x27;v1.0 强制真实选项卡；能力缺失时保持开放。&#x27; },
+        { id: &#x27;P09&#x27;, category: &#x27;产品判断&#x27;, title: &#x27;逐场景规则表&#x27;, issue: &#x27;修复、纠正和回返持续产生程序分支。&#x27;, correction: &#x27;用户要求回到模型规则约束。&#x27;, fix: &#x27;四类规则分流，开放语义回到完整语境。&#x27; },
+        { id: &#x27;P10&#x27;, category: &#x27;文档治理&#x27;, title: &#x27;板块 4 继承不足&#x27;, issue: &#x27;已冻结的模型主导方向在板块 5 再次偏移。&#x27;, correction: &#x27;用户要求检查文档沉淀和读取。&#x27;, fix: &#x27;固定阅读顺序、唯一 Map、当前专项和上游档案。&#x27; },
+        { id: &#x27;P11&#x27;, category: &#x27;产品判断&#x27;, title: &#x27;返还一次额度&#x27;, issue: &#x27;候选会允许阶段 2 出现第三问。&#x27;, correction: &#x27;试运行识别其与 GI-070 冲突。&#x27;, fix: &#x27;选项形成前执行冻结兼容检查。&#x27; },
+        { id: &#x27;P12&#x27;, category: &#x27;讨论流程&#x27;, title: &#x27;客观边界也让用户选择&#x27;, issue: &#x27;产品负责人承担缺少真实取舍的决定。&#x27;, correction: &#x27;试运行识别稳定身份和幂等可直接继承。&#x27;, fix: &#x27;事实唯一推出的边界直接说明依据。&#x27; },
+        { id: &#x27;P13&#x27;, category: &#x27;讨论流程&#x27;, title: &#x27;内部概念先出现&#x27;, issue: &#x27;用户难以判断选项的体验差异。&#x27;, correction: &#x27;用户反馈阶段归属选项难理解。&#x27;, fix: &#x27;场景 → 体验差异 → 概念 → 选项卡。&#x27; },
+        { id: &#x27;P14&#x27;, category: &#x27;讨论流程&#x27;, title: &#x27;每个选择后暂停&#x27;, issue: &#x27;用户需要重复发送“继续”。&#x27;, correction: &#x27;试运行暴露推进节奏断裂。&#x27;, fix: &#x27;同一议题连续推进，并说明进度和剩余选择。&#x27; },
+        { id: &#x27;P15&#x27;, category: &#x27;文档治理&#x27;, title: &#x27;冻结缺少覆盖关系&#x27;, issue: &#x27;上游变化后早期状态容易继续占据当前口径。&#x27;, correction: &#x27;用户要求以 GI-068～074 重新校准。&#x27;, fix: &#x27;早期决策标历史，新决策明确覆盖与日期。&#x27; }
+      ];
+
+      const checks = [
+        &#x27;已读取总 Map 并确认当前板块&#x27;,
+        &#x27;已复述关闭决策与当前开放问题&#x27;,
+        &#x27;本次只聚焦一个高影响选择&#x27;,
+        &#x27;已先用具体场景说明体验差异&#x27;,
+        &#x27;已区分模型判断与程序边界&#x27;,
+        &#x27;已检查上游事实是否唯一决定&#x27;,
+        &#x27;候选与冻结结论保持兼容&#x27;,
+        &#x27;需要取舍时使用真实选项卡&#x27;,
+        &#x27;已准备正常、反例、边界和材料有限案例&#x27;,
+        &#x27;已形成下游评测交接与下一动作&#x27;
+      ];
+
+      const escapeText = value =&gt; String(value);
+      const timelineGrid = root.querySelector(&#x27;#retro-timeline-grid&#x27;);
+      const timelineDetail = root.querySelector(&#x27;#retro-timeline-detail&#x27;);
+      const pitGrid = root.querySelector(&#x27;#retro-pit-grid&#x27;);
+      const pitDetail = root.querySelector(&#x27;#retro-pit-detail&#x27;);
+      const pitCount = root.querySelector(&#x27;#retro-pit-count&#x27;);
+      const categorySelect = root.querySelector(&#x27;#retro-category&#x27;);
+      const checklist = root.querySelector(&#x27;#retro-checklist&#x27;);
+      const checkValue = root.querySelector(&#x27;#retro-check-value&#x27;);
+      const checkProgress = root.querySelector(&#x27;#retro-check-progress&#x27;);
+
+      function showTimeline(index) {
+        const item = timeline[index];
+        timelineGrid.querySelectorAll(&#x27;button&#x27;).forEach((button, buttonIndex) =&gt; {
+          const active = buttonIndex === index;
+          button.setAttribute(&#x27;aria-pressed&#x27;, String(active));
+          button.classList.toggle(&#x27;btn-primary&#x27;, active);
+        });
+        timelineDetail.replaceChildren();
+        const badge = document.createElement(&#x27;span&#x27;);
+        badge.className = &#x27;viz-badge&#x27;;
+        badge.textContent = escapeText(item.date);
+        const title = document.createElement(&#x27;h3&#x27;);
+        title.textContent = escapeText(item.title);
+        const body = document.createElement(&#x27;p&#x27;);
+        body.textContent = escapeText(item.body);
+        const result = document.createElement(&#x27;p&#x27;);
+        result.className = &#x27;text-muted&#x27;;
+        result.textContent = `形成结果：${escapeText(item.result)}`;
+        timelineDetail.append(badge, title, body, result);
+      }
+
+      timeline.forEach((item, index) =&gt; {
+        const button = document.createElement(&#x27;button&#x27;);
+        button.type = &#x27;button&#x27;;
+        button.className = &#x27;btn&#x27;;
+        button.setAttribute(&#x27;aria-pressed&#x27;, &#x27;false&#x27;);
+        button.textContent = `${item.date}｜${item.title}`;
+        button.addEventListener(&#x27;click&#x27;, () =&gt; showTimeline(index));
+        timelineGrid.appendChild(button);
+      });
+      showTimeline(0);
+
+      function showPit(item) {
+        pitGrid.querySelectorAll(&#x27;button&#x27;).forEach(button =&gt; {
+          const active = button.dataset.pitId === item.id;
+          button.setAttribute(&#x27;aria-pressed&#x27;, String(active));
+          button.classList.toggle(&#x27;btn-primary&#x27;, active);
+        });
+        pitDetail.replaceChildren();
+        const heading = document.createElement(&#x27;h3&#x27;);
+        heading.textContent = `${item.id}｜${item.title}`;
+        const grid = document.createElement(&#x27;div&#x27;);
+        grid.className = &#x27;detail-grid&#x27;;
+        [
+          [&#x27;踩坑&#x27;, item.issue],
+          [&#x27;用户纠正&#x27;, item.correction],
+          [&#x27;当前处理&#x27;, item.fix],
+          [&#x27;归类&#x27;, item.category]
+        ].forEach(([label, value]) =&gt; {
+          const wrapper = document.createElement(&#x27;div&#x27;);
+          const labelNode = document.createElement(&#x27;strong&#x27;);
+          labelNode.textContent = label;
+          const valueNode = document.createElement(&#x27;p&#x27;);
+          valueNode.textContent = value;
+          wrapper.append(labelNode, valueNode);
+          grid.appendChild(wrapper);
+        });
+        pitDetail.append(heading, grid);
+      }
+
+      function renderPits() {
+        const category = categorySelect.value;
+        const visible = pits.filter(item =&gt; category === &#x27;all&#x27; || item.category === category);
+        pitGrid.replaceChildren();
+        pitCount.textContent = `当前显示 ${visible.length} 项`;
+        visible.forEach(item =&gt; {
+          const button = document.createElement(&#x27;button&#x27;);
+          button.type = &#x27;button&#x27;;
+          button.className = &#x27;btn&#x27;;
+          button.dataset.pitId = item.id;
+          button.setAttribute(&#x27;aria-pressed&#x27;, &#x27;false&#x27;);
+          button.textContent = `${item.id}｜${item.title}`;
+          button.addEventListener(&#x27;click&#x27;, () =&gt; showPit(item));
+          pitGrid.appendChild(button);
+        });
+        if (visible.length) showPit(visible[0]);
+      }
+      categorySelect.addEventListener(&#x27;change&#x27;, renderPits);
+      renderPits();
+
+      checks.forEach((label, index) =&gt; {
+        const wrapper = document.createElement(&#x27;label&#x27;);
+        wrapper.className = &#x27;form-check&#x27;;
+        const input = document.createElement(&#x27;input&#x27;);
+        input.className = &#x27;form-check-input&#x27;;
+        input.type = &#x27;checkbox&#x27;;
+        input.id = `retro-check-${index}`;
+        const textNode = document.createElement(&#x27;span&#x27;);
+        textNode.className = &#x27;form-check-label&#x27;;
+        textNode.textContent = label;
+        wrapper.setAttribute(&#x27;for&#x27;, input.id);
+        wrapper.append(input, textNode);
+        checklist.appendChild(wrapper);
+      });
+
+      function updateProgress() {
+        const completed = checklist.querySelectorAll(&#x27;input:checked&#x27;).length;
+        checkValue.textContent = `${completed} / ${checks.length}`;
+        checkProgress.value = completed;
+        checkProgress.textContent = `${completed} / ${checks.length}`;
+      }
+      checklist.addEventListener(&#x27;change&#x27;, updateProgress);
+      updateProgress();
+
+      root.querySelectorAll(&#x27;[data-tab]&#x27;).forEach(button =&gt; {
+        button.addEventListener(&#x27;click&#x27;, () =&gt; {
+          const tab = button.dataset.tab;
+          root.querySelectorAll(&#x27;[data-tab]&#x27;).forEach(other =&gt; {
+            const active = other === button;
+            other.setAttribute(&#x27;aria-pressed&#x27;, String(active));
+            other.classList.toggle(&#x27;btn-primary&#x27;, active);
+          });
+          root.querySelectorAll(&#x27;[data-panel]&#x27;).forEach(panel =&gt; {
+            panel.hidden = panel.dataset.panel !== tab;
+          });
+        });
+      });
+    })();
+  &lt;/script&gt;
+&lt;/section&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>

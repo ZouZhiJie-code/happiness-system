@@ -27,14 +27,15 @@ import type {
 } from "@/types/journal-event-entry";
 
 export const EVENT_JOURNAL_PROMPT_VERSION =
-  "2026-08-03.event-journal-source-refs-v3-gi059-compact";
+  "2026-08-10.record-card-source-refs-v4";
 const EVENT_JOURNAL_AI_TIMEOUT_MS = 30_000;
 const EVENT_JOURNAL_AI_MAX_ATTEMPTS = 3;
 
 export const eventJournalDraftSchema = z
   .object({
     title: z.string().trim().min(1).max(16),
-    content: z.string().trim().min(1).max(5000)
+    content: z.string().trim().min(1).max(5000),
+    occurredAtText: z.string().trim().min(1).max(32).nullable().optional()
   })
   .strict();
 
@@ -50,6 +51,7 @@ export const eventJournalStructuredDraftSchema = z
         sourceRefs: z.array(eventJournalSourceRefSchema).max(6)
       })
       .strict(),
+    occurredAtText: z.string().trim().min(1).max(32).nullable().optional(),
     blocks: z
       .array(
         z
@@ -185,7 +187,11 @@ function compileEventJournalProviderDraft(
         : [])
     ].join("\n\n");
     return {
-      draft: { title: structuredDraft.title.text, content },
+      draft: {
+        title: structuredDraft.title.text,
+        content,
+        occurredAtText: structuredDraft.occurredAtText ?? null
+      },
       structured: structuredDraft
     };
   }
@@ -237,7 +243,8 @@ export function buildEventJournalPrompt(snapshot: JournalEventEntrySourceSnapsho
         role: "system",
         content: [
           "你把一件事整理成用户自己的中文日志。只允许使用输入 JSON 中提供的用户原话、有效事实和可写入日志的认识。",
-          "返回严格 JSON：{\"title\":{\"text\":string,\"sourceRefs\":string[]},\"blocks\":[{\"kind\":\"event\"|\"insight\",\"text\":string,\"sourceRefs\":string[]}]}。标题不超过16个字。",
+          "返回严格 JSON：{\"title\":{\"text\":string,\"sourceRefs\":string[]},\"occurredAtText\":string|null,\"blocks\":[{\"kind\":\"event\"|\"insight\",\"text\":string,\"sourceRefs\":string[]}]}。标题不超过16个字。",
+          "occurredAtText 只填写来源明确出现的发生时间短语，例如‘上午’或‘昨天晚上’；来源没有明确时间时返回 null。",
           "每个 sourceRefs 只能填写来源目录中的编号；标题和每个正文 block 至少绑定一条真实来源。不要输出来源目录之外的编号。",
           "正文采用第一人称、自然叙事。先写完整事件；存在 insights 时，再以“我看见的”为自然小标题写已有认识。",
           "保持并存的事实和限定，避免把它们改成排他关系。",
@@ -326,7 +333,11 @@ export function assessEventJournalDraftGrounding(
     if (!hasSourceCoverage(unit)) issues.push("paragraph_without_source_anchor");
   }
 
-  const visibleDraft = `${draft.title}\n${draft.content}`;
+  if (draft.occurredAtText && !hasSourceCoverage(draft.occurredAtText)) {
+    issues.push("occurred_time_without_source_anchor");
+  }
+
+  const visibleDraft = `${draft.title}\n${draft.occurredAtText ?? ""}\n${draft.content}`;
   const outputNumbers = visibleDraft.match(/\d+(?:\.\d+)?/gu) ?? [];
   if (outputNumbers.some((number) => !normalizedSource.includes(number))) {
     issues.push("unverified_number");
@@ -409,7 +420,10 @@ export function assessEventJournalStructuredDraftGrounding(
   });
   const titleSafetyIssues = sourceProtocolSafetyIssues(draft.title, sources);
   const hardBodySafetyIssues = sourceProtocolSafetyIssues(draft.content, sources);
-  const bodyWithSafetyIssues = [...bodyIssues, ...hardBodySafetyIssues];
+  const occurredTimeIssues = draft.occurredAtText && !sources.some((source) =>
+    normalizeGroundingText(source.text).includes(normalizeGroundingText(draft.occurredAtText ?? ""))
+  ) ? ["occurred_time_without_source_anchor"] : [];
+  const bodyWithSafetyIssues = [...bodyIssues, ...hardBodySafetyIssues, ...occurredTimeIssues];
   const titleRepaired = titleIssues.length > 0 || titleSafetyIssues.length > 0;
   const fullFallbackRequired = bodyWithSafetyIssues.length > 0;
   const contentUnits = draft.content
@@ -448,6 +462,15 @@ function fallbackTitle(sentences: string[]) {
   return [...title].slice(0, 16).join("");
 }
 
+function fallbackOccurredAtText(sentences: string[]) {
+  const timePattern = /(?:前天|昨天|今天|今早|早上|上午|中午|下午|傍晚|晚上|夜里|刚才|刚刚|周[一二三四五六日天]|星期[一二三四五六日天]|\d{1,2}(?::\d{2}|点(?:半|\d{1,2}分)?))/u;
+  for (const sentence of sentences) {
+    const match = sentence.match(timePattern)?.[0];
+    if (match) return match.slice(0, 32);
+  }
+  return null;
+}
+
 /**
  * 安全基础版本逐句取自冻结来源，仅补充结构性标点和日志标题。
  * 它的职责是保住“可保存的一件事”，不创造新的认识。
@@ -472,7 +495,8 @@ export function buildSafeEventJournalFallback(
     : "";
   return {
     title: fallbackTitle(narrative),
-    content: `${eventBody}${insightBody}`
+    content: `${eventBody}${insightBody}`,
+    occurredAtText: fallbackOccurredAtText([...narrative, ...userMessages])
   };
 }
 
@@ -567,6 +591,7 @@ async function finishGeneration(input: {
     sourceFingerprint: input.generation.sourceFingerprint,
     title: input.draft.title,
     content: input.draft.content,
+    occurredAtText: input.draft.occurredAtText ?? null,
     outputOrigin: input.outputOrigin,
     qualityChecks: {
       sourceGrounded: input.groundingGate.accepted,

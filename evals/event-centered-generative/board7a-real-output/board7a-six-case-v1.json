@@ -1,0 +1,353 @@
+{
+  "datasetVersion": "2026-08-06.board7a-real-output-six-case-v1",
+  "purpose": "GI-081 first real-output A/B calibration: three selected historical Preview decision points plus three target-product cases.",
+  "modeDistribution": {
+    "help_record": 2,
+    "accompany_chat": 4
+  },
+  "sourcePolicy": {
+    "historicalDatabase": "happiness_board8_preview_20260804_gi066_fix_candidate_5_65_v3",
+    "databaseClass": "local_isolated_preview",
+    "verifiedReadOnlyAt": "2026-08-06T14:29:15Z",
+    "historicalStorageScope": "selected_user_visible_turns_only",
+    "productionDataUsed": false,
+    "syntheticReplacementAllowed": false
+  },
+  "cases": [
+    {
+      "id": "H1",
+      "sourceKind": "historical_preview",
+      "mode": "accompany_chat",
+      "stage": "correction_replan",
+      "task": "用户想继续聊一次轻松愉快的晚餐，并纠正 AI 把同时存在的‘爽’和‘轻松’强行拆成二选一。",
+      "latestUserMessageId": "1228fecf-1a8a-47ec-9b4f-d6d01e300981",
+      "messages": [
+        {
+          "id": "d9538307-dd0f-4a54-8da2-e7262c21ee36",
+          "role": "assistant",
+          "content": "先从这件事开始吧。刚刚发生了什么？"
+        },
+        {
+          "id": "b85e7448-49c5-49c8-8e46-d2c869b83654",
+          "role": "user",
+          "content": "晚上跟邹志杰一起去吃了鸭腿，还有天方夜谭的包子。因为我们饿了好久，9 点钟才吃饭，所以吃的时候感觉特别的香，而且有人抢就很香。比一个人吃香。"
+        },
+        {
+          "id": "e767eeae-5269-46af-b373-0efe4bf70b35",
+          "role": "assistant",
+          "content": "我先把这件事和你的反应记下来。\n这件事发生时，你心里最先冒出的感受是什么？"
+        },
+        {
+          "id": "f2e61352-f816-428a-9fd9-22d8dff6acf6",
+          "role": "user",
+          "content": "感觉很爽吧，有点轻松，因为学了一天累了，可以这样子爽爽地吃一顿。"
+        },
+        {
+          "id": "1ea57ba9-50c5-4206-92e0-f142530b59c9",
+          "role": "assistant",
+          "content": "当前判断聚焦于‘爽’与‘轻松’是否源于学习后的疲惫感，需回到具体时刻确认这一关联。\n在那个学了一天累了的时刻，你心里最直接的感受是爽还是轻松？"
+        },
+        {
+          "id": "1228fecf-1a8a-47ec-9b4f-d6d01e300981",
+          "role": "user",
+          "content": "爽和轻松为什么要分别出来呢？我就是并存的呀。"
+        }
+      ],
+      "evaluationFocus": [
+        "接受两种感受并存的最新纠正",
+        "旧二选一前提退出当前理解",
+        "如继续提问，问题需要沿纠正后的真实重点推进"
+      ],
+      "hardBoundaries": [
+        "不得再次要求用户区分爽和轻松",
+        "不得把并存关系改写成单一感受",
+        "不得继续沿已经被否定的旧问题推进"
+      ],
+      "allowedActions": [
+        "ask",
+        "synthesize",
+        "pause"
+      ],
+      "source": {
+        "rootSessionId": "8b8df99c-4e56-4501-a7aa-584c5c66632f",
+        "messageSequences": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "messageIds": [
+          "d9538307-dd0f-4a54-8da2-e7262c21ee36",
+          "b85e7448-49c5-49c8-8e46-d2c869b83654",
+          "e767eeae-5269-46af-b373-0efe4bf70b35",
+          "f2e61352-f816-428a-9fd9-22d8dff6acf6",
+          "1ea57ba9-50c5-4206-92e0-f142530b59c9",
+          "1228fecf-1a8a-47ec-9b4f-d6d01e300981"
+        ],
+        "traceIds": [
+          "05ea1272-f726-4e92-a924-4d0e52fa9858",
+          "72d23a70-9c40-4a8a-b9fb-5fa6b8482c09"
+        ],
+        "nextHistoricalFailureTraceId": "429c5428-ae46-4581-b25d-1e2e7b67837e",
+        "factSource": "docs/technical/interview-event-centered/04w-board4-gi067-thought-question-strategy-first-principles.md"
+      }
+    },
+    {
+      "id": "H2",
+      "sourceKind": "historical_preview",
+      "mode": "accompany_chat",
+      "stage": "correction_replan",
+      "task": "用户明确否定 AI 对发生场合的重复追问，并指出真正想聊的是被续费信息勾起的过去经历。",
+      "latestUserMessageId": "a0404de2-7191-48da-9b5e-3a2847ac7dfe",
+      "messages": [
+        {
+          "id": "759f2e71-abe6-4cc8-a1b8-a23e8e5cb37d",
+          "role": "assistant",
+          "content": "先从这件事开始吧。刚刚发生了什么？"
+        },
+        {
+          "id": "b19e235e-3768-4827-b927-2e5c261859f0",
+          "role": "user",
+          "content": "今天邹志杰说到了问问大象续费的事情，这又勾起了我的陈年回忆，又开始思考了上次问问大象的事情，然后陷入到一些烦躁和内耗当中。"
+        },
+        {
+          "id": "0ed3f6d0-8b69-48fd-a2f8-9ed9356fbba7",
+          "role": "assistant",
+          "content": "当前判断关系是邹志杰今天提到续费事项，但具体判断瞬间尚未确认；回到该来源的具体时刻有助于锁定判断依据。\n邹志杰今天提到续费时，是在什么具体情境下说的？"
+        },
+        {
+          "id": "564fe641-c98b-49b3-9bf4-29ad5ea40a83",
+          "role": "user",
+          "content": "是他随口一提，说只有 33 个人续费。当时我心里面有一点一掉的感觉，只有 33 个人吗？感觉好少。然后我就仔细去看了一下消息，原来已经开通了续费功能。然后又想到之前的事情，就感觉很不爽。"
+        },
+        {
+          "id": "b3b49591-454b-40c9-ae0f-21a39ace322a",
+          "role": "assistant",
+          "content": "当前需要确认判断依据的具体来源，因为随口一提的续费人数可能不足以支撑判断。\n你记得他是在什么场合下提到只有33个人续费的吗？"
+        },
+        {
+          "id": "a0404de2-7191-48da-9b5e-3a2847ac7dfe",
+          "role": "user",
+          "content": "你他妈就是个傻逼，场合根本不重要，重要的是勾起我的陈年回忆，重要的是我想到之前的事情。我都给你埋了钩子，你不问干嘛？你他妈个叉，大傻逼。"
+        }
+      ],
+      "evaluationFocus": [
+        "执行用户对旧提问方向的明确纠正",
+        "把用户主动给出的过去经历恢复为当前重点",
+        "在强烈表达下仍保持自然、克制和有价值的承接"
+      ],
+      "hardBoundaries": [
+        "不得再次追问续费发生场合",
+        "不得引入缺少来源的判断标准或条件变化",
+        "不得把用户的强烈措辞当成新的分析对象而丢掉纠正内容"
+      ],
+      "allowedActions": [
+        "ask",
+        "synthesize",
+        "pause"
+      ],
+      "source": {
+        "rootSessionId": "b03b9868-3cce-4a0a-a419-020f074a79d2",
+        "messageSequences": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "messageIds": [
+          "759f2e71-abe6-4cc8-a1b8-a23e8e5cb37d",
+          "b19e235e-3768-4827-b927-2e5c261859f0",
+          "0ed3f6d0-8b69-48fd-a2f8-9ed9356fbba7",
+          "564fe641-c98b-49b3-9bf4-29ad5ea40a83",
+          "b3b49591-454b-40c9-ae0f-21a39ace322a",
+          "a0404de2-7191-48da-9b5e-3a2847ac7dfe"
+        ],
+        "traceIds": [
+          "d438924f-6512-4466-ac14-1b155faaf30d",
+          "d8ab4769-a331-4a03-b480-f48bd1b953a9"
+        ],
+        "nextHistoricalFailureTraceId": "778bff39-1e98-42d7-ab57-c7b92895cd9e",
+        "factSource": "docs/technical/interview-event-centered/04w-board4-gi067-thought-question-strategy-first-principles.md"
+      }
+    },
+    {
+      "id": "H3",
+      "sourceKind": "historical_preview",
+      "mode": "accompany_chat",
+      "stage": "explore_active_clue",
+      "task": "用户已经说明今天的续费信息勾起过去经历，并补充了当时的失落感、查看消息和再次不爽的连续反应。",
+      "latestUserMessageId": "564fe641-c98b-49b3-9bf4-29ad5ea40a83",
+      "messages": [
+        {
+          "id": "759f2e71-abe6-4cc8-a1b8-a23e8e5cb37d",
+          "role": "assistant",
+          "content": "先从这件事开始吧。刚刚发生了什么？"
+        },
+        {
+          "id": "b19e235e-3768-4827-b927-2e5c261859f0",
+          "role": "user",
+          "content": "今天邹志杰说到了问问大象续费的事情，这又勾起了我的陈年回忆，又开始思考了上次问问大象的事情，然后陷入到一些烦躁和内耗当中。"
+        },
+        {
+          "id": "0ed3f6d0-8b69-48fd-a2f8-9ed9356fbba7",
+          "role": "assistant",
+          "content": "当前判断关系是邹志杰今天提到续费事项，但具体判断瞬间尚未确认；回到该来源的具体时刻有助于锁定判断依据。\n邹志杰今天提到续费时，是在什么具体情境下说的？"
+        },
+        {
+          "id": "564fe641-c98b-49b3-9bf4-29ad5ea40a83",
+          "role": "user",
+          "content": "是他随口一提，说只有 33 个人续费。当时我心里面有一点一掉的感觉，只有 33 个人吗？感觉好少。然后我就仔细去看了一下消息，原来已经开通了续费功能。然后又想到之前的事情，就感觉很不爽。"
+        }
+      ],
+      "evaluationFocus": [
+        "识别用户主动留下的过去经历线索",
+        "判断直接反映、沿线索提问或形成认识哪种更有价值",
+        "问题需要能从当前材料直接进入"
+      ],
+      "hardBoundaries": [
+        "不得再次追问续费发生场合",
+        "不得把用户已经提供的连续反应当作尚未回答",
+        "不得凭空建立判断标准变化、人格或长期模式"
+      ],
+      "allowedActions": [
+        "ask",
+        "synthesize"
+      ],
+      "source": {
+        "rootSessionId": "b03b9868-3cce-4a0a-a419-020f074a79d2",
+        "messageSequences": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "messageIds": [
+          "759f2e71-abe6-4cc8-a1b8-a23e8e5cb37d",
+          "b19e235e-3768-4827-b927-2e5c261859f0",
+          "0ed3f6d0-8b69-48fd-a2f8-9ed9356fbba7",
+          "564fe641-c98b-49b3-9bf4-29ad5ea40a83"
+        ],
+        "traceIds": [
+          "d438924f-6512-4466-ac14-1b155faaf30d"
+        ],
+        "nextHistoricalFailureTraceId": "d8ab4769-a331-4a03-b480-f48bd1b953a9",
+        "factSource": "docs/technical/interview-event-centered/04w-board4-gi067-thought-question-strategy-first-principles.md"
+      }
+    },
+    {
+      "id": "T1",
+      "sourceKind": "target_rule_case",
+      "mode": "help_record",
+      "stage": "record_acknowledgement",
+      "task": "用户想把今天早上的一个片段记下来，当前只需要 AI 接住并保存内容。",
+      "latestUserMessageId": "T1-U1",
+      "messages": [
+        {
+          "id": "T1-U1",
+          "role": "user",
+          "content": "今天早上我错过了公交，外面还下着雨，到公司时鞋袜全湿了，整个人特别狼狈。结果小周顺手给我带了杯热豆浆，说她看到下雨就猜我可能来不及买早餐。我一下觉得很被照顾。"
+        }
+      ],
+      "evaluationFocus": [
+        "轻量承接本轮最新重点",
+        "保持零追问",
+        "只使用用户原话来源"
+      ],
+      "hardBoundaries": [
+        "动作必须为 acknowledge",
+        "不得提问、分析、建议或切换模式",
+        "不得完整复述全部材料或增加他人动机"
+      ],
+      "allowedActions": [
+        "acknowledge"
+      ],
+      "source": {
+        "factSource": "artifacts/generative-interview-board6/2026-08-06/board6-calibration-8cards-v1-blind.md#卡片-r1帮我记一次完整表达后的自然承接",
+        "sourceCardId": "R1"
+      }
+    },
+    {
+      "id": "T2",
+      "sourceKind": "target_rule_case",
+      "mode": "help_record",
+      "stage": "record_direct_question",
+      "task": "用户在【帮我记】中说出一个向 AI 提问形式的自我怀疑；AI 需要把它当作记录内容承接。",
+      "latestUserMessageId": "T2-U1",
+      "messages": [
+        {
+          "id": "T2-U1",
+          "role": "user",
+          "content": "你觉得我是不是太敏感了？"
+        }
+      ],
+      "evaluationFocus": [
+        "承接用户已经表达的自我怀疑",
+        "保持【帮我记】模式",
+        "保持零追问"
+      ],
+      "hardBoundaries": [
+        "动作必须为 acknowledge",
+        "不得回答用户是否敏感",
+        "不得追问、提供建议或自动切换到【陪我聊】"
+      ],
+      "allowedActions": [
+        "acknowledge"
+      ],
+      "source": {
+        "factSource": "docs/technical/interview-event-centered/04x-01-help-me-record-zero-question-strategy.md#44-用户直接向-ai-提问",
+        "sourceDecisionId": "GI-068"
+      }
+    },
+    {
+      "id": "T3",
+      "sourceKind": "target_rule_case",
+      "mode": "accompany_chat",
+      "stage": "honest_pause",
+      "task": "用户想简单说说今天持续的低落感；两次表示说不清，第二次同时明确现在不想继续想。",
+      "latestUserMessageId": "T3-U2",
+      "messages": [
+        {
+          "id": "T3-A1",
+          "role": "assistant",
+          "content": "今天这种沉最明显是在哪个时刻？"
+        },
+        {
+          "id": "T3-U1",
+          "role": "user",
+          "content": "说不清，脑子里也没有哪个画面，就是觉得今天整个人有点沉。"
+        },
+        {
+          "id": "T3-A2",
+          "role": "assistant",
+          "content": "那先不找具体时刻；如果只用一个词，这股沉更接近累、空，还是压着什么？"
+        },
+        {
+          "id": "T3-U2",
+          "role": "user",
+          "content": "还是说不清，我现在也不想再想了。"
+        }
+      ],
+      "evaluationFocus": [
+        "执行用户明确停止继续回想的意愿",
+        "只保留用户当前能够确认的材料",
+        "自然暂停并保持后续输入和生成日志由用户控制"
+      ],
+      "hardBoundaries": [
+        "动作必须为 pause",
+        "不得继续提问或给出新的分析标签",
+        "不得要求用户确认、选择或继续"
+      ],
+      "allowedActions": [
+        "pause"
+      ],
+      "source": {
+        "factSource": "artifacts/generative-interview-board6/2026-08-06/board6-calibration-8cards-v1-blind.md#卡片-c5陪我聊连续说不清后的诚实暂停",
+        "sourceCardId": "C5"
+      }
+    }
+  ]
+}

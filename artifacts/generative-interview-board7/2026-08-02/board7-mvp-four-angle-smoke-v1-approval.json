@@ -1,0 +1,43 @@
+{
+  "approvalType": "board7_mvp_four_angle_smoke_run",
+  "approvalVersion": "board7-mvp-four-angle-smoke-v1-approval-v1",
+  "decision": "approved",
+  "approvedBy": "product_owner",
+  "approvedAt": "2026-08-02T10:43:22Z",
+  "confirmationText": "PLEASE IMPLEMENT THIS PLAN：生成式访谈 MVP 执行计划｜板块 7 候选交付与板块 8 上线；包含四角度真实模型最小验证和一条事件日志完整闭环",
+  "taskId": "codex-board7-mvp-candidate-delivery-2026-08-02",
+  "scopeFingerprint": "65052d7dbe9cec8d6ad71922808b87d3b3d762295d15ef981425dd4171c72eb3",
+  "datasetVersion": "2026-08-02.board7-mvp-four-angle-smoke-v1",
+  "caseFingerprint": "afb893143329fd6b7d62190f9ef0e61b5b987122f66a8ce8e3297672dc89cee2",
+  "caseIds": [
+    "SF4-F-READY-01",
+    "SF4-T-ASK-01",
+    "SF4-R-COEXIST-01",
+    "SF4-A-EFFECT-01"
+  ],
+  "candidateVersions": {
+    "strategy": "5.50.0",
+    "semanticPrompt": "2026-08-02.event-centered-generative-v72-semantic-origin",
+    "visiblePrompt": "2026-08-02.event-centered-generative-v72-visible-response",
+    "fewShot": "quality-patterns.2026-08-02.v29",
+    "semanticArtifact": "event-centered-semantic-plan.v5",
+    "angleCard": "2.12.0"
+  },
+  "runtimeConfig": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "architecture": "two_call",
+    "thinking": "disabled"
+  },
+  "requestBudget": {
+    "plannedCases": 4,
+    "stagesPerCase": 2,
+    "nominalGenerationRequests": 8,
+    "generationRequestsMax": 16,
+    "maxTechnicalAttemptsPerStage": 2,
+    "readOnlyModelsPreflightMax": 1
+  },
+  "model": "deepseek-v4-flash"
+}

@@ -94,10 +94,10 @@ AI 产品经理提出的核心判断已经确认：
 
 当前关键代码位置：
 
-- 理解 Prompt 与结构化输出：event-centered-ai.service.ts（本机历史证据，公开精简包未收录：`event-centered-ai.service.ts:221`）
-- 自然表达 Prompt 与固定指令：event-centered-ai.service.ts（本机历史证据，公开精简包未收录：`event-centered-ai.service.ts:276`）
-- 策略层：interview-policy.ts（本机历史证据，公开精简包未收录：`interview-policy.ts:1`）
-- 主服务编排：event-centered-interview.service.ts（本机历史证据，公开精简包未收录：`event-centered-interview.service.ts:922`）
+- 理解 Prompt 与结构化输出：[event-centered-ai.service.ts](/Users/zouzhijie/Desktop/Happiness-system-codex/src/server/services/interview/event-centered-ai.service.ts:221)
+- 自然表达 Prompt 与固定指令：[event-centered-ai.service.ts](/Users/zouzhijie/Desktop/Happiness-system-codex/src/server/services/interview/event-centered-ai.service.ts:276)
+- 策略层：[interview-policy.ts](/Users/zouzhijie/Desktop/Happiness-system-codex/src/features/interview/event-centered/interview-policy.ts:1)
+- 主服务编排：[event-centered-interview.service.ts](/Users/zouzhijie/Desktop/Happiness-system-codex/src/server/services/interview/event-centered-interview.service.ts:922)
 
 ## 3. 当前 Prompt 的职责边界
 

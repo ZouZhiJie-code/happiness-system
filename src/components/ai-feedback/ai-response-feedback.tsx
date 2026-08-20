@@ -15,9 +15,11 @@ type FeedbackContext = {
   feedback: FeedbackRecord | null;
 };
 
+export type AIResponseFeedbackMode = "remote" | "local";
+
 function ThumbsUpIcon({ selected }: { selected: boolean }) {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[18px]" fill={selected ? "currentColor" : "white"}>
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[18px]" fill={selected ? "currentColor" : "none"}>
       <path
         stroke="currentColor"
         strokeLinecap="round"
@@ -31,7 +33,7 @@ function ThumbsUpIcon({ selected }: { selected: boolean }) {
 
 function ThumbsDownIcon({ selected }: { selected: boolean }) {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[18px]" fill={selected ? "currentColor" : "white"}>
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[18px]" fill={selected ? "currentColor" : "none"}>
       <path
         stroke="currentColor"
         strokeLinecap="round"
@@ -66,8 +68,8 @@ function VoteButton({
         aria-describedby={tooltipId}
         disabled={disabled}
         onClick={onClick}
-        className={`grid size-8 place-items-center rounded-[var(--radius-control)] transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a57548] disabled:opacity-50 ${
-          selected ? "text-[var(--text-dim)]" : "text-[#806951]"
+        className={`grid size-11 place-items-center rounded-[var(--radius-control)] transition-colors hover:bg-[var(--amber-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper-deep)] disabled:opacity-50 ${
+          selected ? "text-[var(--paper-deep)]" : "text-[var(--text-dim)]"
         }`}
       >
         {vote === "upvote" ? <ThumbsUpIcon selected={selected} /> : <ThumbsDownIcon selected={selected} />}
@@ -75,7 +77,7 @@ function VoteButton({
       <span
         id={tooltipId}
         role="tooltip"
-        className="pointer-events-none absolute -top-8 left-1/2 z-20 -translate-x-1/2 rounded-[var(--radius-control)] bg-[#3f3329] px-2 py-1 text-[11px] leading-none text-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute -top-8 left-1/2 z-20 -translate-x-1/2 rounded-[var(--radius-control)] bg-[var(--text-main)] px-2 py-1 text-[11px] leading-none text-[var(--paper-main)] opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
       >
         {label}
       </span>
@@ -86,11 +88,14 @@ function VoteButton({
 export function AIResponseFeedback({
   traceId,
   compact = false,
-  leadingAction
+  leadingAction,
+  mode = "remote"
 }: {
   traceId: string;
   compact?: boolean;
   leadingAction?: ReactNode;
+  /** 视觉验收使用 local：保留赞踩交互，完整跳过反馈接口。 */
+  mode?: AIResponseFeedbackMode;
 }) {
   const [feedback, setFeedback] = useState<FeedbackRecord | null>(null);
   const [tagOptions, setTagOptions] = useState<Record<FeedbackVote, FeedbackTag[]>>({
@@ -126,6 +131,16 @@ export function AIResponseFeedback({
     clearMessageTimer();
     setMessage(null);
     setEditingVote(null);
+    if (mode === "local") {
+      setFeedback(null);
+      setTagOptions({ upvote: [], downvote: [] });
+      setSelectedTags([]);
+      setComment("");
+      return () => {
+        active = false;
+        clearMessageTimer();
+      };
+    }
     void fetch(`/api/ai-feedback/${traceId}`)
       .then(async (response) => (response.ok ? (await response.json()) as FeedbackContext : null))
       .then((context) => {
@@ -138,7 +153,7 @@ export function AIResponseFeedback({
       active = false;
       clearMessageTimer();
     };
-  }, [traceId]);
+  }, [mode, traceId]);
 
   function beginEditing(vote: FeedbackVote) {
     clearMessageTimer();
@@ -202,6 +217,18 @@ export function AIResponseFeedback({
   }
 
   function handleVoteClick(vote: FeedbackVote) {
+    if (mode === "local") {
+      clearMessageTimer();
+      setMessage(null);
+      setEditingVote(null);
+      setSelectedTags([]);
+      setComment("");
+      setFeedback((current) => current?.vote === vote
+        ? null
+        : { vote, tags: [], comment: null, status: "active" });
+      return;
+    }
+
     if (editingVote) {
       if (editingVote === vote || feedback?.vote === vote) {
         cancelEditing();
@@ -222,7 +249,7 @@ export function AIResponseFeedback({
   const availableTags = editingVote ? tagOptions[editingVote] : [];
 
   return (
-    <div className={`${compact ? "mt-2" : "mt-1 ml-3"} text-xs text-[#806951]`} data-testid={`ai-feedback-${traceId}`}>
+    <div className={`${compact ? "" : "mt-1 ml-3"} text-xs text-[var(--text-dim)]`} data-testid={`ai-feedback-${traceId}`}>
       <div className="flex flex-wrap items-center gap-1">
         {leadingAction}
         <VoteButton
@@ -244,7 +271,7 @@ export function AIResponseFeedback({
 
       {editingVote ? (
         <div className="mt-2 max-w-xl border-t border-[var(--line-soft)] pt-3">
-          <p className="font-medium text-[#594430]">
+          <p className="font-medium text-[var(--text-main)]">
             {editingVote === "upvote" ? "这条内容哪些地方做得好？" : "这条内容哪里需要改进？"}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -260,7 +287,7 @@ export function AIResponseFeedback({
                       selected ? current.filter((item) => item !== tag.code) : [...current, tag.code]
                     )
                   }
-                  className="rounded-[var(--radius-control)] border border-[var(--line-soft)] px-2.5 py-1.5 aria-pressed:border-[#a57548] aria-pressed:bg-[rgba(161,117,72,0.12)]"
+                  className="rounded-[var(--radius-control)] border border-[var(--line-soft)] px-2.5 py-1.5 aria-pressed:border-[var(--line-strong)] aria-pressed:bg-[var(--amber-soft)]"
                 >
                   {tag.label}
                 </button>
@@ -273,14 +300,14 @@ export function AIResponseFeedback({
             maxLength={1000}
             rows={3}
             placeholder={editingVote === "upvote" ? "也可以具体说说哪些地方对你有帮助" : "也可以具体说说哪里有问题"}
-            className="mt-3 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-transparent px-3 py-2 text-sm leading-6 outline-none focus:border-[#a57548]"
+            className="mt-3 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-transparent px-3 py-2 text-sm leading-6 outline-none focus:border-[var(--line-strong)]"
           />
           <div className="mt-2 flex gap-2">
             <button
               type="button"
               disabled={busy || (editingVote === "downvote" && selectedTags.length === 0 && !comment.trim())}
               onClick={() => void submit()}
-              className="rounded-[var(--radius-control)] bg-[#d7b07b] px-3 py-1.5 font-medium text-[#302317] disabled:opacity-50"
+              className="rounded-[var(--radius-control)] bg-[var(--paper-deep)] px-3 py-1.5 font-medium text-[var(--paper-main)] disabled:opacity-50"
             >
               提交反馈
             </button>

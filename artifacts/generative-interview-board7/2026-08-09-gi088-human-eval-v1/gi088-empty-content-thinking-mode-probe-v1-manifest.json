@@ -1,0 +1,176 @@
+{
+  "schemaVersion": "1.0",
+  "probeVersion": "2026-08-09.gi088-empty-content-thinking-mode-probe-v1",
+  "status": "completed_inconclusive_no_empty_reproduction_4_of_4",
+  "purpose": "isolate Thinking mode as the only changed request factor for two frozen EMPTY_CONTENT cases while retaining json_object",
+  "source": {
+    "evaluationVersion": "2026-08-09.gi088-human-eval-v1",
+    "snapshotSha256": "130efc938dc2a7fa3d68a7703390cf226b8d9c3d87451417dad677b2f235f0d5",
+    "candidateFingerprint": "58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884",
+    "executionFingerprint": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2"
+  },
+  "priorProbe": {
+    "version": "2026-08-09.gi088-empty-content-response-format-probe-v1",
+    "fingerprint": "7c0fbbb98bc9c3804a5614e90acd0ecb4b13f023e3b96ddf68820a241c6c9b65",
+    "status": "completed_candidate_rejected_root_cause_open_6_of_6",
+    "decision": "removing_response_format_no_go",
+    "confirmedNearTermMechanism": "upstream_http_200_stop_after_reasoning_with_zero_visible_content",
+    "confirmedRootCause": null
+  },
+  "runtime": {
+    "provider": "openai",
+    "model": "deepseek-v4-flash",
+    "baseUrlHost": "api.deepseek.com"
+  },
+  "probeFingerprint": "7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498",
+  "budget": {
+    "baseCalls": 4,
+    "technicalRetries": 0,
+    "qualityRetries": 0,
+    "fallbackCalls": 0,
+    "maximumCalls": 4
+  },
+  "commonRequestContract": {
+    "responseFormat": "json_object",
+    "systemPrompt": "frozen_from_source_candidate",
+    "caseContext": "frozen_per_case_and_identical_between_paired_arms",
+    "provider": "openai",
+    "model": "deepseek-v4-flash",
+    "maxTokensPolicy": "provider_default",
+    "maxTokensSent": false,
+    "temperaturePolicy": "omitted_for_both_arms",
+    "temperatureSent": false,
+    "timeoutMs": 30000
+  },
+  "variants": {
+    "high": {
+      "thinking": "enabled",
+      "reasoningEffort": "high",
+      "responseFormat": "json_object",
+      "temperature": "omitted",
+      "maxTokensPolicy": "provider_default",
+      "timeoutMs": 30000
+    },
+    "disabled": {
+      "thinking": "disabled",
+      "reasoningEffort": null,
+      "responseFormat": "json_object",
+      "temperature": "omitted",
+      "maxTokensPolicy": "provider_default",
+      "timeoutMs": 30000
+    }
+  },
+  "singleChangedFactor": {
+    "name": "thinking_mode",
+    "high": "enabled_with_reasoning_effort_high",
+    "disabled": "disabled_with_reasoning_effort_omitted",
+    "allOtherRequestFieldsFrozen": true
+  },
+  "cases": [
+    {
+      "caseId": "E1",
+      "contextClass": "cold_start",
+      "taskId": "A3",
+      "sourceBranch": "high",
+      "turnId": "5b85a506-dc99-4f43-82b6-073f2c677851",
+      "sourceCallId": "44e549d5-352f-4ecb-bc36-8eb904bfc90f",
+      "sourceRequestHash": "2f4e1e38bbd64e93f6e740ab07da9e61f2b04f98da499d556e44cb983d689912"
+    },
+    {
+      "caseId": "E3",
+      "contextClass": "long_context_repeated_failure",
+      "taskId": "A1",
+      "sourceBranch": "high",
+      "turnId": "b6163c4b-973e-4dc0-a7e4-be526e4e20f8",
+      "sourceCallId": "052f6a93-3583-4890-a377-12dec613a254",
+      "sourceRequestHash": "d9ca7d0cc781e6d6fa974923060c326456a0ae435e85b31b96225456e3258b89"
+    }
+  ],
+  "callPlan": [
+    {
+      "order": 1,
+      "caseId": "E1",
+      "variant": "high"
+    },
+    {
+      "order": 2,
+      "caseId": "E1",
+      "variant": "disabled"
+    },
+    {
+      "order": 3,
+      "caseId": "E3",
+      "variant": "disabled"
+    },
+    {
+      "order": 4,
+      "caseId": "E3",
+      "variant": "high"
+    }
+  ],
+  "decisionRule": {
+    "supportsThinkingModeAsPrimaryInfluence": "disabled returns 2 of 2 valid outputs and high reproduces at least one EMPTY_CONTENT; this is directional support to enter a high-compatible fix candidate and does not confirm a general root cause",
+    "counterEvidence": "a disabled arm returns EMPTY_CONTENT while its paired high arm is valid",
+    "nonEmptyTechnicalFailure": "any non-EMPTY_CONTENT technical failure makes that paired case non-judgeable and does not count as EMPTY_CONTENT support",
+    "schemaFailure": "a high schema failure does not count as EMPTY_CONTENT support",
+    "inconclusive": "both high arms are valid, either paired case is non-judgeable, both variants fail in the same paired case, or results are mixed without the directional pattern",
+    "productBaselineAfterProbe": "retain Thinking high pending a separately confirmed compatible fix"
+  },
+  "judgmentLedger": {
+    "productOwnerJudgment": "retain_thinking_high_and_use_disabled_for_diagnosis_only",
+    "codexInitialAssessment": "thinking_mode_primary_influence_not_confirmed",
+    "confirmedRootCause": null,
+    "hypothesis": "thinking_high_may_intermittently_end_after_reasoning_without_visible_content"
+  },
+  "privacy": {
+    "publicSummaryFieldsContainUserContent": false,
+    "publicValidationIssuesAreCodeOnly": true,
+    "reasoningBodyPersisted": false,
+    "privateLedgerMayContainRawModelOutput": true,
+    "privateSourceAndRawResults": "artifacts/local-runtime/",
+    "consolePrintsPromptOrRawOutput": false
+  },
+  "authorization": {
+    "modelCallsAuthorized": true,
+    "authorizationConsumed": true,
+    "authorizationId": "981e1baa-7a44-4843-92d5-a7d11f63f5ec",
+    "requiredScope": "empty_content_thinking_mode_probe",
+    "requiresExactProbeFingerprint": true,
+    "requiresExplicitFourCallConfirmation": true
+  },
+  "execution": {
+    "completedAt": "2026-08-09T11:18:42.665Z",
+    "modelGenerationCalls": 4,
+    "completedCalls": 4,
+    "reservedCalls": 0,
+    "requestHashesVerified": 4,
+    "technicalRetries": 0,
+    "qualityRetries": 0,
+    "fallbackCalls": 0,
+    "timeouts": 0,
+    "aborts": 0
+  },
+  "result": {
+    "highValid": 2,
+    "highEmptyContent": 0,
+    "disabledValid": 2,
+    "disabledEmptyContent": 0,
+    "supportsThinkingModeAsPrimaryInfluenceGate": "failed_no_high_empty_content_reproduction",
+    "counterEvidenceGate": "not_triggered",
+    "causalAttributionToThinkingMode": "not_confirmed",
+    "keepThinkingHigh": true,
+    "emptyContentProblem": "open",
+    "confirmedRootCause": null,
+    "resultAsset": "./gi088-empty-content-thinking-mode-probe-v1-result.json",
+    "decisionAsset": "./gi088-empty-content-thinking-mode-probe-v1-decision.md"
+  },
+  "preview": {
+    "deployed": false,
+    "newBatchCreated": false,
+    "changed": false
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

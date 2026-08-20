@@ -83,7 +83,7 @@
 
 ## 3. 当前实现事实
 
-以下内容来自`2026-07-22`工作区，以及T1-01、T1-02开发工作区`/path/to/Happiness-system-codex`中的Prisma模型、repository、service、类型、测试和回填记录。
+以下内容来自`2026-07-22`工作区，以及T1-01、T1-02开发工作区`/Users/zouzhijie/.codex/worktrees/acc5/Happiness-system-codex`中的Prisma模型、repository、service、类型、测试和回填记录。
 
 ### 3.1 会话与事件
 
@@ -1458,7 +1458,7 @@ T1-03只交付事实修订的持久化、投影和确定性门禁。阶段2接�
 
 - 交接版本：本文档`0.2`中的已确认决策`T1-01`。
 - 交接日期：`2026-07-22`。
-- 开发工作区：`/path/to/Happiness-system-codex`。
+- 开发工作区：`/Users/zouzhijie/.codex/worktrees/acc5/Happiness-system-codex`。
 - 前置文档：本文档、产品规格、重构讨论地图、访谈产品优化地图。
 - 实施范围：稳定事件与根会话聚合基础；该次交接不包含事实、成果和日志对象。
 
@@ -1493,7 +1493,7 @@ T1-03只交付事实修订的持久化、投影和确定性门禁。阶段2接�
 - 前置文档：本文档、产品规格、重构讨论地图、访谈产品优化地图，以及T1-01实际变更所在开发工作区。
 - 实施范围：可靠原话事件归属、事实与证据实体、AI待确认命题、分支有效事实读取、隐式确认、原子提交、Trace归属和确定性测试。
 - 后续范围：T1-03事实修订方案已确认并独立交接；阶段2语义识别与事实匹配；阶段3用户操作状态机；阶段5完整AI回复与重新生成体验；阶段6日志生成。
-- 开发工作区：`/path/to/Happiness-system-codex`。
+- 开发工作区：`/Users/zouzhijie/.codex/worktrees/acc5/Happiness-system-codex`。
 - 开发状态：已完成。
 - 技术验证状态：通过。
 - 产品验收状态：纳入批次A统一用户验收。

@@ -1,6 +1,6 @@
 # GI-088｜v7r2 Thinking high Ark Flash
 
-状态：`本地实现与自动验证通过；等待 Preview 部署回读和 0/2 空白批次初始化`
+状态：`2/2 已封存；两项目标均触发；可靠性门未通过；已由 v7r3／v7r4 承接`
 
 评测版本：`2026-08-10.gi088-human-eval-v7r2-ark-flash`
 
@@ -18,9 +18,11 @@ Effective candidate：`63acaede24844272886ea798c435d7f59ab14deb989b734d842b60ab4
 
 Production：`legacy + baseline`
 
-Preview：`待部署与回读`
+Preview：`https://xingfuxitong-8p5uc4ng7-zouzhijies-projects.vercel.app/preview/gi088-evaluation`
 
-批次：`待初始化为 running 0/2`
+Preview deployment：`dpl_HDemGjQPpMhTFhj5fw8Yq8iehpwX`
+
+批次：`c10c8c25-b3f9-4bfb-a02a-c5c0a44c303c`（`sealed 2/2`）
 
 ## 1. 为什么进入 v7r2
 
@@ -55,11 +57,19 @@ v7 两条真人连续轨迹已经完成，连续性工作台、认识修正、�
 - Preview 只使用独立评测库和评测页面；Production 全程保持 `legacy + baseline`。
 - API Key、隐藏思考、Prompt、用户原话和原始模型输出均不进入本目录正式证据。
 
-## 5. 下一步 Preview 验收
+## 5. Preview 起点回读
 
-- 使用受控 Preview 部署当前候选，并通过部署保护与应用权限完成页面回读；
-- 初始化仅启用 Thinking high 的 `running 0/2` 空白批次；
-- 初始化过程模型调用必须保持 `0`；
-- 页面提交真实内容后才允许调用 Ark Flash。
+- Preview 页面经部署保护通道回读为 HTTP `200`；
+- 新批次为 `running 0/2`，仅启用 Thinking high；
+- 初始化过程模型调用为 `0`；
+- 页面提交真实内容后才会调用 Ark Flash。
 
-当前停止点为完成 Preview 部署、页面回读和 `0/2` 空白批次核验。随后由产品负责人完成 A1、A2 真人体验；v8 统一问前决策继续等待 v7r2 的可靠性门。
+## 6. 真人结果与裁决
+
+- 两项任务均完成并封存，共 `15` 次用户提交、`20` 次 Provider 调用；A1、A2 的任务目标均标记为已触发。
+- 首次直接成功 `10/15`；自动恢复后成功 `3` 轮；A1 U8、A2 U7 最终触发程序保护。
+- 两个最终保护都包含 `CONTINUE_WORKING_TASK_MUST_RETAIN_EVIDENCE_LINEAGE`：模型只提交本轮新来源，旧程序要求模型重复全部历史来源。A1 U8 同时暴露“新内容＋停止”仍由模型决定暂停动作的问题。
+- 产品负责人对 A1、A2 均评为 `minor_issue`；可靠性门要求首次直接成功至少 `90%`、整批自动恢复最多一次、最终程序保护为 `0`，因此本批可靠性结论为 `No-Go`。
+- 完整封存结果继续保存在产品负责人下载的私有 JSON 中；正式证据只记录批次版本、指纹、聚合数字、Trace 定位和结论。
+
+后续由 v7r3 将确定性状态交给程序维护并完成零模型回放；v7r4 继承该底座，仅把运行模型切换为官方 DeepSeek V4 Pro。v8 继续等待 v7r4 真人可靠性门。

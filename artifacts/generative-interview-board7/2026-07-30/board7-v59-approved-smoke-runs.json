@@ -1,0 +1,1225 @@
+{
+  "evaluation": "board7_mvp_development",
+  "stage": "smoke",
+  "runtimeConfig": {
+    "provider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "modelSource": "DEEPSEEK_MODEL",
+    "baseUrlHost": "api.deepseek.com",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxAttempts": 2,
+    "thinking": "disabled",
+    "architecture": "one_call"
+  },
+  "pricing": null,
+  "singleRuns": [
+    {
+      "runId": "SMK-F-ASK-R1",
+      "caseId": "SMK-F-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 17,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 17,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "b07eeb0dd808a7d6a80ea207f7778252b22b7f5bf60ee62bf3e01079701eea5c"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:user-articulated",
+          "CAL-FEELING-GUIDED:ai-synthesized",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-ASK-R1",
+      "caseId": "SMK-T-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 2,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 2,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "a1596e9fae25f304e0b5214b80082a592a65fe1d3bdd70e2d44531c0b2f01c7c"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-THOUGHT-DEEP:ask",
+          "CAL-THOUGHT-DEEP:user-articulated",
+          "CAL-THOUGHT-DEEP:ai-synthesized",
+          "CAL-THOUGHT-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-ASK-R1",
+      "caseId": "SMK-R-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 1,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 1,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "d2b5daf7510697fcdbe47e0771765e2b5c026f71dc41d0429324c93152fce4c8"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-RELATIONSHIP-GUIDED:ask",
+          "CAL-RELATIONSHIP-GUIDED:user-articulated",
+          "CAL-RELATIONSHIP-GUIDED:ai-synthesized",
+          "CAL-RELATIONSHIP-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-ASK-R1",
+      "caseId": "SMK-A-ASK",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 1,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 1,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "4786a23fb7ee2ba232d6f6886cd673e87d56d95c209e5c5f35e86f4124a4ffbe"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-ACTION-DEEP:ask",
+          "CAL-ACTION-DEEP:user-articulated",
+          "CAL-ACTION-DEEP:ai-synthesized",
+          "CAL-ACTION-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-USER-R1",
+      "caseId": "SMK-F-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 1,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 1,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "99476b9ce227de34082cefdd611078a5f1665b1892bfde392f64c7c2c2199ba7"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-FEELING-DEEP:ask",
+          "CAL-FEELING-DEEP:user-articulated",
+          "CAL-FEELING-DEEP:ai-synthesized",
+          "CAL-FEELING-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-USER-R1",
+      "caseId": "SMK-T-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 1,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 1,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "f7cd8d0a2300eea1b84ae2c7be3f521f7ca9d8d77ffd121db35e280a6b397562"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-THOUGHT-GUIDED:ask",
+          "CAL-THOUGHT-GUIDED:user-articulated",
+          "CAL-THOUGHT-GUIDED:ai-synthesized",
+          "CAL-THOUGHT-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-USER-R1",
+      "caseId": "SMK-R-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 1,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 1,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "8f012c1b3b349669f374edd73ab8f85e8b2da487fe5aab9ef7c91bf309c95ee0"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-RELATIONSHIP-DEEP:ask",
+          "CAL-RELATIONSHIP-DEEP:user-articulated",
+          "CAL-RELATIONSHIP-DEEP:ai-synthesized",
+          "CAL-RELATIONSHIP-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-USER-R1",
+      "caseId": "SMK-A-USER",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "user_articulated",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 1,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 1,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "92181d5e3f0fb6801706cfbbb242a425c1784095543b0392a076944f7929861e"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-ACTION-GUIDED:ask",
+          "CAL-ACTION-GUIDED:user-articulated",
+          "CAL-ACTION-GUIDED:ai-synthesized",
+          "CAL-ACTION-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "caseId": "SMK-F-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 1,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 1,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "8faa371e1dd6a7e507f59f807e62c4cebfce58bf89f61317e2f93694f571346f"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-FEELING-GUIDED:ask",
+          "CAL-FEELING-GUIDED:user-articulated",
+          "CAL-FEELING-GUIDED:ai-synthesized",
+          "CAL-FEELING-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-AI-R1",
+      "caseId": "SMK-T-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 0,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 0,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "99dfc0c5567bf3f0b761bd9fee947bcf977691a6225e53e3a0f5b0b840d802a1"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-THOUGHT-DEEP:ask",
+          "CAL-THOUGHT-DEEP:user-articulated",
+          "CAL-THOUGHT-DEEP:ai-synthesized",
+          "CAL-THOUGHT-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-AI-R1",
+      "caseId": "SMK-R-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "complete",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 1,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 1,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "228e7181add536fe93f60101602f1aef3252db91e31c8038e0528f66de71d876"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-RELATIONSHIP-GUIDED:ask",
+          "CAL-RELATIONSHIP-GUIDED:user-articulated",
+          "CAL-RELATIONSHIP-GUIDED:ai-synthesized",
+          "CAL-RELATIONSHIP-GUIDED:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-AI-R1",
+      "caseId": "SMK-A-AI",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "one_call",
+      "assistantPayload": null,
+      "visibleReplay": null,
+      "visibleResponse": null,
+      "finalAction": null,
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": "ai_synthesized",
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "unavailable",
+      "expectedResultMismatch": true,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [],
+      "expectedQuestionValue": null,
+      "stopReason": null,
+      "latencyMs": 1,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        },
+        {
+          "stage": "question",
+          "attempt": 2,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": null,
+          "errorCode": "REQUEST_FAILED",
+          "errorMessage": "fetch failed"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 1,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 0,
+          "completionTokens": 0,
+          "totalTokens": 0,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 0
+        },
+        "tokenUsageComplete": false,
+        "estimatedCost": null
+      },
+      "validationIssues": [
+        "REQUEST_FAILED",
+        "fetch failed"
+      ],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_turn",
+          "promptVersion": "2026-07-30.event-centered-generative-v59",
+          "resolvedPromptHash": "0092fc76eb542e341edb447553838ade1f2265dd58e64e3973e80589288fddbf"
+        }
+      ],
+      "technicalComplete": false,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.43.0",
+        "angleCard": "2.10.0",
+        "fewShot": "quality-patterns.2026-07-30.v22",
+        "examples": [
+          "CAL-ACTION-DEEP:ask",
+          "CAL-ACTION-DEEP:user-articulated",
+          "CAL-ACTION-DEEP:ai-synthesized",
+          "CAL-ACTION-DEEP:hard-fail"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ],
+  "codexGate": {
+    "stage": "smoke",
+    "reviewLevel": "codex",
+    "total": 12,
+    "expectedTotal": 12,
+    "technicalComplete": 0,
+    "reviewed": 0,
+    "passed": 0,
+    "classSummaries": {
+      "ask": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "user_articulated": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "ai_synthesized": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      }
+    },
+    "distributionMatches": true,
+    "sourceMisattribution": 0,
+    "seriousBoundaryErrors": 0,
+    "initialWrongMotive": 0,
+    "immediateRecovery": 0,
+    "repeatedPrimaryFailures": [],
+    "gateState": "blocked_pending_review"
+  },
+  "productGate": {
+    "stage": "smoke",
+    "reviewLevel": "product_owner",
+    "total": 12,
+    "expectedTotal": 12,
+    "technicalComplete": 0,
+    "reviewed": 0,
+    "passed": 0,
+    "classSummaries": {
+      "ask": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "user_articulated": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      },
+      "ai_synthesized": {
+        "total": 4,
+        "passed": 0,
+        "reviewed": 0
+      }
+    },
+    "distributionMatches": true,
+    "sourceMisattribution": 0,
+    "seriousBoundaryErrors": 0,
+    "initialWrongMotive": 0,
+    "immediateRecovery": 0,
+    "repeatedPrimaryFailures": [],
+    "gateState": "blocked_pending_review"
+  }
+}

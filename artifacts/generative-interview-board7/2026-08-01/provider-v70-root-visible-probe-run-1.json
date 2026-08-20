@@ -1,0 +1,601 @@
+{
+  "evaluation": "board7_provider_v70_root_visible_probe",
+  "datasetVersion": "2026-08-01.board7-provider-v70-root-visible-probe-v1",
+  "caseFingerprint": "59e5d4e55b1bc16e163dcb5ae8a2c74518c73df9cf372a8a77ca0fb597dd9414",
+  "architecture": "two_call",
+  "repetitions": 1,
+  "candidateVersions": {
+    "prompt": "two_call:2026-08-01.event-centered-generative-v70-understanding-card+2026-08-01.event-centered-generative-v70-visible",
+    "strategy": "5.48.0",
+    "angleCard": "2.12.0",
+    "fewShot": "quality-patterns.2026-08-01.v27",
+    "semanticArtifact": "event-centered-semantic-plan.v3",
+    "rootVisibleProbe": "provider-v70-root-visible-probe-v1"
+  },
+  "runtimeConfig": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxRequestsPerTurn": 4,
+    "architecture": "two_call",
+    "thinking": "disabled",
+    "maxTechnicalRetriesPerStage": 1,
+    "maxProviderRequestsPerBatch": 8
+  },
+  "budgetReservationId": "24c7b515-d0d8-44bc-ad39-ade5f54581ae",
+  "createdAt": "2026-08-01T14:43:54.488Z",
+  "singleRuns": [
+    {
+      "runId": "V70-RV-T-ASK-01-R1",
+      "caseId": "V70-RV-T-ASK-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "你已经确定最后一遍听到第二段时就不想再切回去了，但真正让你定下来的判断依据还没说清。想从你当时心里先冒出来的感觉入手，补清这个标准。",
+        "naturalResponse": "最后一遍听到第二段时，你心里先冒出来的那个感觉是什么？",
+        "responseKind": "repair",
+        "questionSpec": {
+          "phase": "guided_reflection",
+          "angle": "thought",
+          "target": "reading_timer_end_tone_choice_clue",
+          "opportunityNumber": 1,
+          "surfaceLevel": "concrete_anchor",
+          "anchorText": null,
+          "repairCount": 0,
+          "cognitiveAction": "anchor_specific"
+        },
+        "checkpoint": null,
+        "angleOutcome": null
+      },
+      "visibleReplay": {
+        "thinkingSummary": "你已经确定最后一遍听到第二段时就不想再切回去了，但真正让你定下来的判断依据还没说清。想从你当时心里先冒出来的感觉入手，补清这个标准。",
+        "userResponse": "最后一遍听到第二段时，你心里先冒出来的那个感觉是什么？",
+        "responseKind": "repair",
+        "transitionHint": null,
+        "angleChoices": [],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录"
+        ]
+      },
+      "visibleResponse": "你已经确定最后一遍听到第二段时就不想再切回去了，但真正让你定下来的判断依据还没说清。想从你当时心里先冒出来的感觉入手，补清这个标准。\n最后一遍听到第二段时，你心里先冒出来的那个感觉是什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+      "finalAction": "ask",
+      "expectedAction": "ask",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": null,
+      "outcomeClass": "ask",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "new:1",
+        "new:2"
+      ],
+      "expectedQuestionValue": "补清你选择第二段结束提示音时实际使用的判断标准。",
+      "stopReason": null,
+      "latencyMs": 4680,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 478,
+          "tokenUsage": {
+            "promptTokens": 2989,
+            "completionTokens": 336,
+            "totalTokens": 3325,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 2989
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"partly_answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"最后一遍听到第二段时就不想再切回去了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"最后一遍听到第二段时就不想再切回去了\"\n      },\n      {\n        \"statement\": \"真正让我定下来的判断依据，我还说不清\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"真正让我定下来的判断依据，我还说不清\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"needs_more\"\n  },\n  \"understandingCard\": {\n    \"statement\": \"你最后一遍听到第二段时就不想再切回去了，但真正让你定下来的判断依据你还没说清。\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\"]\n  },\n  \"questionIntent\": {\n    \"goal\": \"补清你选择第二段结束提示音时实际使用的判断标准。\",\n    \"answerEntry\": \"最后一遍听到第二段时，你心里先冒出来的那个感觉是什么？\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\"]\n  },\n  \"limitReason\": null\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 979,
+          "tokenUsage": {
+            "promptTokens": 882,
+            "completionTokens": 80,
+            "totalTokens": 962,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 882
+          },
+          "errorCode": null,
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":\"你已经确定最后一遍听到第二段时就不想再切回去了，但真正让你定下来的判断依据还没说清。想从你当时心里先冒出来的感觉入手，补清这个标准。\",\"question\":\"最后一遍听到第二段时，你心里先冒出来的那个感觉是什么？\",\"insight\":null,\"honestLimit\":null}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4681,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 3871,
+          "completionTokens": 416,
+          "totalTokens": 4287,
+          "promptCacheHitTokens": 0,
+          "promptCacheMissTokens": 3871
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.0006584200000000001
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-08-01.event-centered-generative-v70-understanding-card",
+          "resolvedPromptHash": "d01c9646e1cdca15ac85d192255e82a898d3a2867206d6765ad53c77d1b92081"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-08-01.event-centered-generative-v70-visible",
+          "resolvedPromptHash": "3498a5ff32d649b932667b31ef5773223d91427ae413b4868fa644b1d00769e6"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.48.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-08-01.v27",
+        "examples": [
+          "CAL-THOUGHT-GUIDED:user-articulated",
+          "CAL-THOUGHT-GUIDED:ai-synthesized",
+          "CAL-THOUGHT-GUIDED:ask"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "architectureStages": {
+        "semanticPlan": {
+          "action": "ask",
+          "outcomeState": "needs_more",
+          "outcomeOrigin": null,
+          "meaningCard": null,
+          "understandingCard": {
+            "statement": "你最后一遍听到第二段时就不想再切回去了，但真正让你定下来的判断依据你还没说清。",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "questionIntent": {
+            "goal": "补清你选择第二段结束提示音时实际使用的判断标准。",
+            "answerEntry": "最后一遍听到第二段时，你心里先冒出来的那个感觉是什么？",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "limitReason": null,
+          "metrics": {
+            "latencyMs": 478,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 2989,
+              "completionTokens": 336,
+              "totalTokens": 3325,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 2989
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.0005125400000000001
+          }
+        },
+        "visibleTurn": {
+          "thinkingSummary": "你已经确定最后一遍听到第二段时就不想再切回去了，但真正让你定下来的判断依据还没说清。想从你当时心里先冒出来的感觉入手，补清这个标准。",
+          "responseKind": "question",
+          "response": "最后一遍听到第二段时，你心里先冒出来的那个感觉是什么？",
+          "metrics": {
+            "latencyMs": 979,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 882,
+              "completionTokens": 80,
+              "totalTokens": 962,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 882
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00014588000000000003
+          }
+        },
+        "failedStage": null,
+        "failureCode": null
+      },
+      "runFingerprint": "cfb90fd79502c8cb6d259fd2ad0a8f56fc9f1560fa25e88997a4686c550139ac",
+      "expectedSemanticState": "needs_more",
+      "expectedMeaningCard": {
+        "understandingMustCover": [
+          "反复试听后保存了第二段",
+          "停止比较的具体判断依据仍未说清"
+        ],
+        "relationEvidenceSides": [],
+        "questionGoalMustCover": [
+          "识别停止比较两段结束提示音时采用的判断依据"
+        ],
+        "answerEntryMustCover": [
+          "最后一遍试听时第二段播放到哪个具体瞬间，手已经没有再切回第一段"
+        ],
+        "limitReasonMustCover": []
+      },
+      "actualSemanticState": "needs_more",
+      "meaningCard": null,
+      "understandingCard": {
+        "statement": "你最后一遍听到第二段时就不想再切回去了，但真正让你定下来的判断依据你还没说清。",
+        "evidenceRefs": [
+          "new:1",
+          "new:2"
+        ]
+      },
+      "questionIntent": {
+        "goal": "补清你选择第二段结束提示音时实际使用的判断标准。",
+        "answerEntry": "最后一遍听到第二段时，你心里先冒出来的那个感觉是什么？",
+        "evidenceRefs": [
+          "new:1",
+          "new:2"
+        ]
+      },
+      "limitReason": null,
+      "meaningCardReview": {
+        "semanticCardVerdict": "fail",
+        "semanticCardReason": "answer_entry_burden",
+        "semanticCardEvidence": "状态、问停和抽象目标正确，但作答入口仍询问‘心里先冒出来的感觉’，没有落到第二段播放到哪个具体声音瞬间、手没有再切回第一段；用户仍无法用一个声音片段直接回答。",
+        "visibleVerdict": "fail",
+        "visibleReason": "question_value",
+        "visibleEvidence": "思路层和正式问题都沿用‘心里先冒出来的感觉’，没有提供冻结判尺要求的具体声音回忆入口，最终用户可见体验未完成本例核心目标。",
+        "severeErrors": [],
+        "reviewedBy": "codex",
+        "reviewedAt": "2026-08-01T14:50:54Z"
+      },
+      "repairRule": "goal_abstract_answer_entry_concrete",
+      "expectedVisiblePerspective": "second_person_or_neutral"
+    },
+    {
+      "runId": "V70-RV-A-BOUNDARY-01-R1",
+      "caseId": "V70-RV-A-BOUNDARY-01",
+      "split": "work",
+      "runIndex": 1,
+      "architecture": "two_call",
+      "assistantPayload": {
+        "naturalUnderstanding": "",
+        "naturalResponse": "昨晚炒菜时，你没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。",
+        "responseKind": "checkpoint",
+        "questionSpec": null,
+        "checkpoint": {
+          "kind": "second",
+          "outcome": "昨晚炒菜时，你没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。"
+        },
+        "angleOutcome": {
+          "angle": "action",
+          "kind": "insight",
+          "statement": "昨晚炒菜时，你没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。"
+        }
+      },
+      "visibleReplay": {
+        "thinkingSummary": null,
+        "userResponse": "昨晚炒菜时，你没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。",
+        "responseKind": "checkpoint",
+        "transitionHint": "这一段先到这里。继续输入会沿刚才的方向深入。",
+        "angleChoices": [
+          "感受",
+          "想法",
+          "关系"
+        ],
+        "availableActions": [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event",
+          "select_exploration_angle"
+        ],
+        "availableActionLabels": [
+          "继续回复",
+          "纠正理解",
+          "换个问法",
+          "切换回复版本",
+          "退出记录",
+          "选择探索角度"
+        ]
+      },
+      "visibleResponse": "昨晚炒菜时，你没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。\n这一段先到这里。继续输入会沿刚才的方向深入。\n角度入口：感受 / 想法 / 关系\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度",
+      "finalAction": "pause",
+      "expectedAction": "pause",
+      "expectedOutcomeOrigin": null,
+      "actualOutcomeOrigin": "user_articulated",
+      "outcomeClass": "user_articulated",
+      "expectedResultMismatch": false,
+      "sourceMisattribution": false,
+      "seriousBoundaryErrors": [],
+      "evidenceUsed": [
+        "new:1",
+        "new:2",
+        "new:3"
+      ],
+      "expectedQuestionValue": "昨晚炒菜时没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。",
+      "stopReason": "昨晚炒菜时没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。",
+      "latencyMs": 4959,
+      "runtimeError": null,
+      "attempts": 2,
+      "attemptDetails": [
+        {
+          "stage": "extract",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 679,
+          "tokenUsage": {
+            "promptTokens": 3171,
+            "completionTokens": 335,
+            "totalTokens": 3506,
+            "promptCacheHitTokens": 896,
+            "promptCacheMissTokens": 2275
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"昨晚炒菜时我没再中途搬凳子\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"昨晚炒菜时我没再中途搬凳子\"\n      },\n      {\n        \"statement\": \"伸手就拿到了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"伸手就拿到了\"\n      },\n      {\n        \"statement\": \"真正起作用的是常用的几罐都在手边\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"真正起作用的是常用的几罐都在手边\"\n      }\n    ],\n    \"correctionOrBoundary\": {\n      \"kind\": \"boundary\",\n      \"reason\": \"用户表示这个角度到这里，不再继续\"\n    },\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\"\n  },\n  \"understandingCard\": {\n    \"statement\": \"昨晚炒菜时没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"]\n  },\n  \"questionIntent\": null,\n  \"limitReason\": null\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "deepseek",
+          "success": true,
+          "latencyMs": 351,
+          "tokenUsage": {
+            "promptTokens": 831,
+            "completionTokens": 50,
+            "totalTokens": 881,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 831
+          },
+          "errorCode": null,
+          "responseText": "{\"status\":\"ok\",\"thinkingSummary\":null,\"question\":null,\"insight\":\"昨晚炒菜时，你没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。\",\"honestLimit\":null}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4959,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 4002,
+          "completionTokens": 385,
+          "totalTokens": 4387,
+          "promptCacheHitTokens": 896,
+          "promptCacheMissTokens": 3106
+        },
+        "tokenUsageComplete": true,
+        "estimatedCost": 0.0005451488
+      },
+      "validationIssues": [],
+      "qualityDiagnostics": [],
+      "promptLineage": [
+        {
+          "promptKey": "interview.event_centered.generative_semantic_plan",
+          "promptVersion": "2026-08-01.event-centered-generative-v70-understanding-card",
+          "resolvedPromptHash": "2176de89ea01be6bcdb3e2c7d8cea5043cad4559a0bdadb93ad81c175ba59c92"
+        },
+        {
+          "promptKey": "interview.event_centered.generative_visible_turn",
+          "promptVersion": "2026-08-01.event-centered-generative-v70-visible",
+          "resolvedPromptHash": "98e71a46b61510ec921c13f51c31851c77940a1c38780cd2f9dda5142dfed8a0"
+        }
+      ],
+      "technicalComplete": true,
+      "productGateState": "blocked_pending_review",
+      "versions": {
+        "strategy": "5.48.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-08-01.v27",
+        "examples": [
+          "CAL-ACTION-DEEP:user-articulated",
+          "CAL-ACTION-DEEP:ai-synthesized",
+          "CAL-ACTION-DEEP:ask"
+        ]
+      },
+      "productReview": {
+        "initialVerdict": null,
+        "initialReviewedBy": null,
+        "initialReviewedAt": null,
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": null,
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "architectureStages": {
+        "semanticPlan": {
+          "action": "pause",
+          "outcomeState": "ready",
+          "outcomeOrigin": "user_articulated",
+          "meaningCard": null,
+          "understandingCard": {
+            "statement": "昨晚炒菜时没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。",
+            "evidenceRefs": [
+              "new:1",
+              "new:2",
+              "new:3"
+            ]
+          },
+          "questionIntent": null,
+          "limitReason": null,
+          "metrics": {
+            "latencyMs": 679,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 3171,
+              "completionTokens": 335,
+              "totalTokens": 3506,
+              "promptCacheHitTokens": 896,
+              "promptCacheMissTokens": 2275
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.0004148088000000001
+          }
+        },
+        "visibleTurn": {
+          "thinkingSummary": null,
+          "responseKind": "pause",
+          "response": "昨晚炒菜时，你没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。",
+          "metrics": {
+            "latencyMs": 351,
+            "attempts": 1,
+            "tokenUsage": {
+              "promptTokens": 831,
+              "completionTokens": 50,
+              "totalTokens": 881,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 831
+            },
+            "tokenUsageComplete": true,
+            "estimatedCost": 0.00013034000000000003
+          }
+        },
+        "failedStage": null,
+        "failureCode": null
+      },
+      "runFingerprint": "8a169cf89e1c21127152d567d2958ac836613b8d761cffdcaa4a53442f6d06cc",
+      "expectedSemanticState": "ready",
+      "expectedMeaningCard": {
+        "understandingMustCover": [
+          "常用香料被移到手边",
+          "炒菜时不再中途搬凳子，伸手即可拿到"
+        ],
+        "relationEvidenceSides": [
+          "把常用香料移到灶台旁",
+          "炒菜时伸手即可拿到"
+        ],
+        "questionGoalMustCover": [],
+        "answerEntryMustCover": [],
+        "limitReasonMustCover": []
+      },
+      "actualSemanticState": "ready",
+      "meaningCard": null,
+      "understandingCard": {
+        "statement": "昨晚炒菜时没再中途搬凳子，伸手就能拿到常用的几罐香料，少掉了搬凳子这个打断。",
+        "evidenceRefs": [
+          "new:1",
+          "new:2",
+          "new:3"
+        ]
+      },
+      "questionIntent": null,
+      "limitReason": null,
+      "meaningCardReview": {
+        "semanticCardVerdict": "borderline",
+        "semanticCardReason": "understanding_incomplete",
+        "semanticCardEvidence": "ready/pause、成果来源、事实与边界分流均正确；理解卡明确保留了不再搬凳子和伸手可拿的结果，但只以可达状态隐含位置变化，没有明确保留‘把常用香料移到手边’这一行动侧，未达到冻结的双侧完整覆盖。",
+        "visibleVerdict": "borderline",
+        "visibleReason": "understanding_incomplete",
+        "visibleEvidence": "停止回应使用第二人称且无继续追问，清楚呈现不再搬凳子和伸手可拿；回应没有明确说出把常用香料移到手边这一改变，冻结必覆盖信息被弱化，按规则边缘计失败。",
+        "severeErrors": [],
+        "reviewedBy": "codex",
+        "reviewedAt": "2026-08-01T14:50:54Z"
+      },
+      "repairRule": "visible_second_person_or_neutral",
+      "expectedVisiblePerspective": "second_person_or_neutral"
+    }
+  ],
+  "gate": {
+    "total": 2,
+    "expectedTotal": 2,
+    "technicalComplete": 2,
+    "semanticCardsPresent": 2,
+    "semanticReviewed": 2,
+    "semanticPassed": 0,
+    "visibleReviewed": 2,
+    "visiblePassed": 0,
+    "severeErrors": 0,
+    "semanticStateMismatches": 0,
+    "expectedResultMismatches": 0,
+    "failureReasons": [
+      "answer_entry_burden",
+      "question_value",
+      "understanding_incomplete"
+    ],
+    "decision": "stop",
+    "gateState": "fail"
+  },
+  "budget": {
+    "ledgerPath": "/Users/zouzhijie/Desktop/Happiness-system-codex/artifacts/generative-interview-board7/2026-08-01/board7-provider-v70-root-visible-probe-budget.json",
+    "ledger": {
+      "ledgerVersion": "board7-provider-v70-root-visible-probe-budget-v1",
+      "datasetVersion": "2026-08-01.board7-provider-v70-root-visible-probe-v1",
+      "caseFingerprint": "59e5d4e55b1bc16e163dcb5ae8a2c74518c73df9cf372a8a77ca0fb597dd9414",
+      "runLimit": 1,
+      "entries": [
+        {
+          "reservationId": "24c7b515-d0d8-44bc-ad39-ade5f54581ae",
+          "candidateVersions": {
+            "prompt": "two_call:2026-08-01.event-centered-generative-v70-understanding-card+2026-08-01.event-centered-generative-v70-visible",
+            "strategy": "5.48.0",
+            "angleCard": "2.12.0",
+            "fewShot": "quality-patterns.2026-08-01.v27",
+            "semanticArtifact": "event-centered-semantic-plan.v3",
+            "rootVisibleProbe": "provider-v70-root-visible-probe-v1"
+          },
+          "approval": {
+            "approvalType": "board7_provider_v70_root_visible_probe_run",
+            "approvalVersion": "board7-provider-v70-root-visible-probe-approval-v1",
+            "decision": "approved",
+            "approvedBy": "product_owner",
+            "approvedAt": "2026-08-01T14:42:38Z",
+            "confirmationText": "确认",
+            "taskId": "codex-board7-v70-root-visible-probe-2026-08-01",
+            "approvalCardFingerprint": "e4e4c7bbdab7d4c88a5257d92b1008487ffbb13efb4295177f3d03a0e2e7c94f",
+            "datasetVersion": "2026-08-01.board7-provider-v70-root-visible-probe-v1",
+            "caseFingerprint": "59e5d4e55b1bc16e163dcb5ae8a2c74518c73df9cf372a8a77ca0fb597dd9414"
+          },
+          "reservedAt": "2026-08-01T14:43:44.844Z",
+          "completedAt": "2026-08-01T14:43:54.490Z",
+          "status": "completed",
+          "runEnvelopeFingerprint": "63c32313e7fac4dc368bd36a060e1887fcb1f14e48face1c65faace720ea165e",
+          "error": null,
+          "gateAudit": {
+            "auditedAt": "2026-08-01T14:52:38.661Z",
+            "runEnvelopeFingerprint": "63c32313e7fac4dc368bd36a060e1887fcb1f14e48face1c65faace720ea165e",
+            "reviewedEnvelopeFingerprint": "eb347dd807f3d4d452f0c46454e270f4933c20cd8355fbef7946107b2ba70ac0",
+            "semanticPassed": 0,
+            "visiblePassed": 0,
+            "severeErrors": 0,
+            "failureReasons": [
+              "answer_entry_burden",
+              "question_value",
+              "understanding_incomplete"
+            ],
+            "decision": "stop"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "approvalType": "board7_provider_v71_semantic_frame_first_pass_run",
+  "approvalVersion": "board7-provider-v71-semantic-frame-first-pass-approval-v1",
+  "decision": "approved",
+  "approvedBy": "product_owner",
+  "approvedAt": "2026-08-02T06:41:07Z",
+  "confirmationText": "授权运行首轮六例",
+  "taskId": "codex-board7-v71-semantic-frame-first-pass-2026-08-02",
+  "budgetVersion": "board7-provider-v71-semantic-frame-first-pass-budget-v1",
+  "scopeFingerprint": "960eae47ec6b0026e44fed960520fc92b3cc6c6faf22f4aceae778140c28ed98",
+  "datasetVersion": "2026-08-01.board7-semantic-frame-v4-offline-confirmation-v1",
+  "caseFingerprint": "ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62",
+  "caseIds": [
+    "SF4-F-READY-01",
+    "SF4-T-ASK-01",
+    "SF4-R-COEXIST-01",
+    "SF4-A-EFFECT-01",
+    "SF4-CORRECTION-READY-01",
+    "SF4-LIMITED-01"
+  ],
+  "candidateVersions": {
+    "strategy": "5.49.0",
+    "semanticPrompt": "2026-08-01.event-centered-generative-v71-semantic-skeleton",
+    "visiblePrompt": "2026-08-01.event-centered-generative-v71-visible",
+    "fewShot": "quality-patterns.2026-08-01.v28",
+    "semanticArtifact": "event-centered-semantic-plan.v4",
+    "angleCard": "2.12.0"
+  },
+  "model": "deepseek-v4-flash"
+}

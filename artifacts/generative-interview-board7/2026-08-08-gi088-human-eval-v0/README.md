@@ -99,9 +99,9 @@ v0.2 指纹 `53731dc2…f01f20b1` 的关闭组授权在模型请求前遇到 Pre
 
 v0.3 已完成两次技术冒烟：Thinking 关闭组得到 `valid`，耗时 `579ms`、总 Token `2422`；high 组完成一次调用后得到 `technical_failure / EMPTY_CONTENT`。两条结果及对应授权均已封存，high 未执行自动重试。
 
-v0.4 增加安全诊断后完成 high 一次调用：`finishReason=stop`、推理 Token `797`，最终内容为完整 JSON。唯一失败是 `burdenSignal` 把“未出现负担信号”编码为对象并给出空证据。该结果排除了输出预算耗尽、空 content 和 Provider 兼容问题。v0.4 空正式批次 `redacted-operational-id` 经核验为 `0` 消息、`0` 回合、revision `0`，按固定 ID 与旧指纹精确删除；累计三条技术冒烟记录继续保留。
+v0.4 增加安全诊断后完成 high 一次调用：`finishReason=stop`、推理 Token `797`，最终内容为完整 JSON。唯一失败是 `burdenSignal` 把“未出现负担信号”编码为对象并给出空证据。该结果排除了输出预算耗尽、空 content 和 Provider 兼容问题。v0.4 空正式批次 `a12756bb-024a-4135-b727-ac13db13a1db` 经核验为 `0` 消息、`0` 回合、revision `0`，按固定 ID 与旧指纹精确删除；累计三条技术冒烟记录继续保留。
 
-v0.5 保留严格 Schema，并以版本化合同澄清修复上述根因。定向测试 `37/37`、类型检查、定向 ESLint、Prisma 校验、本地与 Preview 构建均通过；Production 页面与两类 API 均为 `404`。off 冒烟在 deployment `redacted-deployment-id` 上得到 `valid`：请求 UUID `redacted-operational-id`，总 Token `2553`，无 reasoning 正文，Provider 耗时 `369ms`。high 冒烟在 deployment `redacted-deployment-id` 上得到 `valid`：请求 UUID `redacted-operational-id`，总 Token `3377`，reasoning 长度 `2971` 字符、推理 Token `722`，Provider 耗时 `411ms`。两臂 `finishReason` 均为 `stop`。
+v0.5 保留严格 Schema，并以版本化合同澄清修复上述根因。定向测试 `37/37`、类型检查、定向 ESLint、Prisma 校验、本地与 Preview 构建均通过；Production 页面与两类 API 均为 `404`。off 冒烟在 deployment `dpl_5CZN1qAUPBrtssXtFZ1HkpmmKVJg` 上得到 `valid`：请求 UUID `b1389fce-5488-45ac-b300-f6ce3c52f132`，总 Token `2553`，无 reasoning 正文，Provider 耗时 `369ms`。high 冒烟在 deployment `dpl_CWoVyTmxKZUgUFUMhrGbtAGDnz5f` 上得到 `valid`：请求 UUID `bb756d3c-af07-4072-9bb5-8e88209a2167`，总 Token `3377`，reasoning 长度 `2971` 字符、推理 Token `722`，Provider 耗时 `411ms`。两臂 `finishReason` 均为 `stop`。
 
 v0 formal batch 最终停在 A2 high。该批次累计 `9` 次正式调用：`3` 次 valid、`3` 次程序保护、`3` 次技术失败；已填写 `3` 条分支评价和 `1` 项配置比较。A2 high 同一轮初次调用与两次手动重试均以 `finishReason=length` 结束，`completionTokens=1600`、`reasoningTokens=1600`，最终可见回答为空。该证据确认应用层 `maxTokens=1600` 会在真实多轮 high 轨迹中挤占全部可见输出空间。批次原始结果完整保留，当前入口切换到 [`GI-088 真人交互开发评测集 v1`](../2026-08-09-gi088-human-eval-v1/README.md)。
 

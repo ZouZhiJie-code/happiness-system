@@ -49,6 +49,7 @@ function entry(overrides: Partial<JournalEventEntryRecord> = {}): JournalEventEn
     generationId: "generation-1",
     title: "会议之后",
     content: "会议结束后，我终于松了一口气。",
+    occurredAtText: null,
     status: "draft",
     generationOrigin: "fallback",
     generationVersion: 1,

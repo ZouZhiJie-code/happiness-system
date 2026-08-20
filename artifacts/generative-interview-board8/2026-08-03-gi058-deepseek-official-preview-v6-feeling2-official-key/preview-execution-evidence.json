@@ -1,0 +1,65 @@
+{
+  "evaluation": "board8_gi058_deepseek_official_preview",
+  "candidate": {
+    "strategyVersion": "5.53.0",
+    "semanticArtifactVersion": "event-centered-semantic-plan.v8",
+    "model": "deepseek-v4-flash",
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "eventMode": "optional",
+    "eventStrategy": "generative"
+  },
+  "startedAt": "2026-08-03T14:15:47.327Z",
+  "completedAt": "2026-08-03T14:16:05.247Z",
+  "database": "happiness_board8_preview_20260803_gi058_deepseek",
+  "rootSessionIds": [
+    "6343828c-14a7-4c08-9687-90bf4559af34"
+  ],
+  "cases": [
+    {
+      "id": "feeling-2",
+      "label": "感受 2｜深聊",
+      "material": "risk",
+      "angle": "feeling",
+      "depth": "deep",
+      "rootSessionId": "6343828c-14a7-4c08-9687-90bf4559af34",
+      "eventId": null,
+      "entryId": null,
+      "status": "failed",
+      "startedAt": "2026-08-03T14:15:47.327Z",
+      "completedAt": "2026-08-03T14:16:05.246Z",
+      "firstCheckpoint": {
+        "reached": false,
+        "equalFourAngles": false,
+        "inputHidden": false,
+        "logHidden": false
+      },
+      "focusSelection": null,
+      "correction": null,
+      "closedAngle": false,
+      "journal": {
+        "generated": false,
+        "origin": null,
+        "edited": false,
+        "saved": false,
+        "reopened": false,
+        "traceId": null
+      },
+      "refresh": {
+        "afterFirstCheckpoint": false,
+        "afterJournalSave": false
+      },
+      "steps": [],
+      "issues": [
+        "CASE_RUNTIME:PrismaClientKnownRequestError"
+      ]
+    }
+  ],
+  "smokes": [],
+  "technicalSummary": {
+    "mainTrajectoriesCompleted": 0,
+    "journalLoopsCompleted": 0,
+    "failures": 1,
+    "status": "technical_failed"
+  }
+}

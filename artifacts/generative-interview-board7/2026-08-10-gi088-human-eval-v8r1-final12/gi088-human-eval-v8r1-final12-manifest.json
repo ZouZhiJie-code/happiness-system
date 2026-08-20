@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0",
+  "status": "preview_ready_0_of_12_waiting_human_acceptance",
+  "evaluation": {
+    "id": "gi088_human_eval_v8r1_final12",
+    "version": "2026-08-10.gi088-human-eval-v8r1-final12",
+    "serviceVersion": "2026-08-10.gi088-question-decision-service-v8r1",
+    "contractVersion": "2026-08-10.gi088-semantic-delta-contract-v2.3",
+    "statePolicyVersion": "2026-08-10.gi088-deterministic-state-maintenance-v2.1",
+    "questionDecisionSkillVersion": "2026-08-10.gi088-question-decision-skill-v1",
+    "recoveryPolicyVersion": "2026-08-10.gi088-shared-recovery-deadline-v2",
+    "effectiveCandidateFingerprint": "f96097f2bde6146e24363d2f640ac51d0773f2e7e2596639a56d4c6ac82c3787",
+    "datasetFingerprint": "0ca2452690aa9e89b2414689bb7c96294a4fa9283359c01f3a45ca1c4b7478a7",
+    "executionFingerprint": "40da54f237d159dd15ae573a5c38000c1a6558b3e443f60f087461b2e3bf8f82"
+  },
+  "inherits": {
+    "evaluationVersion": "2026-08-10.gi088-human-eval-v8-question-decision-pro",
+    "executionFingerprint": "39857f0d7f7e38a36c8d05622bb71d06ab5ba8513baaf8fefa404d3247d3791a",
+    "humanResult": "product_owner_pass_direct_use_1_of_4_early_stopped",
+    "privateExportSha256": "a031676df904967d0ad0cd760947766fc619fedec86e42167a7f6df7b3ac59e8"
+  },
+  "runtime": {
+    "provider": "openai_compatible_rest",
+    "baseUrl": "https://api.deepseek.com",
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000,
+    "hardTimeoutMs": 60000,
+    "automaticChainDeadlineMs": 90000,
+    "manualRetryHardTimeoutMs": 60000,
+    "hiddenReasoningPersistence": "forbidden"
+  },
+  "change": {
+    "singleFactor": "polite_acknowledgement_plus_explicit_stop_bypasses_provider",
+    "pureStopExamples": [
+      "很好，就聊到这吧",
+      "谢谢，今天先到这"
+    ],
+    "mixedStopExample": "我最近其实很好，就聊到这吧"
+  },
+  "tasks": [
+    "A1_continue_after_zero_question_and_polite_stop",
+    "A2_avoid_reasking_answered_content",
+    "A3_concrete_stage3_deepening",
+    "A4_decision_support_stays_on_choice",
+    "A5_correction_revises_state_and_continues",
+    "A6_unclear_or_refusal_respects_boundary",
+    "A7_independent_topics_remain_separate",
+    "A8_complex_input_keeps_single_answer_focus",
+    "A9_sufficient_content_synthesizes_or_pauses",
+    "A10_mixed_content_and_stop_commits_pause",
+    "A11_switch_and_return_preserves_lineage",
+    "A12_long_conversation_continuity"
+  ],
+  "batch": {
+    "id": "5123d795-5c19-408d-9b98-7767eaa7892c",
+    "status": "running",
+    "completedTaskCount": 0,
+    "totalTasks": 12,
+    "activeBranches": ["high"],
+    "initializationModelGenerationCalls": 0
+  },
+  "preview": {
+    "deploymentId": "dpl_HPBafL2QmHd6UsUXQ8kWVbUvKJAQ",
+    "url": "https://xingfuxitong-5l1ns4sci-zouzhijies-projects.vercel.app/preview/gi088-evaluation",
+    "target": "preview",
+    "readyState": "READY",
+    "access": "vercel_login_protected"
+  },
+  "humanAcceptance": {
+    "requiredCompletedTasks": 12,
+    "maximumProviderCallsPerTrajectory": null,
+    "maximumProviderCallsPerUserSubmission": 3,
+    "hardCallBudgetFormula": "3N",
+    "maximumCallsWhenPassingFormula": "N+1",
+    "minimumDirectUseTasks": 9,
+    "maximumMinorIssueTasks": 3,
+    "maximumAutomaticRecoveries": 1,
+    "maximumAutomaticRecoveryDeadlineMs": 90000
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

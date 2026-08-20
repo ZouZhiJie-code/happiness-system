@@ -3,14 +3,14 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { authLocalUserIdStorageKey } from "@/features/auth/auth-local";
 
-const { mockRouterPush, mockRouterRefresh } = vi.hoisted(() => ({
-  mockRouterPush: vi.fn(),
+const { mockRouterReplace, mockRouterRefresh } = vi.hoisted(() => ({
+  mockRouterReplace: vi.fn(),
   mockRouterRefresh: vi.fn()
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: mockRouterPush,
+    replace: mockRouterReplace,
     refresh: mockRouterRefresh
   })
 }));
@@ -41,10 +41,29 @@ describe("auth page client navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: "登录并继续" }));
 
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalledWith("/analysis?month=2026-05");
+      expect(mockRouterReplace).toHaveBeenCalledWith("/analysis?month=2026-05");
     });
     expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBe("user-1");
     expect(mockRouterRefresh).toHaveBeenCalled();
+  });
+
+  it("replaces the auth page with the interview when login has no next path", async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ authenticated: true, user: { id: "user-1", username: "daily_light_01" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      })
+    ) as typeof fetch;
+
+    render(<LoginPageClient />);
+
+    fireEvent.change(screen.getByLabelText("用户名"), { target: { value: "daily_light_01" } });
+    fireEvent.change(screen.getByLabelText("密码"), { target: { value: "supersecret1" } });
+    fireEvent.click(screen.getByRole("button", { name: "登录并继续" }));
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith("/interview");
+    });
   });
 
   it("shows only the localized login error copy when login fails", async () => {
@@ -89,7 +108,7 @@ describe("auth page client navigation", () => {
     fireEvent.change(screen.getByLabelText("密码"), { target: { value: "supersecret1" } });
     fireEvent.click(screen.getByRole("button", { name: "登录并继续" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("登录暂时不可用，请先完成数据库初始化");
+    expect(await screen.findByRole("alert")).toHaveTextContent("登录暂时不可用，请稍后再试");
   });
 
   it("redirects register success to next path when provided", async () => {
@@ -111,10 +130,31 @@ describe("auth page client navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: "创建账户" }));
 
     await waitFor(() => {
-      expect(mockRouterPush).toHaveBeenCalledWith("/calendar");
+      expect(mockRouterReplace).toHaveBeenCalledWith("/calendar");
     });
     expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBe("user-2");
     expect(mockRouterRefresh).toHaveBeenCalled();
+  });
+
+  it("replaces the auth page with the interview when registration has no next path", async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ authenticated: true, user: { id: "user-2", username: "new_user_01" } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      })
+    ) as typeof fetch;
+
+    render(<RegisterPageClient />);
+
+    fireEvent.change(screen.getByLabelText("用户名"), { target: { value: "new_user_01" } });
+    fireEvent.change(screen.getByLabelText("密码"), { target: { value: "supersecret1" } });
+    fireEvent.change(screen.getByLabelText("确认密码"), { target: { value: "supersecret1" } });
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "创建账户" }));
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith("/interview");
+    });
   });
 
   it("shows only the localized register error copy and clears it on input focus", async () => {
@@ -184,6 +224,6 @@ describe("auth page client navigation", () => {
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "创建账户" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("注册暂时不可用，请先完成数据库初始化");
+    expect(await screen.findByRole("alert")).toHaveTextContent("注册暂时不可用，请稍后再试");
   });
 });

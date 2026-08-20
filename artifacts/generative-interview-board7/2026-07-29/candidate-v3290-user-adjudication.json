@@ -1,0 +1,224 @@
+{
+  "schemaVersion": "1.0",
+  "adjudicatedAt": "2026-07-29",
+  "datasetVersion": "2026-07-28.v1",
+  "candidateVersion": "3.29.0",
+  "sourceReview": "../2026-07-28/candidate-v3290-work-human-review.md",
+  "scope": "24 work-set single-turn results",
+  "candidateDisposition": "invalidated",
+  "gateDisposition": "blocked_before_gate",
+  "productionImpact": "none",
+  "summary": {
+    "total": 24,
+    "pass": 3,
+    "edge": 1,
+    "fail": 20,
+    "effectivePass": 3,
+    "effectivePassRate": 0.125
+  },
+  "primaryReasonCounts": {
+    "目标选择偏差": 3,
+    "上下文或假设失真": 1,
+    "认识增量不足": 12,
+    "回答负担过高": 5,
+    "问停节奏不当": 0
+  },
+  "trajectoryAdjudication": {
+    "status": "not_started",
+    "reason": "候选在单轮人工裁决中已被整体作废，原评审包只展示角色卡，未形成可用的完整用户回放。"
+  },
+  "items": [
+    {
+      "caseId": "S01-B",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败，重复用户说的话",
+      "specRootCause": "完成动作把事实复述当作认识成果，缺少感受变化、区分或触发关系带来的新理解。",
+      "disposition": "转入工作集；重写完成成果判尺与面向用户的阶段性认识。"
+    },
+    {
+      "caseId": "S01-C",
+      "verdict": "pass",
+      "primaryReason": null,
+      "originalComment": "通过",
+      "specRootCause": null,
+      "disposition": "保留为材料有限时的诚实收束校准例。"
+    },
+    {
+      "caseId": "S01-D",
+      "verdict": "pass",
+      "primaryReason": null,
+      "originalComment": "通过",
+      "specRootCause": null,
+      "disposition": "保留为引导复盘中单一、具体问题的校准例。"
+    },
+    {
+      "caseId": "S02-A",
+      "verdict": "fail",
+      "primaryReason": "回答负担过高",
+      "originalComment": "失败，提问抽象，看不懂",
+      "specRootCause": "问题使用“转折具体发生在哪一刻”等访谈元语言，并给出多段时间选项，用户需要先理解问题结构。",
+      "disposition": "转入工作集；深聊问题需使用用户原话落地，并在一句话内形成可直接回答的入口。"
+    },
+    {
+      "caseId": "S02-C",
+      "verdict": "pass",
+      "primaryReason": null,
+      "originalComment": "通过",
+      "specRootCause": null,
+      "disposition": "保留为尊重用户停止细分的校准例。"
+    },
+    {
+      "caseId": "S02-D",
+      "verdict": "fail",
+      "primaryReason": "回答负担过高",
+      "originalComment": "失败，提问抽象看不懂",
+      "specRootCause": "问题把模型内部要验证的“关系”直接交给用户概括，缺少可以回忆或辨认的具体入口。",
+      "disposition": "转入工作集；试探理解要给出可否认的具体可能性，再用低负担问句确认。"
+    },
+    {
+      "caseId": "S03-A",
+      "verdict": "fail",
+      "primaryReason": "回答负担过高",
+      "originalComment": "失败，提问不够具体",
+      "specRootCause": "问题要求用户自行解释整条自我判断，未用“买了就该开始”等可辨认标准缩小回答范围。",
+      "disposition": "转入工作集；判断依据问题需指向具体标准、证据差异或评价时刻。"
+    },
+    {
+      "caseId": "S03-B",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败，重复用户说的话",
+      "specRootCause": "完成动作只拼接判断与依据，没有呈现用户标准怎样影响自我评价。",
+      "disposition": "转入工作集；想法成果需形成标准、证据关系或内部矛盾中的至少一种增量。"
+    },
+    {
+      "caseId": "S03-D",
+      "verdict": "fail",
+      "primaryReason": "回答负担过高",
+      "originalComment": "失败，提问抽象看不懂，不够具体",
+      "specRootCause": "“怎样进入判断”属于系统分析语言，用户缺少清楚的比较对象与回答入口。",
+      "disposition": "转入工作集；问题改为基于加班事实和自制力标准的具体证据比较。"
+    },
+    {
+      "caseId": "S04-A",
+      "verdict": "fail",
+      "primaryReason": "上下文或假设失真",
+      "originalComment": "失败，根据上下文，很明显用户是在纠结，既因为数据怀疑自己，又因为这次又进步而感到高兴。并不是二元的对立（区分自己在绘画方面到底有天赋还是没天赋）",
+      "specRootCause": "模型把可以同时成立的失落与进步强制整理为二选一，破坏了用户真实张力。",
+      "disposition": "转入工作集；张力问题需允许两边同时成立，并探索用户如何理解这组矛盾证据。"
+    },
+    {
+      "caseId": "S04-B",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败，模型回复的是废话，重复用户的话",
+      "specRootCause": "暂停内容只是换述用户已明确表达的衡量标准，没有说明本轮新看见了什么。",
+      "disposition": "转入工作集；pause 必须展示可判断贴合度的阶段性认识。"
+    },
+    {
+      "caseId": "S04-C",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败，模型回复的是废话，重复用户的话",
+      "specRootCause": "边界收口机械复述“分不出、不想证明”，缺少对当前可保留范围的简明说明。",
+      "disposition": "转入工作集；honest_limit 只说明已知范围与停下原因，避免逐句复述。"
+    },
+    {
+      "caseId": "S05-B",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败，模型回复的是废话，重复用户的话",
+      "specRootCause": "关系成果重复用户的期待，没有提炼互动背后的参与位置、共同确认意义或边界。",
+      "disposition": "转入工作集；关系成果需识别互动怎样影响用户的位置、信任、互惠、期待或边界。"
+    },
+    {
+      "caseId": "S05-C",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败，模型回复的是废话，重复用户的话",
+      "specRootCause": "诚实收束逐项复述事实与不舒服，没有提供更简洁的范围说明。",
+      "disposition": "转入工作集；材料有限时用一句自然边界收口，不制造成果。"
+    },
+    {
+      "caseId": "S05-D",
+      "verdict": "fail",
+      "primaryReason": "目标选择偏差",
+      "originalComment": "失败。用户的担心有两个，一个是同事没有提前说，另一个是担心贡献被同事给抢了。提问虽然只能问一个问题，但是理解上需要两个都照顾到。而且提问上，这里不是复盘心动的角度，是理解关系，这个提问偏题了。",
+      "specRootCause": "理解遗漏“未提前沟通”，问题转向负责人如何看贡献，偏离用户与同事之间的关系体验。",
+      "disposition": "转入工作集；理解需覆盖并存重点，提问只选其中一个关系目标继续。"
+    },
+    {
+      "caseId": "S06-A",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败。【这周她连续三天替你约好晚饭，还直接答应了亲戚周末来家里。】是重复，是废话；【在这些安排里，你最希望哪部分决定权留给自己？】是在问行动，但是现在是深挖环节，是 deep conversation。需要问得更深度一些。",
+      "specRootCause": "承接只复述事件，问题停在决定事项的分配层，尚未进入关心与自主之间的关系张力。",
+      "disposition": "转入工作集；关系深聊需探索互动对信任、位置、边界或关系意义的影响。"
+    },
+    {
+      "caseId": "S06-C",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败，重复用户说的话。",
+      "specRootCause": "暂停内容机械重复边界，没有说明停止推测他人后当前还能保留什么。",
+      "disposition": "转入工作集；pause 与 honest_limit 都要形成自然、简短且有范围的收口。"
+    },
+    {
+      "caseId": "S06-D",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败。提问太浅层了",
+      "specRootCause": "问题只确认事项决定权，遗漏“拒绝关心会伤关系”的深层张力。",
+      "disposition": "转入工作集；深聊问题需推进关心、自主和拒绝顾虑之间的关系理解。"
+    },
+    {
+      "caseId": "S07-A",
+      "verdict": "fail",
+      "primaryReason": "目标选择偏差",
+      "originalComment": "失败，提问偏题，用户刷的是什么其实是为了更深一层目的，用户为什么要刷这个。只问这个问题，价值太低。",
+      "specRootCause": "模型收集下一步点击对象，无法解释继续刷的行动功能或阻力。",
+      "disposition": "转入工作集；行动问题优先识别选择发挥的作用、保护内容或已发生阻力。"
+    },
+    {
+      "caseId": "S07-B",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败，模型在说废话，重复用户说的话。",
+      "specRootCause": "完成动作复述动作顺序，没有揭示推荐内容怎样承接准备退出后的状态或继续刷的功能。",
+      "disposition": "转入工作集；行动成果需形成目标、功能、阻力或取舍中的真实增量。"
+    },
+    {
+      "caseId": "S07-D",
+      "verdict": "edge",
+      "primaryReason": "回答负担过高",
+      "originalComment": "边缘。问题本身通过，但是问法有点抽象，可以更加具象化一些。",
+      "specRootCause": "方向基本正确，“什么又把你带回”仍要求用户先解释抽象机制。",
+      "disposition": "按未通过转入工作集；使用第二次锁屏后的具体动作、念头或页面作为回答入口。"
+    },
+    {
+      "caseId": "S08-A",
+      "verdict": "fail",
+      "primaryReason": "目标选择偏差",
+      "originalComment": "失败。提问偏题，重点根本不是截至时间，而是究竟什么才代表自己，或者是那段话究竟意味着什么，又或者用户在纠结什么。",
+      "specRootCause": "问题追逐截止时间，把用户最新强调的“能否代表自己”从核心目标降为背景。",
+      "disposition": "转入工作集；行动深聊优先理解反复修改在自我表达中的功能与取舍。"
+    },
+    {
+      "caseId": "S08-B",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败，重复用户说的话。",
+      "specRootCause": "暂停内容照抄用户已经完成的取舍结论，没有补充行动所保护的价值或该选择的意义。",
+      "disposition": "转入工作集；pause 需展示本轮形成的行动功能、价值或张力。"
+    },
+    {
+      "caseId": "S08-C",
+      "verdict": "fail",
+      "primaryReason": "认识增量不足",
+      "originalComment": "失败，重复用户说的话。",
+      "specRootCause": "诚实收束逐句复述用户的已知与未知，没有形成简洁范围说明。",
+      "disposition": "转入工作集；材料有限时保留事实并说明目前无法安全形成哪类认识。"
+    }
+  ]
+}

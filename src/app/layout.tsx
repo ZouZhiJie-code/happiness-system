@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AuthLocalBootstrap } from "@/components/auth/auth-local-bootstrap";
 import { AnalysisChromeProvider } from "@/components/analysis/analysis-chrome-context";
 import { CalendarChromeProvider } from "@/components/calendar/calendar-chrome-context";
+import { EventCenteredInterviewChromeProvider } from "@/components/interview/event-centered/event-centered-interview-chrome-context";
 import { CalendarMainGate } from "@/components/calendar/calendar-main-gate";
 import { PublicSecurityFooter } from "@/components/shared/public-security-footer";
 import { SiteHeader } from "@/components/shared/site-header";
@@ -15,8 +16,8 @@ import { isAdminUsername } from "@/server/services/auth/admin-access";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Daily Light | 在日常里照见自己",
-  description: "用 AI 访谈和幸福日志整理每日开心、充实、思考、改进与感谢，帮助你更理解自己的喜悦、牵挂与抉择。",
+  title: "Daily Light | 从一句话开始，留下一份日记",
+  description: "说下一件想留下的事，Daily Light 会帮你记进当天，并整理成可以回看的日记。",
   icons: {
     icon: [{ url: "/brand/happiness-logo.png", type: "image/png" }],
     apple: [{ url: "/brand/happiness-logo.png", sizes: "1254x1254", type: "image/png" }]
@@ -30,20 +31,22 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className="font-body text-ink antialiased">
+      <body className="font-ui text-ink antialiased">
         <Suspense fallback={null}>
           <AnalysisChromeProvider>
             <CalendarChromeProvider>
-              <div className="relative flex min-h-dvh flex-col">
-                <AuthLocalBootstrap userId={currentUser?.id ?? null} />
-                <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
-                  <SiteHeader isAdmin={isAdmin} authenticated={Boolean(currentUser)} />
-                </Suspense>
-                <main className="flex min-h-0 w-full flex-1 flex-col">
-                  <CalendarMainGate>{children}</CalendarMainGate>
-                </main>
-                <PublicSecurityFooter />
-              </div>
+              <EventCenteredInterviewChromeProvider>
+                <div className="relative flex min-h-dvh flex-col">
+                  <AuthLocalBootstrap userId={currentUser?.id ?? null} />
+                  <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
+                    <SiteHeader isAdmin={isAdmin} authenticated={Boolean(currentUser)} />
+                  </Suspense>
+                  <main className="flex min-h-0 w-full flex-1 flex-col">
+                    <CalendarMainGate>{children}</CalendarMainGate>
+                  </main>
+                  <PublicSecurityFooter />
+                </div>
+              </EventCenteredInterviewChromeProvider>
             </CalendarChromeProvider>
           </AnalysisChromeProvider>
         </Suspense>

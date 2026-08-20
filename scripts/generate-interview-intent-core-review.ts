@@ -1,7 +1,11 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { ZodTypeAny } from "zod";
 
+import seedDatasetJson from "../evals/interview-intent/v1/seed-cases.json";
+import formalVariantsJson from "../evals/interview-intent/v1/formal-variants.json";
+import blindDatasetJson from "../evals/interview-intent/v1/blind-cases.json";
+import externalReviewDatasetJson from "../evals/interview-intent/v1/external-review-cases.json";
 import {
   interviewIntentBlindDatasetSchema,
   interviewIntentEvalDatasetSchema,
@@ -34,30 +38,6 @@ import { readVolcengineArkConfig } from "../src/server/services/ai/provider-conf
 import { createRuntimeAIProvider } from "../src/server/services/ai/runtime-provider-factory";
 import { completeStructuredOutput } from "../src/server/services/ai/structured-output";
 import type { InterviewDimension } from "../src/types/interview";
-
-async function readPrivateDataset(fileName: string) {
-  const filePath = path.resolve(process.cwd(), "evals/interview-intent/v1", fileName);
-  try {
-    return JSON.parse(await readFile(filePath, "utf8")) as unknown;
-  } catch (error) {
-    throw new Error(
-      `Missing private interview-intent dataset: ${fileName}. Restore the controlled local dataset before running this command.`,
-      { cause: error }
-    );
-  }
-}
-
-const [
-  seedDatasetJson,
-  formalVariantsJson,
-  blindDatasetJson,
-  externalReviewDatasetJson
-] = await Promise.all([
-  readPrivateDataset("seed-cases.json"),
-  readPrivateDataset("formal-variants.json"),
-  readPrivateDataset("blind-cases.json"),
-  readPrivateDataset("external-review-cases.json")
-]);
 
 const outputDirectory = path.join(
   process.cwd(),

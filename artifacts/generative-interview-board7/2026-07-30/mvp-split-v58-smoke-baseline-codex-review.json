@@ -1,0 +1,196 @@
+{
+  "singleRuns": [
+    {
+      "runId": "SMK-F-ASK-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "思路摘要忠实保留笑与胸口发紧的两个时点，问题只补准确感受，容易回答。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-ASK-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "用户原话已经把框架来源与成果归属感连在一起，直接整理并停止符合成果优先规则；当前案例的 ask 预期需要修正。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "ask_stop_timing",
+        "visibleEvidence": "‘位置被替代’由 AI 综合产生，内部却标成 user_articulated；当前关系 ask 案例本身也给了足以直接综合的材料。",
+        "finalVerdict": null,
+        "rootCause": "案例问停边界不干净，同时模型把自己的关系解释归给用户。",
+        "resolution": "重写关系 ask 案例，使回答只提供互动锚点并保留一个会改变理解的关系缺口；继续单独检查成果来源。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-ASK-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "回应只整理了关摄像头的好处与代价，尚未达到深聊要求的事件内作用或动机，却提前 pause。",
+        "finalVerdict": null,
+        "rootCause": "深聊把结果层整理误判为行动功能成果。",
+        "resolution": "保留案例，要求继续追问关摄像头具体改变了什么，能够让用户留在会议。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-USER-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": null,
+        "visibleEvidence": "模型给出了正确的 pause 与用户成果，但 expectedUnderstandingDelta 为空，系统因此未形成任何用户可见结果。",
+        "finalVerdict": null,
+        "rootCause": "系统仍依赖模型重复填写可由 outcomeAssessment 派生的停止成果摘要。",
+        "resolution": "由系统在停止成果已有 basis 时兼容补齐 expectedUnderstandingDelta，不改变可见回应。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应忠实保留‘马上回复是负责的唯一证明’以及按时完成也被排除的判断规则。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应完整保留借钱的支持作用和最终用钱决定权这一用户结论，没有推断哥哥动机。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-USER-R1",
+      "review": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "回应忠实连接整理带来的开始感、替代下笔和报告空白三个用户事实。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-F-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": null,
+        "visibleEvidence": "‘事情结束和身体结束并不同步’是 AI 从两个时点综合出的关系，内部却标成 user_articulated。",
+        "finalVerdict": null,
+        "rootCause": "模型用‘你说’包装自己的综合关系，混淆了用户成果与 AI 综合。",
+        "resolution": "收紧来源判定：只有用户明确说出关系或结论才可使用 user_articulated。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-T-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "context_or_assumption",
+        "visibleEvidence": "两次技术尝试都输出非法枚举；草稿还把跨场景证据加强成‘配色能力本身没问题’。",
+        "finalVerdict": null,
+        "rootCause": "Prompt 的枚举写法诱导模型复制组合值，同时 AI 综合超出了两次反馈能够支持的当前场景关系。",
+        "resolution": "把枚举说明改成单值示例，并明确跨事件材料使用 background；保留‘场景匹配’结论，排除整体能力背书。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-R-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": null,
+        "visibleEvidence": "‘退出原本该参与的位置’是 AI 从帮助、改议程和未发言综合出的关系，内部却标成 user_articulated。",
+        "finalVerdict": null,
+        "rootCause": "模型没有区分用户提供事实与用户明确说出结论。",
+        "resolution": "收紧来源判定，并要求 AI 关系综合使用 ai_synthesized 与两条以上证据。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "runId": "SMK-A-AI-R1",
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T05:25:00.000Z",
+        "primaryReason": "target_selection",
+        "secondaryReason": "ask_stop_timing",
+        "visibleEvidence": "问题重复了上一问‘整理看板替你做了什么’，没有处理用户已经提供的清晰感与投诉未打开两条证据。",
+        "finalVerdict": null,
+        "rootCause": "模型忽略当前问题已经获得回答，也没有优先检查 AI 综合成果。",
+        "resolution": "强化先判断成果来源与当前问题回答状态；已有两条相关证据时优先形成单一事件内解释。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      }
+    }
+  ]
+}

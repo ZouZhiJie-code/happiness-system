@@ -1,10 +1,12 @@
 # Daily Light 按意图重新生成
 
-最后更新：`2026-08-02`
+最后更新：`2026-08-12`
 
 当前有效口径：本文档记录已发布的五维访谈“按意图重新生成”能力；它继续复用原话可靠提交、活动分支、纠正和 Trace。事件中心 MVP 的两段式模型链路、事件日志闭环和可选入口属于板块 7候选，详见[板块 7 Preview 候选交接](./technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md)。板块 8独立负责事件中心 Preview、Go/No-Go、Production `optional + generative` 授权、线上观察与回退；Production 当前继续 `legacy + baseline`。
 
 历史功能说明和 `2026-07-21` 验收证据继续保留，避免将五维回复修复与事件中心候选混为同一发布结论。
+
+网页端交互补充：事件中心高保真 UI 将回复下方操作统一呈现为【赞】【踩】【重新生成】；重新生成菜单提供“更简单一点 / 更具体一点 / 换一个角度”三项轻量入口，继续调用本文记录的 `regenerate_response`、反馈和版本切换合同。五维访谈仍保留本文中已发布的五项意图入口，两者共用服务端版本与恢复规则。
 
 ## 1. 背景与目标
 
@@ -91,8 +93,8 @@
 `2026-07-21` 已完成隔离 Preview 与正式环境验收：
 
 - Preview 数据库为 `daily_light_preview_intent`，与生产数据库隔离；回复重新生成迁移已应用。
-- 最终 Preview deployment：`redacted-deployment-id`，体验地址为 `https://xingfuxitong-rbjjwv7e3-example-team.vercel.app`。
-- 本功能在 `2026-07-21` 的正式验收使用 deployment：`redacted-deployment-id`；该版本随后保留为访谈意图识别全量发布的回退入口。当前生产版本以 `docs/vercel-preview-production-lane.md` 为准。
+- 最终 Preview deployment：`dpl_7pQZsrjTUTB3pE5FKMrbRvznKizM`，体验地址为 `https://xingfuxitong-rbjjwv7e3-zouzhijies-projects.vercel.app`。
+- 本功能在 `2026-07-21` 的正式验收使用 deployment：`dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc`；该版本随后保留为访谈意图识别全量发布的回退入口。当前生产版本以 `docs/vercel-preview-production-lane.md` 为准。
 - 正式数据库已应用 `20260720210000_add_interview_intent_assessment` 与 `20260720223000_add_interview_response_regeneration`，当前迁移总数为 30。
 - 注册、登录、登录态、创建新会话与非法日期拒绝 smoke 通过，测试账号只存在于 Preview 库。
 - 开心 / 充实 / 思考 / 改进 / 感谢五维真实调用通过，覆盖简单、具体、换角度、深入和轻量意图。

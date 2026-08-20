@@ -328,7 +328,7 @@ describe("calendar month shell", () => {
     };
   });
 
-  it("normalizes missing search params to today", async () => {
+  it("normalizes missing search params to today's journal day view", async () => {
     mockSearchParams.value = {
       view: null,
       date: null
@@ -338,7 +338,7 @@ describe("calendar month shell", () => {
     render(<CalendarMonthShell />);
 
     await waitFor(() => {
-      expect(mockRouterReplace).toHaveBeenCalledWith(`/calendar?view=month&date=${getTodayEntryDate()}`, { scroll: false });
+      expect(mockRouterReplace).toHaveBeenCalledWith(`/calendar?view=day&date=${getTodayEntryDate()}`, { scroll: false });
     });
   });
 

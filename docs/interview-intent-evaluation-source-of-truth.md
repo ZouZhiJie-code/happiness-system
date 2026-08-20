@@ -1,6 +1,6 @@
 # 访谈意图评测与上线事实源
 
-最后更新：`2026-08-02`
+最后更新：`2026-08-13`
 
 当前版本：`intent-eval-v1.13`
 
@@ -8,11 +8,25 @@
 
 适用范围：`用户输入 → 意图理解 → 内容保留 → 访谈决策 → 下一步响应 → 日志结果 → 失败恢复`
 
+## 总规范适配卡｜2026-08-13
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 适用总规范 | [Daily Light AI 评测总规范 v1.0](./ai-evaluation-standard.md)（`已冻结`） |
+| 接入状态 | `部分接入；阶段 A 文档适配已完成，后续新运行按 v1.0 完整执行` |
+| 本专项要支持的决策 | 判断意图识别候选是否准确保留用户内容、执行用户要求，并达到离线门、Preview 门和上线观察要求 |
+| 已具备 | 北极星目标、错误分类、开发／验证／盲测分工、案例来源、版本化数据、发布门和线上反馈回流 |
+| 待补齐 | 统一案例／数据集／运行身份证；技术、质量、体验三本账；Judge 校准身份；运行前隐私、预算、授权与停止点卡 |
+| 历史结果处理 | `intent-eval-v1.13` 及历史离线、Preview、上线数字继续保留当时的版本和证据身份，不追溯套用 v1.0 |
+| 新运行起点 | 自总规范 `v1.0` 生效后，新建或实质变更的意图评测运行完整执行总规范；日常既有监测继续按本文档当前规则运行 |
+
+本适配卡只建立项目级治理入口，不改变意图识别当前线上状态、历史发布结论和 Production 配置。
+
 ## 当前有效口径｜2026-08-02
 
 - 本文档继续管理五维访谈意图识别 v1.13、案例治理、线上反馈回流和既有 `legacy / enforce` 事实；历史评测数字与部署记录保留为当时的评测证据。
 - 事件中心 MVP 的生成式问停、成果来源、两段式表达、事件日志闭环和可选入口由板块 7专项文档管理，当前候选详见[板块 7 Preview 候选交接](./technical/interview-event-centered/04o-board7-mvp-preview-candidate-handoff.md)。
-- 板块 8独立负责事件中心 Preview、Go/No-Go、Production `optional + generative` 授权、线上冒烟、监控和回退；Production 在明确批准前继续 `legacy + baseline`。
+- 板块 8 独立负责生成式候选 Preview、Go/No-Go、Production `optional + generative` 授权、线上冒烟、监控和回退；项目主链当前使用 `event_centered + baseline`，生成式能力继续关闭。
 - 事件中心大型模拟工作集、隐藏集、准入集和盲评转为上线后真实案例驱动的回归资产，不覆盖本文档既有五维意图评测事实。
 
 ## 1. 文档使命
@@ -650,23 +664,23 @@ intent-eval-v主版本.次版本
 | 当前版本基线评测 | 已完成 | 初始75%，共同原因修复后达到100% |
 | 120条正式评测集 | 已完成 | 开发集72、验证集24、盲测集24 |
 | 正式离线门槛 | 已通过 | 连续3次120/120，P0失败为0 |
-| Preview五维复测 | 执行侧通过（本机历史证据，公开精简包未收录：`2026-07-20-preview-experience-gate-v2.md`） | 五维关键动作5/5；重复追问与标题问题已修复；执行侧体验评分4.7/5 |
-| 响应速度复测 | 正式20条通过（本机历史证据，公开精简包未收录：`2026-07-21-preview-adoption-and-20-turn-observation.md`） | 20条普通访谈服务端P50为9.17秒、P95为9.99秒、最大值为10.13秒，达到P50≤12秒、P95≤20秒门槛 |
-| 共享Preview环境 | 已完成 | 当前候选deployment为`redacted-deployment-id`；意图策略为enforce；共享Preview使用独立数据库、独立应用账号和完整迁移；稳定地址为`https://xingfuxitong-example-user-code-example-team.vercel.app` |
+| Preview五维复测 | [执行侧通过](../evals/interview-intent/reports/2026-07-20-preview-experience-gate-v2.md) | 五维关键动作5/5；重复追问与标题问题已修复；执行侧体验评分4.7/5 |
+| 响应速度复测 | [正式20条通过](../evals/interview-intent/reports/2026-07-21-preview-adoption-and-20-turn-observation.md) | 20条普通访谈服务端P50为9.17秒、P95为9.99秒、最大值为10.13秒，达到P50≤12秒、P95≤20秒门槛 |
+| 共享Preview环境 | 已完成 | 当前候选deployment为`dpl_2riNe1YjW9Ybt4ycq1JyHPZmMTz1`；意图策略为enforce；共享Preview使用独立数据库、独立应用账号和完整迁移；稳定地址为`https://xingfuxitong-zouzhijie-code-zouzhijies-projects.vercel.app` |
 | 隔离验收数据 | 已完成 | 已创建空白独立评审账号；该账号仅存在于Preview数据库，生产数据库同名账号数量为0 |
-| 意图识别执行侧人工复核 | 已完成（本机历史证据，公开精简包未收录：`2026-07-20-intent-execution-side-review.md`） | 24条中20条完全正确、3条部分正确、1条合理歧义；核心加权分98.1%；高影响控制错误为0 |
-| 四条分歧产品裁决 | 已完成（本机历史证据，公开精简包未收录：`2026-07-20-intent-adjudication-resolution.md`） | 3条人工字段判断被采纳，1条歧义完成定义收口；修正后真实模型连续3次24/24 |
-| 新一轮外部评审封存集 | 已完成（本机历史证据，公开精简包未收录：`2026-07-21-external-review-seal.md`） | 新增24条未参与规则优化的案例，覆盖五维和六类场景；候选结果与完整性指纹已经冻结 |
-| 新封存集内部复核 | 已完成（本机历史证据，公开精简包未收录：`2026-07-21-internal-external-set-review.md`） | 19条正确、4条部分正确、1条错误；内部裁决加权分94.2%，P0硬门槛未通过 |
-| 五条意图边界修正 | 已通过（本机历史证据，公开精简包未收录：`2026-07-21-intent-boundary-regression.md`） | `229/231/233/247/248`全部修复；新24条规则层24/24，规则＋模型连续3次24/24，P0失败为0 |
-| 意图识别独立产品评审 | 已通过（本机历史证据，公开精简包未收录：`2026-07-21-independent-intent-review.md`） | 产品负责人完成24/24条独立判断；23条完全正确，1条P1内容边界问题；P0为10/10，加权分99.17% |
+| 意图识别执行侧人工复核 | [已完成](../evals/interview-intent/reports/2026-07-20-intent-execution-side-review.md) | 24条中20条完全正确、3条部分正确、1条合理歧义；核心加权分98.1%；高影响控制错误为0 |
+| 四条分歧产品裁决 | [已完成](../evals/interview-intent/reports/2026-07-20-intent-adjudication-resolution.md) | 3条人工字段判断被采纳，1条歧义完成定义收口；修正后真实模型连续3次24/24 |
+| 新一轮外部评审封存集 | [已完成](../evals/interview-intent/reports/2026-07-21-external-review-seal.md) | 新增24条未参与规则优化的案例，覆盖五维和六类场景；候选结果与完整性指纹已经冻结 |
+| 新封存集内部复核 | [已完成](../evals/interview-intent/reports/2026-07-21-internal-external-set-review.md) | 19条正确、4条部分正确、1条错误；内部裁决加权分94.2%，P0硬门槛未通过 |
+| 五条意图边界修正 | [已通过](../evals/interview-intent/reports/2026-07-21-intent-boundary-regression.md) | `229/231/233/247/248`全部修复；新24条规则层24/24，规则＋模型连续3次24/24，P0失败为0 |
+| 意图识别独立产品评审 | [已通过](../evals/interview-intent/reports/2026-07-21-independent-intent-review.md) | 产品负责人完成24/24条独立判断；23条完全正确，1条P1内容边界问题；P0为10/10，加权分99.17% |
 | `INT-EVAL-252`内容边界修正 | 已通过 | 未完成表达保持`possible`，有效内容为空；24条评审回归和120条正式意图回归均为100% |
 | 120条意图金标准 | 已完成 | 已物化72条开发、24条验证和24条裁决后回归案例的`IntentAssessmentV1`标签；当前版本为`v1.7-blind-adjudicated` |
-| 意图自动化核心门槛 | 已通过（本机历史证据，公开精简包未收录：`2026-07-20-intent-core-release-gate.md`） | 裁决后规则层120/120；规则＋模型连续3次24/24；P0失败为0 |
-| 意图回归复核入口 | 已部署 | 稳定地址`https://xingfuxitong-example-user-code-example-team.vercel.app/intent-review`展示修正后的24条结果，只展示上下文、原话和系统结果，用于独立人工回归复核 |
-| 五维端到端验证 | 辅助验证通过（本机历史证据，公开精简包未收录：`2026-07-21-preview-adoption-and-20-turn-observation.md`） | 五个维度各1条关键场景，意图结果被后续链路正确采用，结果为5/5 |
-| 20条普通访谈观察 | 已通过（本机历史证据，公开精简包未收录：`2026-07-21-preview-adoption-and-20-turn-observation.md`） | 20/20完成，20/20正常内容路由，每轮恰好1次抽取调用，模型成功20/20，fallback为0 |
-| 发布决策 | 已全量上线（本机历史证据，公开精简包未收录：`2026-07-21-production-enforce-release.md`） | 正式环境使用enforce；当前deployment为`redacted-deployment-id`；公开主链和正式候选访谈验证通过 |
+| 意图自动化核心门槛 | [已通过](../evals/interview-intent/reports/2026-07-20-intent-core-release-gate.md) | 裁决后规则层120/120；规则＋模型连续3次24/24；P0失败为0 |
+| 意图回归复核入口 | 已部署 | 稳定地址`https://xingfuxitong-zouzhijie-code-zouzhijies-projects.vercel.app/intent-review`展示修正后的24条结果，只展示上下文、原话和系统结果，用于独立人工回归复核 |
+| 五维端到端验证 | [辅助验证通过](../evals/interview-intent/reports/2026-07-21-preview-adoption-and-20-turn-observation.md) | 五个维度各1条关键场景，意图结果被后续链路正确采用，结果为5/5 |
+| 20条普通访谈观察 | [已通过](../evals/interview-intent/reports/2026-07-21-preview-adoption-and-20-turn-observation.md) | 20/20完成，20/20正常内容路由，每轮恰好1次抽取调用，模型成功20/20，fallback为0 |
+| 发布决策 | [已全量上线](../evals/interview-intent/reports/2026-07-21-production-enforce-release.md) | 正式环境使用enforce；当前deployment为`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`；公开主链和正式候选访谈验证通过 |
 | 真实效果观察 | 进行中 | 内测阶段直接收集真实问题；P0出现1条即触发紧急修复与回退判断，P1按语义家族累计 |
 
 ## 17. 已确认决策
@@ -727,8 +741,8 @@ intent-eval-v主版本.次版本
 52. `INT-EVAL-252`的`presence=possible`继续表达用户正在组织内容；`evidenceText`应为空，防止将“我想说的是……”视为可用访谈材料。
 53. `INT-EVAL-252`已经按产品裁决修正，三类未完成表达、24条独立评审回归和120条正式意图回归全部通过。
 54. 内测阶段采用全量发布和问题驱动迭代；当前样本量下，直接观察真实使用更有利于快速发现和解决问题。
-55. 正式环境已切换到`enforce`，当前deployment为`redacted-deployment-id`，主域名公开smoke与正式候选访谈验证通过。
-56. 上一正式版本`redacted-deployment-id`和`legacy`档位继续承担P0即时回退能力。
+55. 正式环境已切换到`enforce`，当前deployment为`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，主域名公开smoke与正式候选访谈验证通过。
+56. 上一正式版本`dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc`和`legacy`档位继续承担P0即时回退能力。
 
 ## 18. 当前开放问题
 
@@ -796,7 +810,7 @@ intent-eval-v主版本.次版本
 | 2026-07-21 | 产品负责人独立评审 | 24条中23条完全正确；`INT-EVAL-252`将未完成表达显示为有效内容 | 意图核心评分与内容边界 | 加权分99.17%，P0通过，P1进入处置讨论 |
 | 2026-07-21 | 产品阶段判断 | 当前处于内测和大幅调整阶段，用户与提问数量较少，影子观察成本高且效果有限 | 发布策略 | 决定直接全量上线，以真实问题驱动快速迭代 |
 | 2026-07-21 | 未完成表达修正 | `presence=possible`继续保留，`evidenceText`改为空；120条与24条回归均为100% | 内容边界与回归资产 | 已完成 |
-| 2026-07-21 | 正式环境全量发布 | Production切换enforce，主域名指向`redacted-deployment-id`；公开smoke和正式访谈验证通过 | 生产发布与真实效果观察 | 已完成，进入问题驱动观察 |
+| 2026-07-21 | 正式环境全量发布 | Production切换enforce，主域名指向`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`；公开smoke和正式访谈验证通过 | 生产发布与真实效果观察 | 已完成，进入问题驱动观察 |
 
 ## 21. 决策记录
 

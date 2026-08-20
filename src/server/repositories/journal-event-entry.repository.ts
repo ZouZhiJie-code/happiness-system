@@ -18,6 +18,7 @@ import type {
   JournalEventEntryGenerationRecord,
   JournalEventEntryRecord,
   JournalEventEntrySourceSnapshot,
+  MaterializeJournalEventEntryCardInput,
   ReserveJournalEventEntryGenerationInput,
   ReserveJournalEventEntryGenerationResult,
   SaveJournalEventEntryInput,
@@ -66,6 +67,7 @@ function mapEntry(entry: StoredEntry): JournalEventEntryRecord {
     generationId: entry.generationId,
     title: entry.title,
     content: entry.content,
+    occurredAtText: entry.occurredAtText,
     status: entry.status,
     generationOrigin: entry.generationOrigin,
     generationVersion: entry.generationVersion,
@@ -125,6 +127,54 @@ function assertEntryContent(title: string, content: string) {
   }
 }
 
+function uniqueNonEmptyLines(values: string[]) {
+  const seen = new Set<string>();
+  return values.flatMap((value) => {
+    const line = value.trim();
+    const fingerprint = line.replace(/\s+/gu, "");
+    if (!fingerprint || seen.has(fingerprint)) return [];
+    seen.add(fingerprint);
+    return [line];
+  });
+}
+
+function truncateCardTitle(value: string) {
+  const firstSentence = value
+    .replace(/\s+/gu, " ")
+    .split(/[。！？!?\n]/u, 1)[0]
+    ?.trim() ?? "";
+  const title = [...firstSentence].slice(0, 16).join("").trim();
+  return title || "今天的一件事";
+}
+
+function extractOccurredAtText(values: string[]) {
+  const timePattern = /(?:前天|昨天|今天|今早|早上|上午|中午|下午|傍晚|晚上|夜里|刚才|刚刚|周[一二三四五六日天]|星期[一二三四五六日天]|\d{1,2}(?::\d{2}|点(?:半|\d{1,2}分)?))/u;
+  for (const value of values) {
+    const match = value.match(timePattern)?.[0];
+    if (match) return match.slice(0, 32);
+  }
+  return null;
+}
+
+function buildDeterministicRecordCardDraft(snapshot: JournalEventEntrySourceSnapshot) {
+  const effectiveFactIds = new Set(snapshot.effectiveFactIds);
+  const effectiveFacts = snapshot.facts
+    .filter((fact) => effectiveFactIds.has(fact.id) && fact.stance === "affirmed")
+    .map((fact) => fact.statement);
+  const userMessages = snapshot.messages
+    .filter((message) => message.role === "user")
+    .map((message) => message.content);
+  const sourceLines = uniqueNonEmptyLines(
+    effectiveFacts.length > 0 ? effectiveFacts : userMessages
+  );
+  if (sourceLines.length === 0) return null;
+  return {
+    title: truncateCardTitle(sourceLines[0]!),
+    content: sourceLines.join("\n\n"),
+    occurredAtText: extractOccurredAtText([...sourceLines, ...userMessages])
+  };
+}
+
 function isUniqueConflict(error: unknown) {
   return (
     (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") ||
@@ -165,6 +215,7 @@ async function readCurrentSourceFingerprintWithClient(
     eventId: string;
     activeBranchSessionId: string;
     baseMessageSequence: number;
+    returnTurnId?: string | null;
   }
 ) {
   const [route, factProjection, angleProjection] = await Promise.all([
@@ -187,6 +238,18 @@ async function readCurrentSourceFingerprintWithClient(
   if ((route.path.messages.at(-1)?.sequence ?? 0) !== input.baseMessageSequence) {
     return null;
   }
+  const messageRows = await database.interviewMessage.findMany({
+    where: { id: { in: route.path.messages.map((message) => message.id) } },
+    select: { id: true, userTurnId: true }
+  });
+  const internalReturnMessageIds = new Set(
+    messageRows
+      .filter((message) => input.returnTurnId && message.userTurnId === input.returnTurnId)
+      .map((message) => message.id)
+  );
+  const sourceMessageIds = route.path.messages
+    .map((message) => message.id)
+    .filter((messageId) => !internalReturnMessageIds.has(messageId));
   const eligibleOutcomeIds = new Set(angleProjection.logEligibleOutcomeIds);
   const sourceAngleOutcomeIds = JOURNAL_EVENT_ANGLES.flatMap((angle) => {
     const outcome = angleProjection.outcomesByAngle[angle];
@@ -196,11 +259,57 @@ async function readCurrentSourceFingerprintWithClient(
     eventId: input.eventId,
     activeBranchSessionId: input.activeBranchSessionId,
     baseMessageSequence: input.baseMessageSequence,
-    sourceMessageIds: route.path.messages.map((message) => message.id),
+    sourceMessageIds,
     sourceFactIds: factProjection.effectiveFactIds,
     deprioritizedFactIds: factProjection.deprioritizedFactIds,
     explorationFactIds: factProjection.explorationFactIds,
     sourceAngleOutcomeIds
+  });
+}
+
+async function settleRecordCardReturnWithClient(
+  database: DatabaseClient,
+  input: Pick<
+    MaterializeJournalEventEntryCardInput,
+    "userId" | "eventId" | "returnTurnId"
+  >
+) {
+  const event = await database.journalEvent.findFirst({
+    where: { id: input.eventId, userId: input.userId },
+    select: { id: true, rootSessionId: true, status: true }
+  });
+  if (!event || event.status === "abandoned") throw new Error("EVENT_STATE_CHANGED");
+
+  const now = new Date();
+  if (event.status === "active") {
+    const transition = await database.journalEvent.updateMany({
+      where: { id: event.id, userId: input.userId, status: "active" },
+      data: { status: "completed", completedAt: now, generationStartedAt: null }
+    });
+    if (transition.count !== 1) throw new Error("EVENT_STATE_CHANGED");
+  } else if (event.status !== "completed") {
+    throw new Error("EVENT_STATE_CHANGED");
+  }
+
+  if (input.returnTurnId) {
+    await database.interviewUserTurn.updateMany({
+      where: {
+        id: input.returnTurnId,
+        journalEventId: event.id,
+        action: "exit_event",
+        status: "processing"
+      },
+      data: { status: "completed", errorCode: null, completedAt: now }
+    });
+  }
+
+  await database.interviewSession.updateMany({
+    where: {
+      userId: input.userId,
+      mode: "event_centered",
+      OR: [{ id: event.rootSessionId }, { rootSessionId: event.rootSessionId }]
+    },
+    data: { status: "completed", completedAt: now, lastActivityAt: now }
   });
 }
 
@@ -230,6 +339,46 @@ async function findEntryForEvent(
     },
     include: entryInclude
   });
+}
+
+async function confirmRecordCardForReturnWithClient(
+  database: DatabaseClient,
+  input: MaterializeJournalEventEntryCardInput
+) {
+  const existing = await findEntryForEvent(database, input.userId, input.eventId);
+  if (!existing) throw new Error("EVENT_JOURNAL_ENTRY_NOT_FOUND");
+  if (
+    existing.status === "saved" &&
+    existing.savedRevision === existing.contentRevision &&
+    existing.savedAt
+  ) {
+    return existing;
+  }
+
+  const update = await database.journalEventEntry.updateMany({
+    where: {
+      id: existing.id,
+      contentRevision: existing.contentRevision
+    },
+    data: {
+      status: "saved",
+      savedRevision: existing.contentRevision,
+      savedAt: new Date(),
+      generatedByTurnId: existing.generatedByTurnId ?? input.returnTurnId ?? null
+    }
+  });
+  if (update.count !== 1) throw new Error("EVENT_STATE_CHANGED");
+
+  const saved = await findEntryForEvent(database, input.userId, input.eventId);
+  if (
+    !saved ||
+    saved.status !== "saved" ||
+    saved.savedRevision !== saved.contentRevision ||
+    !saved.savedAt
+  ) {
+    throw new Error("EVENT_STATE_CHANGED");
+  }
+  return saved;
 }
 
 async function findGenerationForOperation(
@@ -529,6 +678,162 @@ export async function getJournalEventEntryGenerationForUser(input: {
   return generation ? mapGeneration(generation) : null;
 }
 
+/**
+ * 为“返回当天 / 暂存当前记录”创建事件卡片。
+ *
+ * 这条路径只使用已经持久化的用户原话与有效事实，直接写入
+ * `JournalEventEntry`，因此不会触发模型调用或产生一条事件日志生成任务。
+ * `eventId` 的唯一约束与可靠提交一起保证重复点击、刷新重放后只留下同一张卡片。
+ */
+export async function materializeJournalEventEntryCard(
+  input: MaterializeJournalEventEntryCardInput
+): Promise<JournalEventEntryRecord> {
+  assertNonEmpty(input.userId, "EVENT_OPERATION_INVALID");
+  assertNonEmpty(input.eventId, "EVENT_OPERATION_INVALID");
+  assertNonEmpty(input.activeBranchSessionId, "EVENT_OPERATION_INVALID");
+  assertPositiveInteger(input.baseMessageSequence, "EVENT_OPERATION_INVALID");
+
+  const finishExisting = async () => prisma.$transaction(async (database) => {
+    const existing = await confirmRecordCardForReturnWithClient(database, input);
+    await settleRecordCardReturnWithClient(database, input);
+    return mapEntry(existing);
+  });
+
+  try {
+    return await prisma.$transaction(async (database) => {
+      const existing = await findEntryForEvent(database, input.userId, input.eventId);
+      if (existing) {
+        const confirmed = await confirmRecordCardForReturnWithClient(database, input);
+        await settleRecordCardReturnWithClient(database, input);
+        return mapEntry(confirmed);
+      }
+
+      const route = await getEventCenteredRouteWithClient(database, {
+        eventId: input.eventId,
+        activeBranchSessionId: input.activeBranchSessionId,
+        userId: input.userId,
+        requireWritable: true
+      });
+      if ((route.path.messages.at(-1)?.sequence ?? 0) !== input.baseMessageSequence) {
+        throw new Error("EVENT_STATE_CHANGED");
+      }
+
+      const [factProjection, angleProjection, messageRows] = await Promise.all([
+        getEffectiveJournalEventFactProjectionWithClient(
+          database,
+          input.eventId,
+          input.activeBranchSessionId
+        ),
+        getEffectiveJournalEventAngleProjectionWithClient(
+          database,
+          input.eventId,
+          input.activeBranchSessionId
+        ),
+        database.interviewMessage.findMany({
+          where: { id: { in: route.path.messages.map((message) => message.id) } },
+          select: { id: true, userTurnId: true, role: true, sequence: true, content: true }
+        })
+      ]);
+      const messagesById = new Map(messageRows.map((message) => [message.id, message]));
+      const sourceMessages = route.path.messages.flatMap((message) => {
+        const stored = messagesById.get(message.id);
+        if (!stored) throw new Error("EVENT_STATE_CHANGED");
+        if (input.returnTurnId && stored.userTurnId === input.returnTurnId) return [];
+        return [{
+          id: stored.id,
+          role: stored.role,
+          sequence: stored.sequence,
+          content: stored.content
+        }];
+      });
+      const logEligibleIds = new Set(angleProjection.logEligibleOutcomeIds);
+      const angleOutcomes = JOURNAL_EVENT_ANGLES.flatMap((angle) => {
+        const outcome = angleProjection.outcomesByAngle[angle];
+        return outcome ? [outcome] : [];
+      });
+      const sourceAngleOutcomeIds = angleOutcomes
+        .map((outcome) => outcome.id)
+        .filter((outcomeId) => logEligibleIds.has(outcomeId));
+      const sourceFingerprint = buildJournalEventEntrySourceFingerprint({
+        eventId: input.eventId,
+        activeBranchSessionId: input.activeBranchSessionId,
+        baseMessageSequence: input.baseMessageSequence,
+        sourceMessageIds: sourceMessages.map((message) => message.id),
+        sourceFactIds: factProjection.effectiveFactIds,
+        deprioritizedFactIds: factProjection.deprioritizedFactIds,
+        explorationFactIds: factProjection.explorationFactIds,
+        sourceAngleOutcomeIds
+      });
+      const sourceSnapshot: JournalEventEntrySourceSnapshot = {
+        schemaVersion: 1,
+        eventId: input.eventId,
+        branchSessionId: input.activeBranchSessionId,
+        baseMessageSequence: input.baseMessageSequence,
+        messages: sourceMessages,
+        facts: factProjection.facts,
+        effectiveFactIds: factProjection.effectiveFactIds,
+        deprioritizedFactIds: factProjection.deprioritizedFactIds,
+        explorationFactIds: factProjection.explorationFactIds,
+        angleOutcomes,
+        logEligibleOutcomeIds: sourceAngleOutcomeIds,
+        pendingClaimConfirmation: {
+          kind: "no_eligible_claim",
+          claimId: null,
+          factId: null
+        }
+      };
+      const draft = buildDeterministicRecordCardDraft(sourceSnapshot);
+      if (!draft) throw new Error("EVENT_RECORD_CARD_SOURCE_INSUFFICIENT");
+
+      const currentFingerprint = await readCurrentSourceFingerprintWithClient(database, {
+        eventId: input.eventId,
+        activeBranchSessionId: input.activeBranchSessionId,
+        baseMessageSequence: input.baseMessageSequence,
+        returnTurnId: input.returnTurnId
+      });
+      if (currentFingerprint !== sourceFingerprint) throw new Error("EVENT_STATE_CHANGED");
+
+      const savedAt = new Date();
+      const created = await database.journalEventEntry.create({
+        data: {
+          id: randomUUID(),
+          eventId: input.eventId,
+          sourceBranchSessionId: input.activeBranchSessionId,
+          generatedByTurnId: input.returnTurnId ?? null,
+          currentGenerationTraceId: null,
+          generationId: null,
+          title: draft.title,
+          content: draft.content,
+          occurredAtText: draft.occurredAtText,
+          status: "saved",
+          generationOrigin: "deterministic",
+          generationVersion: 1,
+          sourceMessageSequence: input.baseMessageSequence,
+          sourceMessageIds: sourceMessages.map((message) => message.id),
+          sourceFactIds: factProjection.effectiveFactIds,
+          sourceAngleOutcomeIds,
+          sourceFingerprint,
+          sourceSnapshot: toJsonValue(sourceSnapshot),
+          contentRevision: 1,
+          savedRevision: 1,
+          editedAt: null,
+          savedAt
+        },
+        include: entryInclude
+      });
+      await settleRecordCardReturnWithClient(database, input);
+      return mapEntry(created);
+    });
+  } catch (error) {
+    try {
+      return await finishExisting();
+    } catch {
+      if (isUniqueConflict(error)) throw new Error("EVENT_STATE_CHANGED");
+      throw error;
+    }
+  }
+}
+
 export async function completeJournalEventEntryGeneration(
   input: CompleteJournalEventEntryGenerationInput
 ): Promise<JournalEventEntryRecord> {
@@ -624,6 +929,7 @@ export async function completeJournalEventEntryGeneration(
         generationId: generation.id,
         title: input.title.trim(),
         content: input.content,
+        occurredAtText: input.occurredAtText?.trim() || null,
         status: "draft",
         generationOrigin: input.outputOrigin,
         generationVersion: generation.attemptCount,
@@ -634,7 +940,7 @@ export async function completeJournalEventEntryGeneration(
         sourceFingerprint: generation.sourceFingerprint,
         sourceSnapshot: toJsonValue(generation.sourceSnapshot),
         contentRevision: 1,
-        editedAt: now
+        editedAt: null
       }
     });
     const eventUpdate = await database.journalEvent.updateMany({
@@ -648,7 +954,7 @@ export async function completeJournalEventEntryGeneration(
         mode: "event_centered",
         OR: [{ id: event.rootSessionId }, { rootSessionId: event.rootSessionId }]
       },
-      data: { status: "completed", completedAt: now }
+      data: { status: "completed", completedAt: now, lastActivityAt: now }
     });
     const generationUpdate = await database.journalEventEntryGeneration.updateMany({
       where: { id: generation.id, status: "processing" },
@@ -669,7 +975,11 @@ export async function completeJournalEventEntryGeneration(
       data: {
         status: "completed",
         outputOrigin: input.outputOrigin,
-        finalOutput: toJsonValue({ title: input.title.trim(), content: input.content }),
+        finalOutput: toJsonValue({
+          title: input.title.trim(),
+          content: input.content,
+          occurredAtText: input.occurredAtText?.trim() || null
+        }),
         pipelineDecisions: toJsonValue([
           ...previousDecisions,
           {

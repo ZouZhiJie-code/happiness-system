@@ -167,21 +167,28 @@ describe("journal day mode repository", () => {
     expect(ownership.lastAssertedAt).toEqual(assertionAt);
   });
 
-  it("returns a clear conflict without changing an existing clean owner", async () => {
+  it("moves a legacy day to the event-centered route when a new event is first written", async () => {
     const ownership = addOwnership({ primaryMode: "dimension_legacy" });
+    const assertionAt = new Date("2026-07-22T04:00:00.000Z");
 
     const result = await claimJournalDayModeInTransaction(transactionDatabase, {
       userId,
       entryDate,
-      mode: "event_centered"
+      mode: "event_centered",
+      claimedBySessionId: "event-root-session",
+      now: assertionAt
     });
 
     expect(result).toMatchObject({
-      kind: "conflict",
-      code: "JOURNAL_DAY_MODE_CONFLICT",
-      ownership: { id: ownership.id, primaryMode: "dimension_legacy" }
+      kind: "claimed",
+      ownership: {
+        id: ownership.id,
+        primaryMode: "event_centered",
+        status: "clean",
+        claimedBySessionId: "event-root-session"
+      }
     });
-    expect(mockPrisma.journalDayOwnership.update).not.toHaveBeenCalled();
+    expect(ownership.lastAssertedAt).toEqual(assertionAt);
     expect(state.ownerships).toHaveLength(1);
   });
 
@@ -204,7 +211,7 @@ describe("journal day mode repository", () => {
     expect(state.ownerships[0]).toMatchObject({ primaryMode: "event_centered", status: "clean" });
   });
 
-  it("treats migration-detected mixed days as a read-only route", async () => {
+  it("keeps a mixed day read-only until an event-centered write takes ownership", async () => {
     const ownership = addOwnership({
       status: "mixed",
       mixedAt: new Date("2026-07-22T01:30:00.000Z"),
@@ -219,11 +226,15 @@ describe("journal day mode repository", () => {
       });
     await expect(
       claimJournalDayModeInTransaction(transactionDatabase, { userId, entryDate, mode: "event_centered" })
-    ).resolves.toMatchObject({ kind: "mixed", code: "JOURNAL_DAY_MODE_MIXED" });
+    ).resolves.toMatchObject({
+      kind: "claimed",
+      ownership: { id: ownership.id, primaryMode: "event_centered", status: "clean" }
+    });
     await expect(
       assertJournalDayModeInTransaction(transactionDatabase, { userId, entryDate, mode: "dimension_legacy" })
-    ).rejects.toThrow("JOURNAL_DAY_MODE_MIXED");
-    expect(mockPrisma.journalDayOwnership.update).not.toHaveBeenCalled();
+    ).rejects.toThrow("JOURNAL_DAY_MODE_CONFLICT");
+    expect(ownership.mixedAt).toBeNull();
+    expect(ownership.mixedReason).toBeNull();
   });
 
   it("requires a claimed day and the matching mode before later writes continue", async () => {

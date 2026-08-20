@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "authorizationVersion": "2026-08-13.gi088-stage-c-authorization-v1",
+  "status": "authorized_implementation_in_progress_result_pending",
+  "authorizedBy": "product_owner",
+  "authorizedAt": "2026-08-13",
+  "decision": "判断固定 Judge 模型与思考模式是否具备承担 GI-088 正式结果初评的资格。",
+  "inputs": {
+    "judgeDatasetVersion": "2026-08-13.v2",
+    "blindPackageSha256": "0b5cf9ac4e7833687a9f32f554e20b18adccdeb62a119b0a26e48a11e70ae696",
+    "goldMappingSha256": "82903b1ed3e83e4f629a776bc54fb788abc08fa4dbe76c89bb42fe96fb865452",
+    "promptVersion": "2026-08-13.gi088-judge-prompt-v1",
+    "promptSha256": "6426061d719ba51e5464116579fbea3d55157d60bbd344382f1d7186a3b7bf41"
+  },
+  "route": {
+    "region": "cn-beijing",
+    "baseUrlExposure": "public_report_host_only_private_run_identity_hash_only",
+    "plusModel": "qwen3.7-plus-2026-05-26",
+    "plusModes": ["normal", "thinking"],
+    "maxModel": "qwen3.7-max-2026-06-08",
+    "maxModeRule": "only_if_both_plus_modes_fail_use_better_plus_mode",
+    "selectionRule": "normal_plus_passes_select_normal; otherwise_thinking_plus_passes_select_thinking; otherwise_run_max"
+  },
+  "requestContract": {
+    "responseFormat": "json_object",
+    "temperature": 0,
+    "maxTokens": 2048,
+    "normalEnableThinking": false,
+    "thinkingEnableThinking": true,
+    "reasoningContentPersistence": "forbidden"
+  },
+  "gate": {
+    "singleCaseBlockerRecall": 1,
+    "minimumBlockerAccuracy": 0.9,
+    "minimumFourClassAgreementCount": 17,
+    "requiredCriticalAnchors": ["correction_ignored", "unsupported_fabrication", "event_boundary", "explicit_stop_ignored", "false_stop"]
+  },
+  "budget": {
+    "maximumCalls": 64,
+    "plannedPlusCalls": 40,
+    "conditionalMaxCalls": 20,
+    "maximumTechnicalRetries": 4,
+    "maximumCostCny": 10,
+    "plusInputCnyPerMillionTokens": 2,
+    "plusOutputCnyPerMillionTokens": 8,
+    "maxInputCnyPerMillionTokens": 12,
+    "maxOutputCnyPerMillionTokens": 36
+  },
+  "privacy": {
+    "credentialSource": "process_environment_only",
+    "credentialVariable": "EVENT_CENTERED_JUDGE_QWEN_API_KEY",
+    "credentialPersistence": "forbidden",
+    "blindPayloadOnlyDuringCalls": true,
+    "goldLoadedAfterArmCompletion": true,
+    "publicContentExportCount": 0
+  },
+  "stopPoint": "阶段 C 形成 Judge qualified、Judge No-Go 或 technical_blocked 后停止；独立准入、人工提交、Preview 和 Production 保持关闭。"
+}

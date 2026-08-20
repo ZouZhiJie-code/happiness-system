@@ -63,7 +63,7 @@ v5 的实现、空白批次和 Trace 读取能力继续作为历史证据保留�
 
 产品负责人完成 A1、A2 两条 Thinking high 轨迹后确认原有问题已经解决，并在 A3 开始前提前结束：
 
-- 批次：`redacted-operational-id`；
+- 批次：`37517d91-a258-423a-bb26-a58c97357e68`；
 - 终态：`early_stopped`，完成 `2/4`；A1、A2 完成，A3、A4 为 `not_run`；
 - 11 条可见 ask 的人工分类：同一焦点自然可答 `9`，同一焦点表达偏重 `2`，多个独立回答任务 `0`；
 - 产品负责人判断：v6“单一回答焦点”通过，无需继续执行 A3、A4；
@@ -77,10 +77,10 @@ v5 的实现、空白批次和 Trace 读取能力继续作为历史证据保留�
 
 私有 Preview、专用评测库空白批次与发布隔离均已验证：
 
-- Preview deployment：`redacted-deployment-id`；
+- Preview deployment：`dpl_5Rq7gTnovApDY97b4pg8k7YJf33r`；
 - 评测时入口：`https://xingfuxitong-gi088-v6-single-focus.vercel.app/preview/gi088-evaluation`；该别名已在 v6 收口后推进到 v7，v6 完整结果继续通过本地私有导出只读保存；
 - Vercel 状态：`READY`；
-- 批次初始回读：`redacted-operational-id`，`running`、`0/4`；最终为 `early_stopped`、`2/4`；
+- 批次初始回读：`37517d91-a258-423a-bb26-a58c97357e68`，`running`、`0/4`；最终为 `early_stopped`、`2/4`；
 - 评测模式：`high_only`，活动分支只有 `high`；
 - 执行指纹回读完全一致，Codex 创建批次时模型调用 `0`；
 - 未登录 session 返回 `401`，页面通过登录回跳进入评测工作台；

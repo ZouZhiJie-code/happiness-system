@@ -349,7 +349,7 @@ v72 六例首轮已经完成。第一段技术 `6/6`、严格语义 `3/6`；第�
 - 适用范围：v72 候选、下一份定向候选、结构化输出基础设施和板块 8依赖门。
 - 依据与案例：`SF4-A-EFFECT-01 / SF4-CORRECTION-READY-01 / SF4-LIMITED-01` 三类语义失败，以及六例统一 `Prompt must contain the word 'json'` 技术失败。
 - 影响板块：板块 4部分重开；板块 6保留双层判尺；板块 7与板块 8继续阻断。
-- 专项文档：本文、[04j｜生成式质量评测 v1](./04j-generative-quality-evaluation-v1.md)、[04k｜生成式提问策略与链路改造](./04k-generative-question-strategy-implementation.md)、Codex 双层验收（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md`）
+- 专项文档：本文、[04j｜生成式质量评测 v1](./04j-generative-quality-evaluation-v1.md)、[04k｜生成式提问策略与链路改造](./04k-generative-question-strategy-implementation.md)、[Codex 双层验收](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md)
 - 确认日期：`2026-08-02`
 
 ## 11. v72 停止时的状态与下一步（历史记录）
@@ -372,15 +372,15 @@ v72 六例首轮已经完成。第一段技术 `6/6`、严格语义 `3/6`；第�
 
 实现收口包含：第二段每条 `sourceEvidence` 只保留 `ref / sourceText`；缺少逐字 `quote` 的旧事实不可引用；v1 / v2 / v3 checkpoint 统一重跑第一段升级到 v4；同一目标复用来源必须同时满足 `decision.state` 与 `questionIntent.gap` 一致；兼容 `origin` 解除 `answerStatus` 绑定并仅作为旧 schema 标签；v64、v65 与 `GI-009` 血缘只读隔离，不参与当时候选派生、恢复或质量计数。
 
-板块 4 语义骨架投影复核、板块 6 双层判尺与 runner 适配已经完成。六例矩阵覆盖四角度、纠正与材料有限；确认包路径为 semantic-frame-v4-offline-case-confirmation.md（本机历史证据，公开精简包未收录：`semantic-frame-v4-offline-case-confirmation.md`），案例指纹为 `ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62`。运行策略为 `modelRunAllowed=false`，本轮预算 `0`、模型调用 `0`。
+板块 4 语义骨架投影复核、板块 6 双层判尺与 runner 适配已经完成。六例矩阵覆盖四角度、纠正与材料有限；确认包路径为 [semantic-frame-v4-offline-case-confirmation.md](../../../artifacts/generative-interview-board7/2026-08-01/semantic-frame-v4-offline-case-confirmation.md)，案例指纹为 `ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62`。运行策略为 `modelRunAllowed=false`，本轮预算 `0`、模型调用 `0`。
 
 离线验证结果：事件中心 unit `30` 个测试文件、`622` 个用例通过；生成式 eval `6` 个测试文件、`56` 个用例通过；TypeScript 类型检查通过；ESLint `0 error / 4 existing warnings`；差异格式检查通过。该结果确认协议、适配、恢复和离线评测链路可用；真实模型与正式质量门仍待验证，板块 7 与板块 8 继续阻断，Production 保持 `legacy + baseline`。
 
 ## 13. 2026-08-01 v71 首轮六例运行授权门
 
-六例已经完成产品确认，数据集为 `evals/event-centered-generative/board7-semantic-frame-v4-offline-confirmation-v1.json`，案例指纹为 `ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62`。首轮运行授权卡（本机历史证据，公开精简包未收录：`board7-provider-v71-semantic-frame-first-pass-approval.md`）在该历史时点为 `pending`，模型调用 `0`。
+六例已经完成产品确认，数据集为 `evals/event-centered-generative/board7-semantic-frame-v4-offline-confirmation-v1.json`，案例指纹为 `ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62`。首轮[运行授权卡](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v71-semantic-frame-first-pass-approval.md)在该历史时点为 `pending`，模型调用 `0`。
 
-pending 预算账本（本机历史证据，公开精简包未收录：`board7-provider-v71-semantic-frame-first-pass-budget.json`）已经生成，scopeFingerprint 为 `960eae47ec6b0026e44fed960520fc92b3cc6c6faf22f4aceae778140c28ed98`；程序化护栏拒绝未授权运行，`v71 live` 入口保持关闭，模型调用 `0`。
+[pending 预算账本](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v71-semantic-frame-first-pass-budget.json)已经生成，scopeFingerprint 为 `960eae47ec6b0026e44fed960520fc92b3cc6c6faf22f4aceae778140c28ed98`；程序化护栏拒绝未授权运行，`v71 live` 入口保持关闭，模型调用 `0`。
 
 运行参数固定为 `two_call / deepseek-v4-flash / temperature 0.2 / max tokens 1500 / timeout 12s / thinking off`。六例对应 `12` 次名义生成请求，技术极限为 `24` 次；最多 `1` 次 `/models` 只读预检单列。有效但低质量的结果不重试，首轮六例结束即停；失败后归因并重新审批，成功后也只生成下一轮独立预算。
 
@@ -390,7 +390,7 @@ pending 预算账本（本机历史证据，公开精简包未收录：`board7-p
 
 用户已授权首轮六例。运行先完成 `1` 次只读预检，随后在 `SF4-F-READY-01` 运行第一段与第二段两次技术尝试，共 `3` 次生成请求。第一段返回可追溯的 `ready → complete` 语义骨架；第二段两次均使用顶层 `status=expressible`，而既定结构只接收 `ok` 或 `cannot_express`，因此被判为 `INVALID_SCHEMA` 并中止整轮。余下 `5` 例未运行。
 
-首轮报告见 2026-08-02 运行报告（本机历史证据，公开精简包未收录：`board7-provider-v71-semantic-frame-first-pass-report.md`），账本见 终局预算记录（本机历史证据，公开精简包未收录：`board7-provider-v71-semantic-frame-first-pass-budget.json`）。第二段 Prompt 已在离线层明确成功状态必须是 `ok`，后续模型运行仍需新的确认包与独立授权。该运行还发现用户已经说清“松快”的场景被兼容层标为 `ai_synthesized`，成果来源判定进入板块 4、6、7复核。板块 8继续等待，Production 保持 `legacy + baseline`。
+首轮报告见 [2026-08-02 运行报告](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v71-semantic-frame-first-pass-report.md)，账本见 [终局预算记录](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v71-semantic-frame-first-pass-budget.json)。第二段 Prompt 已在离线层明确成功状态必须是 `ok`，后续模型运行仍需新的确认包与独立授权。该运行还发现用户已经说清“松快”的场景被兼容层标为 `ai_synthesized`，成果来源判定进入板块 4、6、7复核。板块 8继续等待，Production 保持 `legacy + baseline`。
 
 ## 15. 2026-08-02 v72 根因修复与新授权门
 
@@ -404,13 +404,13 @@ pending 预算账本（本机历史证据，公开精简包未收录：`board7-p
 
 新的六例开发冒烟集沿用感受、想法、关系、纠正和材料有限故事，并调整行动故事，使用户只提供“横排三页乐谱、手未离开琴键、连续弹完三页”三项事实，AI 负责连接横排改动与原中断消失的实际效果。这样六例真正覆盖 `3 user_articulated + 1 ai_synthesized + 1 needs_more + 1 limited`。
 
-确认包：semanticFrame v5 成果归属与统一回应确认包（本机历史证据，公开精简包未收录：`semantic-frame-v5-offline-case-confirmation.md`）。数据集版本为 `2026-08-02.board7-semantic-frame-v5-offline-confirmation-v1`，案例指纹为 `481c86765c4d7f1866887705b5af2e032975dc2818c27e9792dedefe3fee2229`。
+确认包：[semanticFrame v5 成果归属与统一回应确认包](../../../artifacts/generative-interview-board7/2026-08-02/semantic-frame-v5-offline-case-confirmation.md)。数据集版本为 `2026-08-02.board7-semantic-frame-v5-offline-confirmation-v1`，案例指纹为 `481c86765c4d7f1866887705b5af2e032975dc2818c27e9792dedefe3fee2229`。
 
 当前模型预算为 `0`。v71 `aborted` 账本不可再次消费；v72 六例需要先完成产品确认，再建立新的独立预算并获得明确授权。六例质量门、隐藏集、工作集、准入和板块 8继续阻断，Production 保持 `legacy + baseline`。
 
 ## 16. 2026-08-02 v72 六例首轮、双层验收与停止
 
-产品负责人确认六例并批准一次真实首轮。首个 v1 账本在 Provider 请求发生前因脚本只读取旧 Endpoint 配置而中止，预检和生成请求均为 `0`，已通过基础设施空跑审计（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-infrastructure-void.md`）封存。评测入口随后加载与应用相同的完整环境层级，以明确引用 v1 空跑的 v2 账本恢复同一首轮。
+产品负责人确认六例并批准一次真实首轮。首个 v1 账本在 Provider 请求发生前因脚本只读取旧 Endpoint 配置而中止，预检和生成请求均为 `0`，已通过[基础设施空跑审计](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-infrastructure-void.md)封存。评测入口随后加载与应用相同的完整环境层级，以明确引用 v1 空跑的 v2 账本恢复同一首轮。
 
 v2 共使用 `1` 次只读预检与 `18` 次生成请求，六例全部到达终态：
 
@@ -424,6 +424,6 @@ v2 共使用 `1` 次只读预检与 `18` 次生成请求，六例全部到达终
 
 `GI-049` 据此固定为 `fail / stop`。结构化输出层需要保证所有 `json_object` 请求都携带中性 JSON 输出要求；第一段重新打开显式关系归属、纠正优先级和必要证据覆盖。当前停止新的模型运行和 Prompt 调优，不进入隐藏集、工作集、准入或板块 8。下一候选需要重新冻结产品规则、升级版本和案例指纹，并获得独立授权。
 
-证据：原始运行报告（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-v2-report.md`）、Codex 双层验收（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md`）、v2 终局账本（本机历史证据，公开精简包未收录：`board7-provider-v72-semantic-frame-first-pass-budget-v2.json`）。Production 保持 `legacy + baseline`。
+证据：[原始运行报告](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-report.md)、[Codex 双层验收](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md)、[v2 终局账本](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-budget-v2.json)。Production 保持 `legacy + baseline`。
 
 历史离线基线为事件中心与生成式评测 `35` 个测试文件、`679/679` 用例通过；v72 运行门补齐后为 `36` 个文件、`687/687` 用例通过。离线结果证明协议、兼容、恢复、默认两段式编排和评测资产可以执行；真实六例已经由本节结果判定失败。

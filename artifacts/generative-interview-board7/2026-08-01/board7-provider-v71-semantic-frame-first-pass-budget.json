@@ -1,0 +1,118 @@
+{
+  "ledgerVersion": "board7-provider-v71-semantic-frame-first-pass-budget-v1",
+  "status": "aborted",
+  "scopeFingerprint": "960eae47ec6b0026e44fed960520fc92b3cc6c6faf22f4aceae778140c28ed98",
+  "datasetVersion": "2026-08-01.board7-semantic-frame-v4-offline-confirmation-v1",
+  "caseIds": [
+    "SF4-F-READY-01",
+    "SF4-T-ASK-01",
+    "SF4-R-COEXIST-01",
+    "SF4-A-EFFECT-01",
+    "SF4-CORRECTION-READY-01",
+    "SF4-LIMITED-01"
+  ],
+  "caseFingerprint": "ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62",
+  "candidateVersions": {
+    "strategy": "5.49.0",
+    "semanticPrompt": "2026-08-01.event-centered-generative-v71-semantic-skeleton",
+    "visiblePrompt": "2026-08-01.event-centered-generative-v71-visible",
+    "fewShot": "quality-patterns.2026-08-01.v28",
+    "semanticArtifact": "event-centered-semantic-plan.v4",
+    "angleCard": "2.12.0"
+  },
+  "runtimeConfig": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxRequestsPerTurn": 4,
+    "maxTechnicalRetriesPerStage": 1,
+    "architecture": "two_call",
+    "thinking": "disabled"
+  },
+  "runLimit": 1,
+  "requestBudget": {
+    "plannedCases": 6,
+    "stagesPerCase": 2,
+    "nominalGenerationRequests": 12,
+    "generationRequestsMax": 24,
+    "readOnlyModelsPreflightMax": 1
+  },
+  "runPolicy": {
+    "firstPassOnly": true,
+    "validLowQualityRetryAllowed": false,
+    "automaticSecondRoundAllowed": false,
+    "promptTuningAllowed": false,
+    "hiddenSetRunAllowed": false,
+    "workSetRunAllowed": false
+  },
+  "approval": {
+    "approvalType": "board7_provider_v71_semantic_frame_first_pass_run",
+    "approvalVersion": "board7-provider-v71-semantic-frame-first-pass-approval-v1",
+    "decision": "approved",
+    "approvedBy": "product_owner",
+    "approvedAt": "2026-08-02T06:41:07Z",
+    "confirmationText": "授权运行首轮六例",
+    "taskId": "codex-board7-v71-semantic-frame-first-pass-2026-08-02",
+    "budgetVersion": "board7-provider-v71-semantic-frame-first-pass-budget-v1",
+    "scopeFingerprint": "960eae47ec6b0026e44fed960520fc92b3cc6c6faf22f4aceae778140c28ed98",
+    "datasetVersion": "2026-08-01.board7-semantic-frame-v4-offline-confirmation-v1",
+    "caseFingerprint": "ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62",
+    "caseIds": [
+      "SF4-F-READY-01",
+      "SF4-T-ASK-01",
+      "SF4-R-COEXIST-01",
+      "SF4-A-EFFECT-01",
+      "SF4-CORRECTION-READY-01",
+      "SF4-LIMITED-01"
+    ],
+    "candidateVersions": {
+      "strategy": "5.49.0",
+      "semanticPrompt": "2026-08-01.event-centered-generative-v71-semantic-skeleton",
+      "visiblePrompt": "2026-08-01.event-centered-generative-v71-visible",
+      "fewShot": "quality-patterns.2026-08-01.v28",
+      "semanticArtifact": "event-centered-semantic-plan.v4",
+      "angleCard": "2.12.0"
+    },
+    "model": "deepseek-v4-flash"
+  },
+  "reservation": {
+    "reservationId": "78dd2447-b4f9-4863-bdd7-f6f0c04e24f2",
+    "runOrdinal": 1,
+    "reservedAt": "2026-08-02T06:46:07.479Z",
+    "completedAt": "2026-08-02T06:46:14.248Z",
+    "status": "aborted",
+    "preflightRequests": 1,
+    "attempts": [
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "semantic",
+        "attemptIndex": 1,
+        "status": "valid",
+        "reservedAt": "2026-08-02T06:46:08.801Z",
+        "settledAt": "2026-08-02T06:46:11.303Z",
+        "errorCode": null
+      },
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "visible",
+        "attemptIndex": 1,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T06:46:11.320Z",
+        "settledAt": "2026-08-02T06:46:12.833Z",
+        "errorCode": "INVALID_SCHEMA"
+      },
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "visible",
+        "attemptIndex": 2,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T06:46:12.836Z",
+        "settledAt": "2026-08-02T06:46:14.245Z",
+        "errorCode": "INVALID_SCHEMA"
+      }
+    ],
+    "runEnvelopeFingerprint": null,
+    "error": "GENERATIVE_SEMANTIC_FRAME_V4_FIRST_PASS_TECHNICAL_STOP:SF4-F-READY-01"
+  }
+}

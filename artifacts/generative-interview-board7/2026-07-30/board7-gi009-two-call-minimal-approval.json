@@ -1,0 +1,23 @@
+{
+  "approvalType": "board7_gi009_two_call_minimal_experiment",
+  "approvalVersion": "board7-gi009-two-call-minimal.1",
+  "decision": "approved",
+  "approvedBy": "product_owner",
+  "approvedAt": "2026-07-31T01:14:09Z",
+  "architecture": "two_call",
+  "confirmationVersion": "2026-07-30.v5",
+  "datasetVersion": "2026-07-30.v3",
+  "caseFingerprint": "79885a71f4eb8c3a355d933f2776422219464423e910df9fa29ef56f5a0cb24f",
+  "targetedCaseIds": [
+    "SMK-R-PARTIAL-ASK",
+    "SMK-F-AI"
+  ],
+  "controls": {
+    "strict_lock": true,
+    "semantic_core": true,
+    "state_mapping": true,
+    "expression_only_retry": true,
+    "targeted_2_of_2": true,
+    "conditional_single_full_correction": true
+  }
+}

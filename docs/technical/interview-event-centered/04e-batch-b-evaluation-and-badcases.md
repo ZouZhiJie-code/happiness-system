@@ -172,7 +172,7 @@ npm run eval:event-centered:batch-b -- \
 
 ## 6. 2026-07-22 真实模型基线与恢复记录
 
-正式报告：event-centered-batch-b-formal.json（本机历史证据，公开精简包未收录：`event-centered-batch-b-formal.json`）。本次已使用真实 Ark 聊天模型与独立 Judge；模型输出结构协议、单案例 checkpoint、受控并行和 Judge-only 续跑能力均已验证。
+正式报告：[event-centered-batch-b-formal.json](../../../artifacts/event-centered-batch-b-formal.json)。本次已使用真实 Ark 聊天模型与独立 Judge；模型输出结构协议、单案例 checkpoint、受控并行和 Judge-only 续跑能力均已验证。
 
 | 指标 | 结果 |
 |---|---:|
@@ -207,7 +207,7 @@ npm run eval:event-centered:batch-b -- \
 
 文本边界策略完成后，旧 checkpoint 中的 `EVB-PUB-091` 仍要求“用户说不知道后继续提出一个低压力锚点”，与当前“文本否定直接收束”的 MVP 规则冲突。执行器因此拒绝混合旧结果；这项保护保证新策略只使用同一版本的真实评测证据。
 
-已创建新的正式批次 checkpoint：event-centered-batch-b-formal-v2.checkpoint.json（本机历史证据，公开精简包未收录：`event-centered-batch-b-formal-v2.checkpoint.json`）。当前为 `0 / 580`，未发起策略模型或 Judge 请求。两次启动都在读取已发布运行配置时因数据库连接暂不可达而停止，错误属于运行配置连接恢复事项。
+已创建新的正式批次 checkpoint：[event-centered-batch-b-formal-v2.checkpoint.json](../../../artifacts/event-centered-batch-b-formal-v2.checkpoint.json)。当前为 `0 / 580`，未发起策略模型或 Judge 请求。两次启动都在读取已发布运行配置时因数据库连接暂不可达而停止，错误属于运行配置连接恢复事项。
 
 运行配置连接恢复后，从该空 checkpoint 继续即可：
 
@@ -243,7 +243,7 @@ npm run eval:event-centered:batch-b -- \
 
 ### 2026-07-23｜第11版修复前正式基线
 
-第11版使用当前冻结的单事件边界、文本否定直接收束与同配置策略模型 / 独立 Judge 口径，完成了首次`580`条全量调度。结果保存在：第11版正式报告（本机历史证据，公开精简包未收录：`event-centered-batch-b-formal-v11.json`） 与 第11版可恢复检查点（本机历史证据，公开精简包未收录：`event-centered-batch-b-formal-v11.checkpoint.json`）。
+第11版使用当前冻结的单事件边界、文本否定直接收束与同配置策略模型 / 独立 Judge 口径，完成了首次`580`条全量调度。结果保存在：[第11版正式报告](../../../artifacts/event-centered-batch-b-formal-v11.json) 与 [第11版可恢复检查点](../../../artifacts/event-centered-batch-b-formal-v11.checkpoint.json)。
 
 | 指标 | 最终基线结果 |
 |---|---:|

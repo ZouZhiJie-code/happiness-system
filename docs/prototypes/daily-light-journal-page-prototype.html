@@ -1,0 +1,2011 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <title>Daily Light｜今日日志页交互原型</title>
+  <style>
+    :root {
+      --wood: #855a34;
+      --wood-deep: #684323;
+      --paper-soft: #edd8b5;
+      --paper-main: #f8e9cc;
+      --paper-panel: #f5ecdb;
+      --paper-surface: #fff9f0;
+      --paper-highlight: #fffdf8;
+      --ink: #302114;
+      --ink-2: #604529;
+      --ink-3: #8a6b4b;
+      --muted: #9d8062;
+      --accent: #a96f3d;
+      --accent-deep: #85501f;
+      --accent-soft: #e7cba7;
+      --line-soft: rgba(121, 87, 52, .16);
+      --line-strong: rgba(121, 87, 52, .38);
+      --empty: #7a6857;
+      --progress: #8a5d17;
+      --draft: #7c5568;
+      --completed: #45644a;
+      --mixed: #8e5638;
+      --danger: #9f3a2f;
+      --radius-shell: 28px;
+      --radius-card: 20px;
+      --radius-control: 12px;
+      --shadow-shell: 0 18px 46px rgba(82, 48, 20, .18);
+      --shadow-card: 0 8px 18px rgba(103, 66, 34, .08);
+      --display: Baskerville, "Iowan Old Style", "Times New Roman", "Songti SC", serif;
+      --body: Charter, Georgia, "PingFang SC", "Hiragino Sans GB", serif;
+      --ui: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { min-height: 100%; scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--body);
+      background:
+        radial-gradient(circle at 16% 8%, rgba(255, 246, 231, .30), transparent 24%),
+        radial-gradient(circle at 82% 18%, rgba(83, 49, 22, .13), transparent 30%),
+        repeating-linear-gradient(6deg, rgba(255,255,255,.028) 0 1px, transparent 1px 9px),
+        linear-gradient(180deg, #81552f 0%, #a97242 30%, #d2a16b 72%, #e4bf8d 100%);
+      overflow-x: clip;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .16;
+      background:
+        linear-gradient(105deg, transparent 0 12%, rgba(255,255,255,.16) 12.5%, transparent 13.5% 38%, rgba(73,41,17,.10) 39%, transparent 40% 72%, rgba(255,255,255,.12) 73%, transparent 74%),
+        repeating-linear-gradient(90deg, transparent 0 118px, rgba(68,39,17,.04) 119px 120px);
+      mix-blend-mode: soft-light;
+      z-index: -1;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+    button:active, .pressable:active { transform: scale(.97); }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid rgba(169, 111, 61, .34); outline-offset: 3px; }
+    ::selection { background: rgba(169, 111, 61, .22); }
+
+    .ui { font-family: var(--ui); }
+    .display { font-family: var(--display); }
+    .hidden { display: none !important; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      min-height: 66px;
+      border-bottom: 1px solid rgba(90, 55, 27, .18);
+      background: rgba(238, 214, 177, .92);
+      backdrop-filter: blur(16px) saturate(.92);
+      box-shadow: 0 8px 24px rgba(83, 49, 23, .08);
+    }
+    .header-row {
+      width: min(1480px, calc(100% - 30px));
+      min-height: 66px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: auto minmax(420px, 1fr) auto;
+      align-items: center;
+      gap: 24px;
+    }
+    .brand {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+    }
+    .brand strong {
+      display: block;
+      font-family: var(--display);
+      font-size: 1.35rem;
+      letter-spacing: .015em;
+      line-height: 1;
+    }
+    .brand span {
+      display: block;
+      margin-top: 5px;
+      color: var(--ink-3);
+      font: 600 .64rem/1 var(--ui);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+    .main-nav {
+      justify-self: center;
+      display: flex;
+      align-items: stretch;
+      gap: 26px;
+      height: 66px;
+      font-family: var(--ui);
+    }
+    .nav-item {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      border: 0;
+      background: transparent;
+      padding: 0 2px;
+      color: #75583d;
+      font-size: .86rem;
+      cursor: pointer;
+    }
+    .nav-item.active {
+      color: var(--ink);
+      font-size: .92rem;
+      font-weight: 700;
+    }
+    .nav-item.active::after {
+      content: "";
+      position: absolute;
+      left: 1px;
+      right: 1px;
+      bottom: 12px;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+
+    .button {
+      min-height: 40px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 9px 15px;
+      font: 700 .82rem/1 var(--ui);
+      letter-spacing: .01em;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
+    }
+    .button:hover { transform: translateY(-1px); }
+    .button.primary {
+      color: #fffaf2;
+      background: linear-gradient(160deg, #b57b3f, #85501f);
+      box-shadow: 0 7px 14px rgba(126, 78, 33, .18);
+    }
+    .button.secondary {
+      color: var(--ink-2);
+      border-color: var(--line-strong);
+      background: rgba(255, 251, 243, .72);
+    }
+    .button.ghost {
+      color: var(--ink-2);
+      border-color: transparent;
+      background: transparent;
+    }
+    .button.danger {
+      color: #fff8f2;
+      background: #8f4137;
+    }
+    .button.small { min-height: 34px; padding: 7px 12px; font-size: .75rem; }
+    .button.full { width: 100%; min-height: 46px; }
+    .button:disabled { cursor: not-allowed; opacity: .42; box-shadow: none; transform: none; }
+    .icon-button {
+      width: 40px;
+      height: 40px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+      background: rgba(255, 251, 243, .66);
+      cursor: pointer;
+      transition: .16s ease;
+    }
+    .icon-button:hover { background: var(--paper-surface); transform: translateY(-1px); }
+    svg.icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    .app {
+      width: min(1480px, calc(100% - 28px));
+      margin: 18px auto 42px;
+    }
+    .surface {
+      position: relative;
+      overflow: hidden;
+      min-height: calc(100vh - 126px);
+      border: 1px solid rgba(110, 73, 38, .14);
+      border-radius: var(--radius-shell);
+      background:
+        linear-gradient(180deg, rgba(249, 239, 220, .98), rgba(239, 220, 187, .98)),
+        repeating-linear-gradient(0deg, rgba(112,73,37,.02) 0 1px, transparent 1px 7px);
+      box-shadow: var(--shadow-shell);
+    }
+    .surface::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 0 0, rgba(255,255,255,.35), transparent 28%),
+        linear-gradient(130deg, rgba(255,255,255,.13), transparent 45%);
+    }
+    .surface > * { position: relative; }
+
+    .day-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 22px;
+      padding: 28px 30px 22px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .eyebrow {
+      color: var(--ink-3);
+      font: 800 .68rem/1.2 var(--ui);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .day-head h1 {
+      margin: 8px 0 7px;
+      font-family: var(--display);
+      font-size: clamp(2rem, 3vw, 3.05rem);
+      line-height: .96;
+      font-weight: 600;
+      letter-spacing: -.02em;
+    }
+    .day-head p {
+      max-width: 720px;
+      margin: 0;
+      color: #73583e;
+      font-size: .92rem;
+      line-height: 1.75;
+    }
+    .date-tools { display: flex; align-items: center; gap: 8px; font-family: var(--ui); }
+    .date-chip {
+      min-width: 118px;
+      text-align: center;
+      color: var(--ink-2);
+      font: 700 .78rem/1 var(--ui);
+    }
+
+    .entry-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      align-items: stretch;
+      padding: 18px 30px 20px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .entry-tile {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 13px;
+      min-height: 76px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-control);
+      padding: 13px 15px;
+      background: rgba(255, 249, 240, .64);
+      text-align: left;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .entry-tile:hover {
+      transform: translateY(-2px);
+      border-color: var(--line-strong);
+      background: rgba(255, 252, 246, .92);
+      box-shadow: var(--shadow-card);
+    }
+    .entry-icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--accent-deep);
+      background: rgba(202, 161, 94, .19);
+    }
+    .entry-tile h2 { margin: 0; font: 700 1rem/1.2 var(--ui); }
+    .entry-tile p { margin: 5px 0 0; color: var(--ink-3); font: .76rem/1.45 var(--ui); }
+    .entry-state { color: var(--completed); font: 700 .68rem/1 var(--ui); white-space: nowrap; }
+    .entry-state::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: currentColor; }
+    .today-summary {
+      align-self: center;
+      padding-left: 18px;
+      border-left: 1px solid var(--line-soft);
+      color: var(--ink-3);
+      font: 700 .72rem/1.65 var(--ui);
+      white-space: nowrap;
+    }
+    .today-summary strong { display: block; color: var(--ink); font-family: var(--display); font-size: 1.35rem; font-weight: 600; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.75fr) minmax(330px, .75fr);
+      min-height: 650px;
+    }
+    .timeline-pane { min-width: 0; padding: 24px 30px 34px; }
+    .journal-pane {
+      min-width: 0;
+      border-left: 1px solid var(--line-soft);
+      padding: 24px 24px 34px;
+      background: rgba(244, 230, 204, .46);
+    }
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      padding-bottom: 13px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .section-heading h2 { margin: 5px 0 0; font-family: var(--display); font-size: 1.55rem; font-weight: 600; }
+    .section-heading p { margin: 0; color: var(--ink-3); font: .74rem/1.4 var(--ui); text-align: right; }
+    .text-button {
+      border: 0;
+      padding: 5px 0;
+      background: transparent;
+      color: var(--accent-deep);
+      font: 700 .74rem/1 var(--ui);
+      cursor: pointer;
+    }
+    .text-button:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+    .timeline { position: relative; margin-top: 7px; padding-left: 74px; }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      top: 9px;
+      bottom: 18px;
+      left: 43px;
+      width: 1px;
+      background: linear-gradient(180deg, rgba(142, 91, 47, .36), rgba(142, 91, 47, .08));
+    }
+    .timeline-item { position: relative; padding: 15px 0; }
+    .time-label {
+      position: absolute;
+      left: -74px;
+      top: 28px;
+      width: 54px;
+      color: var(--ink-3);
+      font: 700 .7rem/1 var(--ui);
+      text-align: right;
+      letter-spacing: .02em;
+    }
+    .time-dot {
+      position: absolute;
+      left: -36px;
+      top: 26px;
+      width: 11px;
+      height: 11px;
+      border: 3px solid #f5e7cc;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 1px rgba(142, 91, 47, .32);
+    }
+    .material-card {
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-card);
+      padding: 17px 18px 14px;
+      background: rgba(255, 250, 241, .88);
+      box-shadow: var(--shadow-card);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease;
+    }
+    .material-card:hover { transform: translateY(-1px); border-color: rgba(121,87,52,.26); box-shadow: 0 11px 22px rgba(103,66,34,.10); }
+    .material-card.excluded { opacity: .58; background: rgba(247, 238, 222, .74); }
+    .material-card.new-material { animation: materialEnter .42s ease both; }
+    @keyframes materialEnter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .material-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .material-kind { color: var(--ink-3); font: 800 .64rem/1 var(--ui); letter-spacing: .12em; text-transform: uppercase; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 25px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font: 750 .67rem/1 var(--ui);
+      white-space: nowrap;
+    }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .badge.included { color: var(--completed); background: rgba(69,100,74,.07); }
+    .badge.excluded { color: var(--empty); background: rgba(122,104,87,.07); }
+    .badge.draft { color: var(--draft); background: rgba(124,85,104,.07); }
+    .badge.completed { color: var(--completed); background: rgba(69,100,74,.07); }
+    .badge.stale { color: var(--mixed); background: rgba(142,86,56,.08); }
+    .badge.progress { color: var(--progress); background: rgba(138,93,23,.08); }
+    .material-card h3 { margin: 11px 0 6px; font-family: var(--display); font-size: 1.25rem; line-height: 1.2; font-weight: 600; }
+    .material-card .summary { margin: 0; color: #4f3a29; font-size: .91rem; line-height: 1.82; }
+    .material-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+      margin-top: 12px;
+      color: var(--ink-3);
+      font: .69rem/1.4 var(--ui);
+    }
+    .material-meta span { display: inline-flex; align-items: center; gap: 6px; }
+    .material-meta span::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: #b58c62; }
+    .material-detail { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+    .material-card.expanded .material-detail { display: block; animation: detailIn .18s ease both; }
+    @keyframes detailIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .source-quote {
+      margin: 0 0 13px;
+      padding-left: 13px;
+      border-left: 2px solid rgba(169,111,61,.36);
+    }
+    .source-quote:last-child { margin-bottom: 0; }
+    .source-quote p { margin: 0; color: #4b3827; font-size: .85rem; line-height: 1.72; }
+    .source-quote footer { margin-top: 5px; color: var(--ink-3); font: .66rem/1.4 var(--ui); }
+    .material-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 16px;
+      margin-top: 13px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line-soft);
+    }
+    .material-actions .spacer { flex: 1; }
+    .material-actions button { border: 0; background: transparent; padding: 4px 0; color: var(--ink-2); font: 700 .7rem/1 var(--ui); cursor: pointer; }
+    .material-actions button:hover { color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px; }
+
+    .empty-timeline {
+      margin-top: 22px;
+      padding: 42px 16px;
+      border-top: 1px dashed var(--line-strong);
+      border-bottom: 1px dashed var(--line-strong);
+      text-align: center;
+      color: var(--ink-3);
+    }
+    .empty-timeline svg { width: 34px; height: 34px; margin-bottom: 10px; }
+    .empty-timeline h3 { margin: 0; font-family: var(--display); font-size: 1.45rem; color: var(--ink); font-weight: 600; }
+    .empty-timeline p { max-width: 420px; margin: 8px auto 16px; font-size: .86rem; line-height: 1.7; }
+
+    .journal-card {
+      position: sticky;
+      top: 90px;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-card);
+      padding: 19px 18px 17px;
+      background: rgba(255, 249, 240, .92);
+      box-shadow: var(--shadow-card);
+    }
+    .journal-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .journal-card h2 { margin: 5px 0 0; font-family: var(--display); font-size: 1.55rem; line-height: 1.05; font-weight: 600; }
+    .journal-lead { margin: 15px 0 0; color: var(--ink-2); font-size: .87rem; line-height: 1.72; }
+    .journal-facts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin: 16px 0 0;
+      padding: 13px 0;
+      border-top: 1px solid var(--line-soft);
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .journal-fact { min-width: 0; padding: 0 9px; text-align: center; }
+    .journal-fact + .journal-fact { border-left: 1px solid var(--line-soft); }
+    .journal-fact strong { display: block; font-family: var(--display); font-size: 1.22rem; font-weight: 600; }
+    .journal-fact span { display: block; margin-top: 4px; color: var(--ink-3); font: .63rem/1.2 var(--ui); }
+    .journal-preview {
+      position: relative;
+      max-height: 222px;
+      overflow: hidden;
+      margin-top: 15px;
+      padding-left: 13px;
+      border-left: 2px solid rgba(169,111,61,.34);
+      color: #483426;
+      font-size: .86rem;
+      line-height: 1.82;
+      white-space: pre-line;
+    }
+    .journal-preview::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 55px;
+      background: linear-gradient(transparent, rgba(255,249,240,.98));
+    }
+    .journal-notice {
+      margin-top: 15px;
+      padding: 10px 0 0 13px;
+      border-left: 3px solid var(--mixed);
+      color: #744934;
+      font: .74rem/1.6 var(--ui);
+    }
+    .journal-notice.error { border-left-color: var(--danger); color: var(--danger); }
+    .journal-action { margin-top: 17px; }
+    .journal-hint { margin: 8px 4px 0; color: var(--ink-3); font: .68rem/1.5 var(--ui); text-align: center; }
+    .journal-secondary { display: flex; justify-content: center; gap: 18px; margin-top: 12px; }
+
+    .generation {
+      margin-top: 17px;
+      padding-top: 15px;
+      border-top: 1px solid var(--line-soft);
+    }
+    .progress-track { height: 5px; overflow: hidden; border-radius: 999px; background: rgba(121,87,52,.12); }
+    .progress-bar { width: 8%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #d7ad74, #9c632e); transition: width .5s ease; }
+    .generation-step { display: flex; align-items: center; gap: 9px; margin-top: 11px; color: var(--ink-2); font: 700 .74rem/1.4 var(--ui); }
+    .spinner { width: 15px; height: 15px; border: 2px solid rgba(138,93,23,.18); border-top-color: var(--progress); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .mobile-actionbar { display: none; }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(57, 34, 17, .42);
+      backdrop-filter: blur(7px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .22s ease, visibility .22s ease;
+    }
+    .overlay.open { opacity: 1; visibility: visible; }
+    .dialog {
+      width: min(720px, 100%);
+      max-height: min(820px, calc(100vh - 40px));
+      overflow: auto;
+      border: 1px solid rgba(110,73,38,.18);
+      border-radius: var(--radius-shell);
+      background: linear-gradient(180deg, #f8ead0, #ecd3aa);
+      box-shadow: 0 28px 90px rgba(65,37,14,.30);
+      transform: translateY(14px) scale(.985);
+      transition: transform .24s ease;
+    }
+    .overlay.open .dialog { transform: translateY(0) scale(1); }
+    .dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 24px 17px; border-bottom: 1px solid var(--line-soft); }
+    .dialog-head h2 { margin: 5px 0 0; font-family: var(--display); font-size: 1.8rem; line-height: 1; font-weight: 600; }
+    .dialog-head p { margin: 8px 0 0; color: var(--ink-3); font-size: .82rem; line-height: 1.6; }
+    .dialog-body { padding: 20px 24px 24px; }
+    .field-label { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 8px; color: var(--ink-2); font: 750 .72rem/1.3 var(--ui); }
+    .field-label span:last-child { color: var(--muted); font-weight: 600; }
+    .text-area {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-control);
+      padding: 15px 16px;
+      color: var(--ink);
+      background: rgba(255, 252, 246, .78);
+      font-family: var(--body);
+      font-size: 1rem;
+      line-height: 1.8;
+      outline: none;
+    }
+    .text-area:focus { border-color: var(--line-strong); box-shadow: 0 0 0 3px rgba(169,111,61,.10); }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 16px; }
+    .microcopy { margin: 9px 0 0; color: var(--ink-3); font: .68rem/1.55 var(--ui); }
+
+    .chat-log { display: flex; flex-direction: column; gap: 12px; max-height: 390px; overflow: auto; padding-right: 4px; }
+    .bubble { max-width: 84%; padding: 11px 14px; border-radius: var(--radius-control); font-size: .87rem; line-height: 1.65; }
+    .bubble.assistant { align-self: flex-start; color: #4f3b2a; background: rgba(255,249,240,.72); border-top-left-radius: 4px; }
+    .bubble.user { align-self: flex-end; color: #fffaf2; background: #8d6039; border-top-right-radius: 4px; }
+    .chat-compose { display: grid; grid-template-columns: 1fr auto; gap: 9px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+    .chat-input { min-width: 0; border: 1px solid var(--line-soft); border-radius: 999px; padding: 11px 15px; color: var(--ink); background: rgba(255,252,246,.78); outline: none; font-family: var(--ui); font-size: .82rem; }
+
+    .confirm-dialog { width: min(560px, 100%); }
+    .confirm-copy { color: var(--ink-2); font-size: .9rem; line-height: 1.8; }
+
+    .editor-view {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 0, rgba(255,255,255,.26), transparent 23%),
+        linear-gradient(180deg, #d8ac78, #95643c 72%, #754723);
+      transform: translateX(102%);
+      visibility: hidden;
+      transition: transform .36s cubic-bezier(.22,.72,.19,1), visibility .36s;
+    }
+    .editor-view.open { transform: translateX(0); visibility: visible; }
+    .editor-topbar {
+      min-height: 66px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 22px;
+      border-bottom: 1px solid rgba(83,49,22,.22);
+      background: rgba(236,211,173,.93);
+      backdrop-filter: blur(14px);
+    }
+    .editor-titlebar { min-width: 0; text-align: center; }
+    .editor-titlebar strong { display: block; font-family: var(--display); font-size: 1.05rem; font-weight: 600; }
+    .editor-titlebar span { display: block; margin-top: 3px; color: var(--ink-3); font: .65rem/1 var(--ui); }
+    .editor-layout {
+      width: min(1260px, calc(100% - 32px));
+      min-height: 0;
+      flex: 1;
+      margin: 18px auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 0;
+      overflow: hidden;
+      border: 1px solid rgba(110,73,38,.18);
+      border-radius: var(--radius-shell);
+      background:
+        linear-gradient(180deg, rgba(255,249,238,.99), rgba(244,226,195,.99)),
+        repeating-linear-gradient(0deg, rgba(112,73,37,.025) 0 1px, transparent 1px 8px);
+      box-shadow: 0 26px 70px rgba(64,35,13,.25);
+      transition: grid-template-columns .28s ease;
+    }
+    .editor-layout.sources-open { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); }
+    .editor-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+    .editor-banner { display: none; margin: 18px 32px 0; padding: 10px 0 10px 14px; border-left: 3px solid var(--mixed); color: #724834; font: .74rem/1.55 var(--ui); }
+    .editor-banner.show { display: block; }
+    .editor-scroll { min-height: 0; flex: 1; overflow: auto; padding: 30px clamp(28px, 7vw, 92px) 24px; }
+    .journal-date-input {
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--line-soft);
+      padding: 0 0 20px;
+      color: var(--ink);
+      background: transparent;
+      outline: none;
+      font-family: var(--display);
+      font-size: clamp(1.7rem, 3vw, 2.65rem);
+      line-height: 1.1;
+      font-weight: 600;
+    }
+    .journal-body-input {
+      width: 100%;
+      min-height: 520px;
+      resize: none;
+      overflow: hidden;
+      border: 0;
+      padding: 24px 0 80px;
+      color: #302114;
+      background: transparent;
+      outline: none;
+      font-family: var(--body);
+      font-size: clamp(1rem, 1.2vw, 1.08rem);
+      line-height: 2.05;
+    }
+    .editor-footer {
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 11px 22px;
+      border-top: 1px solid var(--line-soft);
+      background: rgba(248,234,208,.84);
+    }
+    .save-state { color: var(--ink-3); font: .7rem/1.4 var(--ui); }
+    .editor-footer-actions { display: flex; align-items: center; gap: 8px; }
+    .source-rail {
+      min-width: 0;
+      overflow: auto;
+      border-left: 1px solid var(--line-soft);
+      background: rgba(239,220,188,.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .sources-open .source-rail { opacity: 1; pointer-events: auto; }
+    .source-rail-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 18px 13px; border-bottom: 1px solid var(--line-soft); background: rgba(239,220,188,.94); }
+    .source-rail-head h3 { margin: 0; font: 700 .86rem/1 var(--ui); }
+    .source-item { padding: 16px 18px; border-bottom: 1px solid var(--line-soft); }
+    .source-item strong { display: block; font-family: var(--display); font-size: 1rem; font-weight: 600; }
+    .source-item p { margin: 7px 0 0; color: var(--ink-2); font-size: .78rem; line-height: 1.65; }
+    .source-item small { display: block; margin-top: 8px; color: var(--ink-3); font: .63rem/1.3 var(--ui); }
+
+    .compare-dialog { width: min(1120px, 100%); }
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .compare-column { min-width: 0; }
+    .compare-column + .compare-column { border-left: 1px solid var(--line-soft); padding-left: 22px; }
+    .compare-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; font: 750 .72rem/1 var(--ui); color: var(--ink-2); }
+    .compare-paper { max-height: 440px; overflow: auto; color: #3d2c20; font-size: .86rem; line-height: 1.86; white-space: pre-line; }
+    .new-paragraph { display: block; margin: 14px 0 0; padding-left: 12px; border-left: 3px solid var(--completed); background: linear-gradient(90deg, rgba(69,100,74,.07), transparent 68%); }
+    .compare-note { margin-top: 17px; padding-top: 14px; border-top: 1px solid var(--line-soft); color: var(--ink-3); font: .72rem/1.6 var(--ui); }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 120;
+      width: min(420px, 92vw);
+      border-left: 1px solid rgba(110,73,38,.18);
+      background: linear-gradient(180deg, #f8ead0, #ead0a6);
+      box-shadow: -28px 0 70px rgba(65,37,14,.25);
+      transform: translateX(105%);
+      visibility: hidden;
+      transition: transform .32s cubic-bezier(.22,.72,.19,1), visibility .32s;
+    }
+    .drawer.open { transform: translateX(0); visibility: visible; }
+    .drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 22px 20px 17px; border-bottom: 1px solid var(--line-soft); }
+    .drawer-head h2 { margin: 5px 0 0; font-family: var(--display); font-size: 1.7rem; font-weight: 600; }
+    .drawer-body { height: calc(100% - 83px); overflow: auto; padding: 18px 20px 32px; }
+    .decision { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+    .decision-number { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; color: #fffaf2; background: var(--accent); font: 800 .68rem/1 var(--ui); }
+    .decision h3 { margin: 2px 0 5px; font: 750 .82rem/1.3 var(--ui); }
+    .decision p { margin: 0; color: var(--ink-2); font-size: .78rem; line-height: 1.65; }
+
+    .prototype-launcher {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 70;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      border: 1px solid rgba(255,247,234,.2);
+      border-radius: 999px;
+      padding: 9px 14px;
+      color: #fff8ef;
+      background: rgba(76,45,22,.9);
+      box-shadow: 0 12px 30px rgba(55,31,13,.25);
+      font: 750 .72rem/1 var(--ui);
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+    .prototype-panel {
+      position: fixed;
+      right: 18px;
+      bottom: 70px;
+      z-index: 71;
+      width: min(330px, calc(100vw - 36px));
+      border: 1px solid rgba(255,247,234,.17);
+      border-radius: var(--radius-card);
+      padding: 14px;
+      color: #fff8ef;
+      background: rgba(67,39,19,.94);
+      box-shadow: 0 22px 58px rgba(50,27,10,.34);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px) scale(.985);
+      transition: .2s ease;
+      backdrop-filter: blur(12px);
+    }
+    .prototype-panel.open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+    .prototype-panel h3 { margin: 0; font-family: var(--display); font-size: 1.1rem; font-weight: 600; }
+    .prototype-panel p { margin: 5px 0 12px; color: #e9d4b9; font: .68rem/1.5 var(--ui); }
+    .scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .scenario-button {
+      min-height: 38px;
+      border: 1px solid rgba(255,247,234,.16);
+      border-radius: var(--radius-control);
+      padding: 8px 10px;
+      color: #fff8ef;
+      background: rgba(255,255,255,.055);
+      text-align: left;
+      font: 700 .68rem/1.3 var(--ui);
+      cursor: pointer;
+    }
+    .scenario-button:hover { background: rgba(255,255,255,.11); }
+    .scenario-button.active { border-color: rgba(229,185,128,.7); background: rgba(229,185,128,.16); }
+
+    .toast-stack { position: fixed; left: 50%; bottom: 22px; z-index: 200; display: flex; flex-direction: column; align-items: center; gap: 8px; transform: translateX(-50%); pointer-events: none; }
+    .toast {
+      max-width: min(520px, calc(100vw - 32px));
+      border: 1px solid rgba(255,247,234,.16);
+      border-radius: 999px;
+      padding: 10px 16px;
+      color: #fffaf4;
+      background: rgba(67,39,19,.94);
+      box-shadow: 0 12px 28px rgba(50,27,10,.28);
+      font: 700 .74rem/1.35 var(--ui);
+      animation: toastIn .24s ease both;
+    }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 1023px) {
+      .header-row { grid-template-columns: auto 1fr auto; gap: 14px; }
+      .main-nav { justify-self: start; gap: 18px; }
+      .workspace { grid-template-columns: minmax(0, 1.5fr) minmax(300px, .8fr); }
+      .day-head, .entry-strip, .timeline-pane { padding-left: 22px; padding-right: 22px; }
+      .journal-pane { padding-left: 18px; padding-right: 18px; }
+    }
+
+    @media (max-width: 820px) {
+      .site-header { position: relative; }
+      .header-row { width: calc(100% - 24px); grid-template-columns: 1fr auto; min-height: auto; padding: 11px 0 0; }
+      .brand { grid-column: 1; grid-row: 1; }
+      .header-actions { grid-column: 2; grid-row: 1; justify-self: end; }
+      .main-nav { grid-column: 1 / -1; grid-row: 2; width: 100%; height: 42px; overflow-x: auto; gap: 24px; border-top: 1px solid rgba(90,55,27,.10); }
+      .nav-item.active::after { bottom: 5px; }
+      .app { width: calc(100% - 14px); margin-top: 8px; }
+      .surface { min-height: auto; border-radius: 20px; }
+      .day-head { grid-template-columns: 1fr; gap: 16px; padding-top: 22px; }
+      .date-tools { justify-content: space-between; }
+      .entry-strip { grid-template-columns: 1fr 1fr; }
+      .today-summary { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line-soft); padding: 11px 0 0; display: flex; align-items: baseline; justify-content: space-between; }
+      .today-summary strong { display: inline; }
+      .workspace { display: block; }
+      .journal-pane { border-left: 0; border-top: 1px solid var(--line-soft); }
+      .journal-card { position: static; }
+      .editor-layout { margin: 8px auto; width: calc(100% - 12px); }
+      .editor-layout.sources-open { grid-template-columns: 1fr; }
+      .source-rail { display: none; }
+      .sources-open .source-rail { display: block; position: absolute; inset: 66px 0 0; z-index: 4; opacity: 1; background: #f0dbb8; }
+      .editor-layout { position: relative; }
+    }
+
+    @media (max-width: 640px) {
+      body { padding-bottom: 76px; }
+      .header-actions .button { display: none; }
+      .brand strong { font-size: 1.18rem; }
+      .day-head h1 { font-size: 2.12rem; }
+      .day-head, .entry-strip, .timeline-pane, .journal-pane { padding-left: 15px; padding-right: 15px; }
+      .entry-strip { grid-template-columns: 1fr; }
+      .entry-tile { min-height: 68px; grid-template-columns: 42px 1fr auto; }
+      .entry-icon { width: 42px; height: 42px; }
+      .today-summary { grid-column: auto; }
+      .section-heading { align-items: start; }
+      .section-heading p { text-align: left; }
+      .timeline { padding-left: 52px; }
+      .timeline::before { left: 29px; }
+      .time-label { left: -54px; width: 38px; font-size: .61rem; }
+      .time-dot { left: -28px; }
+      .material-card { padding: 15px 14px 12px; }
+      .material-actions { gap: 8px 13px; }
+      .journal-pane { padding-bottom: 24px; }
+      .journal-card .journal-action { margin-bottom: 2px; }
+      .mobile-actionbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 60;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        min-height: 70px;
+        padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(90,55,27,.18);
+        background: rgba(239,218,183,.95);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 -9px 24px rgba(83,49,23,.10);
+      }
+      .mobile-action-copy strong { display: block; font: 750 .78rem/1.2 var(--ui); }
+      .mobile-action-copy span { display: block; margin-top: 4px; color: var(--ink-3); font: .62rem/1.2 var(--ui); }
+      .mobile-actionbar .button { min-height: 42px; }
+      .prototype-launcher { bottom: 82px; }
+      .prototype-panel { bottom: 132px; }
+      .overlay { padding: 8px; align-items: end; }
+      .dialog { width: 100%; max-height: 91vh; border-radius: 24px 24px 0 0; transform: translateY(105%); }
+      .overlay.open .dialog { transform: translateY(0); }
+      .compare-grid { grid-template-columns: 1fr; }
+      .compare-column + .compare-column { border-left: 0; border-top: 1px solid var(--line-soft); padding-left: 0; padding-top: 18px; }
+      .editor-view { transform: translateY(102%); }
+      .editor-view.open { transform: translateY(0); }
+      .editor-topbar { grid-template-columns: auto 1fr auto; padding: 8px 10px; }
+      .editor-topbar .button.secondary { display: none; }
+      .editor-layout { border-radius: 20px; }
+      .editor-scroll { padding: 26px 22px 20px; }
+      .journal-body-input { min-height: 420px; }
+      .editor-footer { padding: 9px 12px calc(9px + env(safe-area-inset-bottom)); }
+      .editor-footer .button.ghost { display: none; }
+      .editor-footer-actions { margin-left: auto; }
+      .drawer { width: 100%; border-left: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+    @media (prefers-contrast: more) {
+      :root { --line-soft: rgba(78,48,23,.34); --line-strong: rgba(78,48,23,.68); }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-row">
+      <button class="brand" id="brandButton" aria-label="回到今天">
+        <strong>Daily Light</strong>
+        <span>在日常里照见自己</span>
+      </button>
+      <nav class="main-nav ui" aria-label="主导航">
+        <button class="nav-item active" type="button">今天</button>
+        <button class="nav-item" type="button" data-demo-nav="日历">日历</button>
+        <button class="nav-item" type="button" data-demo-nav="分析">分析</button>
+        <button class="nav-item" type="button" data-demo-nav="我的">我的</button>
+      </nav>
+      <div class="header-actions ui">
+        <button class="button ghost small" id="designNotesButton" type="button">设计说明</button>
+        <button class="icon-button" id="profileButton" type="button" aria-label="打开个人菜单">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app" id="appMain">
+    <section class="surface" aria-label="今天工作台">
+      <header class="day-head">
+        <div>
+          <div class="eyebrow ui">Today workspace</div>
+          <h1 id="dayTitle">2026 年 8 月 10 日，星期一</h1>
+          <p>你只管留下真实片段。系统会把同一件事的补充放在一起，生成时再整理成一篇仍然像你自己写的日记。</p>
+        </div>
+        <div class="date-tools">
+          <button class="icon-button" type="button" id="prevDay" aria-label="前一天">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="date-chip" id="dateChip">8 月 10 日 · 今天</div>
+          <button class="icon-button" type="button" id="nextDay" aria-label="后一天">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button class="button secondary small" type="button" id="backToday">回到今天</button>
+        </div>
+      </header>
+
+      <section class="entry-strip" aria-label="记录入口">
+        <button class="entry-tile pressable" id="captureEntry" type="button">
+          <span class="entry-icon" aria-hidden="true">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </span>
+          <span>
+            <h2>帮我记</h2>
+            <p>想到什么就写什么，不追问。</p>
+          </span>
+          <span class="entry-state" id="captureState">可继续</span>
+        </button>
+
+        <button class="entry-tile pressable" id="reflectEntry" type="button">
+          <span class="entry-icon" aria-hidden="true">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+          </span>
+          <span>
+            <h2>陪我聊</h2>
+            <p>通过对话，慢慢把一件事说清楚。</p>
+          </span>
+          <span class="entry-state" id="reflectState">可继续</span>
+        </button>
+
+        <div class="today-summary ui" aria-live="polite">
+          <span>今天已留下</span>
+          <strong id="materialCountTop">3 个片段</strong>
+        </div>
+      </section>
+
+      <div class="workspace">
+        <section class="timeline-pane" aria-labelledby="timelineTitle">
+          <div class="section-heading">
+            <div>
+              <div class="eyebrow ui">Materials</div>
+              <h2 id="timelineTitle">今天的记录</h2>
+            </div>
+            <p id="timelineSummary">按记录时间排列 · 默认纳入今日日志</p>
+          </div>
+          <div id="timelineRoot"></div>
+        </section>
+
+        <aside class="journal-pane" aria-label="今日日志">
+          <article class="journal-card" id="journalCard">
+            <div class="journal-card-header">
+              <div>
+                <div class="eyebrow ui">Daily journal</div>
+                <h2>今日日志</h2>
+              </div>
+              <span class="badge progress" id="journalBadge">待生成</span>
+            </div>
+            <p class="journal-lead" id="journalLead"></p>
+            <div class="journal-facts" id="journalFacts"></div>
+            <div class="journal-preview hidden" id="journalPreview"></div>
+            <div class="journal-notice hidden" id="journalNotice"></div>
+            <div class="generation hidden" id="generationRegion" aria-live="polite">
+              <div class="progress-track"><div class="progress-bar" id="generationBar"></div></div>
+              <div class="generation-step"><span class="spinner" aria-hidden="true"></span><span id="generationText">正在校准今天的记录片段</span></div>
+            </div>
+            <div class="journal-action">
+              <button class="button primary full" id="journalAction" type="button">生成今日日志</button>
+              <p class="journal-hint" id="journalHint"></p>
+            </div>
+            <div class="journal-secondary ui">
+              <button class="text-button" id="scrollMaterials" type="button">查看材料</button>
+              <button class="text-button hidden" id="historyButton" type="button">版本历史</button>
+            </div>
+          </article>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div class="mobile-actionbar ui" id="mobileActionBar" aria-label="今日日志操作">
+    <div class="mobile-action-copy">
+      <strong id="mobileActionTitle">今日日志</strong>
+      <span id="mobileActionHint">3 个片段可整理</span>
+    </div>
+    <button class="button primary small" id="mobileJournalAction" type="button">生成日志</button>
+  </div>
+
+  <div class="overlay" id="captureOverlay" role="dialog" aria-modal="true" aria-labelledby="captureDialogTitle">
+    <section class="dialog">
+      <header class="dialog-head">
+        <div>
+          <div class="eyebrow ui">Capture</div>
+          <h2 id="captureDialogTitle">帮我记</h2>
+          <p>写下一段就可以离开。系统只做简短回应，不会追问。</p>
+        </div>
+        <button class="icon-button" type="button" data-close-overlay="captureOverlay" aria-label="关闭">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <label class="field-label ui" for="captureText"><span>此刻想留下什么？</span><span id="captureCounter">0 / 1000</span></label>
+        <textarea class="text-area" id="captureText" maxlength="1000" placeholder="例如：晚上回家的路上下了很大的雨，我没带伞，在便利店门口等了一会儿。">晚上回家的路上下了很大的雨，我没带伞，在便利店门口等了一会儿。雨小下来后才继续往回走。</textarea>
+        <p class="microcopy ui">原话会立即保存；稍后生成日志时，只会去重、顺句和轻微整理。</p>
+        <div class="dialog-actions">
+          <button class="button ghost" type="button" data-close-overlay="captureOverlay">取消</button>
+          <button class="button primary" type="button" id="saveCapture">记下这段</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay" id="reflectOverlay" role="dialog" aria-modal="true" aria-labelledby="reflectDialogTitle">
+    <section class="dialog">
+      <header class="dialog-head">
+        <div>
+          <div class="eyebrow ui">Reflect</div>
+          <h2 id="reflectDialogTitle">陪我聊</h2>
+          <p>当前会话可在 24 小时内继续；结束聊天不会生成或完成今日日志。</p>
+        </div>
+        <button class="icon-button" type="button" data-close-overlay="reflectOverlay" aria-label="返回今天">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <div class="chat-log" id="chatLog" aria-live="polite">
+          <div class="bubble assistant">你刚才说，早上忘带电脑以后，整个上午都很急。最难受的是迟到本身，还是开头被打乱以后很难慢下来？</div>
+          <div class="bubble user">更像是开头乱了以后，后面就一直慢不下来。</div>
+          <div class="bubble assistant">我明白了。你在意的不只是忘带电脑，而是节奏一旦被打乱，后面很难重新稳住。</div>
+        </div>
+        <div class="chat-compose">
+          <input class="chat-input" id="reflectInput" type="text" placeholder="继续说一句……" value="晚上回想起来，我还是觉得上午整个人都绷着。" />
+          <button class="button primary small" id="sendReflect" type="button">发送</button>
+        </div>
+        <div class="dialog-actions">
+          <button class="button ghost" id="endReflect" type="button">结束本次聊天</button>
+          <button class="button secondary" type="button" data-close-overlay="reflectOverlay">返回今天</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay" id="confirmOverlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <section class="dialog confirm-dialog">
+      <header class="dialog-head">
+        <div>
+          <div class="eyebrow ui">Confirm</div>
+          <h2 id="confirmTitle">不写入今日日志？</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-overlay="confirmOverlay" aria-label="关闭">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <p class="confirm-copy" id="confirmCopy">这段记录仍会保留在时间轴里，但后续生成、更新、周报和月报不会使用它，除非你恢复纳入。</p>
+        <div class="dialog-actions">
+          <button class="button secondary" type="button" data-close-overlay="confirmOverlay">取消</button>
+          <button class="button danger" type="button" id="confirmExclude">确认不写入</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay" id="correctOverlay" role="dialog" aria-modal="true" aria-labelledby="correctTitle">
+    <section class="dialog">
+      <header class="dialog-head">
+        <div>
+          <div class="eyebrow ui">Correct</div>
+          <h2 id="correctTitle">纠正系统理解</h2>
+          <p>这里只修改材料理解，不会直接改写已经生成的日志。</p>
+        </div>
+        <button class="icon-button" type="button" data-close-overlay="correctOverlay" aria-label="关闭">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <label class="field-label ui" for="correctText"><span>正确的意思是</span><span>会保留修订记录</span></label>
+        <textarea class="text-area" id="correctText"></textarea>
+        <div class="dialog-actions">
+          <button class="button ghost" type="button" data-close-overlay="correctOverlay">取消</button>
+          <button class="button primary" id="saveCorrection" type="button">保存纠正</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay" id="updateOverlay" role="dialog" aria-modal="true" aria-labelledby="updateTitle">
+    <section class="dialog compare-dialog">
+      <header class="dialog-head">
+        <div>
+          <div class="eyebrow ui">Update preview</div>
+          <h2 id="updateTitle">先看更新版本，再决定是否采用</h2>
+          <p>当前版本不会被静默覆盖；新增或明显变化的段落会单独标出。</p>
+        </div>
+        <button class="icon-button" type="button" data-close-overlay="updateOverlay" aria-label="关闭">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <div class="compare-grid">
+          <section class="compare-column">
+            <div class="compare-label"><span>当前版本</span><span class="badge completed">已保留</span></div>
+            <div class="compare-paper" id="currentCompare"></div>
+          </section>
+          <section class="compare-column">
+            <div class="compare-label"><span>候选更新版本</span><span class="badge stale">含新内容</span></div>
+            <div class="compare-paper" id="candidateCompare"></div>
+          </section>
+        </div>
+        <p class="compare-note">原型中采用“轻更新”：未受影响的旧段落保持原样，只在末尾加入新记录。旧版本会进入版本历史。</p>
+        <div class="dialog-actions">
+          <button class="button ghost" id="manualUpdate" type="button">在当前版本中手动加入</button>
+          <button class="button secondary" id="keepCurrent" type="button">保留当前版本</button>
+          <button class="button primary" id="adoptUpdate" type="button">采用更新版本</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay" id="historyOverlay" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+    <section class="dialog">
+      <header class="dialog-head">
+        <div>
+          <div class="eyebrow ui">Version history</div>
+          <h2 id="historyTitle">版本历史</h2>
+          <p>每次生成、更新和用户确认都保留版本，不覆盖过去。</p>
+        </div>
+        <button class="icon-button" type="button" data-close-overlay="historyOverlay" aria-label="关闭">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </header>
+      <div class="dialog-body" id="historyList"></div>
+    </section>
+  </div>
+
+  <section class="editor-view" id="editorView" aria-label="今日日志编辑器">
+    <header class="editor-topbar ui">
+      <button class="button ghost small" id="backFromEditor" type="button">← 返回今天</button>
+      <div class="editor-titlebar">
+        <strong>今日日志</strong>
+        <span id="editorTopStatus">草稿 · 所有修改自动保存</span>
+      </div>
+      <button class="button secondary small" id="toggleSources" type="button">查看来源</button>
+    </header>
+    <div class="editor-layout" id="editorLayout">
+      <main class="editor-main">
+        <div class="editor-banner" id="editorBanner">今天又有新记录。当前正文不会自动改变；你可以返回今天生成候选更新版本。</div>
+        <div class="editor-scroll">
+          <label class="sr-only" for="journalTitleInput">日志标题</label>
+          <input class="journal-date-input" id="journalTitleInput" maxlength="50" />
+          <label class="sr-only" for="journalBodyInput">日志正文</label>
+          <textarea class="journal-body-input" id="journalBodyInput"></textarea>
+        </div>
+        <footer class="editor-footer ui">
+          <span class="save-state" id="editorSaveState">所有修改已自动保存</span>
+          <div class="editor-footer-actions">
+            <button class="button ghost small" id="editorHistory" type="button">版本历史</button>
+            <button class="button secondary small" id="editorExport" type="button">导出</button>
+            <button class="button primary" id="completeJournal" type="button">完成</button>
+          </div>
+        </footer>
+      </main>
+      <aside class="source-rail" id="sourceRail">
+        <header class="source-rail-head ui">
+          <h3>正文来源</h3>
+          <button class="text-button" id="closeSources" type="button">关闭</button>
+        </header>
+        <div id="sourceRailList"></div>
+      </aside>
+    </div>
+  </section>
+
+  <aside class="drawer" id="designDrawer" aria-label="设计说明">
+    <header class="drawer-head">
+      <div>
+        <div class="eyebrow ui">Product decisions</div>
+        <h2>这页为什么这样放</h2>
+      </div>
+      <button class="icon-button" id="closeDesignDrawer" type="button" aria-label="关闭设计说明">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+    <div class="drawer-body">
+      <article class="decision"><span class="decision-number">1</span><div><h3>日期是页面主对象</h3><p>所有材料和日志动作都围绕“这一天”组织，不再先选维度，也不让会话决定日志范围。</p></div></article>
+      <article class="decision"><span class="decision-number">2</span><div><h3>两种记录入口放在最上面</h3><p>“帮我记”是低负担记录，“陪我聊”是深入对话。它们只负责获得材料，不各自产生日志。</p></div></article>
+      <article class="decision"><span class="decision-number">3</span><div><h3>时间轴展示材料，不展示聊天</h3><p>默认只展示用户真正留下的内容。AI 提问和共情属于交互过程，需要时再通过“查看原话”追溯。</p></div></article>
+      <article class="decision"><span class="decision-number">4</span><div><h3>材料默认纳入，按需排除</h3><p>用户不必逐张确认。排除后卡片仍保留，避免“内容是不是被删掉了”的不确定感。</p></div></article>
+      <article class="decision"><span class="decision-number">5</span><div><h3>生成和更新共用一个按钮位置</h3><p>今日日志卡始终只有一个主要动作。按钮文案由状态决定，减少“生成、保存、更新、完成”并排造成的歧义。</p></div></article>
+      <article class="decision"><span class="decision-number">6</span><div><h3>“完成”只存在于编辑器</h3><p>自动保存解决不丢内容；“完成”表达用户看过并认可当前版本，所以不能放在尚未阅读的今天页。</p></div></article>
+      <article class="decision"><span class="decision-number">7</span><div><h3>新内容不自动覆盖旧日志</h3><p>完成后新增记录，只把日志标记为“有新内容”。更新先产生候选版本，再由用户采用或保留。</p></div></article>
+      <article class="decision"><span class="decision-number">8</span><div><h3>日志编辑器是一张连续纸面</h3><p>正文不再被拆成多个结构卡。标题、正文、来源和完成动作都围绕一份可编辑成果组织。</p></div></article>
+    </div>
+  </aside>
+
+  <button class="prototype-launcher" id="prototypeLauncher" type="button">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+    原型状态
+  </button>
+  <section class="prototype-panel" id="prototypePanel" aria-label="原型状态切换">
+    <h3>快速查看各状态</h3>
+    <p>这是原型辅助工具，不属于正式产品界面。</p>
+    <div class="scenario-grid">
+      <button class="scenario-button" data-scenario="empty" type="button">A · 今天无记录</button>
+      <button class="scenario-button active" data-scenario="collecting" type="button">B · 有材料待生成</button>
+      <button class="scenario-button" data-scenario="generating" type="button">C · 正在生成</button>
+      <button class="scenario-button" data-scenario="draft" type="button">D · 草稿待完成</button>
+      <button class="scenario-button" data-scenario="confirmed" type="button">E · 日志已完成</button>
+      <button class="scenario-button" data-scenario="stale" type="button">F · 完成后有新内容</button>
+      <button class="scenario-button" data-scenario="failed" type="button">G · 更新失败</button>
+      <button class="scenario-button" data-scenario="reset" type="button">重置完整演示</button>
+    </div>
+  </section>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <script>
+    const SVG = {
+      note: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>'
+    };
+
+    const baseMaterials = [
+      {
+        id: 'm1',
+        time: '08:40',
+        kind: '事件材料',
+        title: '忘带电脑，上午的节奏乱了',
+        summary: '今天出门以后才发现电脑没带，又跑回去拿。到公司时已经有点慌，整个上午都很急，做事情也有些乱。',
+        journalText: '今天出门以后才发现电脑没带，只能又跑回去拿。到公司时我已经有点慌，整个上午都很急，做事情也有些乱。我一旦开头被打乱，后面就很难慢下来。',
+        modes: ['帮我记', '陪我聊'],
+        included: true,
+        recordings: 3,
+        occurred: '上午',
+        sources: [
+          { time: '08:40', mode: '帮我记', text: '出门以后才发现电脑没带，又跑回去拿，到公司时已经有点慌了。' },
+          { time: '10:50', mode: '帮我记', text: '一上午都很急，做事情也有点乱。' },
+          { time: '21:00', mode: '陪我聊', text: '对，我一旦开头乱了，后面就很难慢下来。' }
+        ]
+      },
+      {
+        id: 'm2',
+        time: '13:20',
+        kind: '事件材料',
+        title: '和小周吃饭时，被肯定了一下',
+        summary: '中午和小周吃饭，他说我昨天的方案结构挺清楚。听完这句话，我还挺开心。',
+        journalText: '中午和小周吃饭时，他说我昨天的方案结构挺清楚。听到这句话，我还挺开心。',
+        modes: ['帮我记'],
+        included: true,
+        recordings: 1,
+        occurred: '中午',
+        sources: [
+          { time: '13:20', mode: '帮我记', text: '中午和小周吃饭，他说我昨天的方案结构挺清楚，听完还挺开心。' }
+        ]
+      },
+      {
+        id: 'm3',
+        time: '22:10',
+        kind: '自由片段',
+        title: '晚上有一点空',
+        summary: '今天晚上一直有点空，我也说不上来为什么。',
+        journalText: '晚上一直有点空，我也说不上来为什么。',
+        modes: ['帮我记'],
+        included: true,
+        recordings: 1,
+        occurred: '晚上',
+        sources: [
+          { time: '22:10', mode: '帮我记', text: '今天一直有点空，也说不上来为什么。' }
+        ]
+      }
+    ];
+
+    const rainMaterial = {
+      id: 'm4',
+      time: '22:36',
+      kind: '事件材料',
+      title: '回家路上遇到大雨',
+      summary: '晚上回家的路上下了很大的雨。我没带伞，在便利店门口等了一会儿，雨小下来后才继续回家。',
+      journalText: '晚上回家的路上下了很大的雨，我没带伞，在便利店门口等了一会儿。雨小下来后，我才继续往回走。',
+      modes: ['帮我记'],
+      included: true,
+      recordings: 1,
+      occurred: '晚上',
+      sources: [
+        { time: '22:36', mode: '帮我记', text: '晚上回家的路上下了很大的雨，我没带伞，在便利店门口等了一会儿。雨小下来后才继续往回走。' }
+      ],
+      isNew: true
+    };
+
+    const deepClone = value => JSON.parse(JSON.stringify(value));
+    const defaultJournalTitle = '2026 年 8 月 10 日，星期一';
+
+    const model = {
+      dateOffset: 0,
+      materials: deepClone(baseMaterials),
+      state: 'collecting',
+      journal: null,
+      generationStep: 0,
+      pendingMaterialId: null,
+      editingMaterialId: null,
+      userEdited: false,
+      syncState: 'saved',
+      candidateBody: '',
+      currentScenario: 'collecting',
+      versions: []
+    };
+
+    const elements = {
+      timelineRoot: document.getElementById('timelineRoot'),
+      materialCountTop: document.getElementById('materialCountTop'),
+      timelineSummary: document.getElementById('timelineSummary'),
+      journalBadge: document.getElementById('journalBadge'),
+      journalLead: document.getElementById('journalLead'),
+      journalFacts: document.getElementById('journalFacts'),
+      journalPreview: document.getElementById('journalPreview'),
+      journalNotice: document.getElementById('journalNotice'),
+      generationRegion: document.getElementById('generationRegion'),
+      generationBar: document.getElementById('generationBar'),
+      generationText: document.getElementById('generationText'),
+      journalAction: document.getElementById('journalAction'),
+      journalHint: document.getElementById('journalHint'),
+      historyButton: document.getElementById('historyButton'),
+      mobileJournalAction: document.getElementById('mobileJournalAction'),
+      mobileActionHint: document.getElementById('mobileActionHint'),
+      mobileActionTitle: document.getElementById('mobileActionTitle'),
+      editorView: document.getElementById('editorView'),
+      editorLayout: document.getElementById('editorLayout'),
+      journalTitleInput: document.getElementById('journalTitleInput'),
+      journalBodyInput: document.getElementById('journalBodyInput'),
+      editorSaveState: document.getElementById('editorSaveState'),
+      editorTopStatus: document.getElementById('editorTopStatus'),
+      completeJournal: document.getElementById('completeJournal'),
+      editorBanner: document.getElementById('editorBanner'),
+      sourceRailList: document.getElementById('sourceRailList'),
+      currentCompare: document.getElementById('currentCompare'),
+      candidateCompare: document.getElementById('candidateCompare'),
+      historyList: document.getElementById('historyList'),
+      prototypePanel: document.getElementById('prototypePanel')
+    };
+
+    function includedMaterials() { return model.materials.filter(item => item.included); }
+    function newIncludedMaterials() { return model.materials.filter(item => item.included && item.isNew); }
+    function composeJournal(materials = includedMaterials()) {
+      return materials.map(item => item.journalText || item.summary).join('\n\n');
+    }
+    function ensureJournal() {
+      if (!model.journal) {
+        model.journal = { title: defaultJournalTitle, body: composeJournal(), version: 1, confirmedAt: null };
+      }
+    }
+    function statusConfig() {
+      const count = model.materials.length;
+      const included = includedMaterials().length;
+      const newCount = newIncludedMaterials().length;
+      const map = {
+        empty: {
+          badge: ['未开始', 'progress'],
+          lead: '今天还没有留下记录。先写下一句话，日志入口才会打开。',
+          action: '先留下一条记录',
+          disabled: false,
+          hint: '点击后打开“帮我记”',
+          mobileHint: '先留下一个片段'
+        },
+        collecting: {
+          badge: ['待生成', 'progress'],
+          lead: `今天已经留下 ${count} 个记录片段，其中 ${included} 个会写入日志。`,
+          action: '生成今日日志',
+          disabled: included === 0,
+          hint: included ? '默认使用全部已纳入材料，生成后自动保存为草稿' : '至少恢复一条材料后才能生成',
+          mobileHint: `${included} 个片段可整理`
+        },
+        generating: {
+          badge: ['整理中', 'progress'],
+          lead: '正在把同一件事的补充放在一起，并检查每句话是否有用户来源。',
+          action: '正在整理…',
+          disabled: true,
+          hint: '旧内容和原始材料都不会被删除',
+          mobileHint: '正在生成草稿'
+        },
+        draft: {
+          badge: ['草稿', 'draft'],
+          lead: '草稿已经自动保存。打开后可以直接修改，确认无误再点击“完成”。',
+          action: '继续编辑',
+          disabled: false,
+          hint: '编辑会自动保存；“完成”只在编辑器里出现',
+          mobileHint: '草稿已自动保存'
+        },
+        confirmed: {
+          badge: ['已完成', 'completed'],
+          lead: '你已经确认了当前版本。仍然可以继续编辑，之后再完成修改。',
+          action: '查看今日日志',
+          disabled: false,
+          hint: model.journal?.confirmedAt ? `完成于 ${model.journal.confirmedAt}` : '已成为当天正式日志',
+          mobileHint: '当前版本已确认'
+        },
+        stale: {
+          badge: ['有新内容', 'stale'],
+          lead: `当前日志还没有包含之后新增的 ${Math.max(1, newCount)} 条记录。旧正文不会自动改变。`,
+          action: '更新今日日志',
+          disabled: false,
+          hint: '先生成候选更新版本，再决定采用或保留',
+          mobileHint: `${Math.max(1, newCount)} 条新记录未纳入`
+        },
+        failed: {
+          badge: ['更新失败', 'stale'],
+          lead: '最近一次更新没有完成，但现有日志仍然完整保留。',
+          action: '重试更新',
+          disabled: false,
+          hint: '失败不会清空或覆盖当前版本',
+          mobileHint: '旧版本仍然保留'
+        }
+      };
+      return map[model.state] || map.collecting;
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function renderTimeline() {
+      const count = model.materials.length;
+      const included = includedMaterials().length;
+      elements.materialCountTop.textContent = `${count} 个片段`;
+      elements.timelineSummary.textContent = count
+        ? `按记录时间排列 · ${included} 个纳入 · ${count - included} 个不写入`
+        : '按记录时间排列 · 原始表达会自动保存';
+
+      if (!count) {
+        elements.timelineRoot.innerHTML = `
+          <div class="empty-timeline">
+            ${SVG.note}
+            <h3>今天还没有记录</h3>
+            <p>不用先想清楚，也不用组织成完整日记。先留下一句话，时间轴会从这里开始。</p>
+            <button class="button primary" type="button" data-empty-capture>帮我记一句</button>
+          </div>`;
+        return;
+      }
+
+      const cards = model.materials.map(item => {
+        const sourceHtml = item.sources.map(source => `
+          <blockquote class="source-quote">
+            <p>${escapeHtml(source.text)}</p>
+            <footer>${escapeHtml(source.time)} · ${escapeHtml(source.mode)} · 用户原话</footer>
+          </blockquote>`).join('');
+        return `
+          <article class="timeline-item" data-material-id="${item.id}">
+            <time class="time-label">${escapeHtml(item.time)}</time>
+            <span class="time-dot" aria-hidden="true"></span>
+            <div class="material-card ${item.included ? '' : 'excluded'} ${item.isNew ? 'new-material' : ''}" id="card-${item.id}">
+              <div class="material-top">
+                <span class="material-kind ui">${escapeHtml(item.kind)}</span>
+                <span class="badge ${item.included ? 'included' : 'excluded'}">${item.included ? '已纳入' : '不写入'}</span>
+              </div>
+              <h3>${escapeHtml(item.title)}</h3>
+              <p class="summary">${escapeHtml(item.summary)}</p>
+              <div class="material-meta ui">
+                <span>${item.modes.map(escapeHtml).join(' / ')}</span>
+                <span>${item.recordings} 次记录</span>
+                <span>事情发生：${escapeHtml(item.occurred)}</span>
+              </div>
+              <div class="material-detail" id="detail-${item.id}">${sourceHtml}</div>
+              <div class="material-actions ui">
+                <button type="button" data-action="details" data-id="${item.id}">查看原话</button>
+                <button type="button" data-action="correct" data-id="${item.id}">纠正内容</button>
+                <span class="spacer"></span>
+                <button type="button" data-action="toggle-inclusion" data-id="${item.id}">${item.included ? '不写入今日日志' : '恢复纳入'}</button>
+              </div>
+            </div>
+          </article>`;
+      }).join('');
+      elements.timelineRoot.innerHTML = `<div class="timeline">${cards}</div>`;
+    }
+
+    function renderJournal() {
+      const config = statusConfig();
+      const count = model.materials.length;
+      const included = includedMaterials().length;
+      const newCount = newIncludedMaterials().length;
+
+      elements.journalBadge.textContent = config.badge[0];
+      elements.journalBadge.className = `badge ${config.badge[1]}`;
+      elements.journalLead.textContent = config.lead;
+      elements.journalAction.textContent = config.action;
+      elements.journalAction.disabled = config.disabled;
+      elements.journalHint.textContent = config.hint;
+      elements.mobileJournalAction.textContent = config.action.replace('今日', '');
+      elements.mobileJournalAction.disabled = config.disabled;
+      elements.mobileActionHint.textContent = config.mobileHint;
+      elements.mobileActionTitle.textContent = config.badge[0] === '待生成' ? '今日日志待生成' : `今日日志 · ${config.badge[0]}`;
+
+      elements.journalFacts.innerHTML = `
+        <div class="journal-fact"><strong>${count}</strong><span>记录片段</span></div>
+        <div class="journal-fact"><strong>${included}</strong><span>将写入</span></div>
+        <div class="journal-fact"><strong>${model.journal ? model.journal.version : '—'}</strong><span>当前版本</span></div>`;
+
+      const hasJournal = Boolean(model.journal);
+      elements.journalPreview.classList.toggle('hidden', !hasJournal);
+      elements.historyButton.classList.toggle('hidden', !hasJournal);
+      if (hasJournal) elements.journalPreview.textContent = model.journal.body;
+
+      const showNotice = model.state === 'stale' || model.state === 'failed';
+      elements.journalNotice.classList.toggle('hidden', !showNotice);
+      elements.journalNotice.classList.toggle('error', model.state === 'failed');
+      if (model.state === 'stale') {
+        elements.journalNotice.textContent = `新增 ${Math.max(1, newCount)} 条记录。生成更新版本前，当前正文保持不变。`;
+      } else if (model.state === 'failed') {
+        elements.journalNotice.textContent = '上次更新失败。你仍然可以查看和编辑原有日志。';
+      }
+
+      elements.generationRegion.classList.toggle('hidden', model.state !== 'generating');
+      const progress = [12, 34, 62, 86][model.generationStep] || 12;
+      elements.generationBar.style.width = `${progress}%`;
+      const steps = ['正在校准今天的记录片段', '正在合并同一件事的补充', '正在整理第一人称正文', '正在检查内容来源'];
+      elements.generationText.textContent = steps[model.generationStep] || steps[0];
+    }
+
+    function renderEditor() {
+      if (!model.journal) return;
+      elements.journalTitleInput.value = model.journal.title;
+      elements.journalBodyInput.value = model.journal.body;
+      autoSizeEditor();
+      elements.editorBanner.classList.toggle('show', model.state === 'stale' || model.state === 'failed');
+      if (model.state === 'confirmed') {
+        elements.editorTopStatus.textContent = '已完成 · 编辑后可再次确认';
+        elements.completeJournal.textContent = '完成修改';
+      } else if (model.state === 'stale' || model.state === 'failed') {
+        elements.editorTopStatus.textContent = '当前版本 · 有新内容未纳入';
+        elements.completeJournal.textContent = '完成当前版本';
+      } else {
+        elements.editorTopStatus.textContent = '草稿 · 所有修改自动保存';
+        elements.completeJournal.textContent = model.userEdited ? '完成修改' : '完成';
+      }
+      elements.editorSaveState.textContent = model.syncState === 'saving' ? '正在自动保存…' : '所有修改已自动保存';
+      elements.sourceRailList.innerHTML = includedMaterials().map(item => `
+        <article class="source-item">
+          <strong>${escapeHtml(item.title)}</strong>
+          <p>${escapeHtml(item.sources.map(source => source.text).join('；'))}</p>
+          <small>${escapeHtml(item.time)} · ${item.modes.map(escapeHtml).join(' / ')}</small>
+        </article>`).join('');
+    }
+
+    function renderHistory() {
+      if (!model.journal) return;
+      const current = {
+        label: `版本 ${model.journal.version}`,
+        status: model.state === 'confirmed' ? '已完成' : model.state === 'stale' ? '有新内容' : '当前草稿',
+        body: model.journal.body,
+        time: model.journal.confirmedAt || '刚刚'
+      };
+      const versions = [current, ...model.versions];
+      elements.historyList.innerHTML = versions.map((version, index) => `
+        <article style="padding:16px 0;${index ? 'border-top:1px solid var(--line-soft);' : ''}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div><strong class="display" style="font-size:1.1rem;font-weight:600;">${escapeHtml(version.label)}</strong><div class="ui" style="margin-top:4px;color:var(--ink-3);font-size:.68rem;">${escapeHtml(version.status)} · ${escapeHtml(version.time)}</div></div>
+            ${index ? `<button class="button secondary small" type="button" data-restore-version="${index - 1}">恢复此版本</button>` : '<span class="badge completed">当前</span>'}
+          </div>
+          <p style="margin:11px 0 0;color:var(--ink-2);font-size:.82rem;line-height:1.75;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(version.body)}</p>
+        </article>`).join('');
+    }
+
+    function render() {
+      if (model.materials.length === 0 && model.state !== 'empty') model.state = 'empty';
+      if (model.materials.length > 0 && model.state === 'empty') model.state = 'collecting';
+      renderTimeline();
+      renderJournal();
+      renderEditor();
+      document.querySelectorAll('[data-scenario]').forEach(button => button.classList.toggle('active', button.dataset.scenario === model.currentScenario));
+    }
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.getElementById('toastStack').appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(5px)'; }, 2400);
+      setTimeout(() => toast.remove(), 2800);
+    }
+
+    function openOverlay(id) {
+      const overlay = document.getElementById(id);
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => overlay.querySelector('textarea, input, button')?.focus(), 80);
+    }
+    function closeOverlay(id) {
+      document.getElementById(id).classList.remove('open');
+      if (!elements.editorView.classList.contains('open')) document.body.style.overflow = '';
+    }
+    function closeAllOverlays() {
+      document.querySelectorAll('.overlay.open').forEach(item => item.classList.remove('open'));
+      if (!elements.editorView.classList.contains('open')) document.body.style.overflow = '';
+    }
+
+    function startGeneration() {
+      if (!includedMaterials().length) return;
+      model.state = 'generating';
+      model.currentScenario = 'generating';
+      model.generationStep = 0;
+      render();
+      const timers = [
+        setTimeout(() => { model.generationStep = 1; renderJournal(); }, 620),
+        setTimeout(() => { model.generationStep = 2; renderJournal(); }, 1240),
+        setTimeout(() => { model.generationStep = 3; renderJournal(); }, 1900),
+        setTimeout(() => {
+          ensureJournal();
+          model.journal.body = composeJournal();
+          model.journal.title = defaultJournalTitle;
+          model.journal.version = Math.max(1, model.journal.version || 1);
+          model.state = 'draft';
+          model.currentScenario = 'draft';
+          model.userEdited = false;
+          model.syncState = 'saved';
+          render();
+          openEditor();
+          showToast('草稿已生成并自动保存');
+        }, 2600)
+      ];
+      window.__generationTimers = timers;
+    }
+
+    function openEditor() {
+      ensureJournal();
+      renderEditor();
+      elements.editorView.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => elements.journalBodyInput.focus(), 380);
+    }
+    function closeEditor() {
+      persistEditorImmediately();
+      elements.editorView.classList.remove('open');
+      elements.editorLayout.classList.remove('sources-open');
+      document.body.style.overflow = '';
+      render();
+    }
+    function persistEditorImmediately() {
+      if (!model.journal) return;
+      model.journal.title = elements.journalTitleInput.value.trim() || defaultJournalTitle;
+      model.journal.body = elements.journalBodyInput.value.trim();
+      model.syncState = 'saved';
+    }
+    let autosaveTimer = null;
+    function scheduleAutosave() {
+      model.userEdited = true;
+      model.syncState = 'saving';
+      if (model.state === 'confirmed') model.state = 'draft';
+      renderEditor();
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(() => {
+        persistEditorImmediately();
+        model.syncState = 'saved';
+        renderEditor();
+        renderJournal();
+      }, 700);
+    }
+    function autoSizeEditor() {
+      const area = elements.journalBodyInput;
+      area.style.height = 'auto';
+      area.style.height = `${Math.max(520, area.scrollHeight + 4)}px`;
+    }
+
+    function completeJournal() {
+      persistEditorImmediately();
+      ensureJournal();
+      model.state = 'confirmed';
+      model.currentScenario = 'confirmed';
+      model.journal.confirmedAt = '22:18';
+      model.userEdited = false;
+      closeEditor();
+      showToast('今日日志已完成');
+    }
+
+    function markStaleIfNeeded() {
+      if (model.journal && ['draft', 'confirmed', 'failed'].includes(model.state)) {
+        model.state = 'stale';
+        model.currentScenario = 'stale';
+      } else if (!model.journal) {
+        model.state = 'collecting';
+        model.currentScenario = 'collecting';
+      }
+    }
+
+    function addMaterialFromCapture(text, mode = '帮我记') {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const clean = text.trim();
+      const material = {
+        id: `m${Date.now()}`,
+        time: `${hh}:${mm}`,
+        kind: '事件材料',
+        title: clean.length > 17 ? `${clean.slice(0, 17)}…` : clean,
+        summary: clean,
+        journalText: clean,
+        modes: [mode],
+        included: true,
+        recordings: 1,
+        occurred: '刚刚记录',
+        sources: [{ time: `${hh}:${mm}`, mode, text: clean }],
+        isNew: Boolean(model.journal)
+      };
+      model.materials.push(material);
+      markStaleIfNeeded();
+      render();
+      setTimeout(() => document.getElementById(`card-${material.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+    }
+
+    function prepareUpdate() {
+      ensureJournal();
+      const additions = newIncludedMaterials();
+      const additionBody = additions.map(item => item.journalText).join('\n\n');
+      model.candidateBody = additionBody ? `${model.journal.body}\n\n${additionBody}` : composeJournal();
+      elements.currentCompare.textContent = model.journal.body;
+      const oldText = escapeHtml(model.journal.body).replaceAll('\n', '<br>');
+      const newText = escapeHtml(additionBody || '没有检测到独立新增段落，将重新校准材料关系。').replaceAll('\n', '<br>');
+      elements.candidateCompare.innerHTML = `${oldText}<span class="new-paragraph">${newText}</span>`;
+      openOverlay('updateOverlay');
+    }
+
+    function adoptUpdate() {
+      ensureJournal();
+      model.versions.unshift({
+        label: `版本 ${model.journal.version}`,
+        status: model.journal.confirmedAt ? '已完成' : '旧草稿',
+        body: model.journal.body,
+        time: model.journal.confirmedAt || '更新前'
+      });
+      model.journal.body = model.candidateBody;
+      model.journal.version += 1;
+      model.journal.confirmedAt = null;
+      model.materials.forEach(item => { item.isNew = false; });
+      model.state = 'draft';
+      model.currentScenario = 'draft';
+      model.userEdited = false;
+      closeOverlay('updateOverlay');
+      render();
+      openEditor();
+      showToast('候选更新版本已采用，旧版本仍在版本历史中');
+    }
+
+    function setScenario(name) {
+      clearTimeout(autosaveTimer);
+      (window.__generationTimers || []).forEach(clearTimeout);
+      model.currentScenario = name === 'reset' ? 'collecting' : name;
+      model.dateOffset = 0;
+      model.generationStep = 0;
+      model.pendingMaterialId = null;
+      model.editingMaterialId = null;
+      model.userEdited = false;
+      model.syncState = 'saved';
+      model.versions = [];
+
+      if (name === 'empty') {
+        model.materials = [];
+        model.journal = null;
+        model.state = 'empty';
+      } else if (name === 'collecting' || name === 'reset') {
+        model.materials = deepClone(baseMaterials);
+        model.journal = null;
+        model.state = 'collecting';
+      } else if (name === 'generating') {
+        model.materials = deepClone(baseMaterials);
+        model.journal = null;
+        model.state = 'generating';
+        model.generationStep = 2;
+      } else if (name === 'draft') {
+        model.materials = deepClone(baseMaterials);
+        model.journal = { title: defaultJournalTitle, body: composeJournal(model.materials), version: 1, confirmedAt: null };
+        model.state = 'draft';
+      } else if (name === 'confirmed') {
+        model.materials = deepClone(baseMaterials);
+        model.journal = { title: defaultJournalTitle, body: composeJournal(model.materials), version: 1, confirmedAt: '22:18' };
+        model.state = 'confirmed';
+      } else if (name === 'stale' || name === 'failed') {
+        model.materials = [...deepClone(baseMaterials), deepClone(rainMaterial)];
+        model.journal = { title: defaultJournalTitle, body: composeJournal(baseMaterials), version: 1, confirmedAt: '21:45' };
+        model.state = name;
+      }
+      closeAllOverlays();
+      elements.editorView.classList.remove('open');
+      document.body.style.overflow = '';
+      render();
+      showToast(`已切换：${document.querySelector(`[data-scenario="${model.currentScenario}"]`)?.textContent || '完整演示'}`);
+    }
+
+    function shiftDate(delta) {
+      model.dateOffset += delta;
+      const base = new Date(2026, 7, 10);
+      base.setDate(base.getDate() + model.dateOffset);
+      const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+      document.getElementById('dayTitle').textContent = `${base.getFullYear()} 年 ${base.getMonth()+1} 月 ${base.getDate()} 日，${weekdays[base.getDay()]}`;
+      document.getElementById('dateChip').textContent = model.dateOffset === 0 ? '8 月 10 日 · 今天' : `${base.getMonth()+1} 月 ${base.getDate()} 日`;
+      showToast('原型只复用当前示例内容，实际产品会读取所选日期的数据');
+    }
+
+    document.addEventListener('click', event => {
+      const closeButton = event.target.closest('[data-close-overlay]');
+      if (closeButton) closeOverlay(closeButton.dataset.closeOverlay);
+
+      const emptyCapture = event.target.closest('[data-empty-capture]');
+      if (emptyCapture) openOverlay('captureOverlay');
+
+      const action = event.target.closest('[data-action]');
+      if (action) {
+        const id = action.dataset.id;
+        const item = model.materials.find(material => material.id === id);
+        if (!item) return;
+        if (action.dataset.action === 'details') {
+          const card = document.getElementById(`card-${id}`);
+          card.classList.toggle('expanded');
+          action.textContent = card.classList.contains('expanded') ? '收起原话' : '查看原话';
+        }
+        if (action.dataset.action === 'toggle-inclusion') {
+          if (item.included) {
+            model.pendingMaterialId = id;
+            document.getElementById('confirmCopy').textContent = `“${item.title}”仍会保留在时间轴里，但后续生成、更新、周报和月报不会使用它，除非你恢复纳入。`;
+            openOverlay('confirmOverlay');
+          } else {
+            item.included = true;
+            item.isNew = Boolean(model.journal);
+            markStaleIfNeeded();
+            render();
+            showToast('这段记录已恢复纳入');
+          }
+        }
+        if (action.dataset.action === 'correct') {
+          model.editingMaterialId = id;
+          document.getElementById('correctText').value = item.summary;
+          openOverlay('correctOverlay');
+        }
+      }
+
+      const restore = event.target.closest('[data-restore-version]');
+      if (restore) {
+        const version = model.versions[Number(restore.dataset.restoreVersion)];
+        if (version) {
+          ensureJournal();
+          model.versions.unshift({ label: `版本 ${model.journal.version}`, status: '恢复前版本', body: model.journal.body, time: '刚刚' });
+          model.journal.body = version.body;
+          model.journal.version += 1;
+          model.state = 'draft';
+          closeOverlay('historyOverlay');
+          render();
+          openEditor();
+          showToast('已恢复为新的草稿版本');
+        }
+      }
+
+      if (event.target.classList.contains('overlay')) closeOverlay(event.target.id);
+      const demoNav = event.target.closest('[data-demo-nav]');
+      if (demoNav) showToast(`${demoNav.dataset.demoNav}页不在本次“今日日志页”原型范围内`);
+    });
+
+    document.getElementById('captureEntry').addEventListener('click', () => openOverlay('captureOverlay'));
+    document.getElementById('reflectEntry').addEventListener('click', () => openOverlay('reflectOverlay'));
+    document.getElementById('captureText').addEventListener('input', event => document.getElementById('captureCounter').textContent = `${event.target.value.length} / 1000`);
+    document.getElementById('saveCapture').addEventListener('click', () => {
+      const text = document.getElementById('captureText').value.trim();
+      if (!text) return showToast('先写下一句话');
+      addMaterialFromCapture(text, '帮我记');
+      closeOverlay('captureOverlay');
+      document.getElementById('captureText').value = '';
+      document.getElementById('captureCounter').textContent = '0 / 1000';
+      showToast(model.journal ? '已记下；今日日志已标记为“有新内容”' : '记下了');
+    });
+    document.getElementById('sendReflect').addEventListener('click', () => {
+      const input = document.getElementById('reflectInput');
+      const text = input.value.trim();
+      if (!text) return;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble user';
+      bubble.textContent = text;
+      document.getElementById('chatLog').appendChild(bubble);
+      input.value = '';
+      addMaterialFromCapture(text, '陪我聊');
+      setTimeout(() => {
+        const reply = document.createElement('div');
+        reply.className = 'bubble assistant';
+        reply.textContent = '我记下了。你说“整个人都绷着”，更像是一直在赶节奏，还是担心后面继续出错？';
+        document.getElementById('chatLog').appendChild(reply);
+        reply.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 520);
+    });
+    document.getElementById('endReflect').addEventListener('click', () => { closeOverlay('reflectOverlay'); showToast('本次聊天已结束；材料仍保留在今天'); });
+
+    document.getElementById('confirmExclude').addEventListener('click', () => {
+      const item = model.materials.find(material => material.id === model.pendingMaterialId);
+      if (item) {
+        item.included = false;
+        item.isNew = Boolean(model.journal);
+        markStaleIfNeeded();
+      }
+      model.pendingMaterialId = null;
+      closeOverlay('confirmOverlay');
+      render();
+      showToast('已设为“不写入今日日志”');
+    });
+    document.getElementById('saveCorrection').addEventListener('click', () => {
+      const item = model.materials.find(material => material.id === model.editingMaterialId);
+      const text = document.getElementById('correctText').value.trim();
+      if (item && text) {
+        item.summary = text;
+        item.journalText = text;
+        item.isNew = Boolean(model.journal);
+        markStaleIfNeeded();
+      }
+      closeOverlay('correctOverlay');
+      render();
+      showToast('纠正已保存；已有日志没有被直接改写');
+    });
+
+    function handleJournalAction() {
+      if (model.state === 'empty') return openOverlay('captureOverlay');
+      if (model.state === 'collecting') return startGeneration();
+      if (model.state === 'generating') return;
+      if (model.state === 'draft' || model.state === 'confirmed') return openEditor();
+      if (model.state === 'stale' || model.state === 'failed') return prepareUpdate();
+    }
+    elements.journalAction.addEventListener('click', handleJournalAction);
+    elements.mobileJournalAction.addEventListener('click', handleJournalAction);
+    document.getElementById('scrollMaterials').addEventListener('click', () => document.getElementById('timelineTitle').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    elements.historyButton.addEventListener('click', () => { renderHistory(); openOverlay('historyOverlay'); });
+    document.getElementById('editorHistory').addEventListener('click', () => { renderHistory(); openOverlay('historyOverlay'); });
+
+    document.getElementById('backFromEditor').addEventListener('click', closeEditor);
+    elements.journalTitleInput.addEventListener('input', scheduleAutosave);
+    elements.journalBodyInput.addEventListener('input', () => { autoSizeEditor(); scheduleAutosave(); });
+    elements.completeJournal.addEventListener('click', completeJournal);
+    document.getElementById('toggleSources').addEventListener('click', () => elements.editorLayout.classList.toggle('sources-open'));
+    document.getElementById('closeSources').addEventListener('click', () => elements.editorLayout.classList.remove('sources-open'));
+    document.getElementById('editorExport').addEventListener('click', () => showToast('原型示意：正式产品可在完成后导出 Markdown 或纯文本'));
+
+    document.getElementById('keepCurrent').addEventListener('click', () => { closeOverlay('updateOverlay'); showToast('已保留当前版本；新内容提示仍然存在'); });
+    document.getElementById('manualUpdate').addEventListener('click', () => { closeOverlay('updateOverlay'); openEditor(); showToast('你正在编辑当前版本；新材料不会自动插入'); });
+    document.getElementById('adoptUpdate').addEventListener('click', adoptUpdate);
+
+    document.getElementById('designNotesButton').addEventListener('click', () => document.getElementById('designDrawer').classList.add('open'));
+    document.getElementById('closeDesignDrawer').addEventListener('click', () => document.getElementById('designDrawer').classList.remove('open'));
+    document.getElementById('profileButton').addEventListener('click', () => showToast('个人菜单不在本次原型范围内'));
+    document.getElementById('brandButton').addEventListener('click', () => { document.getElementById('designDrawer').classList.remove('open'); closeEditor(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+    document.getElementById('prototypeLauncher').addEventListener('click', () => elements.prototypePanel.classList.toggle('open'));
+    document.querySelectorAll('[data-scenario]').forEach(button => button.addEventListener('click', () => setScenario(button.dataset.scenario)));
+
+    document.getElementById('prevDay').addEventListener('click', () => shiftDate(-1));
+    document.getElementById('nextDay').addEventListener('click', () => shiftDate(1));
+    document.getElementById('backToday').addEventListener('click', () => { model.dateOffset = 0; shiftDate(0); });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        if (document.getElementById('designDrawer').classList.contains('open')) return document.getElementById('designDrawer').classList.remove('open');
+        if (document.querySelector('.overlay.open')) return closeAllOverlays();
+        if (elements.editorView.classList.contains('open')) return closeEditor();
+        elements.prototypePanel.classList.remove('open');
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && document.getElementById('captureOverlay').classList.contains('open')) {
+        document.getElementById('saveCapture').click();
+      }
+    });
+
+    render();
+    document.getElementById('captureCounter').textContent = `${document.getElementById('captureText').value.length} / 1000`;
+  </script>
+</body>
+</html>

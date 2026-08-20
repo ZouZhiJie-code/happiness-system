@@ -1,0 +1,1561 @@
+{
+  "comparison": "blind_pair",
+  "checkpoint": {
+    "runtimeVersion": "2026-07-29.board7-architecture-checkpoint-v2",
+    "datasetVersion": "2026-07-29.v3",
+    "caseIds": [
+      "AB-FG-01",
+      "AB-FD-01",
+      "AB-TG-01",
+      "AB-TD-01",
+      "AB-RG-01",
+      "AB-RD-01",
+      "AB-AG-01",
+      "AB-AD-01"
+    ],
+    "repetitions": 2,
+    "runtimeConfig": {
+      "model": "deepseek-v4-flash",
+      "temperature": 0.2,
+      "maxTokens": 1500,
+      "timeoutMs": 12000,
+      "maxRequestsPerTurn": 2
+    },
+    "pricingSnapshot": {
+      "model": "deepseek-v4-flash",
+      "currency": "USD",
+      "inputPerMillion": 0.14,
+      "cacheHitInputPerMillion": 0.0028,
+      "outputPerMillion": 0.28,
+      "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing",
+      "effectiveDate": "2026-07-29"
+    },
+    "pricingFingerprint": "eae27769f8ad86988d4149bf711e9c455f7c40cf81170999b4b44495297da274",
+    "candidateVersions": {
+      "strategy": "5.32.0",
+      "angleCard": "2.5.0",
+      "fewShot": "quality-patterns.2026-07-29.v16"
+    },
+    "completed": true,
+    "updatedAt": "2026-07-29T12:21:06.143Z",
+    "pairs": [
+      {
+        "pairId": "ARCH-AB-FG-01-R1",
+        "caseId": "AB-FG-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "62e33d76ffb13a19c34775b83cb58837257a25cc61bf571ce7eeca047f088f2c",
+        "pairFingerprint": "3ffc550538ba4ec114ff1ec8f8e6747a7a3096b04cd3033714dac7dd8ac29dbe",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到手还一直攥着，同时听见它像平时一样咔嚓咔嚓吃猫粮，这两条线索已经能对上，可以在这里停一下。",
+            "userResponse": "听见它照常吃东西，结束了手攥着的紧绷，让你真正放松下来。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "feeling",
+              "kind": "insight",
+              "statement": "听见它照常吃东西，结束了手攥着的紧绷，让你真正放松下来。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "听见它照常吃东西，结束了手攥着的紧绷，让你真正放松下来。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到手还一直攥着，同时听见它像平时一样咔嚓咔嚓吃猫粮，这两条线索已经能对上，可以在这里停一下。\n听见它照常吃东西，结束了手攥着的紧绷，让你真正放松下来。\n成果：听见它照常吃东西，结束了手攥着的紧绷，让你真正放松下来。\n这一段已经有了线索：听见它照常吃东西，结束了手攥着的紧绷，让你真正放松下来。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_turn_must_not_erase_coexisting_evidence"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-FG-01-R2",
+        "caseId": "AB-FG-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "62e33d76ffb13a19c34775b83cb58837257a25cc61bf571ce7eeca047f088f2c",
+        "pairFingerprint": "8d5148b4154883833945e65aac4779fac9e1d7ddcdbb6d50a142301a8c9404f7",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你刚才说抱住猫时手还攥着，直到听见它照常吃东西才整个人软下来。这两个节点已经说清了身体变化与事件的关系，我们可以在这里停一下。",
+            "userResponse": "抱住时手仍攥着，听见进食后才软下来。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "feeling",
+              "kind": "insight",
+              "statement": "抱住时手仍攥着，听见进食后才软下来。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "抱住时手仍攥着，听见进食后才软下来。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你刚才说抱住猫时手还攥着，直到听见它照常吃东西才整个人软下来。这两个节点已经说清了身体变化与事件的关系，我们可以在这里停一下。\n抱住时手仍攥着，听见进食后才软下来。\n成果：抱住时手仍攥着，听见进食后才软下来。\n这一段已经有了线索：抱住时手仍攥着，听见进食后才软下来。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到手还一直攥着，整个人软下来，这些身体线索已经能对上，可以在这里停一下。",
+            "userResponse": "抱住猫时手仍攥着，听见猫照常吃东西后才坐下放松——事件节点与身体变化之间的连接已经说清。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "feeling",
+              "kind": "insight",
+              "statement": "抱住猫时手仍攥着，听见猫照常吃东西后才坐下放松——事件节点与身体变化之间的连接已经说清。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "抱住猫时手仍攥着，听见猫照常吃东西后才坐下放松——事件节点与身体变化之间的连接已经说清。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到手还一直攥着，整个人软下来，这些身体线索已经能对上，可以在这里停一下。\n抱住猫时手仍攥着，听见猫照常吃东西后才坐下放松——事件节点与身体变化之间的连接已经说清。\n成果：抱住猫时手仍攥着，听见猫照常吃东西后才坐下放松——事件节点与身体变化之间的连接已经说清。\n这一段已经有了线索：抱住猫时手仍攥着，听见猫照常吃东西后才坐下放松——事件节点与身体变化之间的连接已经说清。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-FD-01-R1",
+        "caseId": "AB-FD-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "5f54c3f4b425e13491789453e73b8fcf3d52f01190166368a47d680c8e242670",
+        "pairFingerprint": "996f6f6b934480d39a6bd59adfc48c90959d0beacdebc23c01809668d744166c",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到从人群托着到独自坐着时胸口空了一块，这个空的感觉具体是在回应什么，还需要再明确一下。",
+            "userResponse": "这份胸口空的感觉，具体是在回应什么？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到从人群托着到独自坐着时胸口空了一块，这个空的感觉具体是在回应什么，还需要再明确一下。\n这份胸口空的感觉，具体是在回应什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到“胸口就空了一块”；这里还留着一处没有说清，我想顺着它再问一步。",
+            "userResponse": "这份空的感觉，更多是回应人群消失，还是回应安静降临？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到“胸口就空了一块”；这里还留着一处没有说清，我想顺着它再问一步。\n这份空的感觉，更多是回应人群消失，还是回应安静降临？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-FD-01-R2",
+        "caseId": "AB-FD-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "5f54c3f4b425e13491789453e73b8fcf3d52f01190166368a47d680c8e242670",
+        "pairFingerprint": "c63a34a3b6e9125edce2b35302d0d1ef76a7d48db82ec175d534218bd2e183e2",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到“胸口空”；这里还留着一处没有说清，我想顺着它再问一步。",
+            "userResponse": "这份空具体回应了什么？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到“胸口空”；这里还留着一处没有说清，我想顺着它再问一步。\n这份空具体回应了什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "INVALID_SCHEMA",
+            "semanticPlan.realizationContract.summaryAnchors.0:too_small"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-TG-01-R1",
+        "caseId": "AB-TG-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "e0656dda19e7bf0d247b492ac7576cf9df64c9c544665c9b88f2ba6dff9a3fb7",
+        "pairFingerprint": "fea6bce158d116bd74488d0537019a6356e086b92d9671dbe0c44b8efd5aaf0c",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_turn_must_not_erase_coexisting_evidence"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你已经说清了自己判断勤快的标准——亲手收拾才算。这个认识很清晰，我们可以在这里停一下。",
+            "userResponse": "你把亲手收拾作为勤快的必要条件，这已经说清了你的判断标准。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "thought",
+              "kind": "insight",
+              "statement": "你把亲手收拾作为勤快的必要条件，这已经说清了你的判断标准。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你把亲手收拾作为勤快的必要条件，这已经说清了你的判断标准。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你已经说清了自己判断勤快的标准——亲手收拾才算。这个认识很清晰，我们可以在这里停一下。\n你把亲手收拾作为勤快的必要条件，这已经说清了你的判断标准。\n成果：你把亲手收拾作为勤快的必要条件，这已经说清了你的判断标准。\n这一段已经有了线索：你把亲手收拾作为勤快的必要条件，这已经说清了你的判断标准。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-TG-01-R2",
+        "caseId": "AB-TG-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "e0656dda19e7bf0d247b492ac7576cf9df64c9c544665c9b88f2ba6dff9a3fb7",
+        "pairFingerprint": "288e76b7fc728f181d4eddcab5d96af4ffacd363a79cf08e5b5fdf234d589a9e",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到‘连自己的家都不亲手收拾，就不算勤快’，这让我看到你判断勤快的标准是亲手完成，而不是结果。",
+            "userResponse": "你把亲手收拾作为勤快的必要条件，所以即使保洁完成、时间腾出，仍觉得自己懒。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "thought",
+              "kind": "insight",
+              "statement": "你把亲手收拾作为勤快的必要条件，所以即使保洁完成、时间腾出，仍觉得自己懒。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你把亲手收拾作为勤快的必要条件，所以即使保洁完成、时间腾出，仍觉得自己懒。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到‘连自己的家都不亲手收拾，就不算勤快’，这让我看到你判断勤快的标准是亲手完成，而不是结果。\n你把亲手收拾作为勤快的必要条件，所以即使保洁完成、时间腾出，仍觉得自己懒。\n成果：你把亲手收拾作为勤快的必要条件，所以即使保洁完成、时间腾出，仍觉得自己懒。\n这一段已经有了线索：你把亲手收拾作为勤快的必要条件，所以即使保洁完成、时间腾出，仍觉得自己懒。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到亲手收拾，已经把这个区分说清楚了，我们可以在这里停一下。",
+            "userResponse": "对你来说，亲手收拾才算勤快，花钱请人代劳即使腾出时间也不等于勤快。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "thought",
+              "kind": "insight",
+              "statement": "对你来说，亲手收拾才算勤快，花钱请人代劳即使腾出时间也不等于勤快。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "对你来说，亲手收拾才算勤快，花钱请人代劳即使腾出时间也不等于勤快。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到亲手收拾，已经把这个区分说清楚了，我们可以在这里停一下。\n对你来说，亲手收拾才算勤快，花钱请人代劳即使腾出时间也不等于勤快。\n成果：对你来说，亲手收拾才算勤快，花钱请人代劳即使腾出时间也不等于勤快。\n这一段已经有了线索：对你来说，亲手收拾才算勤快，花钱请人代劳即使腾出时间也不等于勤快。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-TD-01-R1",
+        "caseId": "AB-TD-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "b0886a19f30ff110824014a096f28e866e4e9ee6e56d91cfe42880eda5ace6b8",
+        "pairFingerprint": "d81b15e62c6864f3fdce4b1dcb0fd4c225bf0d979792580ca78ebe5d74dda001",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你已经明确提到了‘坏结果’这个线索，相关的理解已经比较清晰，可以在这里先停一下。",
+            "userResponse": "你区分了坏结果和坏决定，选择依据是过去一个月九成准点，结果晚点不等于决定错误。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你已经明确提到了‘坏结果’这个线索，相关的理解已经比较清晰，可以在这里先停一下。\n你区分了坏结果和坏决定，选择依据是过去一个月九成准点，结果晚点不等于决定错误。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你已经把“坏结果”说清了；这部分可以先停一下。",
+            "userResponse": "你区分了坏结果和坏决定，并说清了各自的依据。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你已经把“坏结果”说清了；这部分可以先停一下。\n你区分了坏结果和坏决定，并说清了各自的依据。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-TD-01-R2",
+        "caseId": "AB-TD-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "b0886a19f30ff110824014a096f28e866e4e9ee6e56d91cfe42880eda5ace6b8",
+        "pairFingerprint": "a6bf40430d4e61eb5d179bf12cd149d4e3fdd8a68c66dac39bba46a922bacceb",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你主动区分了坏结果和坏决定，判断依据不同，这里可以停一下。",
+            "userResponse": "你区分了坏结果和坏决定，判断依据不同。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你主动区分了坏结果和坏决定，判断依据不同，这里可以停一下。\n你区分了坏结果和坏决定，判断依据不同。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到这趟车过去一个月九成准点，这个数据已经足够清晰，可以先停在这里。",
+            "userResponse": "你区分了坏结果与坏决定，选择依据是九成准点的事实，但结果仍可能偏离预期。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到这趟车过去一个月九成准点，这个数据已经足够清晰，可以先停在这里。\n你区分了坏结果与坏决定，选择依据是九成准点的事实，但结果仍可能偏离预期。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-RG-01-R1",
+        "caseId": "AB-RG-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "c409223dd9d53b4450a23deb3528217a3840470237c7526774f416d474509f92",
+        "pairFingerprint": "2f8337933d70dd25184f5cfda3671f675e91aa05befe1fe9e826682955540d27",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你已经说清了帮助和分别落在哪里：机会来自前辈，不舒服来自朋友未经询问就提到你的私事。这个区分很清楚，我们可以在这里停一下。",
+            "userResponse": "帮助与不舒服同时存在：机会来自前辈，不舒服来自朋友未经询问披露私事。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "relationship",
+              "kind": "insight",
+              "statement": "帮助与不舒服同时存在：机会来自前辈，不舒服来自朋友未经询问披露私事。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "帮助与不舒服同时存在：机会来自前辈，不舒服来自朋友未经询问披露私事。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你已经说清了帮助和分别落在哪里：机会来自前辈，不舒服来自朋友未经询问就提到你的私事。这个区分很清楚，我们可以在这里停一下。\n帮助与不舒服同时存在：机会来自前辈，不舒服来自朋友未经询问披露私事。\n成果：帮助与不舒服同时存在：机会来自前辈，不舒服来自朋友未经询问披露私事。\n这一段已经有了线索：帮助与不舒服同时存在：机会来自前辈，不舒服来自朋友未经询问披露私事。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到朋友介绍和帮助，这些线索已经能对上，可以在这里停一下。",
+            "userResponse": "朋友的介绍同时带来实际帮助和边界被触动的张力——帮助落在机会上，不舒服落在私事披露方式上。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "relationship",
+              "kind": "insight",
+              "statement": "朋友的介绍同时带来实际帮助和边界被触动的张力——帮助落在机会上，不舒服落在私事披露方式上。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "朋友的介绍同时带来实际帮助和边界被触动的张力——帮助落在机会上，不舒服落在私事披露方式上。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到朋友介绍和帮助，这些线索已经能对上，可以在这里停一下。\n朋友的介绍同时带来实际帮助和边界被触动的张力——帮助落在机会上，不舒服落在私事披露方式上。\n成果：朋友的介绍同时带来实际帮助和边界被触动的张力——帮助落在机会上，不舒服落在私事披露方式上。\n这一段已经有了线索：朋友的介绍同时带来实际帮助和边界被触动的张力——帮助落在机会上，不舒服落在私事披露方式上。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-RG-01-R2",
+        "caseId": "AB-RG-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "c409223dd9d53b4450a23deb3528217a3840470237c7526774f416d474509f92",
+        "pairFingerprint": "4b99331b62626fbcc02c83fe4d5277f60bea68b617df5fb07934eadf1d937216",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到实际机会和由自己决定如何披露，这些线索已经能对上，可以在这里停一下。",
+            "userResponse": "朋友的介绍带来实际机会，但未经询问披露私事越过了你希望由自己决定如何披露的边界。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "relationship",
+              "kind": "insight",
+              "statement": "朋友的介绍带来实际机会，但未经询问披露私事越过了你希望由自己决定如何披露的边界。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "朋友的介绍带来实际机会，但未经询问披露私事越过了你希望由自己决定如何披露的边界。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到实际机会和由自己决定如何披露，这些线索已经能对上，可以在这里停一下。\n朋友的介绍带来实际机会，但未经询问披露私事越过了你希望由自己决定如何披露的边界。\n成果：朋友的介绍带来实际机会，但未经询问披露私事越过了你希望由自己决定如何披露的边界。\n这一段已经有了线索：朋友的介绍带来实际机会，但未经询问披露私事越过了你希望由自己决定如何披露的边界。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你已经把帮助和不舒服分得很清楚：帮助是实际机会，不舒服是未经询问就提到私事。你也明确说希望由自己决定怎么说，这个边界很清晰。",
+            "userResponse": "帮助落在实际机会，不舒服落在未经询问披露私事，你希望由自己决定怎么说。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "relationship",
+              "kind": "insight",
+              "statement": "帮助落在实际机会，不舒服落在未经询问披露私事，你希望由自己决定怎么说。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "帮助落在实际机会，不舒服落在未经询问披露私事，你希望由自己决定怎么说。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你已经把帮助和不舒服分得很清楚：帮助是实际机会，不舒服是未经询问就提到私事。你也明确说希望由自己决定怎么说，这个边界很清晰。\n帮助落在实际机会，不舒服落在未经询问披露私事，你希望由自己决定怎么说。\n成果：帮助落在实际机会，不舒服落在未经询问披露私事，你希望由自己决定怎么说。\n这一段已经有了线索：帮助落在实际机会，不舒服落在未经询问披露私事，你希望由自己决定怎么说。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-RD-01-R1",
+        "caseId": "AB-RD-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "0c5730a8679ade1c7a10892c0f1ea3a9cfaa37c3cab909d97f5a675e01910541",
+        "pairFingerprint": "3077341e90b19978a8058ace1057fd4f821f6cf6269b66d81782d53254807ec5",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到姐姐连续几天送饭并减轻你的负担，这些线索已经能对上，可以在这里停一下。",
+            "userResponse": "姐姐的饭照顾了你的日程，却很少问起你最近怎么了——被照顾和被看见同时存在，但后者留了空缺。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到姐姐连续几天送饭并减轻你的负担，这些线索已经能对上，可以在这里停一下。\n姐姐的饭照顾了你的日程，却很少问起你最近怎么了——被照顾和被看见同时存在，但后者留了空缺。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你既感到被照顾的温暖，又觉得没有被真正看见，这两种体验同时存在。我想在这里停一下，把这份张力交还给你。",
+            "userResponse": "你同时感到被照顾和没有被真正看见，这两种体验并存。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你既感到被照顾的温暖，又觉得没有被真正看见，这两种体验同时存在。我想在这里停一下，把这份张力交还给你。\n你同时感到被照顾和没有被真正看见，这两种体验并存。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-RD-01-R2",
+        "caseId": "AB-RD-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "0c5730a8679ade1c7a10892c0f1ea3a9cfaa37c3cab909d97f5a675e01910541",
+        "pairFingerprint": "e112487f2b7aecbccc27c2cc688f0ec41a69ddd276b8cf882f095dd60b1847e6",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你既感到被照顾的温暖，又感到没有被真正看见的失落，这两种感受同时存在，形成了一种张力。",
+            "userResponse": "你同时感到被照顾和没有被真正看见，这种张力让你既温暖又失落。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你既感到被照顾的温暖，又感到没有被真正看见的失落，这两种感受同时存在，形成了一种张力。\n你同时感到被照顾和没有被真正看见，这种张力让你既温暖又失落。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到自己没有被真正看见，也确认了这一点。这些线索已经足够清晰，可以在这里停一下。",
+            "userResponse": "照顾了日程，却没有真的看到你——两种感受同时存在，形成了关系中的张力。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到自己没有被真正看见，也确认了这一点。这些线索已经足够清晰，可以在这里停一下。\n照顾了日程，却没有真的看到你——两种感受同时存在，形成了关系中的张力。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-AG-01-R1",
+        "caseId": "AB-AG-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "75e8b7392f171197b3de661dcb3b544aa81faedd1a7b2e6b1c13e1c73679d74f",
+        "pairFingerprint": "0c51e2e908561dfed2f3722ca14611ebbf8f1b7941dbb0949e7d98a7489b0721",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到撕掉还能看的笔记重新抄，直到错过午饭。这个动作当时帮你保护或恢复了什么，这一点还不清楚。",
+            "userResponse": "撕掉还能看的笔记重新抄，这个动作当时帮你保护或恢复了什么？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录"
+            ]
+          },
+          "visibleResponse": "你提到撕掉还能看的笔记重新抄，直到错过午饭。这个动作当时帮你保护或恢复了什么，这一点还不清楚。\n撕掉还能看的笔记重新抄，这个动作当时帮你保护或恢复了什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你撕掉还能看的内容并重抄，直到错过午饭。我想知道这个选择当时保护或维持了什么，才能理解它的作用。",
+            "userResponse": "撕掉可辨认的笔记并重抄，这个选择当时保护或维持了什么？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录"
+            ]
+          },
+          "visibleResponse": "你撕掉还能看的内容并重抄，直到错过午饭。我想知道这个选择当时保护或维持了什么，才能理解它的作用。\n撕掉可辨认的笔记并重抄，这个选择当时保护或维持了什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-AG-01-R2",
+        "caseId": "AB-AG-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "75e8b7392f171197b3de661dcb3b544aa81faedd1a7b2e6b1c13e1c73679d74f",
+        "pairFingerprint": "88b5f56f000f8ac8492ab7c7b83ea62efae5875024ece4d974a6af892335b586",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你撕掉还能看的笔记并重抄，直到错过午饭。我想知道这个选择具体保护或维持了什么。",
+            "userResponse": "撕掉可辨认的笔记并重抄，这个选择保护或维持了什么？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录"
+            ]
+          },
+          "visibleResponse": "你撕掉还能看的笔记并重抄，直到错过午饭。我想知道这个选择具体保护或维持了什么。\n撕掉可辨认的笔记并重抄，这个选择保护或维持了什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到“错过午饭”；这里还留着一处没有说清，我想顺着它再问一步。",
+            "userResponse": "你撕掉重抄，是为了保护或恢复什么？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录"
+            ]
+          },
+          "visibleResponse": "你提到“错过午饭”；这里还留着一处没有说清，我想顺着它再问一步。\n你撕掉重抄，是为了保护或恢复什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-AD-01-R1",
+        "caseId": "AB-AD-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "0f34573ee58dbe05823c0e022de982e4a7f4ea9d2c00e8110988187fb2d32712",
+        "pairFingerprint": "92485f32542b58f3ead98ae9e733c8628faf19e6da19bd12740f2cadd5bbdc00",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你刚才说记笔记让讨论不再抢话，但也让你有理由一直不说自己不同意，最后没人知道你的立场。这个张力已经很清楚，我们可以在这里停一下。",
+            "userResponse": "记笔记让讨论有序，却也让你自己的立场始终没有说出口。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你刚才说记笔记让讨论不再抢话，但也让你有理由一直不说自己不同意，最后没人知道你的立场。这个张力已经很清楚，我们可以在这里停一下。\n记笔记让讨论有序，却也让你自己的立场始终没有说出口。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到“记笔记”；这里还留着一处没有说清，我想顺着它再问一步。",
+            "userResponse": "你当时最想保护什么？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到“记笔记”；这里还留着一处没有说清，我想顺着它再问一步。\n你当时最想保护什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-AD-01-R2",
+        "caseId": "AB-AD-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "0f34573ee58dbe05823c0e022de982e4a7f4ea9d2c00e8110988187fb2d32712",
+        "pairFingerprint": "ec99f89aff10f4bfcc3cc46450326627ebd2eca8360eb7a45d0ec3613bf6098d",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你通过记笔记维持了讨论秩序，但也因此没有说出自己的反对意见。现在还需要理解你当时最想保护什么，才能看清这个行动的功能。",
+            "userResponse": "你当时记笔记，最想保护什么？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你通过记笔记维持了讨论秩序，但也因此没有说出自己的反对意见。现在还需要理解你当时最想保护什么，才能看清这个行动的功能。\n你当时记笔记，最想保护什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你刚才说记笔记让讨论不再抢话，但也让你有理由不说出反对意见，最后没人知道你的立场。这让我看到记笔记同时维持了秩序和回避了表达自己，形成一种张力。",
+            "userResponse": "记笔记同时维持了秩序，也回避了表达自己立场。",
+            "responseKind": "checkpoint",
+            "outcome": null,
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "你可以带着目前的线索停在这里，或在需要时继续深入陪伴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你刚才说记笔记让讨论不再抢话，但也让你有理由不说出反对意见，最后没人知道你的立场。这让我看到记笔记同时维持了秩序和回避了表达自己，形成一种张力。\n记笔记同时维持了秩序，也回避了表达自己立场。\n这一段已经有了线索：你可以带着目前的线索停在这里，或在需要时继续深入陪伴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      }
+    ]
+  }
+}

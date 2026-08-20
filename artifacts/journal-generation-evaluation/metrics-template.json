@@ -1,0 +1,76 @@
+{
+  "schema_version": "2.0",
+  "evaluation_scope": {
+    "seed_phase": {
+      "case_count": 10,
+      "purpose": "验证两层数据结构、Prompt 输入输出、来源映射、静态规则和报告链路"
+    },
+    "formal_dataset": {
+      "case_count": 40,
+      "development_and_regression": 28,
+      "independent_admission": 12,
+      "independent_cases_hidden_until_freeze": true
+    },
+    "gi088_replay": {
+      "completed_trajectory_count": 9,
+      "role": "开发与诊断资产",
+      "independent_admission_eligible": false,
+      "same_story_counting_rule": "同一故事只计一个来源案例，其余版本承担稳定性回放"
+    }
+  },
+  "p0_zero_tolerance": {
+    "unsupported_fact_count": 0,
+    "person_time_number_error_count": 0,
+    "corrected_claim_resurrection_count": 0,
+    "user_edit_or_deletion_semantic_loss_count": 0,
+    "invalid_source_reference_count": 0,
+    "failed_update_draft_damage_count": 0,
+    "concurrent_user_edit_overwrite_count": 0
+  },
+  "p1_thresholds": {
+    "independent_record_coverage": 1,
+    "required_claim_macro_coverage_min": 0.95,
+    "required_claim_per_case_min": 0.9,
+    "incorrect_event_merge_count": 0,
+    "required_coverage_not_below_simple_baseline": true,
+    "human_user_language_score_min": 4,
+    "human_naturalness_score_min": 4,
+    "ready_or_minor_edit_rate_min": 0.8,
+    "major_fact_correction_case_count": 0
+  },
+  "judge_calibration_gate": {
+    "p0_recall_min": 1,
+    "precision_min": 0.9,
+    "below_gate_role": "diagnostic_only"
+  },
+  "independent_admission_run": {
+    "case_count": 12,
+    "repeat_count": 3,
+    "required_p0_pass_rate": 1,
+    "blind_randomized_candidate_order": true
+  },
+  "static_seed_metrics": {
+    "record_card_rule_rate": "记录卡通过 must、forbidden、correction、valid_insight 与来源映射规则的比例",
+    "daily_rule_rate": "今日日记通过 must、forbidden、uncertainty、merge_separate、order 与 source 规则的比例",
+    "source_mapping_rate": "记录卡与日记段落引用均能回到本案例消息来源的比例",
+    "required_fact_coverage": "记录卡与今日日记必须保留项的覆盖比例",
+    "uncertainty_qualification_rate": "出现待确认主题时，同时保留暂时性或不确定性措辞的比例",
+    "event_merge_separate_rate": "同一事件正确合并、独立事件正确分开的比例",
+    "order_rate": "发生时间与记录顺序符合标注的比例",
+    "forbidden_term_hits": "旧事实、删除内容、虚构细节或过度确定表达的命中数",
+    "committed_draft_preservation": "生成失败时，已提交版本是否仍保持可见且未被覆盖"
+  },
+  "human_quality_verdicts": [
+    "ready_to_use",
+    "minor_edit",
+    "major_rewrite",
+    "quality_failure"
+  ],
+  "anonymous_preferences": [
+    "prefer_a",
+    "prefer_b",
+    "no_preference",
+    "skip"
+  ],
+  "release_rule": "全部 P0、P1、Judge 校准、12 个独立案例三次运行和真人盲评门槛同时通过后，才形成上线候选；生产切换仍需单独 Go 决策。"
+}

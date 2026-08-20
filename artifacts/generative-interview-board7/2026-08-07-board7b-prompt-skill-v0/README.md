@@ -26,10 +26,12 @@ GI-081 与 GI-083 已经提供临时 Prompt 和透明诊断历史。正式能力
 - [基础 Prompt v0](./board7b-base-prompt-v0.md)
 - [Interview Skill v0](./conduct-daily-light-thinking-interview/SKILL.md)
 - [最小结构化语义结果](./board7b-semantic-result-v0.md)
-- [三个合成对照案例与反事实变体](./board7b-prompt-skill-v0-contrastive-cases.json)
+- [三个对照案例与反事实变体](./board7b-prompt-skill-v0-contrastive-cases.json)
+- [主会话同步结论包](./board7b-prompt-skill-v0-conclusion-package.md)
+- [Board 7B → Board 6 正式评测交接包](./board7b-to-board6-formal-handoff.md)
 - [候选清单与指纹](./board7b-prompt-skill-v0-manifest.json)
-
-逐字事实卡、授权卡和执行交接保留在本机受控目录；公开对照案例均为合成输入，不对应真人轨迹。
+- [事实卡模板](./board7b-prompt-skill-v0-fact-card-template.json)
+- [运行授权卡模板](./board7b-prompt-skill-v0-authorization-template.json)
 
 ## 本机运行包
 

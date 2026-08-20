@@ -18,7 +18,7 @@
   },
   "nonModelAssets": {
     "ruleCoverage": "board7b-gi068-080-rule-coverage-v0.1.md",
-    "regressionPlan": "local-runtime-only",
+    "regressionPlan": "board7b-prompt-skill-v0.1-regression-plan.json",
     "authorizationTemplate": "board7b-prompt-skill-v0.1-authorization-template.json"
   },
   "runtime": {

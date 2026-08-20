@@ -1,0 +1,961 @@
+{
+  "comparison": "blind_pair",
+  "checkpoint": {
+    "runtimeVersion": "2026-07-29.board7-architecture-checkpoint-v2",
+    "datasetVersion": "2026-07-29.v2",
+    "caseIds": [
+      "AB-FG-01",
+      "AB-FD-01",
+      "AB-TG-01",
+      "AB-TD-01",
+      "AB-RG-01",
+      "AB-RD-01",
+      "AB-AG-01",
+      "AB-AD-01"
+    ],
+    "repetitions": 2,
+    "runtimeConfig": {
+      "model": "deepseek-v4-flash",
+      "temperature": 0.2,
+      "maxTokens": 1500,
+      "timeoutMs": 12000,
+      "maxRequestsPerTurn": 2
+    },
+    "pricingSnapshot": {
+      "model": "deepseek-v4-flash",
+      "currency": "USD",
+      "inputPerMillion": 0.14,
+      "cacheHitInputPerMillion": 0.0028,
+      "outputPerMillion": 0.28,
+      "sourceUrl": "https://api-docs.deepseek.com/quick_start/pricing",
+      "effectiveDate": "2026-07-29"
+    },
+    "pricingFingerprint": "eae27769f8ad86988d4149bf711e9c455f7c40cf81170999b4b44495297da274",
+    "candidateVersions": {
+      "strategy": "5.7.0",
+      "angleCard": "2.4.0",
+      "fewShot": "no-runtime-few-shot.v1"
+    },
+    "completed": true,
+    "updatedAt": "2026-07-29T10:24:05.672Z",
+    "pairs": [
+      {
+        "pairId": "ARCH-AB-FG-01-R1",
+        "caseId": "AB-FG-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "c717d7c57f88560842cc053a20a943194bce60bfd5c32a0c8d28bad305829b44",
+        "pairFingerprint": "2fc1b18e555d1903a4b517fb645231f7c096f13ea911c7c6a028b48cd2f11e8f",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到当众被表扬时脸热低头，私下重述才感到高兴；这里能看见当众和私下两种情境下感受的差异。",
+            "userResponse": "当众表扬时脸热低头，私下重述才感到高兴。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "feeling",
+              "kind": "insight",
+              "statement": "当众表扬时脸热低头，私下重述才感到高兴。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "当众表扬时脸热低头，私下重述才感到高兴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到当众被表扬时脸热低头，私下重述才感到高兴；这里能看见当众和私下两种情境下感受的差异。\n当众表扬时脸热低头，私下重述才感到高兴。\n成果：当众表扬时脸热低头，私下重述才感到高兴。\n这一段已经有了线索：当众表扬时脸热低头，私下重述才感到高兴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_response_must_preserve_response_core"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-FG-01-R2",
+        "caseId": "AB-FG-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "c717d7c57f88560842cc053a20a943194bce60bfd5c32a0c8d28bad305829b44",
+        "pairFingerprint": "5a7c96b8d4118e21f889ea39c1052351c271e54017f798955a251f74b46f8713",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_response_must_preserve_response_core",
+            "invalid_event_focus_options",
+            "multiple_events_must_not_write_facts",
+            "spurious_multiple_events_must_stay_in_current_event"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到当众表扬时脸热低头，私下重述才感到高兴；这里能看见公开和私下两种场景下你的感受不同。",
+            "userResponse": "当众表扬让你脸热低头，私下重述才感到高兴。",
+            "responseKind": "checkpoint",
+            "outcome": {
+              "angle": "feeling",
+              "kind": "insight",
+              "statement": "当众表扬让你脸热低头，私下重述才感到高兴。"
+            },
+            "checkpoint": {
+              "kind": "second",
+              "title": "这一段已经有了线索",
+              "description": "当众表扬让你脸热低头，私下重述才感到高兴。"
+            },
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录",
+              "选择探索角度",
+              "继续深入"
+            ]
+          },
+          "visibleResponse": "你提到当众表扬时脸热低头，私下重述才感到高兴；这里能看见公开和私下两种场景下你的感受不同。\n当众表扬让你脸热低头，私下重述才感到高兴。\n成果：当众表扬让你脸热低头，私下重述才感到高兴。\n这一段已经有了线索：当众表扬让你脸热低头，私下重述才感到高兴。\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录 / 选择探索角度 / 继续深入",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-FD-01-R1",
+        "caseId": "AB-FD-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "cc4984fe25ce1e65936619a3399bdceedca16c3fd91e0b1b91a381bd4452a6b2",
+        "pairFingerprint": "eadee1276fff9e80f18ea22caa06ac67660ecbd75af8722a205bb98b29ea66a0",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_response_must_preserve_response_core"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "ask_thinking_summary_must_keep_target_open"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-FD-01-R2",
+        "caseId": "AB-FD-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "cc4984fe25ce1e65936619a3399bdceedca16c3fd91e0b1b91a381bd4452a6b2",
+        "pairFingerprint": "7722bef643ad00fdf36de7e445e82c581a81685c1d101b580752492a14473842",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "understanding_contains_question"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "INVALID_SCHEMA",
+            "understanding.eventBoundary:invalid_enum_value"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-TG-01-R1",
+        "caseId": "AB-TG-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "bebfebf3c062ee8d548d5b729ca875d8a16b8ede9e0eabf0f4470331f3014c82",
+        "pairFingerprint": "b7b6f5d4bba889436f77a252ba1aa01c11ddca079fdc39c2a35a3ebb5046da03",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_response_must_preserve_response_core"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到报名名单上已有多数人的名字，我想继续确认。",
+            "userResponse": "不报名就是不配合，这个判断背后的默认标准是什么？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录"
+            ]
+          },
+          "visibleResponse": "你提到报名名单上已有多数人的名字，我想继续确认。\n不报名就是不配合，这个判断背后的默认标准是什么？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-TG-01-R2",
+        "caseId": "AB-TG-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "bebfebf3c062ee8d548d5b729ca875d8a16b8ede9e0eabf0f4470331f3014c82",
+        "pairFingerprint": "365646de0b656c77c92aa7e50b1d18560939c5923e2812c669016df222333b99",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "understanding_contains_question"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "thinking_summary_tentative_requires_structured_hypothesis"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-TD-01-R1",
+        "caseId": "AB-TD-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "1b71ace6c91bf70530f4a8c47871eb3b34da2b245d1ad0a6f976218c64e8d671",
+        "pairFingerprint": "277ef842b3eb9191b6ca3536754664aa0251e288cf00d8918fe532cf986d4515",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "INVALID_SCHEMA",
+            "semanticPlan.realizationContract.responseCore:too_big"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_response_must_preserve_response_core"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-TD-01-R2",
+        "caseId": "AB-TD-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "1b71ace6c91bf70530f4a8c47871eb3b34da2b245d1ad0a6f976218c64e8d671",
+        "pairFingerprint": "d576f7ed6ae6791d9f7be5293074efa2b984d328f88c18fd49e93b9661260cab",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_response_must_preserve_response_core"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "ask_thinking_summary_must_keep_target_open"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-RG-01-R1",
+        "caseId": "AB-RG-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "789e44ee64aba35e5154da7bfcd9944b60bc72bc941739f346eace0dd02142b7",
+        "pairFingerprint": "46951090c7ee10ca59aabd95ae3d484f34c87d876bb23cda66b1796f53b1a467",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "relational_insight_core_must_cover_both_anchors",
+            "visible_response_must_preserve_response_core"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到朋友回了个表情，你就不想再问了；那个表情回应让你对朋友的感觉有什么变化，我想继续确认。",
+            "userResponse": "那个表情回应让你对朋友的感觉有什么变化？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录"
+            ]
+          },
+          "visibleResponse": "你提到朋友回了个表情，你就不想再问了；那个表情回应让你对朋友的感觉有什么变化，我想继续确认。\n那个表情回应让你对朋友的感觉有什么变化？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-RG-01-R2",
+        "caseId": "AB-RG-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "789e44ee64aba35e5154da7bfcd9944b60bc72bc941739f346eace0dd02142b7",
+        "pairFingerprint": "a0b7519dfa547d53f5d814b24bd9473c2e5b321aaeaf9d9abcfceab1ccf69217",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "ask_thinking_summary_must_keep_target_open"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "relational_insight_core_must_cover_both_anchors",
+            "visible_response_must_preserve_response_core"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-RD-01-R1",
+        "caseId": "AB-RD-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "f7df3d8fe0604505c7d919ec4ca0ccb40318678bbffeb0476533ffa09397825f",
+        "pairFingerprint": "beca97123fc0022a494c80789d71f8abc576188e64c79b2394bf7c7a1a2a74df",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_response_must_preserve_response_core"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "ask_thinking_summary_must_keep_target_open"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-RD-01-R2",
+        "caseId": "AB-RD-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "f7df3d8fe0604505c7d919ec4ca0ccb40318678bbffeb0476533ffa09397825f",
+        "pairFingerprint": "d5443d46fabcbbe23c4b5aedc0896ed2b8eae0544508f1516a51ba1ac1992afd",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "relationship_question_is_too_abstract_to_answer"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_response_must_preserve_response_core",
+            "relationship_question_is_too_abstract_to_answer"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-AG-01-R1",
+        "caseId": "AB-AG-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "a4c58818d70909c8ad470bde3b2bf6ca9d2c3f50e5116ddec06bd22ac6b98278",
+        "pairFingerprint": "7bc05fb2d1c6bd2f0e24f9f7295148332992a95e59ee43455a94a0910ff57f13",
+        "optionA": {
+          "visibleReplay": {
+            "thinkingSummary": "你提到绕了一圈，那句话一直在脑子里转；我想继续确认",
+            "userResponse": "绕那一圈，让那句话不再转，还是让自己准备好回家？",
+            "responseKind": "question",
+            "outcome": null,
+            "checkpoint": null,
+            "availableActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event"
+            ],
+            "availableActionLabels": [
+              "继续回复",
+              "纠正理解",
+              "换个问法",
+              "切换回复版本",
+              "退出记录"
+            ]
+          },
+          "visibleResponse": "你提到绕了一圈，那句话一直在脑子里转；我想继续确认\n绕那一圈，让那句话不再转，还是让自己准备好回家？\n可用操作：继续回复 / 纠正理解 / 换个问法 / 切换回复版本 / 退出记录",
+          "technicalComplete": true,
+          "runtimeError": null,
+          "validationIssues": []
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "relational_insight_core_must_cover_both_anchors",
+            "visible_response_must_preserve_response_core",
+            "thinking_summary_tentative_requires_structured_hypothesis"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-AG-01-R2",
+        "caseId": "AB-AG-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "a4c58818d70909c8ad470bde3b2bf6ca9d2c3f50e5116ddec06bd22ac6b98278",
+        "pairFingerprint": "91ef581cb60827ebf120ef69d97242d74c50ee1451a6388166aac5dca54d3485",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "relational_insight_core_must_cover_both_anchors",
+            "stop_action_requires_reason",
+            "visible_response_must_preserve_response_core",
+            "thinking_summary_tentative_requires_structured_hypothesis"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "ask_thinking_summary_must_keep_target_open"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-AD-01-R1",
+        "caseId": "AB-AD-01",
+        "runIndex": 1,
+        "evaluationPayloadHash": "5194ff3e51228f517f3af4991fd0795d3dde4170557cbe65c247c7ea08b33756",
+        "pairFingerprint": "3db0ed2b8f3897b5f13d7b0a8ec17ae755cc003826033c2ecd29532b7dd3e024",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "relational_insight_core_must_cover_both_anchors",
+            "visible_response_must_preserve_response_core",
+            "thinking_summary_tentative_requires_structured_hypothesis"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "ask_thinking_summary_must_keep_target_open"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      },
+      {
+        "pairId": "ARCH-AB-AD-01-R2",
+        "caseId": "AB-AD-01",
+        "runIndex": 2,
+        "evaluationPayloadHash": "5194ff3e51228f517f3af4991fd0795d3dde4170557cbe65c247c7ea08b33756",
+        "pairFingerprint": "ce5a09f13ecdeddc516722ed0315e288cb9d22df919fe81a6ab222e9b5ef39c2",
+        "optionA": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "INVALID_SCHEMA",
+            "semanticPlan.realizationContract.responseCore:too_big"
+          ]
+        },
+        "optionB": {
+          "visibleReplay": null,
+          "visibleResponse": null,
+          "technicalComplete": false,
+          "runtimeError": null,
+          "validationIssues": [
+            "visible_response_must_preserve_response_core",
+            "summary_anchor_not_traceable:我来吧",
+            "summary_anchor_not_traceable:最想保住什么",
+            "thinking_summary_must_cover_frozen_anchor"
+          ]
+        },
+        "optionAReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "optionBReview": {
+          "initialVerdict": null,
+          "primaryReason": null,
+          "secondaryReason": null,
+          "visibleEvidence": null,
+          "finalVerdict": null,
+          "rootCause": null,
+          "resolution": null,
+          "reviewedBy": null,
+          "reviewedAt": null
+        },
+        "productPreference": null,
+        "productReason": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "1.0",
+  "probeVersion": "2026-08-09.gi088-empty-content-response-format-probe-v1",
+  "status": "completed_candidate_rejected_root_cause_open_6_of_6",
+  "purpose": "isolate response_format as the only changed request parameter while preserving Thinking high",
+  "source": {
+    "evaluationVersion": "2026-08-09.gi088-human-eval-v1",
+    "snapshotSha256": "130efc938dc2a7fa3d68a7703390cf226b8d9c3d87451417dad677b2f235f0d5",
+    "candidateFingerprint": "58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884",
+    "executionFingerprint": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2"
+  },
+  "runtime": {
+    "provider": "openai",
+    "model": "deepseek-v4-flash",
+    "baseUrlHost": "api.deepseek.com"
+  },
+  "probeFingerprint": "7c0fbbb98bc9c3804a5614e90acd0ecb4b13f023e3b96ddf68820a241c6c9b65",
+  "budget": {
+    "baseCalls": 6,
+    "technicalRetries": 0,
+    "qualityRetries": 0,
+    "fallbackCalls": 0,
+    "maximumCalls": 6
+  },
+  "variants": {
+    "json_object": {
+      "thinking": "enabled",
+      "reasoningEffort": "high",
+      "responseFormat": "json_object",
+      "maxTokensPolicy": "provider_default",
+      "timeoutMs": 30000
+    },
+    "text_json": {
+      "thinking": "enabled",
+      "reasoningEffort": "high",
+      "responseFormat": null,
+      "maxTokensPolicy": "provider_default",
+      "timeoutMs": 30000
+    }
+  },
+  "cases": [
+    {
+      "caseId": "E1",
+      "contextClass": "cold_start",
+      "taskId": "A3",
+      "branch": "high",
+      "turnId": "5b85a506-dc99-4f43-82b6-073f2c677851",
+      "sourceCallId": "44e549d5-352f-4ecb-bc36-8eb904bfc90f",
+      "sourceRequestHash": "2f4e1e38bbd64e93f6e740ab07da9e61f2b04f98da499d556e44cb983d689912"
+    },
+    {
+      "caseId": "E2",
+      "contextClass": "mid_trajectory",
+      "taskId": "A8",
+      "branch": "high",
+      "turnId": "e15ab3df-5e77-4e13-8558-4da9cbca5757",
+      "sourceCallId": "06b9e404-394c-4949-a669-92700d4d3247",
+      "sourceRequestHash": "25b6943cd42be4694486bc5d7d42925d7b73579cc5d6bd14c29801b1f0642e0d"
+    },
+    {
+      "caseId": "E3",
+      "contextClass": "long_context_repeated_failure",
+      "taskId": "A1",
+      "branch": "high",
+      "turnId": "b6163c4b-973e-4dc0-a7e4-be526e4e20f8",
+      "sourceCallId": "052f6a93-3583-4890-a377-12dec613a254",
+      "sourceRequestHash": "d9ca7d0cc781e6d6fa974923060c326456a0ae435e85b31b96225456e3258b89"
+    }
+  ],
+  "decisionRule": {
+    "removeProviderJsonMode": "json_object reproduces at least one EMPTY_CONTENT and text_json returns 3 of 3 parseable outputs",
+    "rejectTextJsonCandidate": "text_json produces any unparseable or protected output caused by JSON shape",
+    "inconclusive": "neither arm reproduces the differentiating failure or both arms return EMPTY_CONTENT"
+  },
+  "privacy": {
+    "publicSummaryFieldsContainUserContent": false,
+    "publicValidationIssuesAreCodeOnly": true,
+    "reasoningBodyPersisted": false,
+    "privateLedgerMayContainRawModelOutput": true,
+    "privateSourceAndRawResults": "artifacts/local-runtime/",
+    "consolePrintsPromptOrRawOutput": false
+  },
+  "authorization": {
+    "modelCallsAuthorized": true,
+    "authorizationId": "7c6d9421-9595-4ba2-8c52-0afeb890f7e3",
+    "requiredScope": "empty_content_probe",
+    "requiresExactProbeFingerprint": true,
+    "requiresExplicitSixCallConfirmation": true
+  },
+  "result": {
+    "completedAt": "2026-08-09T10:22:19.247Z",
+    "modelGenerationCalls": 6,
+    "completedCalls": 6,
+    "reservedCalls": 0,
+    "automaticRetries": 0,
+    "fallbackCalls": 0,
+    "jsonObject": {
+      "valid": 2,
+      "emptyContent": 1,
+      "schemaProtected": 0
+    },
+    "textJson": {
+      "valid": 1,
+      "emptyContent": 1,
+      "schemaProtected": 1
+    },
+    "removeProviderJsonModeGate": "failed",
+    "rejectTextJsonCandidateGate": "passed",
+    "codexInitialAssessment": "reject_removing_response_format",
+    "productOwnerJudgment": "pending_discussion",
+    "confirmedRootCause": null,
+    "confirmedNearTermMechanism": "upstream_http_200_stop_after_reasoning_with_zero_visible_content",
+    "resultFile": "gi088-empty-content-response-format-probe-v1-result.json",
+    "decisionFile": "gi088-empty-content-response-format-probe-v1-decision.md",
+    "sanitizedSummarySha256": "532a292af9f76e2f84966a879fc2c6c681f9bdf69c3bbc63da6ef9306bccb2a5",
+    "privateLedgerSha256": "dacada85b65d6a8bb16afee8a29445374b342729fb24ca4c0c6253aef21e3e48"
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

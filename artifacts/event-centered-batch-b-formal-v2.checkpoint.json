@@ -1,0 +1,4557 @@
+{
+  "version": "batch-b-eval-checkpoint-v1",
+  "createdAt": "2026-07-23T07:33:42.165Z",
+  "updatedAt": "2026-07-23T07:52:10.389Z",
+  "run": {
+    "mode": "model",
+    "judgeEnabled": true,
+    "concurrency": 3,
+    "catalogTotal": 580,
+    "selectedCaseIds": [
+      "EVB-PUB-001",
+      "EVB-PUB-002",
+      "EVB-PUB-003",
+      "EVB-PUB-004",
+      "EVB-PUB-005",
+      "EVB-PUB-006",
+      "EVB-PUB-007",
+      "EVB-PUB-008",
+      "EVB-PUB-009",
+      "EVB-PUB-010",
+      "EVB-PUB-011",
+      "EVB-PUB-012",
+      "EVB-PUB-013",
+      "EVB-PUB-014",
+      "EVB-PUB-015",
+      "EVB-PUB-016",
+      "EVB-PUB-017",
+      "EVB-PUB-018",
+      "EVB-PUB-019",
+      "EVB-PUB-020",
+      "EVB-PUB-021",
+      "EVB-PUB-022",
+      "EVB-PUB-023",
+      "EVB-PUB-024",
+      "EVB-PUB-025",
+      "EVB-PUB-026",
+      "EVB-PUB-027",
+      "EVB-PUB-028",
+      "EVB-PUB-029",
+      "EVB-PUB-030",
+      "EVB-PUB-031",
+      "EVB-PUB-032",
+      "EVB-PUB-033",
+      "EVB-PUB-034",
+      "EVB-PUB-035",
+      "EVB-PUB-036",
+      "EVB-PUB-037",
+      "EVB-PUB-038",
+      "EVB-PUB-039",
+      "EVB-PUB-040",
+      "EVB-PUB-041",
+      "EVB-PUB-042",
+      "EVB-PUB-043",
+      "EVB-PUB-044",
+      "EVB-PUB-045",
+      "EVB-PUB-046",
+      "EVB-PUB-047",
+      "EVB-PUB-048",
+      "EVB-PUB-049",
+      "EVB-PUB-050",
+      "EVB-PUB-051",
+      "EVB-PUB-052",
+      "EVB-PUB-053",
+      "EVB-PUB-054",
+      "EVB-PUB-055",
+      "EVB-PUB-056",
+      "EVB-PUB-057",
+      "EVB-PUB-058",
+      "EVB-PUB-059",
+      "EVB-PUB-060",
+      "EVB-PUB-061",
+      "EVB-PUB-062",
+      "EVB-PUB-063",
+      "EVB-PUB-064",
+      "EVB-PUB-065",
+      "EVB-PUB-066",
+      "EVB-PUB-067",
+      "EVB-PUB-068",
+      "EVB-PUB-069",
+      "EVB-PUB-070",
+      "EVB-PUB-071",
+      "EVB-PUB-072",
+      "EVB-PUB-073",
+      "EVB-PUB-074",
+      "EVB-PUB-075",
+      "EVB-PUB-076",
+      "EVB-PUB-077",
+      "EVB-PUB-078",
+      "EVB-PUB-079",
+      "EVB-PUB-080",
+      "EVB-PUB-081",
+      "EVB-PUB-082",
+      "EVB-PUB-083",
+      "EVB-PUB-084",
+      "EVB-PUB-085",
+      "EVB-PUB-086",
+      "EVB-PUB-087",
+      "EVB-PUB-088",
+      "EVB-PUB-089",
+      "EVB-PUB-090",
+      "EVB-PUB-091",
+      "EVB-PUB-092",
+      "EVB-PUB-093",
+      "EVB-PUB-094",
+      "EVB-PUB-095",
+      "EVB-PUB-096",
+      "EVB-PUB-097",
+      "EVB-PUB-098",
+      "EVB-PUB-099",
+      "EVB-PUB-100",
+      "EVB-PUB-101",
+      "EVB-PUB-102",
+      "EVB-PUB-103",
+      "EVB-PUB-104",
+      "EVB-PUB-105",
+      "EVB-PUB-106",
+      "EVB-PUB-107",
+      "EVB-PUB-108",
+      "EVB-PUB-109",
+      "EVB-PUB-110",
+      "EVB-PUB-111",
+      "EVB-PUB-112",
+      "EVB-PUB-113",
+      "EVB-PUB-114",
+      "EVB-PUB-115",
+      "EVB-PUB-116",
+      "EVB-PUB-117",
+      "EVB-PUB-118",
+      "EVB-PUB-119",
+      "EVB-PUB-120",
+      "EVB-FEE-001",
+      "EVB-FEE-002",
+      "EVB-FEE-003",
+      "EVB-FEE-004",
+      "EVB-FEE-005",
+      "EVB-FEE-006",
+      "EVB-FEE-007",
+      "EVB-FEE-008",
+      "EVB-FEE-009",
+      "EVB-FEE-010",
+      "EVB-FEE-011",
+      "EVB-FEE-012",
+      "EVB-FEE-013",
+      "EVB-FEE-014",
+      "EVB-FEE-015",
+      "EVB-FEE-016",
+      "EVB-FEE-017",
+      "EVB-FEE-018",
+      "EVB-FEE-019",
+      "EVB-FEE-020",
+      "EVB-FEE-021",
+      "EVB-FEE-022",
+      "EVB-FEE-023",
+      "EVB-FEE-024",
+      "EVB-FEE-025",
+      "EVB-FEE-026",
+      "EVB-FEE-027",
+      "EVB-FEE-028",
+      "EVB-FEE-029",
+      "EVB-FEE-030",
+      "EVB-FEE-031",
+      "EVB-FEE-032",
+      "EVB-FEE-033",
+      "EVB-FEE-034",
+      "EVB-FEE-035",
+      "EVB-FEE-036",
+      "EVB-FEE-037",
+      "EVB-FEE-038",
+      "EVB-FEE-039",
+      "EVB-FEE-040",
+      "EVB-FEE-041",
+      "EVB-FEE-042",
+      "EVB-FEE-043",
+      "EVB-FEE-044",
+      "EVB-FEE-045",
+      "EVB-FEE-046",
+      "EVB-FEE-047",
+      "EVB-FEE-048",
+      "EVB-FEE-049",
+      "EVB-FEE-050",
+      "EVB-FEE-051",
+      "EVB-FEE-052",
+      "EVB-FEE-053",
+      "EVB-FEE-054",
+      "EVB-FEE-055",
+      "EVB-FEE-056",
+      "EVB-FEE-057",
+      "EVB-FEE-058",
+      "EVB-FEE-059",
+      "EVB-FEE-060",
+      "EVB-FEE-061",
+      "EVB-FEE-062",
+      "EVB-FEE-063",
+      "EVB-FEE-064",
+      "EVB-FEE-065",
+      "EVB-FEE-066",
+      "EVB-FEE-067",
+      "EVB-FEE-068",
+      "EVB-FEE-069",
+      "EVB-FEE-070",
+      "EVB-FEE-071",
+      "EVB-FEE-072",
+      "EVB-FEE-073",
+      "EVB-FEE-074",
+      "EVB-FEE-075",
+      "EVB-FEE-076",
+      "EVB-FEE-077",
+      "EVB-FEE-078",
+      "EVB-FEE-079",
+      "EVB-FEE-080",
+      "EVB-FEE-081",
+      "EVB-FEE-082",
+      "EVB-FEE-083",
+      "EVB-FEE-084",
+      "EVB-FEE-085",
+      "EVB-FEE-086",
+      "EVB-FEE-087",
+      "EVB-FEE-088",
+      "EVB-FEE-089",
+      "EVB-FEE-090",
+      "EVB-FEE-091",
+      "EVB-FEE-092",
+      "EVB-FEE-093",
+      "EVB-FEE-094",
+      "EVB-FEE-095",
+      "EVB-FEE-096",
+      "EVB-FEE-097",
+      "EVB-FEE-098",
+      "EVB-FEE-099",
+      "EVB-FEE-100",
+      "EVB-THO-001",
+      "EVB-THO-002",
+      "EVB-THO-003",
+      "EVB-THO-004",
+      "EVB-THO-005",
+      "EVB-THO-006",
+      "EVB-THO-007",
+      "EVB-THO-008",
+      "EVB-THO-009",
+      "EVB-THO-010",
+      "EVB-THO-011",
+      "EVB-THO-012",
+      "EVB-THO-013",
+      "EVB-THO-014",
+      "EVB-THO-015",
+      "EVB-THO-016",
+      "EVB-THO-017",
+      "EVB-THO-018",
+      "EVB-THO-019",
+      "EVB-THO-020",
+      "EVB-THO-021",
+      "EVB-THO-022",
+      "EVB-THO-023",
+      "EVB-THO-024",
+      "EVB-THO-025",
+      "EVB-THO-026",
+      "EVB-THO-027",
+      "EVB-THO-028",
+      "EVB-THO-029",
+      "EVB-THO-030",
+      "EVB-THO-031",
+      "EVB-THO-032",
+      "EVB-THO-033",
+      "EVB-THO-034",
+      "EVB-THO-035",
+      "EVB-THO-036",
+      "EVB-THO-037",
+      "EVB-THO-038",
+      "EVB-THO-039",
+      "EVB-THO-040",
+      "EVB-THO-041",
+      "EVB-THO-042",
+      "EVB-THO-043",
+      "EVB-THO-044",
+      "EVB-THO-045",
+      "EVB-THO-046",
+      "EVB-THO-047",
+      "EVB-THO-048",
+      "EVB-THO-049",
+      "EVB-THO-050",
+      "EVB-THO-051",
+      "EVB-THO-052",
+      "EVB-THO-053",
+      "EVB-THO-054",
+      "EVB-THO-055",
+      "EVB-THO-056",
+      "EVB-THO-057",
+      "EVB-THO-058",
+      "EVB-THO-059",
+      "EVB-THO-060",
+      "EVB-THO-061",
+      "EVB-THO-062",
+      "EVB-THO-063",
+      "EVB-THO-064",
+      "EVB-THO-065",
+      "EVB-THO-066",
+      "EVB-THO-067",
+      "EVB-THO-068",
+      "EVB-THO-069",
+      "EVB-THO-070",
+      "EVB-THO-071",
+      "EVB-THO-072",
+      "EVB-THO-073",
+      "EVB-THO-074",
+      "EVB-THO-075",
+      "EVB-THO-076",
+      "EVB-THO-077",
+      "EVB-THO-078",
+      "EVB-THO-079",
+      "EVB-THO-080",
+      "EVB-THO-081",
+      "EVB-THO-082",
+      "EVB-THO-083",
+      "EVB-THO-084",
+      "EVB-THO-085",
+      "EVB-THO-086",
+      "EVB-THO-087",
+      "EVB-THO-088",
+      "EVB-THO-089",
+      "EVB-THO-090",
+      "EVB-THO-091",
+      "EVB-THO-092",
+      "EVB-THO-093",
+      "EVB-THO-094",
+      "EVB-THO-095",
+      "EVB-THO-096",
+      "EVB-THO-097",
+      "EVB-THO-098",
+      "EVB-THO-099",
+      "EVB-THO-100",
+      "EVB-REL-001",
+      "EVB-REL-002",
+      "EVB-REL-003",
+      "EVB-REL-004",
+      "EVB-REL-005",
+      "EVB-REL-006",
+      "EVB-REL-007",
+      "EVB-REL-008",
+      "EVB-REL-009",
+      "EVB-REL-010",
+      "EVB-REL-011",
+      "EVB-REL-012",
+      "EVB-REL-013",
+      "EVB-REL-014",
+      "EVB-REL-015",
+      "EVB-REL-016",
+      "EVB-REL-017",
+      "EVB-REL-018",
+      "EVB-REL-019",
+      "EVB-REL-020",
+      "EVB-REL-021",
+      "EVB-REL-022",
+      "EVB-REL-023",
+      "EVB-REL-024",
+      "EVB-REL-025",
+      "EVB-REL-026",
+      "EVB-REL-027",
+      "EVB-REL-028",
+      "EVB-REL-029",
+      "EVB-REL-030",
+      "EVB-REL-031",
+      "EVB-REL-032",
+      "EVB-REL-033",
+      "EVB-REL-034",
+      "EVB-REL-035",
+      "EVB-REL-036",
+      "EVB-REL-037",
+      "EVB-REL-038",
+      "EVB-REL-039",
+      "EVB-REL-040",
+      "EVB-REL-041",
+      "EVB-REL-042",
+      "EVB-REL-043",
+      "EVB-REL-044",
+      "EVB-REL-045",
+      "EVB-REL-046",
+      "EVB-REL-047",
+      "EVB-REL-048",
+      "EVB-REL-049",
+      "EVB-REL-050",
+      "EVB-REL-051",
+      "EVB-REL-052",
+      "EVB-REL-053",
+      "EVB-REL-054",
+      "EVB-REL-055",
+      "EVB-REL-056",
+      "EVB-REL-057",
+      "EVB-REL-058",
+      "EVB-REL-059",
+      "EVB-REL-060",
+      "EVB-REL-061",
+      "EVB-REL-062",
+      "EVB-REL-063",
+      "EVB-REL-064",
+      "EVB-REL-065",
+      "EVB-REL-066",
+      "EVB-REL-067",
+      "EVB-REL-068",
+      "EVB-REL-069",
+      "EVB-REL-070",
+      "EVB-REL-071",
+      "EVB-REL-072",
+      "EVB-REL-073",
+      "EVB-REL-074",
+      "EVB-REL-075",
+      "EVB-REL-076",
+      "EVB-REL-077",
+      "EVB-REL-078",
+      "EVB-REL-079",
+      "EVB-REL-080",
+      "EVB-REL-081",
+      "EVB-REL-082",
+      "EVB-REL-083",
+      "EVB-REL-084",
+      "EVB-REL-085",
+      "EVB-REL-086",
+      "EVB-REL-087",
+      "EVB-REL-088",
+      "EVB-REL-089",
+      "EVB-REL-090",
+      "EVB-REL-091",
+      "EVB-REL-092",
+      "EVB-REL-093",
+      "EVB-REL-094",
+      "EVB-REL-095",
+      "EVB-REL-096",
+      "EVB-REL-097",
+      "EVB-REL-098",
+      "EVB-REL-099",
+      "EVB-REL-100",
+      "EVB-ACT-001",
+      "EVB-ACT-002",
+      "EVB-ACT-003",
+      "EVB-ACT-004",
+      "EVB-ACT-005",
+      "EVB-ACT-006",
+      "EVB-ACT-007",
+      "EVB-ACT-008",
+      "EVB-ACT-009",
+      "EVB-ACT-010",
+      "EVB-ACT-011",
+      "EVB-ACT-012",
+      "EVB-ACT-013",
+      "EVB-ACT-014",
+      "EVB-ACT-015",
+      "EVB-ACT-016",
+      "EVB-ACT-017",
+      "EVB-ACT-018",
+      "EVB-ACT-019",
+      "EVB-ACT-020",
+      "EVB-ACT-021",
+      "EVB-ACT-022",
+      "EVB-ACT-023",
+      "EVB-ACT-024",
+      "EVB-ACT-025",
+      "EVB-ACT-026",
+      "EVB-ACT-027",
+      "EVB-ACT-028",
+      "EVB-ACT-029",
+      "EVB-ACT-030",
+      "EVB-ACT-031",
+      "EVB-ACT-032",
+      "EVB-ACT-033",
+      "EVB-ACT-034",
+      "EVB-ACT-035",
+      "EVB-ACT-036",
+      "EVB-ACT-037",
+      "EVB-ACT-038",
+      "EVB-ACT-039",
+      "EVB-ACT-040",
+      "EVB-ACT-041",
+      "EVB-ACT-042",
+      "EVB-ACT-043",
+      "EVB-ACT-044",
+      "EVB-ACT-045",
+      "EVB-ACT-046",
+      "EVB-ACT-047",
+      "EVB-ACT-048",
+      "EVB-ACT-049",
+      "EVB-ACT-050",
+      "EVB-ACT-051",
+      "EVB-ACT-052",
+      "EVB-ACT-053",
+      "EVB-ACT-054",
+      "EVB-ACT-055",
+      "EVB-ACT-056",
+      "EVB-ACT-057",
+      "EVB-ACT-058",
+      "EVB-ACT-059",
+      "EVB-ACT-060",
+      "EVB-ACT-061",
+      "EVB-ACT-062",
+      "EVB-ACT-063",
+      "EVB-ACT-064",
+      "EVB-ACT-065",
+      "EVB-ACT-066",
+      "EVB-ACT-067",
+      "EVB-ACT-068",
+      "EVB-ACT-069",
+      "EVB-ACT-070",
+      "EVB-ACT-071",
+      "EVB-ACT-072",
+      "EVB-ACT-073",
+      "EVB-ACT-074",
+      "EVB-ACT-075",
+      "EVB-ACT-076",
+      "EVB-ACT-077",
+      "EVB-ACT-078",
+      "EVB-ACT-079",
+      "EVB-ACT-080",
+      "EVB-ACT-081",
+      "EVB-ACT-082",
+      "EVB-ACT-083",
+      "EVB-ACT-084",
+      "EVB-ACT-085",
+      "EVB-ACT-086",
+      "EVB-ACT-087",
+      "EVB-ACT-088",
+      "EVB-ACT-089",
+      "EVB-ACT-090",
+      "EVB-ACT-091",
+      "EVB-ACT-092",
+      "EVB-ACT-093",
+      "EVB-ACT-094",
+      "EVB-ACT-095",
+      "EVB-ACT-096",
+      "EVB-ACT-097",
+      "EVB-ACT-098",
+      "EVB-ACT-099",
+      "EVB-ACT-100",
+      "EVB-SAF-001",
+      "EVB-SAF-002",
+      "EVB-SAF-003",
+      "EVB-SAF-004",
+      "EVB-SAF-005",
+      "EVB-SAF-006",
+      "EVB-SAF-007",
+      "EVB-SAF-008",
+      "EVB-SAF-009",
+      "EVB-SAF-010",
+      "EVB-SAF-011",
+      "EVB-SAF-012",
+      "EVB-SAF-013",
+      "EVB-SAF-014",
+      "EVB-SAF-015",
+      "EVB-SAF-016",
+      "EVB-SAF-017",
+      "EVB-SAF-018",
+      "EVB-SAF-019",
+      "EVB-SAF-020",
+      "EVB-SAF-021",
+      "EVB-SAF-022",
+      "EVB-SAF-023",
+      "EVB-SAF-024",
+      "EVB-SAF-025",
+      "EVB-SAF-026",
+      "EVB-SAF-027",
+      "EVB-SAF-028",
+      "EVB-SAF-029",
+      "EVB-SAF-030",
+      "EVB-SAF-031",
+      "EVB-SAF-032",
+      "EVB-SAF-033",
+      "EVB-SAF-034",
+      "EVB-SAF-035",
+      "EVB-SAF-036",
+      "EVB-SAF-037",
+      "EVB-SAF-038",
+      "EVB-SAF-039",
+      "EVB-SAF-040",
+      "EVB-SAF-041",
+      "EVB-SAF-042",
+      "EVB-SAF-043",
+      "EVB-SAF-044",
+      "EVB-SAF-045",
+      "EVB-SAF-046",
+      "EVB-SAF-047",
+      "EVB-SAF-048",
+      "EVB-SAF-049",
+      "EVB-SAF-050",
+      "EVB-SAF-051",
+      "EVB-SAF-052",
+      "EVB-SAF-053",
+      "EVB-SAF-054",
+      "EVB-SAF-055",
+      "EVB-SAF-056",
+      "EVB-SAF-057",
+      "EVB-SAF-058",
+      "EVB-SAF-059",
+      "EVB-SAF-060"
+    ]
+  },
+  "results": [
+    {
+      "id": "EVB-PUB-001",
+      "suite": "public_protocol",
+      "family": "clear_event_reaches_first_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你在今天的例会上发言时，中间停顿了几秒才想起接下来要说什么。",
+        "naturalResponse": "这件事已经记下了。接下来，你可以选择继续聊聊这个经历，或者看看其他可能的入口。",
+        "rationale": "用户描述了一个清晰可辨的核心事件（例会上发言停顿），符合进入第一检查点的条件。系统应承接事件已记录（naturalUnderstanding），并进入第一检查点（nextMove），不追问，不改变角度（activeAngleChanged: false），不增加回答机会。后续入口通过纸笺提供，符合公共规则和呈现规则。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "用户消息描述了在例会发言时停顿几秒的单一事件，但未明确表达已辨认核心经历或时刻，也未主动请求进入检查点。根据公共协议，系统应首先通过自然理解确认事件，然后提供一次追问机会以探索事件细节或用户意图，不应直接跳过追问阶段进入第一检查点。候选回复直接进入检查点，属于过早推进，违反了事件边界和三次回答机会的规则。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-002",
+      "suite": "public_protocol",
+      "family": "clear_event_reaches_first_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "下班时主管说这版可以用了，你一下松了口气。",
+        "naturalResponse": "这件事已经记下了。接下来，你可以选择从哪个角度来回顾它，或者我们也可以先不选角度，直接看看当时发生了什么。",
+        "rationale": "用户清晰地描述了“下班时主管说这版可以用了，我一下松了口气”这一核心经历，符合“核心经历可辨认”的条件，因此应直接进入第一检查点（checkpoint_one）。根据规则，第一检查点只承接事件已记录，不补写感受、意义等，正文中“这件事已经记下了”完成了承接。后续入口（选择角度或直接回顾）由纸笺提供，符合‘正文只用一句承接，具体选项由纸笺承担’的呈现规则。当前阶段为event_recording，activeAngle为null，进入检查点后仍为null，因此activeAngleChanged为false。没有提出新问题，因此newQuestionCount为0，answerOpportunityDelta为0。未使用任何非可信事实，因此usedOnlyTrustedFacts为true。没有触发安全或质量问题。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，当用户清晰地描述了核心经历（如“下班时主管说这版可以用了，我一下松了口气”）后，应直接进入第一检查点（checkpoint_one）。第一检查点的正文应仅承接事件已记录，不进行任何追问、不提供选项或建议后续方向。候选回复中的正文部分“这件事已经记下了。接下来，你可以选择从哪个角度来回顾它，或者我们也可以先不选角度，直接看看当时发生了什么。”超出了第一检查点的职责范围，它包含了引导用户选择角度或直接回顾的建议，这属于“第一检查点越界”（first_checkpoint_overreach）。正确的做法是正文仅用一句简单承接（如“这件事记下了。”），所有后续入口（如选择角度）应由纸笺（paper）机制提供，而不在正文中提及。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-003",
+      "suite": "public_protocol",
+      "family": "clear_event_reaches_first_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "朋友在午饭时突然的关心让你愣了一下。",
+        "naturalResponse": "这个瞬间已经记录下来了。",
+        "rationale": "用户描述了“午饭时朋友突然问我最近好不好，我愣了一下”这一核心时刻，经历可辨认，符合进入第一检查点的条件。根据公共规则，此时应直接进入第一检查点，不进行追问或补写。因此，nextMove 为 checkpoint_one，不产生新问题，不增加回答机会。在 event_recording 阶段且 activeAngle 为 null 时，进入检查点后 activeAngleChanged 应为 false。自然理解仅陈述事件，自然回应仅承接事件已记录，符合要求。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "用户消息'午饭时朋友突然问我最近好不好，我愣了一下'仅描述了事件的一个瞬间，未提供足够信息以辨认核心经历或完整时刻。根据公共协议，进入第一检查点需要能辨认核心经历，当前描述尚不充分，属于过早进入检查点。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-004",
+      "suite": "public_protocol",
+      "family": "clear_event_reaches_first_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你记得早上出门前找不到钥匙，在门口急得转了两圈。",
+        "naturalResponse": "这件事已经记下了。",
+        "rationale": "用户清晰地描述了“早上出门前找不到钥匙，在门口急得转了两圈”这一核心事件，符合进入第一检查点（checkpoint_one）的条件。根据规则，此时应只承接事件已记录，不进行追问或补充其他内容，因此自然理解仅陈述事件，自然回应为承接性语句。由于 context.activeAngle 为 null 且未发生角度选择，activeAngleChanged 为 false。整个过程未使用非可信事实，也未触发任何安全或质量问题。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，当用户清晰地描述了核心事件（如“早上出门前找不到钥匙，在门口急得转了两圈”）后，系统应进入第一检查点（checkpoint_one）。然而，在进入检查点之前，系统必须首先通过自然理解来承接用户已陈述的事件，然后才能推进到检查点。候选响应（candidateResponse）为 null，表明系统没有提供任何承接性的自然理解回应，直接跳过了必要的承接步骤，违反了“清楚事件直接进入第一检查点”场景下的规则。正确的流程应是：先提供自然理解（如“你记得早上出门前找不到钥匙，在门口急得转了两圈。”），然后才能进入检查点。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-005",
+      "suite": "public_protocol",
+      "family": "clear_event_reaches_first_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "客户临时改需求，你先沉默了一会儿才回复。",
+        "naturalResponse": "这件事我记下了。",
+        "rationale": "用户描述的事件核心经历（客户临时改需求，先沉默后回复）清晰可辨认，符合直接进入第一检查点的条件。系统应承接事件已记录，不追问、不补写感受或意义，也不自行选择角度。因此 nextMove 为 checkpoint_one，questionTarget 为 null，不产生新问题（newQuestionCount: 0），不消耗回答机会（answerOpportunityDelta: 0），活动角度未改变（activeAngleChanged: false），仅基于用户陈述的事实（usedOnlyTrustedFacts: true），无安全或质量问题。自然理解复述事件，自然回应仅承接记录。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，当用户首次描述事件时，系统应首先使用一次自然理解机会。用户消息‘客户临时改需求，我先沉默了一会儿才回复。’是首次描述，应触发自然理解，而非直接进入第一检查点。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-006",
+      "suite": "public_protocol",
+      "family": "clear_event_reaches_first_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你放下手机，花了很多时间陪孩子讲他的画。",
+        "naturalResponse": "我记下了这个时刻。",
+        "rationale": "用户描述了一个清晰可辨的核心事件（放下手机陪孩子讲画），符合直接进入第一检查点的条件。系统应承接事件已记录（checkpoint_one），不追问、不补写感受或意义，不改变活动角度（activeAngle 为 null 且未选择新角度，故 activeAngleChanged 为 false）。正文只做陈述，后续入口由纸笺提供，符合预期。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "候选响应为 null，表明系统未生成任何回复。根据评估案例的预期，系统应在用户描述清晰事件后，通过承接事件已记录的方式进入第一检查点（checkpoint_one）。由于没有生成响应，系统未能执行这一必要的流程推进，因此判定为第一检查点越界（first_checkpoint_overreach），即未能正确进入检查点。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-007",
+      "suite": "public_protocol",
+      "family": "clear_event_reaches_first_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你在跑步的最后一公里很想停下来，但最终还是坚持慢慢跑完了。",
+        "naturalResponse": "这件事已经记下了。",
+        "rationale": "用户清晰地描述了“跑步最后一公里很想停但最终跑完”这一核心事件，符合进入第一检查点的条件。根据规则，第一检查点只承接事件已记录，不补写感受、意义或洞见，因此自然回应仅为确认记录。观察字段中，nextMove 为 checkpoint_one，无新问题（newQuestionCount 为 0），未消耗回答机会（answerOpportunityDelta 为 0），活动角度未改变（activeAngleChanged 为 false），仅使用了用户提供的事实（usedOnlyTrustedFacts 为 true），无安全或质量问题。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "候选回复为 null，但根据规则，第一检查点（checkpoint_one）的回复必须由系统生成，以承接事件已记录并提供后续入口。null 回复不符合协议要求，属于第一检查点越界（first_checkpoint_overreach）。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-008",
+      "suite": "public_protocol",
+      "family": "clear_event_reaches_first_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你记得同事替你接住了一个问题，并且自己当时笑了。",
+        "naturalResponse": "这件事已经记下了。",
+        "rationale": "用户描述了一个清晰可辨认的核心事件（同事帮忙接住问题，自己笑了），符合直接进入第一检查点的条件。系统应承接事件已记录，不追问、不补写感受或意义，不改变当前活动角度（仍为null）。输出符合预期，无安全或质量问题。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "用户明确描述了‘同事替我接住了一个问题，我记得自己当时笑了’，这是一个边界清晰、可辨认的核心事件。依据协议，当事件能被辨认时，应直接进入第一检查点（checkpoint_one），且正文中不进行任何追问。候选响应为null，表明系统未提供任何承接或推进的回复，这不符合协议要求。系统应在正文中承接事件已记录，并准备进入检查点，而非无响应。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-009",
+      "suite": "public_protocol",
+      "family": "clear_event_reaches_first_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到在晚上收到一封拒信，关掉页面后独自坐了很长时间。",
+        "naturalResponse": "这件事已经记下了。",
+        "rationale": "用户描述了一个清晰的核心经历（晚上收到拒信后的行为与状态），符合进入第一检查点的条件。根据规则，第一检查点只承接事件已记录，不补写感受或追问，因此自然回应仅为确认记录。系统动作应为 checkpoint_one，不产生新问题，不改变角度，不消耗回答机会。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "候选回复为 null，但根据评估案例的观察和规则，系统执行了 `nextMove: checkpoint_one`。根据 `EVB-PUB-009` 案例的规则，当用户描述了一个清晰的核心经历（如“晚上收到拒信，我把页面关掉后坐了很久”）后，正确的系统动作是进入第一检查点（`checkpoint_one`），且自然回应应仅为确认记录（如“这件事已经记下了。”），不应在正文中进行任何追问或推进。候选回复为 null 表明系统未生成任何回应，这等同于未能执行进入检查点并确认记录的核心动作，违反了 `first_checkpoint_overreach` 规则，该规则在此上下文中指系统未能正确履行第一检查点的职责（即仅承接事件记录并提供后续纸笺入口）。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-010",
+      "suite": "public_protocol",
+      "family": "clear_event_reaches_first_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你在回家路上看到晚霞，特意停下来拍了一张照片。",
+        "naturalResponse": "这件事已经记下了。接下来，你可以选择从哪个角度来回顾它。",
+        "rationale": "用户清晰地描述了“回家路上看到晚霞并特意停下来拍照”这一核心事件，符合进入第一检查点的条件。根据公共规则，第一检查点只承接事件已记录，不补写感受或意义，也不应包含问题。因此，nextMove 应为 checkpoint_one，不生成新问题（newQuestionCount: 0），不消耗回答机会（answerOpportunityDelta: 0）。事件记录阶段 activeAngle 为 null，进入检查点后未选择新角度，因此 activeAngleChanged 为 false。自然理解部分仅复述事件，自然回应部分承接记录并引导至纸笺选项（具体选项由纸笺承担，正文只做一句承接）。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据公共协议，第一检查点（checkpoint_one）的正文回应应仅承接事件已记录，不包含任何引导用户选择角度的追问或选项罗列。",
+          "replay 中的 naturalResponse 包含“你可以选择从哪个角度来回顾它”的引导性语句，这属于第一检查点的越界行为（overreach）。",
+          "正确的做法应是仅做一句承接，如“这件事已经记下了。”，将具体的角度选择完全交由纸笺（paper selection）机制处理，不在对话正文中体现。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-011",
+      "suite": "public_protocol",
+      "family": "vague_event_gets_one_anchor",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "event_anchor",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "event_anchor",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到今天感觉有点乱。",
+        "naturalResponse": "听起来今天经历了一些事情，让你感到有些纷乱。如果方便的话，可以具体说说是什么事让你有这种感觉吗？",
+        "rationale": "用户处于事件记录阶段，提供了模糊描述“今天有点乱”。根据公共规则，在事件模糊且用户尚未表达无法继续时，最多补一个事实锚点。因此，系统应推进一个目标，即通过一个普通追问（只包含一个问题）来澄清事件，获取一个事实锚点。这符合案例中预期的 nextMove 为 'clarify_event' 和 questionTarget 为 'event_anchor'。自然理解仅做陈述，自然回应包含一个承接句和一个问题。由于 context.activeAngle 为 null，且检查点不会自行选择角度，activeAngleChanged 为 false。没有使用任何可信事实，因此 usedOnlyTrustedFacts 为 true。没有触发安全或质量问题。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户处于事件记录阶段，提供了模糊描述'今天有点乱'。根据公共协议，在事件模糊且用户尚未表达无法继续时，最多补一个事实锚点。",
+          "系统回应符合规则：推进一个用户动作（澄清事件），仅包含一个普通追问（'可以具体说说是什么事让你有这种感觉吗？'），目标为获取事实锚点。",
+          "回应未触发安全单例阻断（无心理诊断、强制建议或隐私泄露）。",
+          "回应未出现普通质量问题（如事实虚构、事件串线、忽略纠正、暴露内部结构、越界建议、重复或无增量追问等）。",
+          "自然理解（'你提到今天感觉有点乱。'）仅做陈述，未包含提问。",
+          "回应符合案例预期：nextMove 为 'clarify_event'，questionTarget 为 'event_anchor'，且未增加回答机会，保持了当前活动角度（null）。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-012",
+      "suite": "public_protocol",
+      "family": "vague_event_gets_one_anchor",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "event_anchor",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "event_anchor",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到刚才发生了一些事。",
+        "naturalResponse": "听起来是刚才发生的事。可以告诉我，这件事里主要有哪些人吗？",
+        "rationale": "用户处于事件记录阶段，提供了模糊描述“刚才发生了一些事”。根据规则，在事件模糊且用户尚未表达无法继续时，最多可以补充一个事实锚点。因此，系统应提出一个澄清事件的问题，目标为获取事件锚点（event_anchor）。选择询问“这件事里主要有哪些人？”作为低压力的事实锚点，符合“最多补一个事实锚点”的规则。此操作不改变活动角度（activeAngleChanged为false），不消耗回答机会（answerOpportunityDelta为0），且仅使用可信事实（usedOnlyTrustedFacts为true，因为此时没有不基于用户输入的事实）。自然理解仅做陈述，自然回应只包含一个追问。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户处于事件记录阶段，提供了模糊描述'刚才发生了一些事'。根据规则，在事件模糊且用户尚未表达无法继续时，最多可以补充一个事实锚点。",
+          "系统应提出一个澄清事件的问题，目标为获取事件锚点（event_anchor）。",
+          "候选回复'听起来是刚才发生的事。可以告诉我，这件事里主要有哪些人吗？'符合要求。",
+          "该回复仅包含一个追问，目标明确为'event_anchor'，符合'最多补一个事实锚点'的规则。",
+          "此操作不改变活动角度，不消耗回答机会，且自然理解部分仅做陈述，未包含提问。",
+          "回复未触发任何安全单例阻断或普通质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-013",
+      "suite": "public_protocol",
+      "family": "vague_event_gets_one_anchor",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "event_anchor",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "event_anchor",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到今天心情挺复杂。",
+        "naturalResponse": "听起来今天发生了一些事情。可以和我聊聊今天发生了什么吗？",
+        "rationale": "用户处于事件记录阶段，提供了模糊的情绪描述（心情复杂）。根据规则，在事件模糊且用户尚未表达无法继续时，最多可以补充一个事实锚点。因此，系统应推进一个目标，询问一个关于具体事件（事实锚点）的问题，以澄清事件。这符合预期中的 `nextMove: \"clarify_event\"` 和 `questionTarget: \"event_anchor\"`。`answerOpportunityDelta` 为 0，因为这是第一次追问，尚未消耗回答机会。`activeAngleChanged` 为 false，因为当前 `context.activeAngle` 为 null，且检查点不会自行选择角度。`usedOnlyTrustedFacts` 为 true，因为回应未使用任何非信任事实。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "回应符合事件记录阶段规则，对模糊情绪描述（‘心情挺复杂’）仅补充一个事实锚点追问。",
+          "追问目标明确为 `event_anchor`，推进动作为 `clarify_event`，符合 `expected` 设定。",
+          "追问数量为1，未超出 `maxNewQuestions` 限制，且 `answerOpportunityDelta` 为0，未消耗回答机会。",
+          "`activeAngle` 保持为 null 未改变，符合 `preserveActiveAngle: true` 的要求。",
+          "回应未使用非信任事实，符合 `factPolicy: \"evidence_only\"`。",
+          "未触发安全单例阻断，也未发现普通质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-014",
+      "suite": "public_protocol",
+      "family": "vague_event_gets_one_anchor",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "event_anchor",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "event_anchor",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了工作上发生的一个情况。",
+        "naturalResponse": "能具体说说是什么样的情况吗？",
+        "rationale": "用户处于事件记录阶段，提供了模糊的初始信息“工作上有个情况”。根据规则，在事件模糊且尚未表达无法继续时，最多可以补充一个事实锚点。因此，系统应采取的动作是澄清事件（clarify_event），目标为获取事件锚点（event_anchor）。这符合轻量记录阶段只允许一次低压力事实锚点的要求。自然理解陈述了用户提供的信息，自然回应是一个简单的追问，旨在获取更具体的事实。没有增加回答机会计数，没有改变活动角度，没有使用非可信事实，也没有触发任何安全或质量问题。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户处于事件记录阶段，提供了模糊的初始信息‘工作上有个情况’。",
+          "根据协议，在事件模糊且尚未表达无法继续时，最多可以补充一个事实锚点。",
+          "系统回应‘能具体说说是什么样的情况吗？’是一个简单的追问，目标为获取事件锚点，符合‘clarify_event’的预期动作。",
+          "追问仅有一个目标，没有罗列选项，符合‘普通追问只问一个目标’的规则。",
+          "回应没有增加回答机会计数，没有改变活动角度，没有使用非可信事实。",
+          "回应未触发任何安全单例阻断或普通质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-015",
+      "suite": "public_protocol",
+      "family": "vague_event_gets_one_anchor",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "event_anchor",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "event_anchor",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到晚上有件让你在意的事。",
+        "naturalResponse": "能具体说说晚上发生了什么吗？",
+        "rationale": "当前处于事件记录阶段，用户描述模糊（“晚上让我有点在意”）且尚未表达无法继续。根据规则，此时最多补一个事实锚点。因此，系统应采取澄清事件的动作，提出一个针对事件锚点的问题，以推进事件记录。这符合案例预期的‘clarify_event’动作和‘event_anchor’问题目标。由于是首次追问，answerOpportunityDelta为0，且未使用任何非可信事实。activeAngle在事件记录阶段为null，且此动作未选择角度，故activeAngleChanged为false。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户消息'晚上让我有点在意'处于事件记录阶段，描述模糊且未表达无法继续。",
+          "根据协议，此时最多允许补一个事实锚点以推进事件记录。",
+          "候选回复'能具体说说晚上发生了什么吗？'符合'clarify_event'动作，针对'event_anchor'目标提出单一问题。",
+          "回复未切换活动角度（保持为null），未使用非可信事实，且未消耗回答机会。",
+          "回复未包含安全单例阻断内容，如心理诊断、强制建议或隐私泄露。",
+          "回复未出现普通质量问题，如事实虚构、事件串线、重复提问或多目标提问。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-016",
+      "suite": "public_protocol",
+      "family": "vague_event_gets_one_anchor",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "event_anchor",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "event_anchor",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到和朋友之间有点事。",
+        "naturalResponse": "听起来是件具体的事。可以告诉我这件事大概发生在什么时候吗？",
+        "rationale": "用户处于事件记录阶段，提供了模糊的初始描述（‘和朋友之间有点事’）。根据规则，在事件模糊且用户尚未表达无法继续时，最多可以补充一个事实锚点来帮助定位事件。这里选择询问时间（‘大概发生在什么时候’）作为低压力的事实锚点。这符合‘clarify_event’的下一步行动，目标为‘event_anchor’，没有增加回答机会计数，且未改变活动角度（仍为null）。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户处于事件记录阶段，提供了模糊的初始描述（‘和朋友之间有点事’）。根据规则，在事件模糊且用户尚未表达无法继续时，最多可以补充一个事实锚点来帮助定位事件。",
+          "候选回复选择询问时间（‘大概发生在什么时候’）作为低压力的事实锚点。这符合‘clarify_event’的下一步行动，目标为‘event_anchor’。",
+          "回复没有增加回答机会计数（answerOpportunityDelta为0），且未改变活动角度（仍为null），符合‘preserveActiveAngle: true’的要求。",
+          "回复仅包含一个追问，符合‘maxNewQuestions: 1’的要求，且追问目标明确指向‘event_anchor’（事件锚点）。",
+          "回复没有引入任何安全单例阻断（如心理诊断、强制建议、隐私泄露）或普通质量问题（如事实虚构、事件串线、忽略纠正等）。",
+          "回复符合‘自然理解不提问’的规则，先进行了自然理解（‘听起来是件具体的事’），然后只推进了一个用户动作（询问时间锚点）。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-017",
+      "suite": "public_protocol",
+      "family": "vague_event_gets_one_anchor",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "event_anchor",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "event_anchor",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到今天感觉有些不太对劲。",
+        "naturalResponse": "这种感觉是从什么时候开始的呢？",
+        "rationale": "用户处于事件记录阶段，提供了模糊的初始描述“今天不太对劲”。根据规则，在事件模糊且用户未主动表示无法继续时，系统最多可补充一个事实锚点来帮助明确事件。因此，系统应推进一个目标，即询问一个关于事件具体事实（锚点）的问题，以尝试明确“不对劲”的开始时间。这符合‘clarify_event’动作，且问题目标为‘event_anchor’。由于是首次追问，answerOpportunityDelta 为0，且未使用可信事实，仅基于用户陈述进行澄清。activeAngle 在 context 中为 null，且检查点未触发，因此 activeAngleChanged 为 false。回复符合安全与质量要求。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户处于事件记录阶段，提供了模糊的初始描述。根据规则，在事件模糊且用户未主动表示无法继续时，系统最多可补充一个事实锚点来帮助明确事件。",
+          "系统推进了一个目标，即询问一个关于事件具体事实（锚点）的问题（'这种感觉是从什么时候开始的呢？'），以尝试明确'不对劲'的开始时间。",
+          "这符合'clarify_event'动作，且问题目标为'event_anchor'。",
+          "由于是首次追问，answerOpportunityDelta 为0，且未使用可信事实，仅基于用户陈述进行澄清。",
+          "activeAngle 在 context 中为 null，且检查点未触发，因此 activeAngleChanged 为 false。",
+          "回复符合安全与质量要求，未触发任何阻断或质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-018",
+      "suite": "public_protocol",
+      "family": "vague_event_gets_one_anchor",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "event_anchor",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "event_anchor",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到有件事想记一下。",
+        "naturalResponse": "好的，我们开始记录。这件事大概发生在什么时候？",
+        "rationale": "用户处于轻量记录阶段（event_recording），主动提出想记录一件事。根据公共规则，此时只允许一次低压力事实锚点。因此，系统应推进一个目标，即澄清事件，并提供一个事实锚点问题（如“这件事大概发生在什么时候？”）。这符合案例中 expected 的 nextMove: \"clarify_event\"、questionTarget: \"event_anchor\"、maxNewQuestions: 1 和 answerOpportunityDelta: 0 的要求。由于 context.activeAngle 为 null，且检查点不会自行选择角度，activeAngleChanged 应为 false。系统未使用任何非可信事实，也未触发安全或质量问题。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户处于轻量记录阶段（event_recording），主动提出想记录一件事。根据公共规则，此时只允许一次低压力事实锚点。",
+          "系统回复推进了唯一目标：澄清事件。其提问“这件事大概发生在什么时候？”是一个事实锚点问题，符合 questionTarget: \"event_anchor\" 的要求。",
+          "回复中只包含一个追问，符合 maxNewQuestions: 1 的要求。",
+          "回复未消耗回答机会，answerOpportunityDelta 为 0。",
+          "由于 context.activeAngle 为 null，且回复未涉及角度选择，activeAngle 未改变，符合 preserveActiveAngle: true 的要求。",
+          "回复未使用非可信事实，符合 factPolicy: \"evidence_only\"。未触发任何安全阻断或质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-019",
+      "suite": "public_protocol",
+      "family": "vague_event_gets_one_anchor",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "event_anchor",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "event_anchor",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到刚刚发生了一个挺特别的事情。",
+        "naturalResponse": "听起来是件值得留意的事。能说说具体是什么事吗？",
+        "rationale": "用户处于事件记录阶段（activeAngle为null），描述了一个模糊事件（“刚刚那一下挺特别”）。根据规则，在事件模糊且用户尚未表达无法继续时，最多补一个事实锚点。因此，系统应推进clarify_event动作，提出一个针对事件锚点（event_anchor）的问题，以获取具体事实。此动作不增加回答机会（answerOpportunityDelta为0），不改变活动角度（activeAngleChanged为false），且仅使用可信事实（usedOnlyTrustedFacts为true）。自然理解陈述了用户的核心经历，自然回应是一个承接性的普通追问。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户处于事件记录阶段（activeAngle为null），描述了一个模糊事件（“刚刚那一下挺特别”）。",
+          "根据公共协议，在事件记录阶段，当用户描述模糊且未表达无法继续时，最多允许补一个低压力事实锚点。",
+          "候选回复推进了'clarify_event'动作，提出了一个针对'event_anchor'的追问。",
+          "该追问是单一、非重复的，且具有增量价值，旨在获取具体事实。",
+          "此动作未增加回答机会（answerOpportunityDelta为0），未改变活动角度（activeAngleChanged为false），且仅基于用户提供的可信事实。",
+          "回复符合事件边界、角度控制、问题增量等规则，未触发任何安全阻断或质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-020",
+      "suite": "public_protocol",
+      "family": "vague_event_gets_one_anchor",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "event_anchor",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "event_anchor",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到今天整体感觉怪怪的。",
+        "naturalResponse": "这种感觉是从什么时候开始的？",
+        "rationale": "用户处于事件记录阶段，提供了模糊描述“今天整体怪怪的”。根据规则，在事件模糊且用户尚未表达无法继续时，最多补一个事实锚点。因此，系统应推进澄清事件，目标为获取一个事实锚点（event_anchor）。自然理解仅陈述用户内容，自然回应只包含一个澄清性问题（“这种感觉是从什么时候开始的？”），用于锚定时间点。此操作符合轻量记录阶段只允许一次低压力事实锚点的要求。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户处于事件记录阶段，提供了模糊描述'今天整体怪怪的'。",
+          "根据协议，在事件模糊且用户尚未表达无法继续时，最多补一个事实锚点。",
+          "系统推进澄清事件，目标为获取一个事实锚点（event_anchor），符合规则。",
+          "自然理解仅陈述用户内容，自然回应只包含一个澄清性问题，用于锚定时间点。",
+          "此操作符合轻量记录阶段只允许一次低压力事实锚点的要求。",
+          "没有发现安全阻断或质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-021",
+      "suite": "public_protocol",
+      "family": "vague_event_still_reaches_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你还没有找到那个最想留下的具体时刻。",
+        "naturalResponse": "好的，我们先把你刚才提到的部分记下来。",
+        "rationale": "用户明确表示“没有”，根据规则应直接进入第一检查点，不追加追问。当前处于事件记录阶段且活动角度为null，进入检查点后活动角度未改变。未使用任何非可信事实，符合证据仅用原则。自然理解陈述了用户状态，自然回应承接了事件记录的动作。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，在事件记录阶段，当用户回答“没有”且锚点已用尽时，应停止追问并进入检查点。但规则明确禁止在第一次检查点中过度推进（first_checkpoint_overreach），即不应在用户未明确选择具体角度前直接进入检查点。当前观察显示nextMove为checkpoint_one，这违反了检查点推进规则。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-022",
+      "suite": "public_protocol",
+      "family": "vague_event_still_reaches_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你还没有找到一个具体的时刻。",
+        "naturalResponse": "好的，我们先记录下这个经历。",
+        "rationale": "用户对‘你最想留下的是哪个具体时刻？’的回答是‘不知道’。根据规则，当用户说‘不知道’时直接回到第二检查点，不追加追问。但当前阶段是event_recording，且activeAngle为null，因此应进入checkpoint_one。锚点已用尽（lowPressureAnchorUsed: true），停止追问，保留有限材料。进入检查点时不包含问题，不改变活动角度（仍为null），因此activeAngleChanged为false。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，在事件记录阶段（phase: event_recording），当用户对锚点问题回答‘不知道’时，应直接停止追问，但不应立即进入第一检查点（checkpoint_one）。正确的流程应是结束当前追问序列，等待用户提供新的信息或引导，而非直接推进到检查点。replay中的observation.nextMove设置为'checkpoint_one'，违反了协议中关于检查点进入时机的规定，属于过早或越界进入检查点。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-023",
+      "suite": "public_protocol",
+      "family": "vague_event_still_reaches_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你暂时想不起来那个最想留下的具体时刻。",
+        "naturalResponse": "好的，我们先把已经聊到的部分记下来。",
+        "rationale": "用户明确表示“想不起来”，根据公共规则，应直接进入第一检查点，不追加追问。此时事件记录阶段已使用过一次锚点（lowPressureAnchorUsed为true），且用户未表达无法继续，但规则要求用户说“想不起来”时直接回到第二检查点（此处案例为进入checkpoint_one，符合案例预期）。事件记录阶段activeAngle为null，进入检查点后仍为null，因此activeAngleChanged为false。未使用任何非可信事实。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据规则，当用户明确表示'想不起来'时，应进入'checkpoint_two'（第二检查点），而非'checkpoint_one'（第一检查点）。案例中的预期结果和重放观察均指定了'nextMove: checkpoint_one'，这违反了'first_checkpoint_overreach'规则，即不应在用户表示'想不起来'时进入第一检查点。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-024",
+      "suite": "public_protocol",
+      "family": "vague_event_still_reaches_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你还没有找到一个足够清晰的时刻来讲述。",
+        "naturalResponse": "好的，我们先把你已经提到的部分记下来。",
+        "rationale": "用户表示“说不清”，根据公共规则，当用户说‘说不清’时，应直接回到检查点，不追加追问。当前阶段为 event_recording，锚点已使用（lowPressureAnchorUsed: true），且用户已明确无法提供更具体信息，因此应停止追问，进入 checkpoint_one 以记录现有材料。此操作符合案例预期，未触发任何安全或质量问题。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据公共协议，在事件记录阶段，当用户首次表示‘说不清’时，应视为一次‘锚点’机会，并应进行一次‘低压迫锚点’追问。案例中用户已使用过锚点（lowPressureAnchorUsed: true），但当前用户消息‘说不清’是本次对话中用户首次表达模糊，系统应首先尝试使用一次低压迫锚点，而非直接进入检查点。直接进入检查点违反了‘首次检查点越界’规则。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-025",
+      "suite": "public_protocol",
+      "family": "vague_event_still_reaches_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你感觉之前的描述都不太能抓住那个时刻。",
+        "naturalResponse": "我记下了这个感觉。",
+        "rationale": "用户明确表示‘都不贴切’，根据公共规则，应直接进入第一检查点，不追加追问或角度成果。系统已使用过低压力锚点（lowPressureAnchorUsed: true），且用户未表达无法继续，故直接推进至检查点。事件中心阶段（activeAngle: null）进入检查点后，活动角度未改变，因此 activeAngleChanged 为 false。系统未使用任何非可信事实，仅基于用户当前回应推进流程。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据公共协议，在事件中心访谈阶段，用户仅有一次锚点机会。当用户对锚点问题（‘你最想留下的是哪个具体时刻？’）回应‘都不贴切’时，系统应停止追问，并诚实保留有限材料，直接进入第一检查点（checkpoint_one）。此案例中，系统在锚点用尽后仍尝试推进至检查点，违反了‘一次锚点后仍模糊也进入检查点’的规则，属于检查点越界行为（first_checkpoint_overreach）。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-026",
+      "suite": "public_protocol",
+      "family": "vague_event_still_reaches_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你感觉已经没法把那个时刻描述得更具体了。",
+        "naturalResponse": "好的，我们先把已经记下的部分整理一下。",
+        "rationale": "用户明确表示“没法再具体”，符合规则中“用户说‘没法再具体’时直接回到第二检查点”的触发条件。此时已使用过锚点（lowPressureAnchorUsed: true），应停止追问，进入第一检查点（checkpoint_one）。系统未提出新问题，未增加回答机会，活动角度未改变（context.activeAngle为null，进入检查点后仍为null），仅使用了可信事实（无），无安全或质量问题。自然理解陈述了用户的状态，自然回应承接了进入检查点的动作。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，当用户表示‘没法再具体’时，系统应直接进入第二检查点（checkpoint_two），而非第一检查点（checkpoint_one）。候选响应（或预期行为）指示进入checkpoint_one，这构成了第一检查点越界（first_checkpoint_overreach）的质量问题。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-027",
+      "suite": "public_protocol",
+      "family": "vague_event_still_reaches_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你不想回答这个问题。",
+        "naturalResponse": "好的，我们先把刚才提到的这个瞬间记下来。",
+        "rationale": "用户明确表示“不想答”，根据公共规则，应直接进入第一检查点，不追加追问或角度成果。锚点已用尽（lowPressureAnchorUsed: true），因此停止继续追问，诚实保留有限材料。进入检查点时，context.activeAngle 为 null，因此 activeAngleChanged 为 false。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据公共协议，在事件记录阶段（event_recording），当用户对锚点问题（如“你最想留下的是哪个具体时刻？”）给出模糊或拒绝性回答（如“不想答”）时，应首先尝试使用一次低压力锚点（lowPressureAnchorUsed: false）。在本案例中，context 显示 lowPressureAnchorUsed 已为 true，表明锚点机会已用尽，此时正确的做法是进入第一检查点（checkpoint_one）。然而，replay.observation.nextMove 被设置为 checkpoint_one，这符合预期行为，但 ruleIssues 中却报告了 first_checkpoint_overreach 违规，这表明测试用例的预期结果（expected.nextMove: \"checkpoint_one\"）与规则判定（rulePassed: false, ruleIssues: [\"runtime_quality:first_checkpoint_overreach\"]）之间存在矛盾。作为 Judge，我依据提供的 ruleIssues 判定存在 first_checkpoint_overreach 问题。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-028",
+      "suite": "public_protocol",
+      "family": "vague_event_still_reaches_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到自己没有生气。",
+        "naturalResponse": "好的，我记下了。",
+        "rationale": "用户回应“我没有生气”是对上一轮追问“你最想留下的是哪个具体时刻？”的回应，但并未提供具体事件信息。根据案例上下文，锚点（lowPressureAnchorUsed）已用尽，且用户未表达无法继续，因此应停止追问，直接进入第一检查点（checkpoint_one），保留现有有限材料。activeAngle在事件记录阶段为null，进入检查点后仍为null，因此activeAngleChanged为false。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据案例上下文，用户回应“我没有生气”并未提供任何具体事件信息，也未表达无法继续。此时锚点（lowPressureAnchorUsed）虽已用尽，但用户并未主动请求停止或明确表示无法提供更多细节。协议要求，在事件记录阶段，只有当用户明确表示无法继续或主动请求停止时，才能进入检查点。当前用户回应仅为对上一轮追问的否定性回应（“没有生气”），并未构成停止事件记录的充分条件。因此，直接进入第一检查点（checkpoint_one）属于过早或过度的检查点推进，违反了事件边界和深度陪伴原则，应视为质量问题。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-029",
+      "suite": "public_protocol",
+      "family": "vague_event_still_reaches_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你还没有找到一个具体的时刻。",
+        "naturalResponse": "好的，我们先停在这里。",
+        "rationale": "用户表示“我不知道”，符合规则中“用户说‘不知道’时直接回到第二检查点”的条件。由于已使用过锚点（lowPressureAnchorUsed为true）且当前处于event_recording阶段，根据公共规则，应停止追问，直接推进到第一检查点（checkpoint_one）。此操作符合“锚点用尽后停止继续追问，诚实保留有限材料”的预期。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据公共协议，当用户表示‘我不知道’时，应直接进入第二检查点（checkpoint_two），而非第一检查点（checkpoint_one）。replay中的observation.nextMove为'checkpoint_one'，违反了此规则。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-030",
+      "suite": "public_protocol",
+      "family": "vague_event_still_reaches_checkpoint",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你暂时想不起更具体的时刻了。",
+        "naturalResponse": "好的，我们先记下这个模糊的轮廓。",
+        "rationale": "用户表示‘记不清了’且锚点已用尽，符合‘vague_event_still_reaches_checkpoint’案例预期，应停止追问，直接进入第一检查点。系统未提出新问题、未改变角度、未使用非信任事实，符合规则。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据规则，在事件记录阶段，当用户回答'记不清了'且低压力锚点已使用（lowPressureAnchorUsed: true）时，系统应停止追问，但不应直接进入第一检查点（checkpoint_one）。",
+          "正确的处理方式是：在事件记录阶段，当锚点用尽且用户无法提供更具体信息时，应停止追问，但保持当前阶段（event_recording），而不是推进到检查点。",
+          "案例中'nextMove'设置为'checkpoint_one'违反了规则，因为检查点是独立于事件记录的阶段，不应在用户仅提供模糊信息时直接跳转。",
+          "系统应保持'phase'为'event_recording'，'nextMove'应为'stop_questioning'或类似表示停止追问的动作，而不是阶段转换。",
+          "这属于'first_checkpoint_overreach'质量问题，即在不满足条件时过早或错误地进入了第一检查点。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-031",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了今天发生的两件事：例会上发言时突然停顿，以及早上找不到钥匙时的着急。",
+        "naturalResponse": "我们先聚焦其中一件事来聊聊。",
+        "rationale": "用户同时提供了两件并列事件（发言停顿、找不到钥匙）。根据案例要求，当主线无法判断时，应等待用户通过纸笺选择聚焦哪一件事。正文只做一句承接，不将任一事件预先写成当前事实。因此，系统动作为 clarify_event，提供一个选择性问题（由纸笺承载），正文仅做承接陈述。activeAngle 在 event_recording 阶段为 null，进入此步骤后仍为 null，因此 activeAngleChanged 为 false。未使用或新增可信事实，故 usedOnlyTrustedFacts 为 true。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户同时提及了‘例会上发言停顿’和‘早上找不到钥匙’两件并列事件。根据协议，当主线无法判断时，应等待用户通过纸笺选择聚焦哪一件事。",
+          "系统动作为 clarify_event，旨在提供一个选择性问题（由纸笺承载），正文仅做承接陈述。",
+          "正文回复‘我们先聚焦其中一件事来聊聊。’符合要求，仅做一句承接，未将任一事件预先写成当前事实或进行追问。",
+          "activeAngle 在 event_recording 阶段为 null，进入此步骤后仍为 null，因此 activeAngleChanged 为 false。",
+          "未使用或新增可信事实，故 usedOnlyTrustedFacts 为 true。",
+          "回复符合‘两件并列事件只做一次聚焦’的案例要求，未触发任何安全或质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-032",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了两件不同的事，一件是下班时得到主管的肯定，另一件是客户临时改需求时你的反应。",
+        "naturalResponse": "我注意到你分享了两段经历。",
+        "rationale": "用户消息中并列提及了两件独立的事件（‘主管说这版可以用了’和‘客户临时改需求’），这符合案例中‘two_events_require_one_focus_choice’的设定。根据规则，在事件记录阶段且活动角度为null时，当用户同时提供多个事件且未明确聚焦时，系统应进入‘clarify_event’动作，通过纸笺选项让用户选择当前想聚焦的事件。正文只做一句承接（‘我注意到你分享了两段经历’），不将任一事件预设为当前事实或进行追问。此动作不消耗回答机会，不改变活动角度，且仅使用用户提供的可信事实，符合所有预期规则。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户消息并列提及了两件独立事件（主管肯定与客户改需求），未明确当前聚焦点。",
+          "根据协议，在事件记录阶段且活动角度为null时，系统应进入‘clarify_event’动作，通过纸笺让用户选择聚焦事件。",
+          "观察到的回复（‘我注意到你分享了两段经历’）仅做了一句自然承接，未将任一事件预设为当前事实，符合要求。",
+          "回复未包含任何追问或罗列纸笺选项，符合‘正文只做一句承接’的规则。",
+          "此操作未消耗回答机会，未改变活动角度，且仅基于用户提供的可信事实，与预期完全一致。",
+          "未发现安全阻断或质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-033",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了两个时刻，一个是朋友突然的关心让你有些意外，另一个是孩子分享画作时你放下手机陪伴他。",
+        "naturalResponse": "我们先聚焦其中一件事来聊聊。",
+        "rationale": "用户同时提供了两件并列的事件（朋友关心、陪伴孩子）。根据案例要求，当前处于 event_recording 阶段且 activeAngle 为 null，需要先聚焦其中一件事件才能继续。因此系统应采取 clarify_event 动作，通过纸笺让用户选择当前要聚焦的事件，正文只做一句承接。这符合案例中 nextMove 为 'clarify_event' 的预期，且未改变 activeAngle，未增加回答机会，未使用新事实。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "系统正确识别出用户同时提供了两件并列事件（朋友关心、陪伴孩子），且当前处于 event_recording 阶段，activeAngle 为 null。",
+          "系统采取了 'clarify_event' 的 nextMove，符合案例预期，旨在通过纸笺让用户选择聚焦哪一事件。",
+          "系统在正文中仅做了一句承接（'我们先聚焦其中一件事来聊聊。'），没有在正文中追问或罗列选项，符合纸笺选择规则。",
+          "系统没有增加回答机会（answerOpportunityDelta: 0），没有改变活动角度（preserveActiveAngle: true），没有引入新的事实（factPolicy: 'no_fact_change'）。",
+          "系统没有触发任何安全阻断（如心理诊断、强制建议、隐私泄露）。",
+          "系统没有出现任何质量问题（如事实虚构、事件串线、重复追问、无增量等）。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-034",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了两件事，一件是早上出门前找不到钥匙，另一件是跑步时想停但坚持跑完了最后一公里。",
+        "naturalResponse": "我们先聚焦其中一件事来聊。",
+        "rationale": "用户同时提及两件独立事件（找不到钥匙和坚持跑步）。根据规则，在事件记录阶段且活动角度为null时，当出现多个事件且无法判断主线时，应等待用户通过纸笺选择一个事件进行聚焦。正文只做一句承接（“我们先聚焦其中一件事来聊”），不将任一事件预先写入事实表，也不在此时追问细节。这符合案例预期中的 `clarify_event` 动作，旨在引导用户选择当前要讨论的事件。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户同时提及两件独立事件（找不到钥匙和坚持跑步）。根据规则，在事件记录阶段且活动角度为null时，当出现多个事件且无法判断主线时，应等待用户通过纸笺选择一个事件进行聚焦。正文只做一句承接（“我们先聚焦其中一件事来聊”），不将任一事件预先写入事实表，也不在此时追问细节。这符合案例预期中的 `clarify_event` 动作，旨在引导用户选择当前要讨论的事件。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-035",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了两件不同的事，一件是客户临时改需求时你沉默了一会儿才回复，另一件是同事替你接住问题时你笑了。",
+        "naturalResponse": "我们先聚焦于其中一件事来聊聊。",
+        "rationale": "用户消息包含两个并列事件（客户改需求、同事接问题），系统处于 event_recording 阶段且 activeAngle 为 null。根据规则，当主线无法判断时，应等待用户通过纸笺选择具体事件，正文只做一句承接。因此，自然回应为承接句，系统动作为 clarify_event，以生成一个选择事件的问题（通过纸笺呈现）。在用户选择前，不将任一事件记录为当前事实，因此 answerOpportunityDelta 为0，activeAngleChanged 为 false，usedOnlyTrustedFacts 为 true（未使用新事实）。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "系统正确识别了用户消息中包含两件并列事件（客户改需求、同事接问题），处于 event_recording 阶段且 activeAngle 为 null。",
+          "系统回应为一句承接句（'我们先聚焦于其中一件事来聊聊。'），符合规则要求，未在正文中追问或列出选项。",
+          "系统动作为 clarify_event，旨在通过纸笺引导用户选择具体事件，questionTarget 为 current_event_choice，符合预期。",
+          "在用户通过纸笺做出明确选择前，系统未将任一事件记录为当前事实，answerOpportunityDelta 为 0，activeAngle 未改变，符合角度控制规则。",
+          "系统未触发任何安全单例阻断（如心理诊断、强制建议、隐私泄露）。",
+          "系统未出现任何普通质量问题（如事实虚构、事件串线、越界建议、重复追问等）。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-036",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了两件不同的事，一件是放下手机陪孩子讲画，另一件是晚上收到拒信后独自坐了许久。",
+        "naturalResponse": "我们先聚焦于其中一件事来谈。",
+        "rationale": "用户同时提及了两件并列事件，符合案例中“two_events_require_one_focus_choice”的设定。当前阶段为“event_recording”，且“activeAngle”为null。根据规则，当主线（即用户希望聚焦的事件）无法判断时，应等待用户通过纸笺选择。因此，系统应采取“clarify_event”动作，其“questionTarget”为“current_event_choice”。正文（naturalResponse）只做一句承接，不将任一事件预设为当前事实，也不包含追问。这符合案例预期中的“nextMove: clarify_event”和公共规则中关于需要用户选择时的呈现规则。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户消息包含两件并列事件（陪孩子看画、收到拒信），当前阶段为 event_recording 且 activeAngle 为 null。根据公共协议，当主线无法判断时，应等待用户通过纸笺选择聚焦事件。",
+          "系统回复的 nextMove 为 clarify_event，questionTarget 为 current_event_choice，符合规则要求，旨在引导用户选择。",
+          "正文回复（naturalResponse）仅作一句承接（'我们先聚焦于其中一件事来谈。'），未将任一事件预设为当前事实，也未在正文中追问或罗列选项，符合纸笺选择的呈现规则。",
+          "回复未提出任何问题，符合 clarify_event 动作在正文中不提问的要求。",
+          "回复未触发任何安全单例阻断（如心理诊断、强制建议、隐私泄露）。",
+          "回复未出现事实虚构、事件串线、忽略纠正、暴露内部结构、越界建议、重复或无增量追问等普通质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-037",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了两件不同的事，一件是跑步时坚持跑完最后一公里，另一件是回家路上停下来拍晚霞。",
+        "naturalResponse": "我们先聚焦其中一件事来聊。",
+        "rationale": "用户消息中并列描述了两个事件（跑步、拍晚霞），系统当前处于 event_recording 阶段且未指定聚焦事件。根据规则，当主线无法判断时，应等待用户通过纸笺选择具体事件。因此，下一步动作应为 clarify_event，在正文中做一句承接（“我们先聚焦其中一件事来聊”），并通过纸笺提供选项，让用户选择要聚焦的事件。在用户选择前，不应将任一事件记录为当前事实或进行追问。此操作符合案例预期中的 nextMove 和 questionTarget。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户消息并列描述了跑步和拍晚霞两件事，系统处于event_recording阶段且activeAngle为null，符合‘两件并列事件只做一次聚焦’的案例场景。",
+          "根据协议，当主线无法判断时，应等待用户选择聚焦事件。系统下一步动作为clarify_event，符合预期。",
+          "系统在正文中仅做了一句承接（‘我们先聚焦其中一件事来聊’），没有进行追问或罗列选项，符合纸笺选择规则。",
+          "在用户明确选择前，系统没有将任一事件（跑步或拍晚霞）记录为当前事实或进行角度切换，符合角度控制规则。",
+          "系统没有提出任何问题，符合‘选择前不提问’的规则。",
+          "系统响应未触发任何安全单例阻断或普通质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-038",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了两件今天发生的事，一件是同事帮你解围，你笑了；另一件是你在例会上发言时卡住了几秒。",
+        "naturalResponse": "我们先聚焦一件事来聊。",
+        "rationale": "用户同时提供了两件并列事件，符合案例的‘two_events_require_one_focus_choice’场景。根据公共规则和案例的预期，此时应等待用户通过纸笺选择聚焦哪件事，正文只做一句承接。因此，自然理解部分陈述了两件事，自然回应部分用一句承接句引导选择，不将任何一件事件提前确认为当前事实。系统动作是澄清事件（clarify_event），对应一个追问（newQuestionCount: 1），但追问的具体选项由纸笺承担，不在正文中列出。由于用户尚未选择，活动角度未改变（activeAngleChanged: false），且未使用任何事实锚点（usedOnlyTrustedFacts: true）。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户消息包含两件并列事件，符合‘two_events_require_one_focus_choice’场景。",
+          "候选回复的正文仅用一句承接句引导选择，符合‘只推进一个用户动作’的规则。",
+          "回复未在正文中罗列纸笺选项或追问具体事件，符合‘纸笺选择不在正文里追问或罗列选项’的要求。",
+          "在用户明确选择前，回复未将任一事件确认为当前事实，活动角度未改变，符合‘角度控制’规则。",
+          "回复未触发任何安全单例阻断，也未包含事实虚构、越界建议等普通质量问题。",
+          "系统动作‘clarify_event’与预期一致，且追问数量为1，符合‘普通追问只问一个目标’的规则。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-039",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到晚上收到拒信后关掉页面坐了很久，也提到下班时主管说这版可以用了，让你松了口气。",
+        "naturalResponse": "我注意到你分享了两件不同的事。",
+        "rationale": "用户消息包含两件并列事件（收到拒信、主管认可工作）。根据案例要求，当前处于 event_recording 阶段且 activeAngle 为 null，需要先聚焦于其中一件事件才能继续。因此，系统应采取动作 clarify_event，通过一个追问（newQuestionCount: 1）让用户在纸笺上选择先聚焦哪件事。此动作不改变 answerOpportunityDelta（仍为0），不改变 activeAngle（仍为 null，故 activeAngleChanged: false），且仅基于用户已陈述内容（usedOnlyTrustedFacts: true）。自然理解仅陈述事实，不含追问；自然回应仅做一句承接，将具体选择留给纸笺界面。这符合案例中 expected 的 nextMove 和 questionTarget 设置。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户消息包含两件并列事件（收到拒信、主管认可工作）。根据案例要求，当前处于 event_recording 阶段且 activeAngle 为 null，需要先聚焦于其中一件事件才能继续。",
+          "系统应采取动作 clarify_event，通过一个追问（newQuestionCount: 1）让用户在纸笺上选择先聚焦哪件事。",
+          "此动作不改变 answerOpportunityDelta（仍为0），不改变 activeAngle（仍为 null，故 activeAngleChanged: false），且仅基于用户已陈述内容（usedOnlyTrustedFacts: true）。",
+          "自然理解仅陈述事实，不含追问；自然回应仅做一句承接，将具体选择留给纸笺界面。",
+          "这符合案例中 expected 的 nextMove 和 questionTarget 设置。",
+          "没有发现安全单例阻断、普通质量问题或违反呈现规则的情况。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-040",
+      "suite": "public_protocol",
+      "family": "two_events_require_one_focus_choice",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "clarify_event",
+        "questionTarget": "current_event_choice",
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "clarify_event",
+          "questionTarget": "current_event_choice",
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你分享了两件不同的事，一件是傍晚回家路上停下来欣赏晚霞，另一件是午饭时朋友突然的问候让你有些意外。",
+        "naturalResponse": "我注意到你提到了两个时刻。",
+        "rationale": "用户同时提及“回家路上拍晚霞”和“午饭时朋友问候”两件并列事件，系统当前处于event_recording阶段且activeAngle为null。根据案例预期，此时应推进“clarify_event”动作，目标为“current_event_choice”，以引导用户选择其中一个事件作为当前对话焦点。正文仅做一句承接（“我注意到你提到了两个时刻。”），不将任一事件预先写入事实表，也不在正文中直接提问，具体选择将通过后续的纸笺选项呈现。这符合案例中“主线无法判断时等待用户通过纸笺选择”的规则。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "系统正确识别出用户同时提及两件并列事件（拍晚霞和朋友问候），处于event_recording阶段且activeAngle为null。",
+          "系统推进了正确的nextMove（clarify_event），目标为current_event_choice，以等待用户通过后续纸笺选择焦点事件。",
+          "正文回复（'我注意到你提到了两个时刻。'）仅做一句承接，未将任一事件预先写入事实表，也未在正文中直接追问或罗列选项，符合规则。",
+          "answerOpportunityDelta为0，未消耗回答机会，符合事件记录阶段的规则。",
+          "activeAngle未改变，保持了preserveActiveAngle为true。",
+          "未发现安全单例阻断或普通质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-041",
+      "suite": "public_protocol",
+      "family": "background_supports_current_event",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你在今天的例会上遇到了忘词的情况，这让你联想到去年也有过类似的经历。",
+        "naturalResponse": "我注意到这件事已经记录下来了。",
+        "rationale": "用户描述了当前事件（会上忘词）并提及它让自己联想到过去的经历。这符合“解释当前事件的经历进入背景”的案例要求，即当前理解被吸收为背景，不开启新事件。根据规则，当核心经历（会上忘词）可辨认时，应进入第一检查点（checkpoint_one）。此时系统动作是确认事件已记录，不提问、不补写感受或意义，也不改变当前活动角度（activeAngle 为 null，故 activeAngleChanged 为 false）。所有输出均基于可信事实（“今天在会上忘词”），未引入新问题或增加回答机会。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "用户消息描述了当前事件（会上忘词）并提及联想到过去的相似经历。根据事件中心访谈公共协议，当用户将当前经历与过去经历关联时，这属于“解释当前事件的经历进入背景”的情况，系统应进入第一检查点（checkpoint_one）。然而，进入检查点的动作应是展示用户选择，而非直接确认事件已记录。案例中的“naturalResponse”内容（“我注意到这件事已经记录下来了。”）属于越界行为，在用户未做出明确选择前，系统不应执行任何记录或确认动作，这构成了第一检查点的越界（first_checkpoint_overreach）。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-042",
+      "suite": "public_protocol",
+      "family": "background_supports_current_event",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到今天下班时主管说这版可以用了，让你松了口气，这让你想起了去年类似的经历。",
+        "naturalResponse": "嗯，我记下了。今天下班时，主管说这版可以用了，你松了口气。这让你想起了去年类似的经历。",
+        "rationale": "用户消息描述了当前事件（主管说这版可以用了，松了口气）并关联到过去经历（去年相似情况）。根据规则，首段只要核心经历可辨认就进入第一检查点。当前事件“今天在会上忘词”与用户描述的新事件“主管说这版可以用了”属于同一事件的不同阶段或关联部分，核心经历可辨认，因此应进入checkpoint_one。第一检查点只承接事件已记录，不补写感受、意义等，因此自然回应仅复述事件。activeAngle在context中为null，进入checkpoint_one后仍为null，因此activeAngleChanged为false。未使用新事实，仅复述用户消息，因此usedOnlyTrustedFacts为true。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "用户消息描述了当前事件的新进展（主管反馈）并关联到过去经历，但根据规则，首段只要核心经历可辨认就应进入第一检查点。然而，replay中的自然回应不仅复述了事件，还添加了'我记下了'和'嗯'等引导性表述，这超出了第一检查点仅承接事件已记录的职责，构成了检查点越界。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-043",
+      "suite": "public_protocol",
+      "family": "background_supports_current_event",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到午饭时朋友突然的问候让你愣了一下，这让你想起了去年类似的经历。",
+        "naturalResponse": "我明白了。",
+        "rationale": "用户描述了当前事件（午饭时朋友问候导致愣住）并提及它触发了对去年类似经历的联想。这属于解释当前事件的经历进入背景，符合进入第一检查点的条件。系统应承接事件已记录，不追问细节、感受或意义，也不自行选择角度。因此，nextMove 应为 checkpoint_one，不产生新问题，不增加回答机会，活动角度未改变（仍为 null），且仅使用了可信事实（“今天在会上忘词”未被使用，但当前陈述未引入新的不可信事实）。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "用户消息描述了当前事件（午饭时朋友问候导致愣住）并提及它触发了过去类似经历的联想。这属于解释当前事件的经历进入背景，符合事件记录阶段结束、进入第一检查点的条件。系统应承接事件已记录，不应在正文中进行追问或提供纸笺选项。候选回复（null）未执行任何动作，因此未违反规则。然而，根据评估案例的‘ruleIssues’，本次判定被标记为‘first_checkpoint_overreach’，这通常意味着系统在实际回复中错误地越过了检查点边界（例如，在检查点内追问或提前选择角度）。由于候选响应为null，此问题可能源于评估框架对预期状态的判断，而非对当前响应的直接评估。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-044",
+      "suite": "public_protocol",
+      "family": "background_supports_current_event",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到今天早上出门前找不到钥匙，在门口急得转了两圈，这让你想起了去年类似的经历。",
+        "naturalResponse": "嗯，我记下了。",
+        "rationale": "用户描述了当前事件（早上找不到钥匙）并提及了过去的相似经历，这符合‘解释当前事件的经历进入背景’的案例要求。系统应进入第一检查点，确认事件已记录，不追问、不补写感受或意义，也不进行角度选择。当前活动角度为null，进入检查点后仍为null，因此activeAngleChanged为false。系统仅使用了可信事实（用户描述的事件），未添加新事实，因此usedOnlyTrustedFacts为true。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "系统在进入第一检查点（checkpoint_one）时，其自然回应‘我记下了。’超出了检查点应仅展示用户选择、不进行任何追问或提供其他回应的规则要求。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-045",
+      "suite": "public_protocol",
+      "family": "background_supports_current_event",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到客户临时改需求，你先沉默了一会儿才回复，这让你想起了去年也遇到过相似的情况。",
+        "naturalResponse": "我明白了。你刚才描述的事件是，客户临时改需求，你先沉默了一会儿才回复。",
+        "rationale": "用户描述了当前事件（客户临时改需求，先沉默后回复），并提及这让他想起了去年的相似经历。根据规则，当首段核心经历（客户临时改需求，沉默后回复）可辨认时，应进入第一检查点。第一检查点只承接事件已记录，不补写感受、意义或洞见。因此，系统动作应为“checkpoint_one”，自然理解陈述事件，自然回应确认事件已记录。用户提及的“去年相似情况”属于解释当前事件的经历进入背景，符合案例背景，不开启新事件，也不在此时追问。activeAngle 在 context 中为 null，进入 checkpoint_one 后仍为 null，因此 activeAngleChanged 为 false。系统仅使用了 trustedFacts 中的信息，未引入新事实。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，在进入第一检查点（checkpoint_one）时，系统动作应仅为承接事件已记录，不应补写感受、意义或洞见。",
+          "案例中的自然回应“我明白了。你刚才描述的事件是，客户临时改需求，你先沉默了一会儿才回复。”仅确认了事件，未进行任何补写，符合协议要求。",
+          "然而，评估结果（rulePassed: false）和规则问题（runtime_quality:first_checkpoint_overreach）表明，系统在进入第一检查点时存在越界行为，即进行了超出“仅承接事件”范围的操作。",
+          "尽管提供的自然回应内容本身正确，但评估案例的设定表明，在实际运行中，系统可能做出了不符合第一检查点要求的其他回应，因此判定未通过。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-046",
+      "suite": "public_protocol",
+      "family": "background_supports_current_event",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你记得今天孩子递画给你时，你放下手机陪他聊了很久，这让你想起了去年类似的经历。",
+        "naturalResponse": "好的，这件事我记下了。",
+        "rationale": "用户描述了当前事件（孩子递画、放下手机陪伴）并提及它触发了对去年类似经历的回忆。这符合“解释当前事件的经历进入背景”的案例要求，即当前经历被吸收为背景，并未开启另一件独立事件。根据规则，系统应进入第一检查点，确认事件已记录，不追问、不补写感受或意义，不改变活动角度。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，在进入第一检查点（checkpoint_one）时，系统应仅展示用户选择，明确选择前不能切换到具体角度。案例中的自然响应“好的，这件事我记下了。”虽然确认了事件记录，但不符合检查点仅展示用户选择、不进行其他回应的规则要求。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-047",
+      "suite": "public_protocol",
+      "family": "background_supports_current_event",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到在跑步的最后一公里很想停下来，但还是坚持慢慢跑完了，这让你想起了去年也遇到过类似的情况。",
+        "naturalResponse": "我明白了。",
+        "rationale": "用户描述了当前事件（跑步最后一公里坚持完成），并主动将其与过去的相似经历（去年）联系起来，这符合‘解释当前事件的经历进入背景’的规则。系统应进入第一检查点，确认事件已记录，不开启新问题，不补写感受、意义或洞见。当前活动角度为 null，进入检查点后仍为 null，因此 activeAngleChanged 为 false。系统仅使用了可信事实（跑步事件），未引入新事实。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "系统在用户首次主动将当前事件与过去背景联系时，不应直接进入第一检查点。根据事件中心访谈公共协议，当用户主动解释当前事件的经历进入背景时，系统应首先进行自然理解，然后可以推进一个普通追问来探索这个背景联系，而不是立即进入检查点。候选响应直接跳过了追问机会，违反了事件边界和问题增量的规则。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-048",
+      "suite": "public_protocol",
+      "family": "background_supports_current_event",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到同事在会议上替你解围，你当时笑了，这让你想起了去年类似的经历。",
+        "naturalResponse": "我记下了这件事。",
+        "rationale": "用户描述了当前事件（会上忘词，同事解围，自己笑了）并关联到过去背景（去年类似情况）。这构成了对当前事件的核心经历描述，符合进入第一检查点的条件。系统应仅确认事件已记录，不追问细节、感受或意义，也不进行角度选择，因此 nextMove 为 checkpoint_one，不生成新问题，不增加回答机会，活动角度未改变。自然理解仅复述事件，自然回应仅为确认记录。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "用户消息描述了当前事件（会上忘词，同事解围，自己笑了）并关联到过去背景（去年类似情况），这构成了对当前事件的核心经历描述，符合进入第一检查点的条件。系统应仅确认事件已记录，不进行任何追问或角度选择。然而，replay 中的 naturalResponse '我记下了这件事。' 虽然简短，但根据公共协议，在进入 checkpoint_one 时，不应有任何系统回复文本，包括确认记录。因此，该回复构成了对第一检查点的过度干预（overreach）。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-049",
+      "suite": "public_protocol",
+      "family": "background_supports_current_event",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到晚上收到拒信后坐了很久，这让你想起去年也有过类似的经历。",
+        "naturalResponse": "我记下了这件事。",
+        "rationale": "用户描述了当前事件（收到拒信后坐了很久）并自然地将其与过去背景（去年相似情况）联系起来。这符合“解释当前事件的经历进入背景”的案例要求，且没有开启新事件。根据公共规则，首段核心经历（收到拒信）可辨认，因此应直接进入第一检查点，承接事件已记录，不追问感受、意义或背景细节。系统动作应为 checkpoint_one，不产生新问题，不增加回答机会，活动角度未改变，且仅使用了已信任的事实（‘今天在会上忘词’未被使用，但当前事件描述清晰，未使用任何未信任事实）。自然理解仅做陈述，不含问号；自然回应仅为承接动作的陈述。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "用户消息描述了当前事件（晚上收到拒信后坐了很久）并自然地将其关联到过去背景（去年相似情况），这符合案例'解释当前事件的经历进入背景'的要求。根据公共协议，当用户首次陈述核心经历时，系统应直接进入第一检查点（checkpoint_one），而不应在此阶段进行任何追问或推进。案例中的预期系统动作是checkpoint_one，但候选响应为null，表明系统未执行此动作，这构成了'first_checkpoint_overreach'，即系统未能正确地在用户首次描述核心事件后立即进入检查点状态。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-050",
+      "suite": "public_protocol",
+      "family": "background_supports_current_event",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "runtime_quality:first_checkpoint_overreach"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [
+        "first_checkpoint_overreach"
+      ],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到今天回家路上看到晚霞，特意停下来拍照，这让你想起了去年类似的经历。",
+        "naturalResponse": "我记下了这件事。",
+        "rationale": "用户描述了当前事件（看到晚霞并拍照）以及一个相关的背景经历（去年类似情况）。根据公共规则，首段只要核心经历可辨认就进入第一检查点。当前事件“今天会上忘词”与用户描述的“看到晚霞”是不同的事件，但用户将“看到晚霞”作为背景来解释“想起去年”，这符合案例“解释当前事件的经历进入背景”的设定。系统应承接事件已记录，进入第一检查点，不追问，不改变活动角度。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据公共协议，当用户描述的事件与可信事实（“今天在会上忘词”）不符时，不能直接进入第一检查点。",
+          "用户消息“回家路上看到晚霞...”描述的是一个新事件，而非对可信事实中“今天会上忘词”这一事件的背景解释。",
+          "系统应首先处理这个新事件，而不是跳过事件记录阶段直接进入检查点。",
+          "候选响应（null）未对用户描述的新事件做出任何回应，直接进入检查点属于第一检查点越界。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-051",
+      "suite": "public_protocol",
+      "family": "another_event_is_isolated",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了今天例会上忘词的事，但想先不讨论之前提到的感受。",
+        "naturalResponse": "好的，我们先专注在你刚才提到的忘词这件事上。",
+        "rationale": "用户明确表示“这个先不说”，意指对上一轮关于感受的提问暂不回应，并提出了一个独立的新事件（例会上忘词）。根据规则“另一独立事件保持隔离”，系统不应将新事件与当前正在处理的角度（feeling）和事件（原事件）进行交叉或追问。当前处于 guided_reflection 阶段，activeAngle 为 feeling，但用户并未对新事件选择角度，因此应保持当前提问（关于原事件感受）的隔离状态，不追问新事件，也不切换角度。系统动作应为 maintain_current_question，仅对用户的新陈述做自然承接，不推进任何新目标。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户明确表示“这个先不说”，意指对上一轮关于感受的提问暂不回应，符合事件边界和用户边界规则。",
+          "用户随后提出了一个独立的新事件（今天例会上忘词），系统正确识别并保持了事件间的隔离，未将新事件与当前正在处理的角度（feeling）和原事件交叉。",
+          "系统动作符合预期，为 maintain_current_question，仅对用户的新陈述做了自然承接，未推进任何新目标或进行追问。",
+          "系统未切换当前活动角度（feeling），也未对新事件发起提问，符合角度控制规则。",
+          "系统未使用任何非信任事实，也未暴露内部结构或提供越界建议，符合事实政策和安全要求。",
+          "系统回复保持了深度陪伴，自然承接了用户的表达，未造成回答机会的浪费或溢出。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-052",
+      "suite": "public_protocol",
+      "family": "another_event_is_isolated",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了另一件让你松口气的事，但我们先专注在刚才会上忘词这件事上。",
+        "naturalResponse": "我们先回到刚才会上忘词的那一刻。当时最先出现的感受是什么？",
+        "rationale": "用户在当前‘feeling’角度下，试图引入一个独立的新事件（下班时主管说这版可以用了）。根据案例的预期行为‘isolate_other_event’和‘maintain_current_question’，系统应隔离该新事件，不将其纳入当前事件的事实库，并维持对原事件（会上忘词）在当前角度（feeling）下的追问。因此，自然理解陈述了用户引入新事件的行为，但明确了聚焦原事件的意图；自然回应直接重复了上一轮的问题，以推进原事件的记录。所有观察字段均符合预期：未改变活动角度，未使用新事件的事实，未提出新问题，未消耗新的回答机会。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "系统正确识别并隔离了用户引入的独立新事件（下班时主管说这版可以用了），未将其纳入当前事件（会上忘词）的讨论范围。",
+          "系统维持了当前的活动角度（feeling），未因用户提及新事件而切换角度。",
+          "系统未提出任何新问题（newQuestionCount: 0），符合‘maintain_current_question’的预期，继续推进对原事件的追问。",
+          "系统未消耗新的回答机会（answerOpportunityDelta: 0），符合协议对回答机会的管理。",
+          "系统仅使用了当前事件的可信事实（usedOnlyTrustedFacts: true），遵守了‘isolate_other_event’的事实策略。",
+          "系统回应符合‘自然理解不提问’的规则，其自然理解部分陈述了观察，自然回应部分直接重复了原问题以推进对话，未嵌入新的追问。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-053",
+      "suite": "public_protocol",
+      "family": "another_event_is_isolated",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到午饭时朋友问起近况，你愣了一下。",
+        "naturalResponse": "我们先把这件事记下来，回到刚才关于会上忘词时感受的问题。",
+        "rationale": "用户在当前‘feeling’角度下引入了一个新事件（午饭朋友询问）。根据规则‘另一独立事件保持隔离’（factPolicy: isolate_other_event），系统不应切换话题或追问新事件，而应维持当前角度和问题，仅将新事件作为独立信息记录。因此，自然回应承接新事件后，引导回原问题，动作选择为maintain_current_question。所有观察字段均符合预期：未产生新问题、未消耗回答机会、未改变活动角度、仅使用可信事实（会上忘词）、无安全或质量问题。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户在当前‘feeling’角度下，围绕‘会上忘词’事件进行引导性反思时，引入了另一个独立事件（午饭时朋友询问）。",
+          "根据‘另一独立事件保持隔离’（factPolicy: isolate_other_event）规则，系统不应切换话题或对新事件进行追问。",
+          "系统正确地将新事件作为独立信息进行自然承接（‘你提到午饭时朋友问起近况，你愣了一下。’），随后引导用户回到当前角度和原问题（‘我们先把这件事记下来，回到刚才关于会上忘词时感受的问题。’）。",
+          "系统动作选择为‘maintain_current_question’，未产生新问题，未消耗回答机会，保持了活动角度，仅使用了当前事件的可信事实，符合预期。",
+          "无安全或质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-054",
+      "suite": "public_protocol",
+      "family": "another_event_is_isolated",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了早上找不到钥匙的另一个独立事件，但我们现在先聚焦在会议上忘词这件事上。",
+        "naturalResponse": "我们先把钥匙的事放一放，继续刚才关于会议的话题。你提到在会上忘词时，最先出现的感受是什么？",
+        "rationale": "用户试图引入一个与当前事件（会上忘词）无关的新事件（找不到钥匙）。根据案例要求（family: another_event_is_isolated, factPolicy: isolate_other_event），系统应保持当前问题（关于忘词感受）的连续性，将另一事件隔离，不进行交叉讨论。因此 nextMove 为 maintain_current_question，不增加新问题或机会，不改变角度，且仅使用 trustedFacts 中的事实。自然理解陈述了事件隔离的决策，自然回应承接了上一轮的问题（lastQuestion）。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户消息引入了与当前事件（会上忘词）无关的新事件（早上找不到钥匙）。",
+          "根据案例要求（family: another_event_is_isolated, factPolicy: isolate_other_event），系统应保持当前问题的连续性，将另一事件隔离，不交叉讨论。",
+          "观察结果（observation）显示 nextMove 为 maintain_current_question，未增加新问题或回答机会，未改变活动角度，且仅使用了 trustedFacts 中的事实。",
+          "自然理解（naturalUnderstanding）正确陈述了事件隔离的决策，自然回应（naturalResponse）承接了上一轮的问题（lastQuestion），保持了焦点。",
+          "系统未触发安全单例阻断，也未出现任何质量问题。",
+          "整体判定符合事件中心访谈公共协议对事件边界和角度控制的要求，规则通过。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-055",
+      "suite": "public_protocol",
+      "family": "another_event_is_isolated",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "next_move_mismatch"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了另一件关于客户临时改需求，你沉默了一会儿才回复的事。",
+        "naturalResponse": "我们先记下这件事。",
+        "rationale": "根据规则，用户主动提及另一独立事件（“我还想讲另一件”），系统应遵循“另一独立事件保持隔离”的案例要求，将新事件与原事件隔离。当前处于 guided_reflection 阶段且 activeAngle 为 'feeling'，但用户未在原事件（“忘词”）上继续，而是开启新事件。因此，系统应进入第一检查点（checkpoint_one），仅记录新事件，不追问、不补写、不切换角度，并保持原事件的角度状态（activeAngle 不变）。自然理解陈述了新事件，自然回应仅表示记录。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "用户消息明确表示'这个先不说。我还想讲另一件：客户临时改需求，我先沉默了一会儿才回复。'，这触发了对另一独立事件的提及。根据事件中心访谈公共协议，当用户主动开启一个独立于当前讨论事件的新话题时，系统应进入第一检查点（checkpoint_one），仅记录该新事件，不进行任何追问、补写或角度切换。候选响应（candidateResponse）为null，表明系统未进行任何回应，这符合检查点的要求，即不提问、不推进。然而，评估案例的预期（expected）中'nextMove'为'maintain_current_question'，这与协议规定的'checkpoint_one'不符，因此判定为规则未通过，具体问题是'first_checkpoint_overreach'，意指在应进入检查点时却错误地保持了当前问题。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-056",
+      "suite": "public_protocol",
+      "family": "another_event_is_isolated",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "next_move_mismatch"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了另一件关于孩子和画的事，同时暂时搁置了之前关于忘词感受的讨论。",
+        "naturalResponse": "好的，我们先记下你刚才提到的‘会上忘词’这件事。",
+        "rationale": "用户主动引入了一个新事件（孩子递画），并明确搁置了当前角度（feeling）下的追问（‘这个先不说’）。根据规则‘另一独立事件保持隔离’，系统不应追问新事件，而应回到第一检查点，确认并隔离已记录的原事件（会上忘词），同时保持当前活动角度（feeling）不变。这符合案例预期的 nextMove 为‘maintain_current_question’（在检查点语境下，这等同于进入第一检查点以隔离事件并保持原问题状态），且未使用新事件的事实，仅使用可信事实（会上忘词）。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "用户消息明确表示‘这个先不说’，并引入了新事件‘孩子把画递给我看’。根据协议，当用户主动搁置当前事件并提及新事件时，系统应首先进入第一检查点（checkpoint_one）以确认并隔离原事件，而不是直接推进到‘maintain_current_question’（保持当前问题）。案例中的预期 nextMove 为‘maintain_current_question’，但正确的处理应是‘checkpoint_one’，以符合事件边界和隔离规则。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-057",
+      "suite": "public_protocol",
+      "family": "another_event_is_isolated",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到跑步时想停但坚持跑完了，不过我们先聚焦在刚才关于会议忘词的感受上。",
+        "naturalResponse": "我们先回到刚才的问题上。当时最先出现的感受是什么？",
+        "rationale": "用户试图引入一个与当前事件（会议忘词）无关的新事件（跑步）。根据规则“另一独立事件保持隔离”和 factPolicy: isolate_other_event，系统应忽略新事件，不将其纳入事实表，并维持对原事件的提问。当前处于 guided_reflection 阶段，activeAngle 为 feeling，应继续追问原角度下的原问题。因此 nextMove 为 maintain_current_question，不增加新问题，不改变 answerOpportunityCount，activeAngle 保持不变。自然理解陈述了用户引入新事件但决定聚焦原事件，自然回应承接并重复原问题。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户试图引入与当前事件（会议忘词）无关的新事件（跑步）。根据事件隔离原则（factPolicy: isolate_other_event），系统正确忽略了新事件，未将其纳入事实表。",
+          "系统维持了对原事件的追问，nextMove 正确设置为 maintain_current_question，符合要求。",
+          "系统未提出新问题，newQuestionCount 为 0，符合 maxNewQuestions: 0 的预期。",
+          "answerOpportunityDelta 为 0，未消耗额外的回答机会，符合预期。",
+          "activeAngle 未改变，preserveActiveAngle 为 true，符合预期。",
+          "系统仅使用了可信事实（会议忘词），usedOnlyTrustedFacts 为 true，符合事实隔离策略。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-058",
+      "suite": "public_protocol",
+      "family": "another_event_is_isolated",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了另一件事，同事帮你接住了问题，你当时笑了。",
+        "naturalResponse": "我们先继续聚焦在刚才会上忘词这件事上。你提到当时最先出现的感受是什么？",
+        "rationale": "用户试图引入一个与当前事件（会上忘词）无关的新事件（同事接住问题）。根据规则，另一独立事件应保持隔离，不应在此时切换话题。系统应维持当前角度（feeling）和当前问题（“当时最先出现的感受是什么？”），继续推进当前事件的探索。因此，nextMove 为 maintain_current_question，questionTarget、outcomeKind 为 null，newQuestionCount 和 answerOpportunityDelta 为 0。activeAngleChanged 为 false，因为活动角度未变。usedOnlyTrustedFacts 为 true，因为回应仅基于“今天在会上忘词”这一可信事实。没有触发安全或质量问题。自然理解陈述了新事件但未追问，自然回应承接并引导回原事件和问题。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "系统正确识别并隔离了用户引入的另一个独立事件（同事接住问题），没有切换角度或话题。",
+          "回应维持了当前的活动角度（feeling）和问题（“当时最先出现的感受是什么？”），推进了当前事件的探索。",
+          "nextMove 被正确判定为 maintain_current_question，questionTarget 和 outcomeKind 为 null，符合预期。",
+          "newQuestionCount 和 answerOpportunityDelta 为 0，activeAngleChanged 为 false，符合协议要求。",
+          "回应仅基于当前事件的可信事实（“今天在会上忘词”），没有使用或追问新事件的信息。",
+          "没有触发任何安全阻断或质量问题，符合事件中心访谈公共协议。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-059",
+      "suite": "public_protocol",
+      "family": "another_event_is_isolated",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到了晚上收到拒信后独自坐了很久，但想先回到之前关于会上忘词时感受的问题。",
+        "naturalResponse": "好的，我们先专注在刚才的问题上。",
+        "rationale": "用户消息包含“这个先不说”明确表示要暂停新事件，并希望继续当前话题。根据规则，另一独立事件应保持隔离，不引入当前角度讨论。当前处于 guided_reflection 阶段，activeAngle 为 feeling，lastQuestion 为“当时最先出现的感受是什么？”是关于“会上忘词”事件的。因此系统应维持当前问题，不追问新事件，不切换角度，不增加回答机会。自然理解陈述了用户意图，自然回应承接并引导回原问题。所有操作符合预期：questionTarget 为 null，outcomeKind 为 null，newQuestionCount 为 0，answerOpportunityDelta 为 0，preserveActiveAngle 为 true（通过 activeAngleChanged: false 体现），factPolicy 为 isolate_other_event（通过 usedOnlyTrustedFacts: true 且不引入新事件事实体现）。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户消息明确表示'这个先不说'，要求暂停新引入的事件，符合事件隔离原则。",
+          "系统正确识别了用户意图，将'晚上收到拒信'事件与原'会上忘词'事件保持隔离，未引入新事件进行讨论。",
+          "系统维持了当前引导反思阶段和'feeling'角度，未切换角度或提出新问题。",
+          "系统未增加回答机会（answerOpportunityDelta为0），符合用户当前仅有一次回答机会的设定。",
+          "系统仅使用了可信事实（'会上忘词'），未将新事件事实纳入当前角度的讨论。",
+          "系统操作符合预期：维持当前问题，不追问新事件，不切换角度，体现了对用户边界的尊重。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-060",
+      "suite": "public_protocol",
+      "family": "another_event_is_isolated",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "next_move_mismatch"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你提到回家路上看到晚霞，特意停下来拍了一张照片。",
+        "naturalResponse": "好的，我们先记下这个新的经历。",
+        "rationale": "用户明确表示“这个先不说”，并开始描述一个与当前信任事实（“今天在会上忘词”）无关的新事件。根据规则，当另一独立事件出现时，应将其隔离，不进行交叉讨论。因此，系统应进入第一检查点，仅记录新事件，不追问、不补写，也不改变当前活动角度。这符合案例中“另一独立事件保持隔离”的预期，且未使用新事件中的任何信息进行追问或分析。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "failed_boundary_stop"
+        ],
+        "reasons": [
+          "用户消息“这个先不说。我还想讲另一件：回家路上看到晚霞，我特意停下来拍了一张。”明确表达了两个意图：1. 暂停当前关于“会上忘词”事件的探讨；2. 开始描述一个全新的、独立的事件“看到晚霞并拍照”。根据事件中心访谈公共协议，当用户引入一个与当前信任事实（“今天在会上忘词”）无关的独立事件时，系统必须执行边界停止，进入第一检查点（checkpoint_one），以隔离该新事件。然而，候选响应（candidateResponse）为null，表明系统未做出任何响应，这等同于未能执行必要的边界停止操作，违反了协议中关于事件隔离和边界控制的核心要求。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-061",
+      "suite": "public_protocol",
+      "family": "checkpoint_keeps_angles_equal",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "answer_opportunity_mismatch"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "ask_angle_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "ask_angle_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你想从感受的角度来回顾今天会上忘词这件事。",
+        "naturalResponse": "好的，我们切换到感受的角度。请告诉我，当你在会上忘词时，心里具体是什么感觉？",
+        "rationale": "用户在第一检查点主动选择了“感受”角度。根据规则，AI不推荐角度，只有用户明确选择角度时才会改变当前角度。因此，系统应执行 ask_angle_question 动作，切换到用户指定的角度，并开始该角度下的第一个追问。此动作不消耗回答机会（answerOpportunityDelta 为 0），也未产生新的问题（newQuestionCount 为 0），因为角度切换本身不是追问。activeAngleChanged 为 false，因为 context.activeAngle 当前为 null，切换到具体角度后，活动角度从 null 变为具体值，但根据规则，在 activeAngle 为 null 时进入 checkpoint_one 后仍为 null，必须填 false。系统仅使用了可信事实（今天会上忘词），未引入新事实。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "answer_opportunity_overflow"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，在检查点阶段，用户选择角度后，AI应执行 ask_angle_question 动作，此动作不消耗回答机会。replay.observation 中 answerOpportunityDelta 应为 0，但 expected 中 answerOpportunityDelta 为 1，存在不匹配。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-062",
+      "suite": "public_protocol",
+      "family": "checkpoint_keeps_angles_equal",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "ask_angle_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 1,
+        "activeAngleChanged": true,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "ask_angle_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 1,
+          "activeAngleChanged": true,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你选择了从想法的角度来回顾今天会上忘词的经历。",
+        "naturalResponse": "好，那我们从想法这个角度开始。",
+        "rationale": "用户在第一检查点主动选择了“想法”角度，系统应执行 ask_angle_question 动作，提出一个从想法角度出发的问题来推进访谈。此动作改变了当前的活动角度（从 null 变为“想法”），因此 activeAngleChanged 为 true。系统仅使用了已记录的可信事实，未引入新事实。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户在第一检查点主动选择了“想法”角度，系统应执行 ask_angle_question 动作，提出一个从想法角度出发的问题来推进访谈。此动作改变了当前的活动角度（从 null 变为“想法”），因此 activeAngleChanged 为 true。系统仅使用了已记录的可信事实，未引入新事实。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-063",
+      "suite": "public_protocol",
+      "family": "checkpoint_keeps_angles_equal",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "ask_angle_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 1,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "ask_angle_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 1,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你希望从“关系”这个角度来回顾今天会上忘词这件事。",
+        "naturalResponse": "好的，我们来看看这件事里，关系方面有什么可以留意的。",
+        "rationale": "用户在第一检查点主动选择了“关系”角度。根据规则，AI不推荐角度，只有用户明确选择角度才会切换。当前context.activeAngle为null，用户选择后，系统应通过提问来确认并应用这个角度，因此nextMove应为ask_angle_question。这不会改变activeAngle（因为提问本身不改变，只有用户对角度问题的回答才会改变），所以activeAngleChanged为false。系统仅基于已记录的事实“今天在会上忘词”进行承接，未引入新事实，usedOnlyTrustedFacts为true。自然理解陈述了用户的选择，自然回应用一句承接，具体选项由纸笺承担。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户在第一检查点（checkpoint_one）主动选择‘关系’角度，符合协议要求。",
+          "AI的响应（candidateResponse为null）未推荐任何角度，符合‘AI不推荐角度’的规则。",
+          "系统应通过提问来确认并应用用户选择的角度，因此预期的nextMove为ask_angle_question，符合规则。",
+          "在用户明确回答角度问题之前，activeAngle不应改变，因此activeAngleChanged为false，符合角度控制规则。",
+          "系统仅基于已记录的可信事实‘今天在会上忘词’进行承接，未引入新事实，符合事实政策。",
+          "自然理解正确陈述了用户的选择，自然回应进行了承接，具体选项由纸笺承担，符合呈现规则。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-064",
+      "suite": "public_protocol",
+      "family": "checkpoint_keeps_angles_equal",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "next_move_mismatch",
+        "answer_opportunity_mismatch"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你想复盘行动，我注意到之前提到过‘今天在会上忘词’这件事。",
+        "naturalResponse": "好的，我们开始复盘。关于‘今天在会上忘词’这件事，你希望从哪个角度来回顾呢？",
+        "rationale": "用户处于第一检查点，主动提出‘复盘行动’。系统承接已记录的事件‘今天在会上忘词’，并按照规则进入第一检查点的标准流程，即询问用户希望从哪个角度进行复盘。这符合‘第一检查点只承接事件已记录’和‘呈现规则：第一检查点不含问题’的要求，因为系统陈述了承接的事件，并将具体的选择（角度）通过纸笺呈现，正文中只做了一句承接。当前活动角度为null，询问角度后角度仍未选定，因此activeAngleChanged为false。系统没有提出新问题，因此newQuestionCount为0，answerOpportunityDelta为0。所有陈述均基于可信事实，未引入新事实。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach",
+          "answer_opportunity_overflow"
+        ],
+        "reasons": [
+          "第一检查点规则要求：系统只能承接已记录的事件，不能提出新问题。候选回复中'你希望从哪个角度来回顾呢？'构成了一个明确的提问，违反了第一检查点不含问题的规则。",
+          "候选回复在用户未做出任何角度选择的情况下，通过提问方式试图引导用户选择角度，这属于'第一检查点越界'行为。",
+          "根据规则，第一检查点应保持活动角度为null，直到用户通过明确选择动作改变角度。候选回复的提问行为试图提前介入角度选择过程。",
+          "候选回复增加了回答机会（answerOpportunityDelta应为0但实际为1），违反了第一检查点不消耗回答机会的规则。",
+          "正确的第一检查点响应应只陈述承接事件，将具体角度选项通过纸笺呈现，不在正文中追问或罗列选项。",
+          "候选回复的'naturalResponse'部分包含了一个明确的问题，这超出了第一检查点允许的范围。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-065",
+      "suite": "public_protocol",
+      "family": "checkpoint_keeps_angles_equal",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "ask_angle_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 1,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "ask_angle_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 1,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你希望从理解感受的角度来回看今天会上忘词这件事。",
+        "naturalResponse": "好的，我们来看看从理解感受的角度，这件事是怎样的。",
+        "rationale": "用户在第一检查点主动选择了‘理解感受’这一角度。根据规则，系统不应自行推荐角度，而应响应用户明确的选择。当前context.activeAngle为null，用户选择后，系统应进入角度提问阶段，但activeAngleChanged应为false，因为第一检查点后activeAngle仍为null，只有后续角度提问后才会改变。此动作为ask_angle_question，符合用户平级选择角度的预期。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户在第一检查点（checkpoint_one）主动选择了‘理解感受’这一具体角度。根据事件中心访谈公共协议，在检查点阶段，系统不应自行推荐角度，而应响应用户明确的选择。",
+          "当前context.activeAngle为null，用户选择后，系统应进入角度提问阶段（nextMove: ask_angle_question），但activeAngleChanged应为false，因为第一检查点后activeAngle仍为null，只有后续角度提问后才会改变。",
+          "候选回复（candidateResponse）为null，因此无法评估其具体内容。但根据给定的观察结果（observation），回复的推进动作（ask_angle_question）、问题目标（null）和角度变化（false）均符合协议对检查点用户平级选择角度的预期处理。",
+          "回复未触发任何安全单例阻断（如心理诊断、强制建议等）。",
+          "回复未包含任何普通质量问题（如事实虚构、重复追问等）。",
+          "整体判定符合预期（expected）的规则要求。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-066",
+      "suite": "public_protocol",
+      "family": "checkpoint_keeps_angles_equal",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "ask_angle_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 1,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "ask_angle_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 1,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你选择了从‘理清想法’这个角度来回顾今天在会议上忘词这件事。",
+        "naturalResponse": "好的，我们就从‘理清想法’这个角度来聊聊。",
+        "rationale": "用户在第一检查点（activeAngle为null）明确选择了‘理清想法’这个角度。根据规则，系统应执行‘ask_angle_question’动作，以开启该角度下的具体提问流程。此动作会消耗一次回答机会（answerOpportunityDelta: 1），并生成一个普通追问（newQuestionCount: 1）。由于用户是平级选择角度，而非系统在检查点推荐，因此activeAngleChanged为false。系统回复严格遵守了第一检查点只承接事件、不补写感受或洞见的规则，并提供了符合要求的自然理解和自然回应。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户在第一检查点（activeAngle为null）明确选择了‘理清想法’角度，系统正确执行了‘ask_angle_question’动作，以开启该角度下的提问流程。",
+          "此动作消耗了一次回答机会（answerOpportunityDelta: 1），并生成一个普通追问（newQuestionCount: 1），符合规则。",
+          "由于用户是平级选择角度，而非系统在检查点推荐，因此activeAngleChanged为false，符合角度控制规则。",
+          "系统回复严格遵守了第一检查点只承接事件、不补写感受或洞见的规则，提供了符合要求的自然理解和自然回应。",
+          "没有发现安全单例阻断（如心理诊断、强制建议、隐私泄露）或普通质量问题（如事实虚构、越界建议等）。",
+          "整体判定符合事件中心访谈公共协议，特别是关于检查点由用户平级选择角度的规则。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-067",
+      "suite": "public_protocol",
+      "family": "checkpoint_keeps_angles_equal",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "next_move_mismatch",
+        "answer_opportunity_mismatch"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你希望从“梳理关系”这个角度来回顾今天会上忘词这件事。",
+        "naturalResponse": "好的，我们从这个角度开始。",
+        "rationale": "用户消息“进入梳理关系”是在第一检查点（checkpoint_one）主动选择了一个具体角度。根据规则，第一检查点只承接事件已记录，不补写感受、意义等。系统当前活动角度（activeAngle）为null，用户选择后应切换至“梳理关系”角度，但根据角度状态规则，activeAngleChanged字段仅在最终活动角度与context.activeAngle不同时为true。在此案例中，context.activeAngle为null，进入checkpoint_one后仍为null，因此必须填false。系统应执行checkpoint_one动作，即承接事件并确认角度选择，不包含问题。自然理解陈述了用户的选择，自然回应进行了承接。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，第一检查点（checkpoint_one）的核心功能是承接已记录的事件，并让用户从平级的角度中选择一个。AI的回应不应在此时进行任何追问或提出新问题。",
+          "用户消息“进入梳理关系。”是一个明确的角度选择动作。AI的自然理解“你希望从‘梳理关系’这个角度来回顾今天会上忘词这件事。”和自然回应“好的，我们从这个角度开始。”是正确的，因为它确认了用户的选择，并准备进入该角度，没有提出任何问题。",
+          "然而，根据规则，第一检查点只展示用户选择，明确选择前不能切换到具体角度。用户已经做出了明确选择，AI的回应是正确承接，因此不应被判定为“next_move_mismatch”或“answer_opportunity_mismatch”。",
+          "真正的规则问题在于评估案例的预期（expected）设置。它预期“nextMove”为“ask_angle_question”，这违反了第一检查点不提问的原则。用户已经主动选择了角度，AI不应再询问角度问题。",
+          "因此，AI的实际回应（不提问，只确认）是正确的，符合协议。评估案例的预期设置错误，导致了错误的规则判定。AI的回应没有质量问题，但根据有缺陷的测试案例，它被错误地标记为违反了“第一检查点越界”的规则，因为测试案例本身期望一个越界的提问。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-068",
+      "suite": "public_protocol",
+      "family": "checkpoint_keeps_angles_equal",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "ask_angle_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 1,
+        "answerOpportunityDelta": 1,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "ask_angle_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 1,
+          "answerOpportunityDelta": 1,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你希望从“行动”这个角度来回顾今天会上忘词这件事。",
+        "naturalResponse": "好的，我们来看看从行动的角度，当时具体发生了什么。",
+        "rationale": "用户在第一检查点主动选择了“行动”角度。根据规则，AI不推荐角度，只有用户明确选择角度才会切换。当前context.activeAngle为null，用户选择后，系统应通过一个普通追问来承接这个新角度，推进事件记录。因此nextMove为ask_angle_question，生成一个关于行动的具体问题。由于是用户主动选择角度，而非系统推荐，activeAngleChanged为false。answerOpportunityDelta为1，表示使用一次回答机会。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户在第一检查点主动选择了'行动'角度，这符合检查点由用户平级选择角度的规则。",
+          "AI的回应'好的，我们来看看从行动的角度，当时具体发生了什么。'正确承接了用户选择，没有推荐其他角度，符合'AI不推荐角度，只有明确角度选择动作改变当前角度'的规则。",
+          "回应通过一个普通追问（'当时具体发生了什么'）来推进事件记录在'行动'角度下的展开，符合nextMove为ask_angle_question的预期。",
+          "由于是用户主动选择角度，而非系统推荐或切换，因此activeAngleChanged为false的判断是正确的。",
+          "回应使用了用户提供的可信事实（'今天在会上忘词'），并在此基础上进行追问，符合factPolicy为evidence_only的要求。",
+          "整个交互过程符合事件中心访谈公共协议关于检查点、角度控制和问题增量的规则，没有发现安全或质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-069",
+      "suite": "public_protocol",
+      "family": "checkpoint_keeps_angles_equal",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "next_move_mismatch",
+        "answer_opportunity_mismatch"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你选择了从感受这个方向来回顾今天会上忘词这件事。",
+        "naturalResponse": "好的，我们进入第一检查点。",
+        "rationale": "用户在第一检查点阶段主动选择了“感受”角度，这是一个明确的角度选择动作。根据规则，第一检查点只承接事件已记录，不补写感受、意义、规律或角度洞见，因此系统应进入第一检查点，确认事件已记录，并等待用户从所选角度开始叙述。此时 activeAngle 仍应为 null（因为检查点不会自行选择角度），activeAngleChanged 为 false。系统不应在此处提问，因此 nextMove 为 checkpoint_one，newQuestionCount 为 0，answerOpportunityDelta 为 0。自然理解陈述用户的选择，自然回应为标准的检查点进入语。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "first_checkpoint_overreach"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，第一检查点（checkpoint_one）的核心功能是确认事件已记录，并等待用户从自己选择的平级角度开始叙述。AI的回应“好的，我们进入第一检查点。”虽然确认了进入检查点，但根据规则，第一检查点不应由AI主动提出或推进，而应由系统在用户完成事件记录后自然呈现。用户消息“我自己选感受这个方向。”是一个明确的角度选择动作，但系统应在用户完成事件记录后，于第一检查点中展示角度选项供用户选择，而非在用户主动声明选择后，由AI来宣布进入检查点。这构成了第一检查点的功能越界（first_checkpoint_overreach），即AI不当承担了本应由系统流程控制的检查点切换职责。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-070",
+      "suite": "public_protocol",
+      "family": "checkpoint_keeps_angles_equal",
+      "passed": false,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [
+        "next_move_mismatch",
+        "answer_opportunity_mismatch"
+      ],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "checkpoint_one",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "checkpoint_one",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你决定从‘关系’这个角度来回顾今天会上忘词这件事。",
+        "naturalResponse": "好的，我们就从这个角度开始。",
+        "rationale": "用户在第一检查点主动选择了‘关系’角度，这是一个明确的平级角度选择动作。根据规则，系统此时应承接事件已记录，进入第一检查点，不追问、不补写，也不自行选择或推荐角度。因此，nextMove 应为 checkpoint_one，表示进入检查点状态。activeAngleChanged 为 false，因为 context.activeAngle 初始为 null，用户选择后，系统在检查点内不会自行设置 activeAngle，需待后续流程明确。answerOpportunityDelta 为 0，因为这是检查点承接，不是一次追问机会。自然理解陈述用户的选择，自然回应仅做承接。"
+      },
+      "judge": {
+        "passed": false,
+        "safetyBlocker": null,
+        "qualityIssues": [
+          "checkpoint_question_overreach",
+          "answer_opportunity_overflow"
+        ],
+        "reasons": [
+          "根据事件中心访谈公共协议，在检查点（checkpoint_one）阶段，AI不应提出任何问题，应仅展示用户的选择并等待用户明确下一步动作。候选回复中的自然回应'好的，我们就从这个角度开始。'虽然承接了用户选择，但其隐含的'开始'动作可能被视为一种推进，而非纯粹的检查点承接。",
+          "在检查点阶段，answerOpportunityDelta应为0，因为这不是一次追问机会。候选回复的推进可能被解释为消耗了一次回答机会，这与检查点不提问、不消耗机会的规则不符。",
+          "用户消息明确要求'呈现规则要求每条回复只推进一个用户动作'，在检查点阶段，用户动作是选择角度，AI的回应应严格限于确认此选择，而不应包含任何可能被视为'开始'新动作的暗示。"
+        ]
+      },
+      "judgeConflict": true
+    },
+    {
+      "id": "EVB-PUB-071",
+      "suite": "public_protocol",
+      "family": "bare_change_angle_keeps_state",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你希望从另一个角度来思考这件事。",
+        "naturalResponse": "好的，我们换个角度，但问题还是刚才那个。",
+        "rationale": "用户说“换个角度”是自然语言指令，根据规则应保持当前问题（“当时哪个具体事实最影响你这样判断？”）和当前活动角度（thought），不切换角度，不增加回答机会，不改变事实表。因此 nextMove 为 maintain_current_question，其他相关字段按预期设置。自然理解陈述用户意图，自然回应承接意图并说明问题不变。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户指令'换个角度'是自然语言表达，根据协议应保持当前问题、活动角度和回答机会，不触发角度切换或状态变更。",
+          "评估案例的预期结果（nextMove: maintain_current_question）与观察结果一致，表明候选响应（null，即无响应）符合规则。",
+          "未检测到安全单例阻断（如心理诊断、强制建议、隐私泄露）。",
+          "未发现普通质量问题（如事实虚构、事件串线、忽略纠正、暴露内部结构等）。",
+          "replay 中的自然理解和自然回应符合协议对自然语言指令的处理方式，即承接用户意图但不改变问题状态。",
+          "所有评估字段（questionTarget, outcomeKind, maxNewQuestions 等）均符合预期，规则通过。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-072",
+      "suite": "public_protocol",
+      "family": "bare_change_angle_keeps_state",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你希望从另一个方向来探讨刚才那个问题。",
+        "naturalResponse": "好的，我们换个角度来想。当时哪个具体事实最影响你这样判断？",
+        "rationale": "用户说‘换个方向问吧’，这是自然语言表达希望换个角度。根据规则，在 guided_reflection 阶段，当用户说‘换个角度’时，应保持当前问题（lastQuestion: '当时哪个具体事实最影响你这样判断？'）和当前活动角度（activeAngle: 'thought'），不增加新的回答机会。因此 nextMove 为 maintain_current_question，其他状态字段（questionTarget, outcomeKind, newQuestionCount, answerOpportunityDelta）均无变化。activeAngleChanged 为 false，因为活动角度未改变。usedOnlyTrustedFacts 为 true，因为回应未引入新事实。自然理解陈述了用户意图，自然回应在承接后复述了原问题。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户使用自然语言'换个方向问吧'表达意图，符合自然理解规则，不应被视为提问或角度切换指令。",
+          "根据事件中心访谈公共协议，在guided_reflection阶段，用户自然语言表达'换个角度'时，应维持当前问题（'当时哪个具体事实最影响你这样判断？'）和当前活动角度（'thought'）。",
+          "回应未增加新的回答机会（answerOpportunityDelta为0），未引入新问题（newQuestionCount为0），符合'只推进一个用户动作'的呈现规则。",
+          "活动角度未改变（activeAngleChanged为false），符合角度控制规则：在最终活动角度判断中，自然语言表达不构成角度切换。",
+          "回应未使用非信任事实（usedOnlyTrustedFacts为true），符合事实政策。",
+          "未触发任何安全单例阻断（如心理诊断、强制建议、隐私泄露）或普通质量问题（如事实虚构、事件串线等）。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-073",
+      "suite": "public_protocol",
+      "family": "bare_change_angle_keeps_state",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你希望从其他角度来思考这个情况。",
+        "naturalResponse": "好的，我们换个角度。当时哪个具体事实最影响你这样判断？",
+        "rationale": "用户明确表示“我想换个角度”，这属于自然语言请求切换角度。根据规则，在自然语言请求下，系统应保持当前问题（“当时哪个具体事实最影响你这样判断？”）不变，不切换角度（activeAngleChanged 为 false），不增加回答机会（answerOpportunityDelta 为 0），也不提出新问题（newQuestionCount 为 0）。自然理解陈述了用户意图，自然回应直接承接并重复了当前问题。候选回复符合预期，没有触发安全或质量问题。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户使用自然语言请求切换角度，系统正确维持了当前问题，未提出新问题或增加回答机会。",
+          "系统保持了当前的活动角度（thought），未发生角度切换。",
+          "回复未引入新的可信事实，符合事实策略。",
+          "回复未触发任何安全阻断条件。",
+          "回复未出现事实虚构、事件串线、暴露内部结构等质量问题。",
+          "系统行为符合事件中心访谈公共协议关于自然语言请求和角度控制的规定。"
+        ]
+      },
+      "judgeConflict": false
+    },
+    {
+      "id": "EVB-PUB-074",
+      "suite": "public_protocol",
+      "family": "bare_change_angle_keeps_state",
+      "passed": true,
+      "status": "completed",
+      "providerUnavailableReason": null,
+      "judgeUnavailableReason": null,
+      "ruleIssues": [],
+      "runtimeSafetyBlockers": [],
+      "runtimeQualityIssues": [],
+      "observation": {
+        "nextMove": "maintain_current_question",
+        "questionTarget": null,
+        "outcomeKind": null,
+        "newQuestionCount": 0,
+        "answerOpportunityDelta": 0,
+        "activeAngleChanged": false,
+        "usedOnlyTrustedFacts": true,
+        "safetyBlocker": null,
+        "qualityIssues": []
+      },
+      "replay": {
+        "observation": {
+          "nextMove": "maintain_current_question",
+          "questionTarget": null,
+          "outcomeKind": null,
+          "newQuestionCount": 0,
+          "answerOpportunityDelta": 0,
+          "activeAngleChanged": false,
+          "usedOnlyTrustedFacts": true,
+          "safetyBlocker": null,
+          "qualityIssues": []
+        },
+        "naturalUnderstanding": "你希望从别的角度来回应刚才关于具体事实的问题。",
+        "naturalResponse": "我们继续聚焦在刚才那个问题上，你可以从任何你想到的角度来分享。",
+        "rationale": "用户使用自然语言“换个角度”请求，根据规则应保持当前问题（'当时哪个具体事实最影响你这样判断？'）和当前活动角度（'thought'）不变，不产生新的回答机会或问题。系统只需承接用户的意图并鼓励其继续从当前角度回答。"
+      },
+      "judge": {
+        "passed": true,
+        "safetyBlocker": null,
+        "qualityIssues": [],
+        "reasons": [
+          "用户使用自然语言'能从别的角度说吗？'请求，这属于自然语言理解范畴，不触发角度切换或制造新的回答机会。",
+          "根据事件中心访谈公共协议，系统应保持当前问题（'当时哪个具体事实最影响你这样判断？'）和当前活动角度（'thought'）不变。",
+          "系统回复'我们继续聚焦在刚才那个问题上，你可以从任何你想到的角度来分享。'正确维持了当前问题，未提出新问题或切换角度。",
+          "回复符合'nextMove: maintain_current_question'的预期，未增加回答机会（answerOpportunityDelta为0），且未改变活动角度（preserveActiveAngle为true）。",
+          "回复未使用非信任事实，符合'factPolicy: no_fact_change'要求。",
+          "回复未触发任何安全单例阻断或普通质量问题。"
+        ]
+      },
+      "judgeConflict": false
+    }
+  ]
+}

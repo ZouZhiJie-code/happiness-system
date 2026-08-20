@@ -21,8 +21,8 @@ Production 状态：`保持当前入口、模型、配置和数据原状`
 
 相关证据：
 
-- 候选 3.29.0 失败重置报告（本机历史证据，公开精简包未收录：`candidate-v3290-failure-reset-report.md`）
-- B7-QH-01 第三轮 Codex 初评（本机历史证据，公开精简包未收录：`architecture-ab-v3-qh01-r3-codex-review.md`）
+- [候选 3.29.0 失败重置报告](../../../artifacts/generative-interview-board7/2026-07-29/candidate-v3290-failure-reset-report.md)
+- [B7-QH-01 第三轮 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-29/architecture-ab-v3-qh01-r3-codex-review.md)
 - [当时的板块 7 实施文档（历史）](./04k-generative-question-strategy-implementation.md)
 
 ## 2. 当前卡点
@@ -322,9 +322,9 @@ visibleTurn
 
 执行证据：
 
-- 四角度冒烟第 2 轮 Codex 初评（本机历史证据，公开精简包未收录：`mvp-quality-repair-v1-smoke-r2-codex-review.md`）
-- 四角度冒烟第 2 轮真实用户可见评审包（本机历史证据，公开精简包未收录：`mvp-quality-repair-v1-smoke-r2-review.md`）
-- 四角度冒烟第 2 轮结构化结果（本机历史证据，公开精简包未收录：`mvp-quality-repair-v1-smoke-r2.json`）
+- [四角度冒烟第 2 轮 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-29/mvp-quality-repair-v1-smoke-r2-codex-review.md)
+- [四角度冒烟第 2 轮真实用户可见评审包](../../../artifacts/generative-interview-board7/2026-07-29/mvp-quality-repair-v1-smoke-r2-review.md)
+- [四角度冒烟第 2 轮结构化结果](../../../artifacts/generative-interview-board7/2026-07-29/mvp-quality-repair-v1-smoke-r2.json)
 
 ## 11. 参考依据
 

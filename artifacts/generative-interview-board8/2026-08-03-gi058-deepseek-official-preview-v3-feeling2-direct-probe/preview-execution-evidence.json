@@ -1,0 +1,153 @@
+{
+  "evaluation": "board8_gi058_deepseek_official_preview",
+  "candidate": {
+    "strategyVersion": "5.53.0",
+    "semanticArtifactVersion": "event-centered-semantic-plan.v8",
+    "model": "deepseek-v4-flash",
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "eventMode": "optional",
+    "eventStrategy": "generative"
+  },
+  "startedAt": "2026-08-03T13:52:07.554Z",
+  "completedAt": "2026-08-03T13:56:23.084Z",
+  "database": "happiness_board8_preview_20260803_gi058_deepseek",
+  "rootSessionIds": [
+    "a0dc8360-95d5-4087-b07c-c95403a84853"
+  ],
+  "cases": [
+    {
+      "id": "feeling-2",
+      "label": "感受 2｜深聊",
+      "material": "risk",
+      "angle": "feeling",
+      "depth": "deep",
+      "rootSessionId": "a0dc8360-95d5-4087-b07c-c95403a84853",
+      "eventId": null,
+      "entryId": "6f453502-8494-4b75-bfc9-de5554202a34",
+      "status": "failed",
+      "startedAt": "2026-08-03T13:52:07.554Z",
+      "completedAt": "2026-08-03T13:56:23.082Z",
+      "firstCheckpoint": {
+        "reached": true,
+        "equalFourAngles": true,
+        "inputHidden": true,
+        "logHidden": true
+      },
+      "focusSelection": null,
+      "correction": null,
+      "closedAngle": false,
+      "journal": {
+        "generated": true,
+        "origin": "llm",
+        "edited": true,
+        "saved": true,
+        "reopened": true,
+        "traceId": "3fb4d920-e787-46db-bcca-a14169fb3b78"
+      },
+      "refresh": {
+        "afterFirstCheckpoint": true,
+        "afterJournalSave": true
+      },
+      "steps": [
+        {
+          "action": "reply",
+          "durationMs": 46931,
+          "snapshot": {
+            "phase": "checkpoint_one",
+            "activeAngle": null,
+            "checkpoint": "first",
+            "availableAngles": [
+              "feeling",
+              "thought",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle"
+            ],
+            "latestMessageSequence": 2,
+            "lastAssistantTraceId": "ea0b9b24-f078-42b6-809a-594c0b6a3f40",
+            "lastQuestion": null
+          }
+        },
+        {
+          "action": "select_exploration_angle",
+          "durationMs": 46964,
+          "snapshot": {
+            "phase": "guided_reflection",
+            "activeAngle": "feeling",
+            "checkpoint": null,
+            "availableAngles": [
+              "feeling",
+              "thought",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event"
+            ],
+            "latestMessageSequence": 4,
+            "lastAssistantTraceId": "a5e8a678-8c3f-4245-84ac-8f8e9ea9ccd0",
+            "lastQuestion": {
+              "phase": "guided_reflection",
+              "angle": "feeling",
+              "target": "specific_trigger",
+              "surfaceLevel": "open_anchor",
+              "opportunityNumber": 1
+            }
+          }
+        },
+        {
+          "action": "reply",
+          "durationMs": 64385,
+          "snapshot": {
+            "phase": "checkpoint_two",
+            "activeAngle": null,
+            "checkpoint": "second",
+            "availableAngles": [
+              "feeling",
+              "thought",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration",
+              "generate_event_journal"
+            ],
+            "latestMessageSequence": 6,
+            "lastAssistantTraceId": "5677568d-cd2f-4945-bc26-467ecbb8d2cd",
+            "lastQuestion": null
+          }
+        }
+      ],
+      "issues": [
+        "ANGLE_NOT_CLOSED_AFTER_BOUNDARY"
+      ]
+    }
+  ],
+  "smokes": [],
+  "technicalSummary": {
+    "mainTrajectoriesCompleted": 0,
+    "journalLoopsCompleted": 1,
+    "failures": 1,
+    "status": "technical_failed"
+  }
+}

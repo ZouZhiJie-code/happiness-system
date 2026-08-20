@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -16,9 +16,7 @@ import {
   generativeSemanticFrameV5OfflineCaseFingerprint
 } from "@/features/interview/event-centered/generative-evaluation-runner";
 
-describe.skipIf(!existsSync(GENERATIVE_SEMANTIC_FRAME_V5_OFFLINE_CONFIRMATION_ARTIFACT_PATH))(
-  "semanticFrame v5 历史成果归属与统一回应确认包",
-  () => {
+describe("semanticFrame v5 历史成果归属与统一回应确认包", () => {
   it("冻结六例、历史候选和独立运行授权门", () => {
     expect(GENERATIVE_SEMANTIC_FRAME_V5_OFFLINE_CASES).toHaveLength(6);
     expect(GENERATIVE_SEMANTIC_FRAME_V5_OFFLINE_DATASET.candidateVersions)
@@ -96,5 +94,4 @@ describe.skipIf(!existsSync(GENERATIVE_SEMANTIC_FRAME_V5_OFFLINE_CONFIRMATION_AR
       "utf8"
     ).trimEnd()).toBe(packageText.trimEnd());
   });
-  }
-);
+});

@@ -1,0 +1,30 @@
+{
+  "repairProbeRuns": [
+    {
+      "runId": "V70-RV-T-ASK-01-R1",
+      "runFingerprint": "cfb90fd79502c8cb6d259fd2ad0a8f56fc9f1560fa25e88997a4686c550139ac",
+      "semanticCardVerdict": "fail",
+      "semanticCardReason": "answer_entry_burden",
+      "semanticCardEvidence": "状态、问停和抽象目标正确，但作答入口仍询问‘心里先冒出来的感觉’，没有落到第二段播放到哪个具体声音瞬间、手没有再切回第一段；用户仍无法用一个声音片段直接回答。",
+      "visibleVerdict": "fail",
+      "visibleReason": "question_value",
+      "visibleEvidence": "思路层和正式问题都沿用‘心里先冒出来的感觉’，没有提供冻结判尺要求的具体声音回忆入口，最终用户可见体验未完成本例核心目标。",
+      "severeErrors": [],
+      "reviewedBy": "codex",
+      "reviewedAt": "2026-08-01T14:50:54Z"
+    },
+    {
+      "runId": "V70-RV-A-BOUNDARY-01-R1",
+      "runFingerprint": "8a169cf89e1c21127152d567d2958ac836613b8d761cffdcaa4a53442f6d06cc",
+      "semanticCardVerdict": "borderline",
+      "semanticCardReason": "understanding_incomplete",
+      "semanticCardEvidence": "ready/pause、成果来源、事实与边界分流均正确；理解卡明确保留了不再搬凳子和伸手可拿的结果，但只以可达状态隐含位置变化，没有明确保留‘把常用香料移到手边’这一行动侧，未达到冻结的双侧完整覆盖。",
+      "visibleVerdict": "borderline",
+      "visibleReason": "understanding_incomplete",
+      "visibleEvidence": "停止回应使用第二人称且无继续追问，清楚呈现不再搬凳子和伸手可拿；回应没有明确说出把常用香料移到手边这一改变，冻结必覆盖信息被弱化，按规则边缘计失败。",
+      "severeErrors": [],
+      "reviewedBy": "codex",
+      "reviewedAt": "2026-08-01T14:50:54Z"
+    }
+  ]
+}

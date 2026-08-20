@@ -1,0 +1,25 @@
+{
+  "template": true,
+  "factCardVersion": "2026-08-07.board7b-prompt-skill-fact-card-v0",
+  "status": "pending",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0",
+  "candidateFingerprint": "84c17021fe079d9b3060092ea279dc3c41bfc0bb34addcaa51912fcfabf45541",
+  "factsToConfirm": {
+    "mode": "accompany_chat",
+    "architecture": "one_model_call_per_user_turn",
+    "context": "full_current_record_plus_compact_semantic_state",
+    "visibleExperience": "natural_response_only",
+    "semanticPersistence": "key_state_plus_current_turn_progress",
+    "model": "deepseek-v4-flash",
+    "evaluationLabelsInModelInput": false,
+    "GI-068-through-GI-080": "closed",
+    "methodVersion": "v1.0_frozen",
+    "production": "legacy + baseline",
+    "currentModelCalls": 0
+  },
+  "formalEvaluationSetVersion": null,
+  "runtimeParameters": null,
+  "confirmedBy": null,
+  "confirmedAt": null,
+  "notes": "确认时只记录候选、评测和运行事实；用户真实表达与隐藏评测答案保持在模型输入边界之外。"
+}

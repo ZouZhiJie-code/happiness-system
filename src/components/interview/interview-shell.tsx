@@ -9,6 +9,7 @@ import { DailyJournalWorkspace, type DailyJournalWorkspaceHandle } from "@/compo
 import { HappinessScoreEntry } from "@/components/interview/happiness-score-entry";
 import { JournalGenerationOverlay } from "@/components/interview/journal-generation-overlay";
 import { JournalGenerationStatus } from "@/components/interview/journal-generation-status";
+import { InterviewMessageBubble } from "@/components/interview/interview-message-bubble";
 import { InterviewResponseRegeneration } from "@/components/interview/interview-response-regeneration";
 import {
   resolveDayAction,
@@ -158,6 +159,30 @@ function buildDraftCoverageSignature(turnCount: number, messages: InterviewMessa
   return [turnCount, messages.length, lastMessage?.id ?? "", lastMessage?.sequence ?? -1].join("::");
 }
 
+function debugShortId(value: string | null | undefined) {
+  return value ? value.slice(-8) : null;
+}
+
+function debugInterviewShell(hypothesisId: string, message: string, data: Record<string, unknown>) {
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
+
+  fetch("http://127.0.0.1:7878/ingest/de44b1c7-c5fb-4417-8fc3-efe91f2e999c", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7fc210" },
+    body: JSON.stringify({
+      sessionId: "7fc210",
+      runId: "post-fix",
+      hypothesisId,
+      location: "interview-shell.tsx:debug",
+      message,
+      data,
+      timestamp: Date.now()
+    })
+  }).catch(() => {});
+}
+
 function isAutoDraftRequestMessage(message: string) {
   const normalized = message.replace(/\s+/g, "");
 
@@ -187,59 +212,6 @@ function findInterviewResponseVersion(messages: InterviewMessage[], targetMessag
   }
 
   return null;
-}
-
-function MessageBubble({
-  message,
-  content,
-  role,
-  variant = "default"
-}: {
-  message?: InterviewMessage;
-  content?: string;
-  role?: InterviewMessage["role"];
-  variant?: "default" | "thinking" | "question";
-}) {
-  const bubbleRole = message?.role ?? role ?? "assistant";
-  const isAssistant = bubbleRole === "assistant";
-  const bubbleContent = content ?? message?.content ?? "";
-  const isThinking = variant === "thinking";
-  const isQuestion = variant === "question";
-
-  // 思考层：轻旁注（淡色文字 + 小圆点），不做成气泡，方便和正式问题一眼区分。
-  if (isThinking) {
-    return (
-      <div className="flex justify-start">
-        <div
-          data-message-variant="thinking"
-          className="relative max-w-2xl py-0.5 pl-4 pr-2 text-[0.82rem] leading-6 text-[rgba(48,33,20,0.5)]"
-        >
-          <span
-            aria-hidden="true"
-            className="absolute left-0 top-[0.62rem] h-1.5 w-1.5 rounded-full bg-[rgba(169,111,61,0.55)]"
-          />
-          <p className="whitespace-pre-wrap">{bubbleContent}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}>
-      <div
-        data-message-variant={variant}
-        className={`max-w-2xl rounded-[28px] border px-4 py-3 text-sm leading-7 ${
-          isAssistant
-            ? isQuestion
-              ? "border-[rgba(166,111,59,0.24)] bg-[linear-gradient(180deg,rgba(255,246,234,0.98),rgba(243,226,199,0.96))] text-[#2b2118]"
-              : "border-[rgba(156,114,70,0.14)] bg-[rgba(255,248,238,0.44)] text-ink shadow-soft"
-            : "border-[rgba(133,91,47,0.2)] bg-[linear-gradient(180deg,rgba(221,185,133,0.96),rgba(195,152,97,0.96))] text-[#2f2823] shadow-soft"
-        }`}
-      >
-        <p className={`whitespace-pre-wrap ${isQuestion ? "font-medium" : ""}`}>{bubbleContent}</p>
-      </div>
-    </div>
-  );
 }
 
 function InPlaceRegenerationStatus({
@@ -304,7 +276,7 @@ export function ConversationMessage({
   const reduceMotion = useReducedMotion();
 
   if (message.role !== "assistant") {
-    return <MessageBubble message={message} />;
+    return <InterviewMessageBubble message={message} />;
   }
 
   const assistantPayload = message.assistantPayload;
@@ -325,7 +297,7 @@ export function ConversationMessage({
   if (!assistantPayload) {
     return (
       <React.Fragment>
-        <MessageBubble message={message} />
+        <InterviewMessageBubble message={message} />
         {message.traceId ? <AIResponseFeedback traceId={message.traceId} leadingAction={regenerationAction} /> : null}
       </React.Fragment>
     );
@@ -352,9 +324,9 @@ export function ConversationMessage({
         >
           <div aria-hidden="true" className="invisible col-start-1 row-start-1 flex flex-col gap-3">
             {parts.summary || parts.insight ? (
-              <MessageBubble content={parts.summary || parts.insight} role="assistant" variant="thinking" />
+              <InterviewMessageBubble content={parts.summary || parts.insight} role="assistant" variant="thinking" />
             ) : null}
-            {parts.question ? <MessageBubble content={parts.question} role="assistant" variant="question" /> : null}
+            {parts.question ? <InterviewMessageBubble content={parts.question} role="assistant" variant="question" /> : null}
           </div>
           <div className="col-start-1 row-start-1 flex flex-col gap-3">
             <AnimatePresence mode="popLayout" initial={false}>
@@ -368,10 +340,10 @@ export function ConversationMessage({
                   transition={{ duration: reduceMotion ? 0 : 0.16, ease: "easeOut" }}
                 >
                   {regenerationStream.summary ? (
-                    <MessageBubble content={regenerationStream.summary} role="assistant" variant="thinking" />
+                    <InterviewMessageBubble content={regenerationStream.summary} role="assistant" variant="thinking" />
                   ) : null}
                   {regenerationStream.question ? (
-                    <MessageBubble content={regenerationStream.question} role="assistant" variant="question" />
+                    <InterviewMessageBubble content={regenerationStream.question} role="assistant" variant="question" />
                   ) : (
                     <InPlaceRegenerationStatus messageId={message.id} label={inPlaceLabel} />
                   )}
@@ -390,9 +362,9 @@ export function ConversationMessage({
           transition={{ duration: reduceMotion ? 0 : 0.12, ease: "easeOut" }}
         >
           {parts.summary || parts.insight ? (
-            <MessageBubble content={parts.summary || parts.insight} role="assistant" variant="thinking" />
+            <InterviewMessageBubble content={parts.summary || parts.insight} role="assistant" variant="thinking" />
           ) : null}
-          {parts.question ? <MessageBubble content={parts.question} role="assistant" variant="question" /> : null}
+          {parts.question ? <InterviewMessageBubble content={parts.question} role="assistant" variant="question" /> : null}
         </motion.div>
       )}
       {message.traceId ? <AIResponseFeedback traceId={message.traceId} leadingAction={regenerationAction} /> : null}
@@ -884,6 +856,7 @@ export function InterviewShell({
   const journalSheetDragControls = useDragControls();
   const pendingPanelDimensionActionRef = useRef<{ dimension: InterviewDimension; action: "generate" } | null>(null);
   const panelResizeStateRef = useRef<{ startX: number; startRatio: number } | null>(null);
+  const pendingPanelActionDebugKeyRef = useRef<string | null>(null);
   const bumpTodayJournalBoard = useCallback(() => {
     setTodayJournalBoardRefreshKey((current) => current + 1);
   }, []);
@@ -3750,6 +3723,22 @@ export function InterviewShell({
         const data = (await response.json()) as TodayJournalBoardPayload;
 
         if (!cancelled) {
+          // #region agent log
+          debugInterviewShell("H3", "loaded today journal board", {
+            date: currentRecordDate,
+            currentDimension,
+            sessionDimension,
+            sessionId: debugShortId(sessionId),
+            dimensions: data.dimensions.map((card) => ({
+              dimension: card.dimension,
+              status: card.status,
+              hasContent: Boolean(card.content),
+              hasNewSinceJournal: card.hasNewSinceJournal,
+              sessionId: debugShortId(card.sessionId)
+            })),
+            dailyJournal: data.dailyJournal
+          });
+          // #endregion
           setTodayJournalBoard(data);
         }
       } catch {
@@ -4002,6 +3991,23 @@ export function InterviewShell({
   }
 
   function handleGenerateDimensionFromPanel(targetDimension: InterviewDimension) {
+    const targetCard =
+      mergedTodayJournalBoard?.dimensions.find((card) => card.dimension === targetDimension) ?? null;
+
+    // #region agent log
+    debugInterviewShell("H4", "today journal single dimension generate clicked", {
+      targetDimension,
+      currentDimension,
+      sessionDimension,
+      currentSessionId: debugShortId(sessionId),
+      targetCardStatus: targetCard?.status ?? null,
+      targetCardSessionId: debugShortId(targetCard?.sessionId),
+      targetCardHasContent: Boolean(targetCard?.content),
+      targetCardHasNewSinceJournal: Boolean(targetCard?.hasNewSinceJournal),
+      sameDimension: targetDimension === currentDimension
+    });
+    // #endregion
+
     if (targetDimension === currentDimension) {
       void handleGenerateDraft();
       return;
@@ -4013,6 +4019,34 @@ export function InterviewShell({
 
   useEffect(() => {
     const pending = pendingPanelDimensionActionRef.current;
+    const pendingReadiness = pending
+      ? {
+          action: pending.action,
+          targetDimension: pending.dimension,
+          workspaceMode,
+          currentDimension,
+          sessionDimension,
+          isSessionHydratedForCurrentDimension,
+          bootState,
+          hasJournalEntry: Boolean(journalEntry),
+          sessionId: debugShortId(sessionId),
+          draftGenerationUnlocked
+        }
+      : null;
+
+    if (pendingReadiness) {
+      const debugKey = JSON.stringify(pendingReadiness);
+
+      if (pendingPanelActionDebugKeyRef.current !== debugKey) {
+        pendingPanelActionDebugKeyRef.current = debugKey;
+        // #region agent log
+        debugInterviewShell("H4", "pending panel dimension action readiness", pendingReadiness);
+        // #endregion
+      }
+    } else {
+      pendingPanelActionDebugKeyRef.current = null;
+    }
+
     if (
       !pending ||
       workspaceMode !== "interview" ||
@@ -4223,7 +4257,7 @@ export function InterviewShell({
                               />
                             ))
                           : null}
-                        {optimisticUserMessage ? <MessageBubble content={optimisticUserMessage} role="user" /> : null}
+                        {optimisticUserMessage ? <InterviewMessageBubble content={optimisticUserMessage} role="user" /> : null}
                         {effectivePendingUserTurn && assistantState === "idle" ? (
                           <div
                             data-testid="pending-user-turn-status"
@@ -4257,13 +4291,13 @@ export function InterviewShell({
                         {showStreamingBubble ? (
                           <>
                             {assistantState === "thinking" && !streamedAssistantSummary && !streamedAssistantQuestion ? (
-                              <MessageBubble content="正在思考中..." />
+                              <InterviewMessageBubble content="正在思考中..." />
                             ) : null}
                             {streamedAssistantSummary ? (
-                              <MessageBubble content={streamedAssistantSummary} role="assistant" variant="thinking" />
+                              <InterviewMessageBubble content={streamedAssistantSummary} role="assistant" variant="thinking" />
                             ) : null}
                             {streamedAssistantQuestion ? (
-                              <MessageBubble content={streamedAssistantQuestion} role="assistant" variant="question" />
+                              <InterviewMessageBubble content={streamedAssistantQuestion} role="assistant" variant="question" />
                             ) : null}
                           </>
                         ) : null}
@@ -4273,12 +4307,12 @@ export function InterviewShell({
                           </div>
                         ) : null}
                         {showBootBubble ? (
-                          <MessageBubble content={bootBubbleContent} />
+                          <InterviewMessageBubble content={bootBubbleContent} />
                         ) : null}
                         {showChoiceCard ? (
                           <>
                             {activeChoiceAcknowledgement ? (
-                              <MessageBubble content={activeChoiceAcknowledgement} role="assistant" variant="thinking" />
+                              <InterviewMessageBubble content={activeChoiceAcknowledgement} role="assistant" variant="thinking" />
                             ) : null}
                             <ChoiceActionCard
                               dimensionLabel={dimensionMeta.label}

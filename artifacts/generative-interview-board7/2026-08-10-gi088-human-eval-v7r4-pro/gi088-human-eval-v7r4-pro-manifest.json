@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "status": "sealed_2_of_2_no_go",
+  "evaluation": {
+    "id": "gi088_human_eval_v7r4_pro",
+    "version": "2026-08-10.gi088-human-eval-v7r4-pro",
+    "serviceVersion": "2026-08-10.gi088-pro-service-v7r4",
+    "contractVersion": "2026-08-10.gi088-semantic-delta-contract-v2.2",
+    "runtimePolicyVersion": "2026-08-10.gi088-deepseek-pro-runtime-v1",
+    "statePolicyVersion": "2026-08-10.gi088-deterministic-state-maintenance-v1",
+    "effectiveCandidateFingerprint": "f527c74873e774a146878f00312a11384e0913cbb0bd0867db6652455934c702",
+    "datasetFingerprint": "0ebccea51837785b610efc3a87074fd5ef997dc4627d993b77669d3327bb9c34",
+    "executionFingerprint": "945d0bf5a0de783c0e831a2f8f988f81a48289f3ef355c5a3bb7eaebf4a92b98"
+  },
+  "singlePrimaryFactor": "official_deepseek_v4_pro_after_deterministic_state_baseline",
+  "inherits": {
+    "evaluationVersion": "2026-08-10.gi088-human-eval-v7r3-deterministic-state",
+    "executionFingerprint": "f3f112e73be9579a635a339c07225a03d8771765aca554796e21410cf4fefda7",
+    "zeroCallReplayPassed": true
+  },
+  "runtime": {
+    "provider": "openai_compatible_rest",
+    "baseUrl": "https://api.deepseek.com",
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000,
+    "hardTimeoutMs": 60000,
+    "hiddenReasoningPersistence": "forbidden"
+  },
+  "batch": {
+    "id": "954f144c-b26b-487a-ac3e-74f84183ad09",
+    "status": "sealed",
+    "completedTaskCount": 2,
+    "totalTasks": 2,
+    "activeBranches": ["high"],
+    "initializationModelGenerationCalls": 0,
+    "terminalAt": "2026-08-10T09:59:42.120Z",
+    "privateExportSha256": "c5bcaaa92a870f6b1082a4978b4bc6d41048b0a6dae1a06656f2439ebb930334"
+  },
+  "preview": {
+    "deploymentId": "dpl_G4bfiVDTNfsP7aMF94uMsp3KfVxe",
+    "url": "https://xingfuxitong-q2is93zhx-zouzhijies-projects.vercel.app/preview/gi088-evaluation",
+    "readyState": "READY",
+    "pageReadbackHttpStatus": 200,
+    "pageMarkers": ["GI-088", "v7r4"]
+  },
+  "humanAcceptance": {
+    "tasks": ["A1_revise_continue_and_explicit_stop", "A2_long_chat_to_stage3"],
+    "minimumUserSubmissions": 10,
+    "maximumProviderCallsPerUserSubmission": 3,
+    "worstCaseCallsAtMinimumSubmissionCount": 30,
+    "actualUserSubmissions": 12,
+    "actualProviderCalls": 13,
+    "firstVisibleResponses": 11,
+    "directAcceptedInitialResponses": 9,
+    "emptyContentCount": 0,
+    "automaticRecoveryCount": 1,
+    "protectedFailureCount": 2,
+    "manualRetryCount": 0,
+    "taskQualities": ["minor_issue", "minor_issue"],
+    "result": "no_go",
+    "productOwnerDecision": "keep_official_deepseek_v4_pro_and_continue_to_v8_after_program_repairs"
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

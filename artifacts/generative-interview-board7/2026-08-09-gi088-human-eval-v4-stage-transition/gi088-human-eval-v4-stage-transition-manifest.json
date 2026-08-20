@@ -1,0 +1,176 @@
+{
+  "schemaVersion": "1.0",
+  "status": "early_stopped_readonly_1_of_12",
+  "evaluation": {
+    "id": "gi088_human_eval_v4_stage_transition",
+    "version": "2026-08-09.gi088-human-eval-v4-stage-transition",
+    "serviceVersion": "2026-08-09.gi088-stage-transition-service-v4",
+    "effectiveCandidateFingerprint": "cc3984818587c410decc828b446094a41b11f41bc2833c04fd6189c37a9d21c9",
+    "datasetFingerprint": "064f042b0fdf592b2f3ebfac413f1c7001f99828bf0347505c9ef12d00d493c0",
+    "executionFingerprint": "0206fd34f57f2a8e6c4c5401a172bcfda526e702bf6081e197324054a47b1d0a"
+  },
+  "lineage": {
+    "historicalHumanEvaluationVersion": "2026-08-09.gi088-human-eval-v1",
+    "historicalHumanExecutionFingerprint": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2",
+    "historicalCompletedTasks": 8,
+    "historicalTotalTasks": 12,
+    "diagnosticEvaluationVersion": "2026-08-09.gi088-human-eval-v2-diagnostic",
+    "diagnosticExecutionFingerprint": "96a555c6ecef0efd8ff2946bbf7ec9c7ee6b717157520a1e6944bb888b29f943",
+    "previousCandidateEvaluationVersion": "2026-08-09.gi088-human-eval-v3-empty-recovery",
+    "previousCandidateExecutionFingerprint": "3b79fe68ecdb541b867b8c78ff85bf3f6fba222333523e36e47f4f4fa170d23b",
+    "previousCandidateStatus": "early_stopped_readonly_1_of_12"
+  },
+  "decisionLedger": {
+    "productOwnerJudgment": "stage2_exhausted_then_conditionally_enter_stage3_else_synthesize_or_pause_with_one_exact_error_auto_correction",
+    "codexInitialAssessment": "candidate_contract_service_lineage_ui_and_targeted_tests_complete",
+    "confirmedRootCause": "model_received_no_remaining_stage2_opportunity_but_returned_stage2_with_new_question",
+    "pendingHypothesis": "at_least_3_of_4_human_trajectories_transition_correctly_on_first_call_and_at_most_1_uses_recovery"
+  },
+  "stageTransitionContract": {
+    "version": "2026-08-09.gi088-stage-transition-v1",
+    "stage1MaximumAnswerOpportunities": 2,
+    "stage2MaximumAnswerOpportunities": 2,
+    "stage3NumericLimit": null,
+    "enterStage3RequiresUnderstanding": true,
+    "stage3QuestionRequiresLatestUserSource": true,
+    "semanticValueOwner": "model_with_full_context",
+    "programChecks": [
+      "understanding_exists_or_is_formed_this_turn",
+      "transition_question_references_latest_user_message"
+    ]
+  },
+  "recoveryContract": {
+    "version": "2026-08-09.gi088-stage-transition-auto-recovery-v1",
+    "eligibleBranches": [
+      "off",
+      "high"
+    ],
+    "trigger": "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE",
+    "onlyIssueRequired": true,
+    "maximumAutomaticRetriesPerTurn": 1,
+    "maximumProviderCallsPerTurnAcrossAllRecoveryTypes": 2,
+    "retryUsesOriginalBranchConfig": true,
+    "recoveryInstructionVersion": "2026-08-09.gi088-stage-transition-recovery-instruction-v1",
+    "recoveryInstruction": "当前阶段的新回答机会已经用尽。若已形成认识且用户打开了更深的未解部分，请进入深化阶段；否则总结或暂停。不要继续在原阶段创建新回答机会。",
+    "fallbackToThinkingDisabled": false,
+    "fallbackToOff": false,
+    "thirdCallAllowed": false,
+    "readsOrStoresReasoningBody": false
+  },
+  "accounting": {
+    "initialViolationPermanentlyRecorded": true,
+    "successfulTurnStatus": "complete_after_auto_recovery",
+    "recoveryStates": [
+      "eligible",
+      "retrying",
+      "recovered",
+      "exhausted"
+    ],
+    "lineageFields": [
+      "parentCallId",
+      "retryTrigger",
+      "retryOrdinal",
+      "effectiveConfig"
+    ],
+    "distinctRequestFingerprintForRecovery": true,
+    "assistantCommitsOnSuccess": 1,
+    "semanticStateCommitsOnSuccess": 1
+  },
+  "automaticValidation": {
+    "testFiles": 5,
+    "testsPassed": 95,
+    "testsFailed": 0,
+    "typecheck": "passed",
+    "eslint": "passed",
+    "prismaSchema": "passed",
+    "productionBuild": "passed_with_unrelated_existing_warnings",
+    "diffCheck": "passed",
+    "inspectModelGenerationCalls": 0
+  },
+  "targetedHumanEvaluation": {
+    "status": "early_stopped_readonly",
+    "taskIds": [
+      "A1",
+      "A2"
+    ],
+    "plannedTaskCount": 2,
+    "plannedTrajectoryCount": 4,
+    "branchOrder": [
+      "off",
+      "high"
+    ],
+    "modelCallWorstCaseBudget": 40,
+    "modelCallBudgetAuthorized": true,
+    "automaticRetriesPerUserSubmissionMaximum": 1,
+    "providerCallsPerUserSubmissionMaximum": 2,
+    "previewBatchCreated": true,
+    "modelCallsConsumed": 10,
+    "passGate": {
+      "correctTransitions": "4/4",
+      "firstCallDirectSuccessMinimum": "3/4",
+      "automaticCorrectionsMaximum": "1/4",
+      "unrecoveredFailures": 0,
+      "thirdCalls": 0,
+      "manualRetries": 0,
+      "duplicateMessages": 0,
+      "qualityFailures": 0,
+      "singleCaseBlockers": 0,
+      "minorIssuesMaximum": 1
+    },
+    "actualResult": {
+      "batchId": "7d6f66b2-65a0-4975-a66f-277ebdf5102c",
+      "batchStatus": "early_stopped",
+      "revision": 24,
+      "sealedAt": "2026-08-09T16:30:13.282Z",
+      "completedTaskIds": ["A1"],
+      "notRunTaskCount": 11,
+      "completedTrajectories": 2,
+      "modelCalls": 10,
+      "offCalls": 2,
+      "highCalls": 8,
+      "highHardTotalTimeouts": 2,
+      "manualRetries": 2,
+      "doubleQuestionProtectedFailures": 2,
+      "emptyContentFailures": 0,
+      "earlyStopReasonCode": "mixed"
+    }
+  },
+  "queuedAfterStageTransition": [
+    "double_question_and_output_field_contract",
+    "timeout_root_cause_recovery_and_waiting_experience",
+    "content_and_boundary",
+    "full_12_task_24_trajectory_batch"
+  ],
+  "preview": {
+    "deployed": true,
+    "deploymentId": "dpl_H2MD53kihsYYjH3uh6RQ1gWjdQhV",
+    "url": "https://xingfuxitong-ncy2wcta8-zouzhijies-projects.vercel.app/preview/gi088-evaluation",
+    "readyState": "READY",
+    "newBatchCreated": true,
+    "requiresSeparateAuthorization": false,
+    "loginReadbackPending": false,
+    "unauthenticatedSessionHttpStatus": 401,
+    "authenticatedReadback": {
+      "evaluationLabel": "GI-088 · 真人交互开发评测集 v4 阶段转场候选",
+      "executionFingerprint": "0206fd34f57f2a8e6c4c5401a172bcfda526e702bf6081e197324054a47b1d0a",
+      "batchStatus": "early_stopped",
+      "completedTaskCount": 1,
+      "totalTaskCount": 12,
+      "firstTaskId": "A1",
+      "firstTaskStatus": "completed",
+      "modelCallsConsumed": 10
+    },
+    "uiLabelCorrection": {
+      "deploymentId": "dpl_4xGhPcZQcd5pDTPbXPxzjmXHZhXV",
+      "deploymentUrl": "https://xingfuxitong-gcg0sz2ur-zouzhijies-projects.vercel.app/preview/gi088-evaluation",
+      "stableAlias": "https://xingfuxitong-gi088-v4-stage-transition.vercel.app/preview/gi088-evaluation",
+      "readyState": "READY",
+      "stableAliasLoginPending": true,
+      "activeHumanEvaluationUsesAuthenticatedOriginalDeployment": true
+    }
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

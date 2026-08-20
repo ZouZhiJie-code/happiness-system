@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
-import { AIResponseFeedback } from "@/components/ai-feedback/ai-response-feedback";
-import { EventCenteredJournalPanel } from "@/components/interview/event-centered/event-centered-journal-panel";
+import {
+  AIResponseFeedback,
+  type AIResponseFeedbackMode
+} from "@/components/ai-feedback/ai-response-feedback";
+import { InterviewMessageBubble } from "@/components/interview/interview-message-bubble";
 import { RegenerateIcon } from "@/components/interview/interview-response-regeneration";
-import { ActionButton, Card, Surface } from "@/components/ui";
+import { ActionButton, ActionMenu, Surface, actionButtonClass } from "@/components/ui";
+import { buildCalendarHref } from "@/features/calendar/view-state";
+import { getTodayEntryDate } from "@/features/interview/entry-date";
 import type { JournalEventAngle } from "@/types/journal-event-angle-outcome";
-import type { JournalEventEntryRecord } from "@/types/journal-event-entry";
 import type {
   EventCenteredAllowedAction,
-  EventCenteredResponseVersion,
   EventCenteredWorkspaceMessage,
   EventCenteredWorkspaceSession
 } from "@/types/event-centered-dialogue";
@@ -37,15 +41,31 @@ export type EventCenteredDialogueWorkspaceAction =
   | { action: "generate_event_journal" }
   | { action: "exit_event" };
 
+export type EventCenteredDialogueIssue = {
+  code?: string;
+  title: string;
+  message: string;
+  resolution?: string;
+  retryable?: boolean;
+  action?: string;
+  requestId?: string;
+};
+
 export type EventCenteredDialogueWorkspaceViewProps = {
   session: EventCenteredWorkspaceSession;
   entryDate: string;
+  recordMode?: "capture" | "chat" | null;
   tabs?: EventCenteredDialogueTab[];
   activeTabId?: string;
   busy?: boolean;
   /** 历史事件可阅读；写入、版本调整与退出动作保持关闭。 */
   readOnly?: boolean;
   canCreateEvent?: boolean;
+  showCompletionHandoff?: boolean;
+  /** 外层已提供跨日期会话侧栏时，隐藏旧的当天片段栏。 */
+  showRecordRail?: boolean;
+  /** 视觉验收可切到 local，真实访谈默认继续读写反馈接口。 */
+  feedbackMode?: AIResponseFeedbackMode;
   /** 可选受控草稿；父层可把它与可靠 outbox 绑定。 */
   composerDraft?: string;
   optimisticUserMessage?: {
@@ -58,29 +78,15 @@ export type EventCenteredDialogueWorkspaceViewProps = {
     summary: string;
     response: string;
   } | null;
-  /** 日志只在用户点击入口后展开；桌面为右侧栏，小屏由父层决定承载方式。 */
-  journalOpen?: boolean;
-  journalEntry?: JournalEventEntryRecord | null;
-  journalGenerating?: boolean;
-  journalNotice?: { title: string; message: string } | null;
-  error?: { title: string; message: string } | null;
+  error?: EventCenteredDialogueIssue | null;
   onAction: (action: EventCenteredDialogueWorkspaceAction) => Promise<void> | void;
   onSelectTab?: (rootSessionId: string) => void;
   onCreateEvent?: () => void;
-  onComposerDraftChange?: (draft: string) => void;
-  onJournalOpenChange?: (open: boolean) => void;
-  onUpdateJournal?: (input: {
-    entryId: string;
-    title: string;
-    content: string;
-    expectedContentRevision: number;
-  }) => Promise<JournalEventEntryRecord>;
-  onSaveJournal?: (input: {
-    entryId: string;
-    expectedContentRevision: number;
-  }) => Promise<JournalEventEntryRecord>;
-  /** 兼容父层已有的打开日志动作。 */
+  /** 零写入视觉稿可在本地切换到日记；真实链路继续使用标准地址。 */
   onOpenJournal?: () => void;
+  /** 根据结构化错误给出的恢复动作，刷新当前会话并保留已提交内容。 */
+  onResolveIssue?: () => void | Promise<void>;
+  onComposerDraftChange?: (draft: string) => void;
 };
 
 const ANGLES: Array<{ id: JournalEventAngle; label: string; description: string }> = [
@@ -88,18 +94,6 @@ const ANGLES: Array<{ id: JournalEventAngle; label: string; description: string 
   { id: "thought", label: "理清想法", description: "理一理当时的念头和判断" },
   { id: "relationship", label: "梳理关系", description: "看看互动、期待与边界" },
   { id: "action", label: "复盘行动", description: "回看目标、选择和条件" }
-];
-
-const REPAIR_OPTIONS: Array<{
-  id: "simplify" | "concretize" | "change_angle" | "deepen" | "lighten";
-  label: string;
-  description: string;
-}> = [
-  { id: "simplify", label: "更简单一点", description: "保留关注点，用更直白的一句话问" },
-  { id: "concretize", label: "更具体一点", description: "从画面、动作或念头里选一个小锚点" },
-  { id: "lighten", label: "问得轻一点", description: "一句话或一个小例子也可以" },
-  { id: "change_angle", label: "换一种问法", description: "保留当前角度，换一个更好回答的入口" },
-  { id: "deepen", label: "再深入一点", description: "已有材料足够时，再往理解里走一层" }
 ];
 
 function statusCopy(status: EventCenteredDialogueTab["status"]) {
@@ -114,224 +108,228 @@ function angleLabel(angle: JournalEventAngle | null) {
   return ANGLES.find((item) => item.id === angle)?.label ?? "事件记录";
 }
 
+function formatEntryDateLabel(entryDate: string) {
+  const [, month = "", day = ""] = entryDate.split("-");
+  return `${Number(month)} 月 ${Number(day)} 日`;
+}
+
+function formatCompactEntryDateLabel(entryDate: string) {
+  const [, month = "", day = ""] = entryDate.split("-");
+  return `${Number(month)}月${Number(day)}日`;
+}
+
 function actionAllowed(session: EventCenteredWorkspaceSession, action: EventCenteredAllowedAction) {
   return session.dialogue.allowedActions.includes(action);
 }
 
-function EventProgress({ session }: { session: EventCenteredWorkspaceSession }) {
-  return (
-    <div data-testid="event-centered-dialogue-progress" className="grid gap-3 py-3 sm:grid-cols-3">
-      {session.dialogue.progress.map((stage, index) => (
-        <div key={stage.id} data-stage-status={stage.status} className="min-w-0">
-          <div className="flex items-baseline justify-between gap-2 text-xs">
-            <span className={stage.status === "current" ? "font-semibold text-ink" : "text-[var(--text-dim)]"}>
-              {index + 1} · {stage.label}
-            </span>
-            <span className="shrink-0 text-[var(--text-faint)]">{stage.percent}%</span>
-          </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--line-soft)]">
-            <div
-              className={stage.status === "current" ? "h-full rounded-full bg-[var(--paper-deep)]" : "h-full rounded-full bg-[var(--paper-soft)]"}
-              style={{ width: `${stage.percent}%` }}
-            />
-          </div>
-          <p className="mt-1 text-[0.68rem] text-[var(--text-faint)]">{stage.detail}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
+const REGENERATION_OPTIONS = [
+  { id: "simplify" as const, label: "更简单一点", description: "保留原来的关注点，改成更直白的问法" },
+  { id: "concretize" as const, label: "更具体一点", description: "加入画面、动作、念头或时间锚点" },
+  { id: "change_angle" as const, label: "换一个角度", description: "避开已经聊过或不想聊的方向" }
+];
 
-function AssistantMessage({
+function EventCenteredRegenerationControls({
   message,
-  session,
   busy,
   onAction
 }: {
   message: EventCenteredWorkspaceMessage;
-  session: EventCenteredWorkspaceSession;
   busy: boolean;
   onAction: EventCenteredDialogueWorkspaceViewProps["onAction"];
 }) {
-  const [repairOpen, setRepairOpen] = useState(false);
-  const [correctionOpen, setCorrectionOpen] = useState(false);
-  const [correction, setCorrection] = useState("");
-  const repairTooltipId = useId();
-  const payload = message.assistantPayload;
+  const responseVersion = message.responseVersion;
+  if (!responseVersion) return null;
 
-  if (!payload) {
-    return (
-      <div className="flex justify-start">
-        <div className="max-w-2xl">
-          <div className="rounded-[var(--radius-card)] bg-[var(--header-surface-strong)] px-4 py-3 text-sm leading-7 text-ink">
-            {message.content}
-          </div>
-          {message.generationTraceId ? (
-            <AIResponseFeedback traceId={message.generationTraceId} compact />
-          ) : null}
-        </div>
-      </div>
-    );
-  }
-
-  const version = message.responseVersion;
-  const canRepair = Boolean(version?.canRegenerate && actionAllowed(session, "regenerate_response"));
-  const canCorrect = actionAllowed(session, "correct_understanding");
-  const canSwitchVersion = actionAllowed(session, "switch_response_version");
-  const thoughtOnly = session.dialogue.productScope === "thought_only";
+  const activeVersion = responseVersion.versions.find((version) => version.active);
+  const activeIndex = Math.max(0, responseVersion.versions.findIndex((version) => version.active));
+  const previousVersion = activeIndex > 0 ? responseVersion.versions[activeIndex - 1] : null;
+  const nextVersion = activeIndex < responseVersion.versions.length - 1
+    ? responseVersion.versions[activeIndex + 1]
+    : null;
 
   return (
-    <div className="flex justify-start">
-      <div className="max-w-2xl space-y-2.5">
-        {payload.naturalUnderstanding ? (
-          <p className="border-l-2 border-[var(--paper-deep)] pl-3 text-sm leading-6 text-[var(--text-dim)]">
-            {payload.naturalUnderstanding}
-          </p>
-        ) : null}
-        <div className="rounded-[var(--radius-card)] bg-[var(--header-surface-strong)] px-4 py-3 text-sm leading-7 text-ink">
-          {payload.naturalResponse || message.content}
-        </div>
-        {payload.questionSpec || version ? (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
-            {canRepair ? (
-              <span className="group relative inline-flex">
-                <button
-                  type="button"
-                  onClick={() => setRepairOpen((value) => !value)}
-                  disabled={busy}
-                  aria-label="换个问法"
-                  aria-describedby={repairTooltipId}
-                  aria-expanded={repairOpen}
-                  className="inline-flex size-8 items-center justify-center rounded-full text-[var(--text-dim)] transition hover:bg-[var(--paper-soft)] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--paper-deep)] disabled:opacity-50"
-                >
-                  <RegenerateIcon />
-                </button>
-                <span
-                  id={repairTooltipId}
-                  role="tooltip"
-                  className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-[var(--radius-control)] bg-ink px-2 py-1 text-[0.68rem] text-[var(--paper-main)] opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
-                >
-                  换个问法
-                </span>
-              </span>
-            ) : null}
-            {canCorrect ? (
-              <button
-                type="button"
-                onClick={() => setCorrectionOpen((value) => !value)}
-                disabled={busy}
-                aria-expanded={correctionOpen}
-                className="text-[var(--text-dim)] underline decoration-[var(--line-soft)] underline-offset-4 transition hover:text-ink disabled:opacity-50"
-              >
-                纠正理解
-              </button>
-            ) : null}
-            {version ? <ResponseVersions version={version} busy={busy} enabled={canSwitchVersion} onAction={onAction} /> : null}
-          </div>
-        ) : null}
-        {message.generationTraceId ? (
-          <AIResponseFeedback traceId={message.generationTraceId} compact />
-        ) : null}
-        {repairOpen ? (
-          <div role="group" aria-label="问题修复方式" className="grid gap-1.5 pt-1 sm:grid-cols-2">
-            {REPAIR_OPTIONS.filter((option) =>
-              (!thoughtOnly || option.id !== "simplify") &&
-              (option.id !== "deepen" || payload.questionSpec?.angle !== null)
-            ).map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  setRepairOpen(false);
-                  void onAction({
-                    action: "regenerate_response",
-                    targetMessageId: message.id,
-                    regenerationIntent: option.id
-                  });
-                }}
-                className="rounded-[var(--radius-control)] px-2 py-2 text-left transition hover:bg-[var(--paper-soft)] disabled:opacity-50"
-              >
-                <span className="block text-xs font-medium text-ink">{option.label}</span>
-                <span className="mt-0.5 block text-[0.7rem] leading-5 text-[var(--text-faint)]">{option.description}</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
-        {correctionOpen ? (
-          <form
-            className="pt-1"
-            onSubmit={async (event) => {
-              event.preventDefault();
-              const rawText = correction.trim();
-              if (!rawText) return;
-              setCorrection("");
-              setCorrectionOpen(false);
-              try {
-                await onAction({ action: "correct_understanding", rawText, targetMessageId: message.id });
-              } catch {
-                setCorrection(rawText);
-                setCorrectionOpen(true);
-              }
-            }}
+    <div className="relative flex items-center gap-1" data-testid={`event-centered-regeneration-${message.id}`}>
+      <ActionMenu
+        triggerLabel={<RegenerateIcon />}
+        triggerAriaLabel="重新生成"
+        triggerClassName="!size-11 !min-h-11 !min-w-11 !p-0"
+        showDisclosure={false}
+        disabled={busy || !responseVersion.canRegenerate}
+        disabledReason={!responseVersion.canRegenerate ? "当前回复暂时不能重新生成" : null}
+        menuAriaLabel="选择重新生成方向"
+        align="start"
+        variant="ghost"
+        testId={`event-centered-regeneration-menu-${message.id}`}
+        items={REGENERATION_OPTIONS.map((option) => ({
+          id: option.id,
+          label: option.label,
+          description: option.description,
+          onSelect: () => void onAction({
+            action: "regenerate_response",
+            targetMessageId: message.id,
+            regenerationIntent: option.id
+          })
+        }))}
+      />
+
+      {responseVersion.versionCount > 1 ? (
+        <div className="flex items-center gap-0.5 text-xs text-[var(--text-dim)]" aria-label={`回复版本 ${activeVersion?.version ?? 1} / ${responseVersion.versionCount}`}>
+          <button
+            type="button"
+            aria-label="查看上一个回复版本"
+            disabled={busy || !responseVersion.canSwitch || !previousVersion}
+            onClick={() => previousVersion && void onAction({
+              action: "switch_response_version",
+              targetMessageId: previousVersion.messageId,
+              targetBranchSessionId: previousVersion.branchSessionId
+            })}
+            className="grid size-11 place-items-center rounded-[var(--radius-control)] hover:bg-[var(--amber-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--paper-deep)] disabled:opacity-30"
           >
-            <label className="sr-only" htmlFor={`event-correction-${message.id}`}>纠正 AI 对这段话的理解</label>
-            <textarea
-              id={`event-correction-${message.id}`}
-              rows={2}
-              value={correction}
-              disabled={busy}
-              onChange={(event) => setCorrection(event.target.value)}
-              placeholder="比如：不是这样，我想表达的是…"
-              className="w-full resize-y rounded-[var(--radius-control)] bg-[var(--paper-soft)] px-3 py-2 text-sm leading-6 text-ink outline-none focus-visible:ring-2 focus-visible:ring-[var(--paper-deep)]"
-            />
-            <div className="mt-2 flex justify-end gap-2">
-              <ActionButton type="button" variant="ghost" onClick={() => setCorrectionOpen(false)}>取消</ActionButton>
-              <ActionButton type="submit" disabled={busy || !correction.trim()}>提交纠正</ActionButton>
-            </div>
-          </form>
-        ) : null}
-      </div>
+            ‹
+          </button>
+          <span className="min-w-8 text-center tabular-nums">{activeVersion?.version ?? 1} / {responseVersion.versionCount}</span>
+          <button
+            type="button"
+            aria-label="查看下一个回复版本"
+            disabled={busy || !responseVersion.canSwitch || !nextVersion}
+            onClick={() => nextVersion && void onAction({
+              action: "switch_response_version",
+              targetMessageId: nextVersion.messageId,
+              targetBranchSessionId: nextVersion.branchSessionId
+            })}
+            className="grid size-11 place-items-center rounded-[var(--radius-control)] hover:bg-[var(--amber-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--paper-deep)] disabled:opacity-30"
+          >
+            ›
+          </button>
+        </div>
+      ) : null}
+
     </div>
   );
 }
 
-function ResponseVersions({
-  version,
-  busy,
-  enabled,
-  onAction
+export function AssistantMessageGroup({
+  understanding,
+  question,
+  pending = false,
+  questionPending = false,
+  status,
+  actions,
+  testId
 }: {
-  version: EventCenteredResponseVersion;
-  busy: boolean;
-  enabled: boolean;
-  onAction: EventCenteredDialogueWorkspaceViewProps["onAction"];
+  understanding?: string | null;
+  question?: string | null;
+  pending?: boolean;
+  questionPending?: boolean;
+  status?: ReactNode;
+  actions?: ReactNode;
+  testId?: string;
 }) {
-  if (!version.canSwitch || version.versions.length < 2) return null;
+  const first = understanding?.trim() ?? "";
+  const second = question?.trim() ?? "";
+  const showInitialPlaceholder = pending && !first && !second;
+  const showQuestionPlaceholder = questionPending && Boolean(first) && !second;
 
   return (
-    <span className="inline-flex items-center gap-1" aria-label="回复版本">
-      <span className="text-[var(--text-faint)]">回复</span>
-      {version.versions.map((item) => (
-        <button
-          key={item.messageId}
-          type="button"
-          disabled={busy || !enabled || item.active}
-          onClick={() => void onAction({
-            action: "switch_response_version",
-            targetMessageId: item.messageId,
-            targetBranchSessionId: item.branchSessionId
-          })}
-          aria-current={item.active ? "true" : undefined}
-          title={enabled ? undefined : "先完成当前澄清"}
-          className={item.active
-            ? "inline-flex size-5 items-center justify-center rounded-full bg-[var(--paper-deep)] text-[0.68rem] text-[var(--paper-main)]"
-            : "inline-flex size-5 items-center justify-center rounded-full text-[0.68rem] text-[var(--text-dim)] underline decoration-[var(--line-soft)] underline-offset-2 hover:text-ink disabled:opacity-50"}
-        >
-          {item.version}
-        </button>
-      ))}
-    </span>
+    <div className="w-full" data-testid={testId}>
+      <div className="flex flex-col gap-2">
+        {first ? <InterviewMessageBubble content={first} role="assistant" live={pending} /> : null}
+        {second || showInitialPlaceholder || showQuestionPlaceholder ? (
+          <InterviewMessageBubble
+            content={second || "正在回复…"}
+            role="assistant"
+            live={pending}
+            status={status}
+          />
+        ) : null}
+        {!second && first && status && !showQuestionPlaceholder ? (
+          <InterviewMessageBubble content="正在回复…" role="assistant" live status={status} />
+        ) : null}
+      </div>
+      {actions && second ? (
+        <div className="mt-1 flex items-start" role="group" aria-label="回复操作">
+          {actions}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function IssueAssistantMessage({
+  issue,
+  busy = false,
+  entryDate,
+  onResolve
+}: {
+  issue: EventCenteredDialogueIssue;
+  busy?: boolean;
+  entryDate: string;
+  onResolve?: () => void | Promise<void>;
+}) {
+  const content = [issue.message, issue.resolution].filter(Boolean).join("\n");
+  const canRefresh = issue.action === "refresh" && onResolve;
+  const canOpenJournal = issue.action === "open_journal";
+  const status = (
+    <div className="flex flex-wrap items-center gap-2">
+      <span>{issue.title}</span>
+      {issue.requestId ? <span className="text-[var(--text-faint)]">请求标识 {issue.requestId}</span> : null}
+      {canRefresh ? (
+        <ActionButton type="button" variant="secondary" disabled={busy} onClick={() => void onResolve()}>
+          刷新到最新记录
+        </ActionButton>
+      ) : canOpenJournal ? (
+        <Link href={buildCalendarHref({ view: "day", date: entryDate })} className={actionButtonClass("secondary")}>
+          查看当天日记
+        </Link>
+      ) : null}
+    </div>
+  );
+
+  return <AssistantMessageGroup question={content} status={status} />;
+}
+
+function AssistantMessage({
+  message,
+  busy,
+  showActions,
+  feedbackMode,
+  onAction
+}: {
+  message: EventCenteredWorkspaceMessage;
+  busy: boolean;
+  showActions: boolean;
+  feedbackMode: AIResponseFeedbackMode;
+  onAction: EventCenteredDialogueWorkspaceViewProps["onAction"];
+}) {
+  const payload = message.assistantPayload;
+  const regenerationAction = message.responseVersion ? (
+    <EventCenteredRegenerationControls message={message} busy={busy} onAction={onAction} />
+  ) : null;
+  const actions = !showActions || payload?.responseKind === "opening" ? null : message.generationTraceId ? (
+    <div className="flex items-start gap-1">
+      <AIResponseFeedback traceId={message.generationTraceId} compact mode={feedbackMode} />
+      {regenerationAction}
+    </div>
+  ) : regenerationAction ? (
+    <div className="flex items-center text-xs text-[var(--text-dim)]">
+      {regenerationAction}
+    </div>
+  ) : null;
+
+  if (!payload) {
+    return <AssistantMessageGroup question={message.content} actions={actions} />;
+  }
+
+  if (payload.responseKind === "opening") {
+    return <AssistantMessageGroup question={payload.naturalResponse || message.content} />;
+  }
+
+  return (
+    <AssistantMessageGroup
+      understanding={payload.naturalUnderstanding}
+      question={payload.naturalResponse || message.content}
+      actions={actions}
+    />
   );
 }
 
@@ -357,31 +355,24 @@ function CheckpointNote({
   return (
     <div
       data-testid={`event-centered-${kind}-checkpoint`}
-      className="mx-auto w-full max-w-3xl px-1 pb-2"
+      className="w-full max-w-[70rem] pb-2"
     >
-      <p aria-live="polite" className="text-xs leading-5 text-[var(--text-dim)]">
-        {isFirst
+      <InterviewMessageBubble
+        role="assistant"
+        content={isFirst
           ? "我先把这件事和你在意的部分记住了。选一个角度开始。"
           : "这一段先到这里。继续输入会沿刚才的方向深入。"}
-      </p>
-      {!isFirst && actionAllowed(session, "generate_event_journal") ? (
-        <ActionButton
-          type="button"
-          variant="secondary"
-          className="mt-2"
-          disabled={busy}
-          onClick={() => void onAction({ action: "generate_event_journal" })}
-        >
-          生成事件日志
-        </ActionButton>
-      ) : null}
+        live
+      />
       {!thoughtOnly && (isFirst ? actionAllowed(session, "select_exploration_angle") : showAngles) ? (
-        <AngleChooser
-          session={session}
-          busy={busy}
-          angles={available}
-          onAction={onAction}
-        />
+        <div className="max-w-[48rem]">
+          <AngleChooser
+            session={session}
+            busy={busy}
+            angles={available}
+            onAction={onAction}
+          />
+        </div>
       ) : !thoughtOnly && available.length > 0 ? (
         <button
           type="button"
@@ -447,22 +438,22 @@ function RecoveryNote({
   if (!pending) return null;
 
   return (
-    <Card className="mx-auto w-full max-w-2xl bg-[var(--paper-main)] p-4">
-      <p className="text-sm font-medium text-ink">这段话已经收到</p>
-      <p className="mt-1 text-sm leading-6 text-[var(--text-dim)]">
-        {pending.errorCode ? "理解暂时中断。原话和刚才的进度都保留好了。" : "正在继续整理这段表达。"}
-      </p>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <ActionButton
-          type="button"
-          disabled={busy || !actionAllowed(session, "resume_turn")}
-          onClick={() => void onAction({ action: "resume_turn" })}
-        >
-          继续生成
-        </ActionButton>
-        <span className="text-xs text-[var(--text-faint)]">可继续第 {pending.attemptCount + 1} 次</span>
-      </div>
-    </Card>
+    <div role={pending.errorCode ? "alert" : "status"}>
+      <AssistantMessageGroup
+        question={pending.errorCode ? "这段话已保存，回复还没完成" : "正在回复…"}
+        pending={!pending.errorCode}
+        status={pending.errorCode && actionAllowed(session, "resume_turn") ? (
+          <ActionButton
+            type="button"
+            variant="secondary"
+            disabled={busy}
+            onClick={() => void onAction({ action: "resume_turn" })}
+          >
+            继续生成
+          </ActionButton>
+        ) : "原话已经保存"}
+      />
+    </div>
   );
 }
 
@@ -478,10 +469,9 @@ function FocusSelectionNote({
   if (session.dialogue.phase !== "event_focus_clarification" || session.dialogue.focusOptions.length === 0) return null;
 
   return (
-    <Card className="mx-auto w-full max-w-2xl bg-[var(--paper-main)] p-4 sm:p-5">
-      <p className="text-xs font-medium tracking-[0.12em] text-[var(--text-dim)]">先选一件</p>
-      <p className="mt-1 text-sm leading-6 text-ink">两件事都值得留下。先从眼下最想整理的一件开始。</p>
-      <div className="mt-3 grid gap-2">
+    <div className="w-full py-2">
+      <InterviewMessageBubble role="assistant" content="先选一件想聊的事" />
+      <div className="mt-2 grid max-w-[48rem] gap-2">
         {session.dialogue.focusOptions.map((option) => (
           <ActionButton
             key={option.id}
@@ -499,40 +489,224 @@ function FocusSelectionNote({
           </ActionButton>
         ))}
       </div>
-      <p className="mt-3 text-xs leading-5 text-[var(--text-faint)]">都不贴切时，可以在下方换一种说法。</p>
-    </Card>
+      <p className="mt-2 text-[13px] leading-5 text-[var(--text-dim)]">也可以在下方直接说。</p>
+    </div>
+  );
+}
+
+export function EventCenteredStartWorkspaceView({
+  entryDate,
+  tabs = [],
+  busy = false,
+  pendingRecordMode = null,
+  readOnly = false,
+  error = null,
+  onStart,
+  onSelectTab
+}: {
+  entryDate: string;
+  tabs?: EventCenteredDialogueTab[];
+  busy?: boolean;
+  pendingRecordMode?: "capture" | "chat" | null;
+  readOnly?: boolean;
+  error?: EventCenteredDialogueIssue | null;
+  onStart: (recordMode: "capture" | "chat") => void | Promise<void>;
+  onSelectTab?: (rootSessionId: string) => void;
+}) {
+  const entryDateLabel = formatEntryDateLabel(entryDate);
+  const isToday = entryDate === getTodayEntryDate();
+  const showRecordRail = tabs.length > 0;
+  const prompt = isToday ? "今天想怎么记？" : `${entryDateLabel}想怎么记？`;
+
+  return (
+    <Surface
+      data-testid="event-centered-start-workspace"
+      className={showRecordRail
+        ? "grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-none border-x-0 border-y-0 p-0 lg:grid-cols-[18rem_minmax(0,1fr)]"
+        : "grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-none border-x-0 border-y-0 p-0"}
+    >
+      {showRecordRail ? <aside className="min-h-0 border-b border-[var(--line-soft)] bg-[var(--header-surface)] px-4 py-5 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-5 lg:py-6" aria-label="当天片段">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-ink">当天片段</p>
+            <p className="mt-1 text-[13px] leading-5 text-[var(--text-dim)]">按时间排列</p>
+          </div>
+          <time className="shrink-0 text-right text-xs leading-5 text-[var(--text-dim)]">
+            <strong className="block text-sm text-ink">{entryDateLabel}</strong>
+            <span>{isToday ? "今天" : `${entryDate.slice(0, 4)} 年`}</span>
+          </time>
+        </div>
+        <div role="tablist" aria-label="当天事件" className="mt-5 grid gap-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.rootSessionId}
+              type="button"
+              role="tab"
+              onClick={() => onSelectTab?.(tab.rootSessionId)}
+              disabled={busy || !onSelectTab}
+              className="rounded-[var(--radius-control)] px-3 py-3 text-left transition-colors hover:bg-[var(--paper-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--paper-deep)] disabled:cursor-default"
+            >
+              <span className="block truncate text-sm font-semibold text-ink">{tab.label}</span>
+              <span className="mt-1 block text-xs text-[var(--text-faint)]">{statusCopy(tab.status)}</span>
+            </button>
+          ))}
+        </div>
+        <Link
+          href={buildCalendarHref({ view: "day", date: entryDate })}
+          className="mt-5 block rounded-[var(--radius-control)] px-2 py-2 text-center text-xs font-medium text-[var(--text-dim)] transition hover:bg-[var(--amber-soft)] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--paper-deep)]"
+        >
+          查看 {entryDateLabel} 日记
+        </Link>
+      </aside> : null}
+      <section className="relative flex min-h-0 min-w-0 flex-1 flex-col" aria-label={`开始 ${entryDateLabel} 的记录`}>
+        <header className="shrink-0 px-4 py-4 md:px-6">
+          <div className="w-full max-w-[70rem]">
+            <p className="text-[13px] font-medium text-[var(--text-dim)]">记录</p>
+            <h1 className="mt-1 font-ui text-2xl font-semibold tracking-tight text-ink">新记录</h1>
+            <p className="mt-1 text-[13px] text-[var(--text-dim)]">{entryDateLabel}</p>
+          </div>
+        </header>
+        <div className="panel-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 md:px-6">
+          <div className="flex w-full max-w-[70rem] flex-col gap-2 pb-32">
+            <InterviewMessageBubble content={prompt} role="assistant" />
+            <div className="grid max-w-[70rem] gap-2 pt-1 sm:grid-cols-2" aria-label="选择记录方式">
+                <button
+                  type="button"
+                  disabled={busy || readOnly}
+                  aria-busy={pendingRecordMode === "chat"}
+                  onClick={() => void onStart("chat")}
+                  className="group min-h-[5rem] rounded-[var(--radius-control)] bg-[var(--paper-deep)] px-4 py-3 text-left text-[var(--paper-main)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper-deep)] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="block text-base font-semibold">陪我聊</span>
+                  <span className="mt-1 block text-sm leading-6 opacity-80">
+                    {pendingRecordMode === "chat" ? "正在准备…" : "我来问，你来说"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || readOnly}
+                  aria-busy={pendingRecordMode === "capture"}
+                  onClick={() => void onStart("capture")}
+                  className="group min-h-[5rem] rounded-[var(--radius-control)] bg-[var(--paper-soft)] px-4 py-3 text-left transition-colors hover:bg-[var(--amber-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper-deep)] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="block text-base font-semibold text-ink">帮我记</span>
+                  <span className="mt-1 block text-sm leading-6 text-[var(--text-dim)]">
+                    {pendingRecordMode === "capture" ? "正在准备…" : "你来说，我在听"}
+                  </span>
+                </button>
+            </div>
+            {error ? <div role="alert"><IssueAssistantMessage issue={error} entryDate={entryDate} /></div> : null}
+          </div>
+        </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pb-5 pt-8 md:px-6">
+          <div
+            data-testid="event-centered-start-composer"
+            className="liquid-composer pointer-events-auto relative flex w-full max-w-[70rem] items-end gap-2 rounded-[var(--radius-card)] px-2 py-1.5 md:px-2.5"
+          >
+            <label className="sr-only" htmlFor="event-centered-start-input">输入当前事件</label>
+            <textarea
+              id="event-centered-start-input"
+              rows={1}
+              disabled
+              placeholder="先选择一种记录方式"
+              className="relative z-[1] min-h-[2.75rem] w-full resize-none bg-transparent px-4 py-2 pr-16 font-ui text-[15px] leading-[26px] text-ink outline-none placeholder:text-[var(--text-dim)] disabled:cursor-not-allowed disabled:opacity-70"
+            />
+            <button
+              type="button"
+              disabled
+              aria-label="发送"
+              className="absolute right-2 top-1/2 z-[1] grid size-11 -translate-y-1/2 place-items-center rounded-full bg-[var(--paper-deep)] text-[var(--paper-main)] opacity-40"
+            >
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 15.5v-9" />
+                <path d="m4.5 9.5 5.5-5.5 5.5 5.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+    </Surface>
+  );
+}
+
+export function EventCompletionHandoff({
+  entryDate,
+  busy,
+  onCreateEvent,
+  onOpenJournal
+}: {
+  entryDate: string;
+  busy: boolean;
+  onCreateEvent?: () => void;
+  onOpenJournal?: () => void;
+}) {
+  return (
+    <Surface
+      data-testid="event-centered-completion-handoff"
+      className="flex min-h-0 flex-1 items-center justify-center rounded-none border-x-0 border-y-0 px-5 py-10"
+      aria-label="记录完成"
+    >
+      <div className="w-full max-w-xl text-center">
+        <h1 className="font-ui text-[2rem] font-semibold tracking-tight text-ink">已记下</h1>
+        <p className="mt-2 font-ui text-sm leading-6 text-[var(--text-dim)]">
+          这件事已经放进 {formatCompactEntryDateLabel(entryDate)}的记录
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          {onOpenJournal ? (
+            <ActionButton type="button" variant="primary" onClick={onOpenJournal}>
+              查看 {formatCompactEntryDateLabel(entryDate)}日记
+            </ActionButton>
+          ) : (
+            <Link
+              href={buildCalendarHref({ view: "day", date: entryDate })}
+              className={actionButtonClass("primary")}
+            >
+              查看 {formatCompactEntryDateLabel(entryDate)}日记
+            </Link>
+          )}
+          <ActionButton
+            type="button"
+            variant="secondary"
+            disabled={busy || !onCreateEvent}
+            onClick={onCreateEvent}
+          >
+            再记一件
+          </ActionButton>
+        </div>
+      </div>
+    </Surface>
   );
 }
 
 export function EventCenteredDialogueWorkspaceView({
   session,
   entryDate,
+  recordMode = session.recordMode ?? null,
   tabs = [],
   activeTabId = session.rootSessionId,
   busy = false,
   readOnly = false,
   canCreateEvent = false,
+  showCompletionHandoff = false,
+  showRecordRail = true,
+  feedbackMode = "remote",
   composerDraft,
   optimisticUserMessage = null,
   streamPreview = null,
-  journalOpen = false,
-  journalEntry = null,
-  journalGenerating = false,
-  journalNotice = null,
   error = null,
   onAction,
   onSelectTab,
   onCreateEvent,
-  onComposerDraftChange,
-  onJournalOpenChange,
-  onUpdateJournal,
-  onSaveJournal,
-  onOpenJournal
+  onOpenJournal,
+  onResolveIssue,
+  onComposerDraftChange
 }: EventCenteredDialogueWorkspaceViewProps) {
   const [localComposerDraft, setLocalComposerDraft] = useState("");
+  const [composerDockHeight, setComposerDockHeight] = useState(0);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const journalTriggerRef = useRef<HTMLButtonElement>(null);
-  const journalPanelRef = useRef<HTMLElement | null>(null);
+  const messageViewportRef = useRef<HTMLDivElement>(null);
+  const composerDockRef = useRef<HTMLFormElement>(null);
+  const keepLatestMessageVisibleRef = useRef(true);
   const allTabs = useMemo(() => {
     if (tabs.some((tab) => tab.rootSessionId === session.rootSessionId)) return tabs;
     const currentStatus: EventCenteredDialogueTab["status"] = session.eventStatus === "completed"
@@ -554,22 +728,33 @@ export function EventCenteredDialogueWorkspaceView({
   const checkpoint = session.dialogue.checkpoint;
   const allowReply = actionAllowed(session, "reply");
   const isAngleSelectionCheckpoint = checkpoint?.kind === "first" && !allowReply;
-  const actionBusy = busy || readOnly;
+  const abandoned = session.sessionStatus === "abandoned" || session.eventStatus === "abandoned";
+  const completed = !abandoned &&
+    session.sessionStatus === "completed" &&
+    session.eventStatus === "completed";
+  const terminal = completed || abandoned;
+  const actionBusy = busy || readOnly || terminal;
+  const isCaptureMode = recordMode === "capture";
+  const entryDateLabel = formatEntryDateLabel(entryDate);
   const activeTab = allTabs.find((tab) => tab.rootSessionId === activeTabId) ?? allTabs[0];
   const dialoguePanelId = `event-centered-dialogue-panel-${session.rootSessionId}`;
   const activeComposerDraft = composerDraft ?? localComposerDraft;
+  const streamFailed = streamPreview?.phase === "recovery_failed";
+  const streamRetrying = streamPreview?.phase === "provider_retry_1";
+  const latestUnansweredAssistantId = useMemo(() => {
+    if (terminal || readOnly) return null;
+    let latestUserSequence = -1;
+    for (const message of session.messages) {
+      if (message.role === "user") latestUserSequence = Math.max(latestUserSequence, message.sequence);
+    }
+    const candidates = session.messages.filter((message) =>
+      message.role === "assistant" && message.sequence > latestUserSequence
+    );
+    return candidates.at(-1)?.id ?? null;
+  }, [readOnly, session.messages, terminal]);
   const setComposerDraft = (next: string) => {
     if (composerDraft === undefined) setLocalComposerDraft(next);
     onComposerDraftChange?.(next);
-  };
-  const toggleJournal = () => {
-    const next = !journalOpen;
-    onJournalOpenChange?.(next);
-    if (next) onOpenJournal?.();
-  };
-  const closeJournal = () => {
-    onJournalOpenChange?.(false);
-    journalTriggerRef.current?.focus();
   };
   const selectTab = (rootSessionId: string) => {
     if (busy || !onSelectTab || rootSessionId === activeTabId) return;
@@ -591,12 +776,10 @@ export function EventCenteredDialogueWorkspaceView({
     selectTab(nextTab.rootSessionId);
   };
 
-  useEffect(() => {
-    if (journalOpen) journalPanelRef.current?.focus();
-  }, [journalOpen]);
   const submitReply = async () => {
     const rawText = activeComposerDraft.trim();
     if (!rawText || actionBusy || !allowReply) return;
+    keepLatestMessageVisibleRef.current = true;
     setComposerDraft("");
     try {
       await onAction(
@@ -608,146 +791,242 @@ export function EventCenteredDialogueWorkspaceView({
     }
   };
 
+  useEffect(() => {
+    if (!keepLatestMessageVisibleRef.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      const viewport = messageViewportRef.current;
+      if (viewport) viewport.scrollTop = viewport.scrollHeight;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    error?.message,
+    optimisticUserMessage?.clientTurnId,
+    optimisticUserMessage?.status,
+    session.messages.length,
+    streamPreview?.phase,
+    streamPreview?.response,
+    streamPreview?.summary
+  ]);
+
+  useEffect(() => {
+    const dock = composerDockRef.current;
+    if (!dock || isAngleSelectionCheckpoint) {
+      setComposerDockHeight(0);
+      return;
+    }
+
+    const updateHeight = () => setComposerDockHeight(dock.getBoundingClientRect().height);
+    updateHeight();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(dock);
+    return () => observer.disconnect();
+  }, [checkpoint, isAngleSelectionCheckpoint]);
+
+  const messageBottomClearance = isAngleSelectionCheckpoint
+    ? 24
+    : Math.max(128, Math.ceil(composerDockHeight) + 24);
+
   return (
-    <Surface className={`grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-none border-x-0 border-y-0 p-0 ${journalOpen ? "lg:grid-cols-[minmax(0,1fr)_23rem]" : "lg:grid-cols-1"}`}>
+    <Surface className={showRecordRail
+      ? "grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-none border-x-0 border-y-0 p-0 lg:grid-cols-[18rem_minmax(0,1fr)]"
+      : "flex min-h-0 flex-1 overflow-hidden rounded-none border-x-0 border-y-0 p-0"}>
+      {showRecordRail ? <aside className="min-h-0 border-b border-[var(--line-soft)] bg-[var(--header-surface)] px-4 py-5 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-5 lg:py-6" aria-label="当天片段">
+        <p className="text-sm font-semibold text-ink">当天片段</p>
+        <p className="mt-1 text-xs leading-5 text-[var(--text-dim)]">{entryDateLabel}</p>
+        <div role="tablist" aria-label="当天事件" className="mt-5 grid gap-2">
+          {allTabs.map((tab, index) => (
+            <button
+              key={tab.rootSessionId}
+              ref={(node) => {
+                tabRefs.current[tab.rootSessionId] = node;
+              }}
+              id={`event-centered-tab-${tab.rootSessionId}`}
+              type="button"
+              role="tab"
+              aria-selected={tab.rootSessionId === activeTabId}
+              aria-controls={dialoguePanelId}
+              tabIndex={tab.rootSessionId === activeTabId ? 0 : -1}
+              disabled={busy || !onSelectTab}
+              onClick={() => selectTab(tab.rootSessionId)}
+              onKeyDown={(event) => handleTabKeyDown(event, index)}
+              className={tab.rootSessionId === activeTabId
+                ? "rounded-[var(--radius-control)] bg-[var(--amber-soft)] px-3 py-3 text-left"
+                : "rounded-[var(--radius-control)] px-3 py-3 text-left transition-colors hover:bg-[var(--paper-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--paper-deep)] disabled:cursor-default"}
+            >
+              <span className="block truncate text-sm font-semibold text-ink">{tab.label}</span>
+              <span className="mt-1 block text-xs text-[var(--text-faint)]">{statusCopy(tab.status)}</span>
+            </button>
+          ))}
+        </div>
+        <ActionButton
+          type="button"
+          variant="secondary"
+          className="mt-4 w-full"
+          disabled={busy || !canCreateEvent || !onCreateEvent}
+          onClick={onCreateEvent}
+        >
+          再记一件
+        </ActionButton>
+        {onOpenJournal ? (
+          <ActionButton type="button" variant="ghost" className="mt-3 w-full" onClick={onOpenJournal}>
+            查看 {entryDateLabel} 日记
+          </ActionButton>
+        ) : (
+          <Link
+            href={buildCalendarHref({ view: "day", date: entryDate })}
+            className="mt-3 block rounded-[var(--radius-control)] px-2 py-2 text-center text-xs font-medium text-[var(--text-dim)] transition hover:bg-[var(--amber-soft)] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--paper-deep)]"
+          >
+            查看 {entryDateLabel} 日记
+          </Link>
+        )}
+      </aside> : null}
       <section
         id={dialoguePanelId}
         role="tabpanel"
         aria-labelledby={activeTab ? `event-centered-tab-${activeTab.rootSessionId}` : undefined}
-        className="flex min-h-0 flex-col"
+        className="relative flex min-h-0 min-w-0 flex-1 flex-col"
       >
-        <header className="shrink-0 border-b border-[var(--line-soft)] px-3 pt-3 md:px-5 md:pt-4">
-          <div className="flex items-end justify-between gap-3 overflow-x-auto">
-            <div className="flex min-w-0 items-end gap-1">
-              <div role="tablist" aria-label="当天事件" className="flex min-w-0 items-end gap-1">
-              {allTabs.map((tab, index) => (
-                <button
-                  key={tab.rootSessionId}
-                  ref={(node) => {
-                    tabRefs.current[tab.rootSessionId] = node;
-                  }}
-                  id={`event-centered-tab-${tab.rootSessionId}`}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab.rootSessionId === activeTabId}
-                  aria-controls={dialoguePanelId}
-                  tabIndex={tab.rootSessionId === activeTabId ? 0 : -1}
-                  disabled={busy || !onSelectTab}
-                  onClick={() => selectTab(tab.rootSessionId)}
-                  onKeyDown={(event) => handleTabKeyDown(event, index)}
-                  className={tab.rootSessionId === activeTabId
-                    ? "inline-flex shrink-0 items-center gap-2 rounded-t-[var(--radius-control)] bg-[var(--header-surface-strong)] px-3 py-2 text-sm font-medium text-ink"
-                    : "inline-flex shrink-0 items-center gap-2 rounded-t-[var(--radius-control)] px-3 py-2 text-sm text-[var(--text-dim)] transition hover:bg-[var(--paper-soft)] disabled:cursor-default"}
-                >
-                  <span className="max-w-36 truncate">{tab.label}</span>
-                  <span className="text-[0.68rem] text-[var(--text-faint)]">{statusCopy(tab.status)}</span>
-                </button>
-              ))}
-              </div>
-              <button
-                type="button"
-                aria-label="记下一件事"
-                title={canCreateEvent ? "记下一件事" : "当前事件完成后，可以新建下一件事"}
-                disabled={busy || !canCreateEvent || !onCreateEvent}
-                onClick={onCreateEvent}
-                className="mb-1 inline-flex size-8 shrink-0 items-center justify-center rounded-full text-lg text-[var(--text-dim)] transition hover:bg-[var(--paper-soft)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span aria-hidden="true">+</span>
-              </button>
-            </div>
-            <button
-              ref={journalTriggerRef}
-              type="button"
-              onClick={toggleJournal}
-              aria-expanded={journalOpen}
-              aria-controls="event-centered-journal-panel"
-              className="mb-1 shrink-0 px-2 py-1.5 text-xs font-medium text-[var(--text-dim)] underline decoration-[var(--line-soft)] underline-offset-4 hover:text-ink"
-            >
-              当前事件日志
-            </button>
-            {readOnly ? <span className="mb-1 shrink-0 px-1 py-1.5 text-xs text-[var(--text-faint)]">只读查看</span> : null}
-            {actionAllowed(session, "exit_event") ? (
-              <button
-                type="button"
-                disabled={actionBusy}
-                onClick={() => void onAction({ action: "exit_event" })}
-                className="mb-1 shrink-0 px-1 py-1.5 text-xs text-[var(--text-faint)] underline decoration-[var(--line-soft)] underline-offset-4 hover:text-[var(--text-dim)] disabled:opacity-50"
-              >
-                退出
-              </button>
-            ) : null}
-          </div>
-          <EventProgress session={session} />
-          {!readOnly && !canCreateEvent && session.eventStatus === "active" ? (
-            <p data-testid="event-centered-next-event-blocker" className="pb-3 text-xs leading-5 text-[var(--text-dim)]">
-              这件事还在进行中。生成当前事件日志后，就可以记录下一件。
+        <header className="shrink-0 px-4 py-4 md:px-6">
+          <div className="w-full max-w-[70rem]">
+            <p className="text-[13px] font-medium text-[var(--text-dim)]">
+              {isCaptureMode ? "帮我记" : "陪我聊"}
             </p>
-          ) : null}
+            <h1 className="mt-1 font-ui text-2xl font-semibold tracking-tight text-ink">
+              {activeTab?.label ?? "当前片段"}
+            </h1>
+            <p className="mt-1 text-[13px] text-[var(--text-dim)]">
+              {entryDateLabel} · {angleLabel(session.dialogue.activeAngle)}
+              {readOnly ? " · 只读查看" : ""}
+            </p>
+          </div>
         </header>
 
-        <div className="panel-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 md:px-6">
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 pb-5">
-            <p className="text-xs text-[var(--text-faint)]">当前记录日期：{entryDate} · {angleLabel(session.dialogue.activeAngle)}</p>
+        <div
+          ref={messageViewportRef}
+          data-testid="event-centered-message-viewport"
+          className="panel-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 md:px-6"
+          style={{ scrollPaddingBottom: messageBottomClearance }}
+          onScroll={(event) => {
+            const viewport = event.currentTarget;
+            keepLatestMessageVisibleRef.current = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 96;
+          }}
+        >
+          <div
+            data-testid="event-centered-message-track"
+            className="flex w-full max-w-[70rem] flex-col gap-4"
+            style={{ paddingBottom: messageBottomClearance }}
+          >
             {session.messages.map((message) => message.role === "user" ? (
-              <div key={message.id} className="flex justify-end">
-                <div className="max-w-2xl rounded-[var(--radius-card)] bg-[var(--paper-soft)] px-4 py-3 text-sm leading-7 text-ink">
-                  {message.rawText || message.content}
-                </div>
-              </div>
+              <InterviewMessageBubble
+                key={message.id}
+                content={message.rawText || message.content}
+                role="user"
+              />
             ) : message.role === "assistant" ? (
-              <AssistantMessage key={message.id} message={message} session={session} busy={actionBusy} onAction={onAction} />
+              <AssistantMessage
+                key={message.id}
+                message={message}
+                busy={actionBusy}
+                showActions={!isCaptureMode && message.id === latestUnansweredAssistantId}
+                feedbackMode={feedbackMode}
+                onAction={onAction}
+              />
             ) : null)}
             {optimisticUserMessage ? (
               <div
                 data-testid="event-centered-optimistic-user-message"
                 data-status={optimisticUserMessage.status}
-                className="flex justify-end"
+                className="w-full"
               >
-                <div className="max-w-2xl rounded-[var(--radius-card)] bg-[var(--paper-soft)] px-4 py-3 text-sm leading-7 text-ink">
-                  {optimisticUserMessage.rawText}
-                </div>
+                <InterviewMessageBubble content={optimisticUserMessage.rawText} role="user" />
               </div>
             ) : null}
 
             <FocusSelectionNote session={session} busy={actionBusy} onAction={onAction} />
             {streamPreview ? (
-              <div role="status" aria-live="polite" className="mx-auto w-full max-w-2xl border-l-2 border-[var(--paper-deep)] py-1 pl-3">
-                <p className="text-xs text-[var(--text-faint)]">
-                  {streamPreview.phase === "provider_retry_1"
-                    ? "AI 现在有点忙，正在自动重试（1/1）"
-                    : streamPreview.phase === "understanding"
-                      ? "正在理解这段表达…"
-                      : "正在整理下一步…"}
-                </p>
-                {streamPreview.summary ? <p className="mt-1 text-sm leading-6 text-[var(--text-dim)]">{streamPreview.summary}</p> : null}
-                {streamPreview.response ? <p className="mt-1 text-sm leading-6 text-ink">{streamPreview.response}</p> : null}
+              <div role={streamFailed ? "alert" : "status"}>
+                <AssistantMessageGroup
+                  testId="event-centered-stream-message-group"
+                  understanding={streamPreview.summary}
+                  question={streamFailed ? "这段话已保存，回复还没完成" : streamPreview.response}
+                  pending={!streamFailed}
+                  questionPending={!streamFailed && streamPreview.phase === "responding"}
+                  status={streamFailed && actionAllowed(session, "resume_turn") ? (
+                    <ActionButton
+                      type="button"
+                      variant="secondary"
+                      disabled={actionBusy}
+                      onClick={() => void onAction({ action: "resume_turn" })}
+                    >
+                      继续生成
+                    </ActionButton>
+                  ) : streamRetrying ? "连接有点慢，正在重试" : null}
+                />
+              </div>
+            ) : session.recovery.pendingTurn ? (
+              <RecoveryNote session={session} busy={actionBusy} onAction={onAction} />
+            ) : error ? (
+              <div role="alert">
+                <IssueAssistantMessage
+                  issue={error}
+                  busy={actionBusy}
+                  entryDate={entryDate}
+                  onResolve={onResolveIssue}
+                />
               </div>
             ) : null}
-            <RecoveryNote session={session} busy={actionBusy} onAction={onAction} />
-            {error ? (
-              <div role="alert" className="border-l-2 border-[var(--paper-deep)] py-1 pl-3">
-                <p className="text-sm font-medium text-ink">{error.title}</p>
-                <p className="mt-1 text-sm leading-6 text-[var(--text-dim)]">{error.message}</p>
+            {completed ? (
+              <div
+                data-testid="event-centered-completion-inline"
+                data-newly-completed={showCompletionHandoff ? "true" : undefined}
+                className="pt-1"
+              >
+                <InterviewMessageBubble
+                  role="assistant"
+                  content={`已记下\n这件事已经放进 ${formatCompactEntryDateLabel(entryDate)}的记录`}
+                />
+                <div className="mt-2 flex max-w-[48rem] items-center gap-2 pl-1">
+                  {onOpenJournal ? (
+                    <ActionButton type="button" variant="primary" onClick={onOpenJournal}>
+                      查看 {formatCompactEntryDateLabel(entryDate)}日记
+                    </ActionButton>
+                  ) : (
+                    <Link
+                      href={buildCalendarHref({ view: "day", date: entryDate })}
+                      className={actionButtonClass("primary")}
+                    >
+                      查看 {formatCompactEntryDateLabel(entryDate)}日记
+                    </Link>
+                  )}
+                  {canCreateEvent && onCreateEvent ? (
+                    <ActionButton type="button" variant="secondary" disabled={busy} onClick={onCreateEvent}>
+                      新建记录
+                    </ActionButton>
+                  ) : null}
+                </div>
               </div>
             ) : null}
-            {!checkpoint && actionAllowed(session, "generate_event_journal") ? (
-              <div className="mx-auto flex w-full max-w-2xl flex-wrap items-center justify-between gap-2 border-l-2 border-[var(--paper-deep)] py-1 pl-3">
-                <p className="text-xs leading-5 text-[var(--text-dim)]">这一段随时可以收进当前事件日志。</p>
-                <ActionButton
-                  type="button"
-                  variant="secondary"
-                  disabled={actionBusy}
-                  onClick={() => void onAction({ action: "generate_event_journal" })}
-                >
-                  生成事件日志
-                </ActionButton>
+            {abandoned ? (
+              <div data-testid="event-centered-abandoned-inline" className="pt-1">
+                <InterviewMessageBubble
+                  role="assistant"
+                  content="这条空记录已结束\n还没有形成记录卡，可以新建一条记录。"
+                />
+                {canCreateEvent && onCreateEvent ? (
+                  <div className="mt-2 flex max-w-[48rem] items-center gap-2 pl-1">
+                    <ActionButton type="button" variant="primary" disabled={busy} onClick={onCreateEvent}>
+                      新建记录
+                    </ActionButton>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>
         </div>
 
         {isAngleSelectionCheckpoint ? (
-          <div className="shrink-0 border-t border-[var(--line-soft)] px-3 py-3 md:px-5">
+          <div className="shrink-0 px-3 py-3 md:px-5">
             <CheckpointNote
               kind="first"
               session={session}
@@ -757,21 +1036,33 @@ export function EventCenteredDialogueWorkspaceView({
           </div>
         ) : (
           <form
-            className="shrink-0 border-t border-[var(--line-soft)] px-3 py-3 md:px-5"
+            ref={composerDockRef}
+            data-testid="event-centered-composer-dock"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pb-5 pt-8 md:px-6"
             onSubmit={(event) => {
               event.preventDefault();
               void submitReply();
             }}
           >
             {checkpoint ? (
-              <CheckpointNote
-                kind={checkpoint.kind}
-                session={session}
-                busy={actionBusy}
-                onAction={onAction}
-              />
+              <div className="pointer-events-auto w-full max-w-[70rem]">
+                <CheckpointNote
+                  kind={checkpoint.kind}
+                  session={session}
+                  busy={actionBusy}
+                  onAction={onAction}
+                />
+              </div>
             ) : null}
-            <div className="liquid-composer mx-auto flex max-w-3xl items-end gap-2 rounded-[var(--radius-card)] px-3 py-2">
+            <div
+              data-testid="event-centered-composer"
+              title={completed
+                ? "这条记录已经完成，如需继续，请新建一条记录。"
+                : abandoned
+                  ? "这条空记录已经结束，如需记录，请新建一条记录。"
+                  : undefined}
+              className="liquid-composer pointer-events-auto relative flex w-full max-w-[70rem] items-end gap-2 rounded-[var(--radius-card)] px-2 py-1.5 outline-none ring-[var(--line-strong)] transition-shadow focus-within:ring-1 md:px-2.5"
+            >
               <label className="sr-only" htmlFor="event-centered-dialogue-input">输入当前事件</label>
               <textarea
                 id="event-centered-dialogue-input"
@@ -786,38 +1077,30 @@ export function EventCenteredDialogueWorkspaceView({
                     event.currentTarget.form?.requestSubmit();
                   }
                 }}
-                placeholder={session.dialogue.phase === "event_focus_clarification"
+                placeholder={completed
+                  ? "这条记录已经完成，如需继续，请新建一条记录。"
+                  : abandoned
+                    ? "这条空记录已经结束，如需记录，请新建一条记录。"
+                  : session.dialogue.phase === "event_focus_clarification"
                   ? "用一句话说，你想先记录哪一件…"
                   : allowReply ? "把此刻想补充的话说给我听…" : "这一段已经收好，可以选择下一步"}
-                className="min-h-10 flex-1 resize-none bg-transparent px-2 py-1 text-sm leading-6 text-ink outline-none placeholder:text-[var(--text-faint)] disabled:cursor-not-allowed"
+                className="relative z-[1] max-h-44 min-h-[2.75rem] w-full resize-none bg-transparent px-4 py-2 pr-16 font-ui text-[15px] leading-[26px] text-ink outline-none transition placeholder:text-[var(--text-dim)] disabled:cursor-wait disabled:opacity-55"
               />
-              <ActionButton type="submit" disabled={actionBusy || !allowReply || !activeComposerDraft.trim()}>发送</ActionButton>
+              <button
+                type="submit"
+                disabled={actionBusy || !allowReply || !activeComposerDraft.trim()}
+                aria-label="发送"
+                className="absolute right-2 top-1/2 z-[1] grid size-11 -translate-y-1/2 place-items-center rounded-full bg-[var(--paper-deep)] text-sm text-[var(--paper-main)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--paper-deep)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10 15.5v-9" />
+                  <path d="m4.5 9.5 5.5-5.5 5.5 5.5" />
+                </svg>
+              </button>
             </div>
           </form>
         )}
       </section>
-
-      {journalOpen ? (
-        <EventCenteredJournalPanel
-          session={session}
-          entry={journalEntry}
-          generating={journalGenerating}
-          readOnly={readOnly}
-          notice={journalNotice}
-          panelRef={(node) => {
-            journalPanelRef.current = node;
-          }}
-          onClose={closeJournal}
-          onGenerate={() => onAction({ action: "generate_event_journal" })}
-          onUpdate={onUpdateJournal ?? (async () => {
-            throw new Error("EVENT_JOURNAL_UPDATE_UNAVAILABLE");
-          })}
-          onSave={onSaveJournal ?? (async () => {
-            throw new Error("EVENT_JOURNAL_SAVE_UNAVAILABLE");
-          })}
-          onCreateEvent={canCreateEvent ? onCreateEvent : undefined}
-        />
-      ) : null}
     </Surface>
   );
 }

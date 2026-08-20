@@ -1,0 +1,562 @@
+{
+  "evaluation": "board7_mvp_four_angle_smoke",
+  "datasetVersion": "2026-08-02.board7-mvp-four-angle-smoke-v1",
+  "caseFingerprint": "afb893143329fd6b7d62190f9ef0e61b5b987122f66a8ce8e3297672dc89cee2",
+  "scopeFingerprint": "65052d7dbe9cec8d6ad71922808b87d3b3d762295d15ef981425dd4171c72eb3",
+  "model": "deepseek-v4-flash",
+  "status": "completed",
+  "startedAt": "2026-08-02T10:45:47.336Z",
+  "completedAt": "2026-08-02T10:46:08.132Z",
+  "ledger": {
+    "scopeFingerprint": "65052d7dbe9cec8d6ad71922808b87d3b3d762295d15ef981425dd4171c72eb3",
+    "status": "completed",
+    "preflightRequests": 0,
+    "requests": [
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "semantic",
+        "attemptIndex": 1
+      },
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "visible",
+        "attemptIndex": 1
+      },
+      {
+        "caseId": "SF4-T-ASK-01",
+        "stage": "semantic",
+        "attemptIndex": 1
+      },
+      {
+        "caseId": "SF4-T-ASK-01",
+        "stage": "semantic",
+        "attemptIndex": 2
+      },
+      {
+        "caseId": "SF4-R-COEXIST-01",
+        "stage": "semantic",
+        "attemptIndex": 1
+      },
+      {
+        "caseId": "SF4-R-COEXIST-01",
+        "stage": "visible",
+        "attemptIndex": 1
+      },
+      {
+        "caseId": "SF4-R-COEXIST-01",
+        "stage": "visible",
+        "attemptIndex": 2
+      },
+      {
+        "caseId": "SF4-A-EFFECT-01",
+        "stage": "semantic",
+        "attemptIndex": 1
+      },
+      {
+        "caseId": "SF4-A-EFFECT-01",
+        "stage": "visible",
+        "attemptIndex": 1
+      }
+    ]
+  },
+  "inProgress": null,
+  "results": [
+    {
+      "caseId": "SF4-F-READY-01",
+      "angle": "feeling",
+      "expected": {
+        "state": "ready",
+        "action": "complete",
+        "origin": "user_articulated"
+      },
+      "semantic": {
+        "artifact": {
+          "artifactVersion": "event-centered-semantic-plan.v5",
+          "inputBinding": {
+            "phase": "guided_reflection",
+            "activeAngle": "feeling",
+            "currentQuestionTarget": "ten_laps_first_experience_change",
+            "planPromptHash": "83da80586850cf4e3f41b76a47065dbf1f289f24c8f4777b7534aa21c25ed3cc",
+            "semanticPlanHash": "ca22f3cedda7e7cb6bbf3cae29f3cb3242aae73a4553d5b687a5f215abcbe981"
+          },
+          "understanding": {
+            "eventBoundary": "current_event",
+            "coreEventIdentifiable": true,
+            "answerStatus": "answered",
+            "factDeltas": [
+              {
+                "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑"
+              },
+              {
+                "statement": "肩膀也松了",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "肩膀也松了"
+              },
+              {
+                "statement": "那一刻就是松快",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "那一刻就是松快"
+              }
+            ],
+            "correctionOrBoundary": null,
+            "tentativeInterpretation": null,
+            "eventOptions": []
+          },
+          "decisionState": "ready",
+          "decisionOrigin": "user_articulated",
+          "semanticFrame": {
+            "units": [
+              {
+                "id": "u1",
+                "role": "event",
+                "evidenceRefs": [
+                  "new:1"
+                ]
+              },
+              {
+                "id": "u2",
+                "role": "experience",
+                "evidenceRefs": [
+                  "new:2"
+                ]
+              }
+            ],
+            "relation": {
+              "type": "coexistence",
+              "fromUnitId": "u1",
+              "toUnitId": "u2"
+            }
+          },
+          "providerQuestionIntent": null,
+          "providerLimitReason": null,
+          "understandingCard": {
+            "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，同时肩膀也松了",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "questionIntent": null,
+          "limitReason": null,
+          "semanticPlan": {
+            "action": "complete",
+            "activeAngle": "feeling",
+            "outcomeAssessment": {
+              "state": "ready",
+              "origin": "user_articulated",
+              "basis": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，同时肩膀也松了",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ],
+              "missingUnderstanding": null
+            },
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ],
+            "insightKind": "connection",
+            "selectedTargetId": null,
+            "expectedUnderstandingDelta": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，同时肩膀也松了",
+            "tentativeInterpretation": null,
+            "stopReason": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，同时肩膀也松了",
+            "cognitiveAction": null,
+            "microgoalDelta": null,
+            "realizationContract": {
+              "responseCore": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，同时肩膀也松了",
+              "summaryAnchors": [
+                "手碰到池壁那一下，我摘下泳镜，才发现自己在笑"
+              ]
+            }
+          },
+          "evidenceStatements": [
+            {
+              "ref": "new:1",
+              "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑",
+              "sourceText": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑"
+            },
+            {
+              "ref": "new:2",
+              "statement": "肩膀也松了",
+              "sourceText": "肩膀也松了"
+            }
+          ],
+          "strategyVersion": "5.50.0",
+          "angleCardVersion": "2.12.0",
+          "fewShotVersion": "quality-patterns.2026-08-02.v29",
+          "fewShotIds": [
+            "CAL-FEELING-GUIDED:user-articulated",
+            "CAL-FEELING-GUIDED:ai-synthesized",
+            "CAL-FEELING-GUIDED:ask"
+          ],
+          "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+          "promptLineage": [
+            {
+              "promptKey": "interview.event_centered.generative_semantic_plan",
+              "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+              "resolvedPromptHash": "83da80586850cf4e3f41b76a47065dbf1f289f24c8f4777b7534aa21c25ed3cc"
+            }
+          ]
+        },
+        "validationIssues": [],
+        "qualityDiagnostics": []
+      },
+      "visible": {
+        "response": "手碰到池壁那一下，你摘下泳镜，才发现自己在笑，肩膀也松了。",
+        "thinkingSummary": null,
+        "validationIssues": [],
+        "qualityDiagnostics": []
+      },
+      "terminalStatus": "complete"
+    },
+    {
+      "caseId": "SF4-T-ASK-01",
+      "angle": "thought",
+      "expected": {
+        "state": "needs_more",
+        "action": "ask",
+        "origin": null
+      },
+      "semantic": {
+        "artifact": null,
+        "validationIssues": [
+          "CURRENT_TURN_CONTENT_OMITTED:1",
+          "CURRENT_TURN_CONTENT_OMITTED:2"
+        ],
+        "qualityDiagnostics": []
+      },
+      "visible": {
+        "response": null,
+        "thinkingSummary": null,
+        "validationIssues": [
+          "VISIBLE_SKIPPED_AFTER_SEMANTIC_FAILURE"
+        ],
+        "qualityDiagnostics": []
+      },
+      "terminalStatus": "semantic_failed"
+    },
+    {
+      "caseId": "SF4-R-COEXIST-01",
+      "angle": "relationship",
+      "expected": {
+        "state": "ready",
+        "action": "pause",
+        "origin": "user_articulated"
+      },
+      "semantic": {
+        "artifact": {
+          "artifactVersion": "event-centered-semantic-plan.v5",
+          "inputBinding": {
+            "phase": "deep_companionship",
+            "activeAngle": "relationship",
+            "currentQuestionTarget": "dance_partner_two_experiences",
+            "planPromptHash": "3683f7b7dce0ac499c705281467d0d896e1b19645aff2f7a648bf5efa328914c",
+            "semanticPlanHash": "e7d4ab0b2136aa8abec2604cd3231f018ed25c25cb1ab81c1f5730085702b6e4"
+          },
+          "understanding": {
+            "eventBoundary": "current_event",
+            "coreEventIdentifiable": true,
+            "answerStatus": "answered",
+            "factDeltas": [
+              {
+                "statement": "我跟不上时，他会在旁边数拍，我就能接回节奏",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "我跟不上时，他会在旁边数拍，我就能接回节奏"
+              },
+              {
+                "statement": "可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "可我只要错一步，他就当着大家把音乐喊停，我会一下很紧"
+              },
+              {
+                "statement": "帮到我和让我有压力，这两边都是真的",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "帮到我和让我有压力，这两边都是真的"
+              }
+            ],
+            "correctionOrBoundary": null,
+            "tentativeInterpretation": null,
+            "eventOptions": []
+          },
+          "decisionState": "ready",
+          "decisionOrigin": "user_articulated",
+          "semanticFrame": {
+            "units": [
+              {
+                "id": "u1",
+                "role": "event",
+                "evidenceRefs": [
+                  "new:1"
+                ]
+              },
+              {
+                "id": "u2",
+                "role": "result",
+                "evidenceRefs": [
+                  "new:2"
+                ]
+              }
+            ],
+            "relation": {
+              "type": "coexistence",
+              "fromUnitId": "u1",
+              "toUnitId": "u2"
+            }
+          },
+          "providerQuestionIntent": null,
+          "providerLimitReason": null,
+          "understandingCard": {
+            "statement": "我跟不上时，他会在旁边数拍，我就能接回节奏，同时可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "questionIntent": null,
+          "limitReason": null,
+          "semanticPlan": {
+            "action": "pause",
+            "activeAngle": "relationship",
+            "outcomeAssessment": {
+              "state": "ready",
+              "origin": "user_articulated",
+              "basis": "我跟不上时，他会在旁边数拍，我就能接回节奏，同时可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ],
+              "missingUnderstanding": null
+            },
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ],
+            "insightKind": "connection",
+            "selectedTargetId": null,
+            "expectedUnderstandingDelta": "我跟不上时，他会在旁边数拍，我就能接回节奏，同时可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+            "tentativeInterpretation": null,
+            "stopReason": "我跟不上时，他会在旁边数拍，我就能接回节奏，同时可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+            "cognitiveAction": null,
+            "microgoalDelta": {
+              "operation": "complete",
+              "statement": "理解舞伴两种排练做法分别带来的体验",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ]
+            },
+            "realizationContract": {
+              "responseCore": "我跟不上时，他会在旁边数拍，我就能接回节奏，同时可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+              "summaryAnchors": [
+                "我跟不上时，他会在旁边数拍，我就能接回节奏"
+              ]
+            }
+          },
+          "evidenceStatements": [
+            {
+              "ref": "new:1",
+              "statement": "我跟不上时，他会在旁边数拍，我就能接回节奏",
+              "sourceText": "我跟不上时，他会在旁边数拍，我就能接回节奏"
+            },
+            {
+              "ref": "new:2",
+              "statement": "可我只要错一步，他就当着大家把音乐喊停，我会一下很紧",
+              "sourceText": "可我只要错一步，他就当着大家把音乐喊停，我会一下很紧"
+            }
+          ],
+          "strategyVersion": "5.50.0",
+          "angleCardVersion": "2.12.0",
+          "fewShotVersion": "quality-patterns.2026-08-02.v29",
+          "fewShotIds": [
+            "CAL-RELATIONSHIP-DEEP:user-articulated",
+            "CAL-RELATIONSHIP-DEEP:ai-synthesized",
+            "CAL-RELATIONSHIP-DEEP:ask"
+          ],
+          "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+          "promptLineage": [
+            {
+              "promptKey": "interview.event_centered.generative_semantic_plan",
+              "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+              "resolvedPromptHash": "3683f7b7dce0ac499c705281467d0d896e1b19645aff2f7a648bf5efa328914c"
+            }
+          ]
+        },
+        "validationIssues": [],
+        "qualityDiagnostics": []
+      },
+      "visible": {
+        "response": null,
+        "thinkingSummary": null,
+        "validationIssues": [
+          "user_articulated_origin_adds_unstated_relation"
+        ],
+        "qualityDiagnostics": []
+      },
+      "terminalStatus": "visible_failed"
+    },
+    {
+      "caseId": "SF4-A-EFFECT-01",
+      "angle": "action",
+      "expected": {
+        "state": "ready",
+        "action": "complete",
+        "origin": "ai_synthesized"
+      },
+      "semantic": {
+        "artifact": {
+          "artifactVersion": "event-centered-semantic-plan.v5",
+          "inputBinding": {
+            "phase": "guided_reflection",
+            "activeAngle": "action",
+            "currentQuestionTarget": "horizontal_score_observable_results",
+            "planPromptHash": "8246331c8c21869215ec524e1e92cf85044d0d31a81c2c18d2e471adf6730788",
+            "semanticPlanHash": "8fa1b300d2594f1a0dfed4000a6ed4fd2b84f141ef340f1b9945e42221eef550"
+          },
+          "understanding": {
+            "eventBoundary": "current_event",
+            "coreEventIdentifiable": true,
+            "answerStatus": "answered",
+            "factDeltas": [
+              {
+                "statement": "三页还横排在谱架上",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "三页还横排在谱架上"
+              },
+              {
+                "statement": "昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了"
+              }
+            ],
+            "correctionOrBoundary": null,
+            "tentativeInterpretation": null,
+            "eventOptions": []
+          },
+          "decisionState": "ready",
+          "decisionOrigin": "user_articulated",
+          "semanticFrame": {
+            "units": [
+              {
+                "id": "u1",
+                "role": "event",
+                "evidenceRefs": [
+                  "new:1"
+                ]
+              },
+              {
+                "id": "u2",
+                "role": "change",
+                "evidenceRefs": [
+                  "new:2"
+                ]
+              }
+            ],
+            "relation": {
+              "type": "coexistence",
+              "fromUnitId": "u1",
+              "toUnitId": "u2"
+            }
+          },
+          "providerQuestionIntent": null,
+          "providerLimitReason": null,
+          "understandingCard": {
+            "statement": "三页还横排在谱架上，同时昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "questionIntent": null,
+          "limitReason": null,
+          "semanticPlan": {
+            "action": "complete",
+            "activeAngle": "action",
+            "outcomeAssessment": {
+              "state": "ready",
+              "origin": "user_articulated",
+              "basis": "三页还横排在谱架上，同时昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ],
+              "missingUnderstanding": null
+            },
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ],
+            "insightKind": "connection",
+            "selectedTargetId": null,
+            "expectedUnderstandingDelta": "三页还横排在谱架上，同时昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+            "tentativeInterpretation": null,
+            "stopReason": "三页还横排在谱架上，同时昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+            "cognitiveAction": null,
+            "microgoalDelta": null,
+            "realizationContract": {
+              "responseCore": "三页还横排在谱架上，同时昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+              "summaryAnchors": [
+                "三页还横排在谱架上"
+              ]
+            }
+          },
+          "evidenceStatements": [
+            {
+              "ref": "new:1",
+              "statement": "三页还横排在谱架上",
+              "sourceText": "三页还横排在谱架上"
+            },
+            {
+              "ref": "new:2",
+              "statement": "昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了",
+              "sourceText": "昨晚我的手一直留在琴键上，从第一页到第三页连着弹完了"
+            }
+          ],
+          "strategyVersion": "5.50.0",
+          "angleCardVersion": "2.12.0",
+          "fewShotVersion": "quality-patterns.2026-08-02.v29",
+          "fewShotIds": [
+            "CAL-ACTION-GUIDED:user-articulated",
+            "CAL-ACTION-GUIDED:ai-synthesized",
+            "CAL-ACTION-GUIDED:ask"
+          ],
+          "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+          "promptLineage": [
+            {
+              "promptKey": "interview.event_centered.generative_semantic_plan",
+              "promptVersion": "2026-08-02.event-centered-generative-v72-semantic-origin",
+              "resolvedPromptHash": "8246331c8c21869215ec524e1e92cf85044d0d31a81c2c18d2e471adf6730788"
+            }
+          ]
+        },
+        "validationIssues": [],
+        "qualityDiagnostics": []
+      },
+      "visible": {
+        "response": "三页还横排在谱架上，而昨晚你的手一直留在琴键上，从第一页到第三页连着弹完了。",
+        "thinkingSummary": null,
+        "validationIssues": [],
+        "qualityDiagnostics": []
+      },
+      "terminalStatus": "complete"
+    }
+  ],
+  "error": null
+}

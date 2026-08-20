@@ -1,0 +1,148 @@
+{
+  "ledgerVersion": "board7-v64.1",
+  "confirmationVersion": "2026-07-30.v5",
+  "datasetVersion": "2026-07-30.v3",
+  "caseFingerprint": "79885a71f4eb8c3a355d933f2776422219464423e910df9fa29ef56f5a0cb24f",
+  "limits": {
+    "fullRuns": 3,
+    "targetedCases": 4,
+    "targetedCasesPerRun": 2
+  },
+  "entries": [
+    {
+      "reservationId": "5134bfd6-7636-4fec-9395-b8f5619ddce4",
+      "kind": "full",
+      "caseIds": [
+        "SMK-F-PARTIAL-ASK",
+        "SMK-T-ASK",
+        "SMK-R-CLEAN-ASK",
+        "SMK-A-PARTIAL-ASK",
+        "SMK-F-CLOSED",
+        "SMK-T-USER",
+        "SMK-R-PARTIAL-ASK",
+        "SMK-A-CLOSED",
+        "SMK-F-AI",
+        "SMK-T-AI",
+        "SMK-R-AI",
+        "SMK-A-AI"
+      ],
+      "candidateVersions": {
+        "prompt": "2026-07-30.event-centered-generative-v64",
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25"
+      },
+      "reservedAt": "2026-07-30T17:01:57.239Z",
+      "completedAt": "2026-07-30T17:01:57.263Z",
+      "status": "void_technical_preflight_gap",
+      "technicalAttempts": 24,
+      "technicalRetries": 12,
+      "technicallyCompleteCases": 0,
+      "error": null,
+      "voidAudit": {
+        "auditVersion": "board7-v64-technical-preflight-gap.1",
+        "auditedBy": "delegated_codex",
+        "auditedAt": "2026-07-30T17:21:03Z",
+        "reason": "dns_preflight_gap_before_budget_reservation",
+        "sourceEnvelopeFingerprint": "c531a1693cdac4bb982ce9ba69b04a68f3ae35b9a652ef3bbaca8aed2314d187"
+      },
+      "architecture": "one_call",
+      "gateAudit": null
+    },
+    {
+      "reservationId": "00aea834-320f-4a3e-88b9-d422d894a473",
+      "kind": "full",
+      "caseIds": [
+        "SMK-F-PARTIAL-ASK",
+        "SMK-T-ASK",
+        "SMK-R-CLEAN-ASK",
+        "SMK-A-PARTIAL-ASK",
+        "SMK-F-CLOSED",
+        "SMK-T-USER",
+        "SMK-R-PARTIAL-ASK",
+        "SMK-A-CLOSED",
+        "SMK-F-AI",
+        "SMK-T-AI",
+        "SMK-R-AI",
+        "SMK-A-AI"
+      ],
+      "candidateVersions": {
+        "prompt": "2026-07-30.event-centered-generative-v64",
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25"
+      },
+      "reservedAt": "2026-07-30T17:24:54.815Z",
+      "completedAt": "2026-07-30T17:26:15.327Z",
+      "status": "completed",
+      "technicalAttempts": 17,
+      "technicalRetries": 5,
+      "technicallyCompleteCases": 10,
+      "error": null,
+      "voidAudit": null,
+      "architecture": "one_call",
+      "gateAudit": null
+    },
+    {
+      "reservationId": "e39b9303-98c8-4ce2-adb9-c0e7a378c33f",
+      "kind": "targeted",
+      "caseIds": [
+        "SMK-R-PARTIAL-ASK",
+        "SMK-F-AI"
+      ],
+      "candidateVersions": {
+        "prompt": "2026-07-30.event-centered-generative-v65",
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25"
+      },
+      "reservedAt": "2026-07-30T17:45:23.138Z",
+      "completedAt": "2026-07-30T17:45:43.009Z",
+      "status": "completed",
+      "technicalAttempts": 4,
+      "technicalRetries": 2,
+      "technicallyCompleteCases": 2,
+      "error": null,
+      "voidAudit": null,
+      "architecture": "one_call",
+      "gateAudit": null
+    },
+    {
+      "reservationId": "3dce0cbf-9a6a-4901-a3f5-3d72aa2453f5",
+      "kind": "targeted",
+      "caseIds": [
+        "SMK-R-PARTIAL-ASK",
+        "SMK-F-AI"
+      ],
+      "architecture": "two_call",
+      "candidateVersions": {
+        "prompt": "two_call:2026-07-30.event-centered-generative-v66-plan+2026-07-30.event-centered-generative-v66-visible",
+        "strategy": "5.46.0",
+        "angleCard": "2.12.0",
+        "fewShot": "quality-patterns.2026-07-30.v25"
+      },
+      "reservedAt": "2026-07-31T01:21:49.953Z",
+      "completedAt": "2026-07-31T01:21:56.863Z",
+      "status": "completed",
+      "technicalAttempts": 4,
+      "technicalRetries": 0,
+      "technicallyCompleteCases": 2,
+      "error": null,
+      "voidAudit": null,
+      "gateAudit": {
+        "auditedAt": "2026-07-31T01:26:44.434Z",
+        "architecture": "two_call",
+        "reservationId": "3dce0cbf-9a6a-4901-a3f5-3d72aa2453f5",
+        "total": 2,
+        "passed": 1,
+        "technicalComplete": 2,
+        "sourceMisattribution": 0,
+        "seriousBoundaryErrors": 0,
+        "repeatedPrimaryFailures": [],
+        "codexReviewed": 2,
+        "productReviewed": 2,
+        "decision": "stop"
+      }
+    }
+  ]
+}

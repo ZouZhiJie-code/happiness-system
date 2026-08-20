@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "df1958a283207743",
+  "status": "Judge No-Go",
+  "recommendation": null,
+  "arms": [
+    {
+      "model": "qwen3.7-plus-2026-05-26",
+      "mode": "normal",
+      "validResults": 20,
+      "calls": 20,
+      "retries": 0,
+      "inputTokens": 16000,
+      "outputTokens": 2000,
+      "reasoningTokens": 0,
+      "reasoningObservedCount": 0,
+      "costCny": 0.048,
+      "technicalFailureCount": 0,
+      "score": {
+        "validResults": 20,
+        "fourClassAgreementCount": 4,
+        "fourClassAgreementRate": 0.2,
+        "blockerRecall": 0.2,
+        "blockerAccuracy": 0.6,
+        "criticalAnchorsRecognized": [
+          "event_boundary"
+        ],
+        "criticalAnchorCount": 1,
+        "medianLatencyMs": 19.5,
+        "qualified": false
+      }
+    },
+    {
+      "model": "qwen3.7-plus-2026-05-26",
+      "mode": "thinking",
+      "validResults": 20,
+      "calls": 20,
+      "retries": 0,
+      "inputTokens": 16000,
+      "outputTokens": 2000,
+      "reasoningTokens": 1000,
+      "reasoningObservedCount": 20,
+      "costCny": 0.048,
+      "technicalFailureCount": 0,
+      "score": {
+        "validResults": 20,
+        "fourClassAgreementCount": 4,
+        "fourClassAgreementRate": 0.2,
+        "blockerRecall": 0.2,
+        "blockerAccuracy": 0.6,
+        "criticalAnchorsRecognized": [
+          "event_boundary"
+        ],
+        "criticalAnchorCount": 1,
+        "medianLatencyMs": 19.5,
+        "qualified": false
+      }
+    },
+    {
+      "model": "qwen3.7-max-2026-06-08",
+      "mode": "normal",
+      "validResults": 20,
+      "calls": 20,
+      "retries": 0,
+      "inputTokens": 16000,
+      "outputTokens": 2000,
+      "reasoningTokens": 0,
+      "reasoningObservedCount": 0,
+      "costCny": 0.264,
+      "technicalFailureCount": 0,
+      "score": {
+        "validResults": 20,
+        "fourClassAgreementCount": 4,
+        "fourClassAgreementRate": 0.2,
+        "blockerRecall": 0.2,
+        "blockerAccuracy": 0.6,
+        "criticalAnchorsRecognized": [
+          "event_boundary"
+        ],
+        "criticalAnchorCount": 1,
+        "medianLatencyMs": 19.5,
+        "qualified": false
+      }
+    }
+  ],
+  "totals": {
+    "calls": 60,
+    "retries": 0,
+    "costCny": 0.36
+  },
+  "conclusionBoundary": "仅判断 Judge 配置能否承担 GI-088 初评；独立准入、人工评分、Preview 和 Production 保持关闭。"
+}

@@ -35,7 +35,7 @@
 
 精确授权执行后核验通过：
 
-- 授权 ID：`redacted-operational-id`；
+- 授权 ID：`981e1baa-7a44-4843-92d5-a7d11f63f5ec`；
 - 精确指纹：`7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498`；
 - 账本状态：`4 completed / 0 reserved`；
 - 调用上限：生成调用 `4/4`，自动重试、质量重试与 fallback 均为 `0`；

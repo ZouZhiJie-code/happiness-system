@@ -29,6 +29,26 @@ const DOT_HEX: Record<InterviewDimension, string> = {
   gratitude: "#b8848d"
 };
 
+function debugTodayJournalPanel(hypothesisId: string, message: string, data: Record<string, unknown>) {
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
+
+  fetch("http://127.0.0.1:7878/ingest/de44b1c7-c5fb-4417-8fc3-efe91f2e999c", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7fc210" },
+    body: JSON.stringify({
+      sessionId: "7fc210",
+      runId: "post-fix",
+      hypothesisId,
+      location: "today-journal-panel.tsx:debug",
+      message,
+      data,
+      timestamp: Date.now()
+    })
+  }).catch(() => {});
+}
+
 export function resolveDayAction(board: TodayJournalBoardPayload | null): {
   variant: TodayDayActionVariant;
   label: string;
@@ -307,6 +327,34 @@ export function TodayJournalPanel({
     [board?.dimensions]
   );
   const dayAction = useMemo(() => resolveDayAction(board), [board]);
+
+  useEffect(() => {
+    const panelRect = panelRef.current?.getBoundingClientRect();
+    const parentRect = panelRef.current?.parentElement?.getBoundingClientRect();
+
+    // #region agent log
+    debugTodayJournalPanel("H1,H2,H3", "today journal panel render state", {
+      activeDimension,
+      openDimension,
+      isLoading,
+      className: className ?? null,
+      panelWidth: panelRect ? Math.round(panelRect.width) : null,
+      parentWidth: parentRect ? Math.round(parentRect.width) : null,
+      dimensionStates: interviewDimensions.map((dimension) => {
+        const card = cardByDimension.get(dimension);
+        return {
+          dimension,
+          status: card?.status ?? "none",
+          hasContent: Boolean(card?.content),
+          hasNewSinceJournal: Boolean(card?.hasNewSinceJournal),
+          hasSession: Boolean(card?.sessionId),
+          hasEntryId: Boolean(card?.entryId)
+        };
+      }),
+      dayAction
+    });
+    // #endregion
+  }, [activeDimension, cardByDimension, className, dayAction, isLoading, openDimension]);
 
   return (
     <aside

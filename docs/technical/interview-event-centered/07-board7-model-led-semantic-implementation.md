@@ -2,11 +2,11 @@
 
 最后更新：`2026-08-09`
 
-文档状态：`当前专项入口；GI-088 v7 两条真人连续性轨迹已封存，v7r1 Prefix 兼容路线 No-Go，v7r2 Ark Flash 本地实现与自动验证通过并等待 Preview`
+文档状态：`当前专项入口；GI-088 v1 首批 8/12 已复盘，response format 探针 No-Go，Thinking 模式探针 4/4 completed inconclusive；正式运行时接入继续等待板块 6`
 
 产品决策状态：`继承 GI-067 / GI-068～080 冻结结论；GI-081～083 保留诊断血缘；GI-084～086 保留开发、能力校准与失败证据；GI-087 任务结构保留；GI-088 上下文纯净与影响因素调优协议已确认`
 
-落地验证状态：`GI-087 已退出当前质量门；GI-088 v0～v6 保留分阶段证据；v7 两条轨迹已封存；v7r1 No-Go；v7r2 已通过本地定向自动验证与 Production build，等待 Preview 回读和 0/2 空白批次`
+落地验证状态：`GI-087 已退出当前质量门；GI-088 v0 已形成 1600 Token 上限失败证据；v1 已在 8/12 主动提前结束，high 内容优势与运行失败均已形成证据`
 
 Production：`继续保持 legacy + baseline；生成式候选入口与发布授权保持关闭`
 
@@ -43,9 +43,9 @@ Production：`继续保持 legacy + baseline；生成式候选入口与发布授
 |---|---|---|
 | `GI-068～074` 产品架构与评测方法 | `已冻结·高置信度；落地验证未启动` | 直接继承，保持结论关闭 |
 | 板块 5 产品行为约定 | `GI-075～080 六类规则完成 6/6` | 计数、修复、版本、纠正、恢复和交互收束可直接继承 |
-| 板块 6 正式评测资产 | `7 张人工卡已收口、C3 开放；GI-088 v7 两条轨迹已封存；完整正式资产仍在建设` | 当前允许 v7r2 可靠性门验证；正式接入仍等待评分卡、Judge、开发集与准入集 |
+| 板块 6 正式评测资产 | `7 张人工卡已收口、C3 开放；GI-088 v1 前 8 项已复盘；完整正式资产仍在建设` | 当前允许下一候选单因素迭代；正式接入仍等待评分卡、Judge、开发集与准入集 |
 | 板块 7A 诊断候选 | `GI-081 与 GI-083 保留诊断历史；GI-083 产品负责人轨迹调用 0，工程合成自测 5/5` | 为正式资产保留失败背景与结构演进证据 |
-| 板块 7B 当前诊断候选 | `GI-088 v7r2 Thinking high Ark Flash；单一平台变量；本地实现与自动验证通过` | 受控 Preview 回读、0/2 空白批次与两条真人连续性轨迹依次执行；v8 等待可靠性门 |
+| 板块 7B 当前诊断候选 | `GI-088 Thinking 模式探针已完成 4/4，high 未复现空内容，主要影响因素未确认` | 继续保留 high 产品方向、JSON mode 与其余候选合同；下一步讨论相同 high 请求的复现稳定性 |
 | Production | `legacy + baseline` | 继续保持当前安全档位 |
 
 ### 2.2 启动条件
@@ -67,13 +67,13 @@ Production：`继续保持 legacy + baseline；生成式候选入口与发布授
 2. 候选 A 使用一次结构化调用，同时产生语义与可见回应；候选 B 使用语义与表达两阶段。
 3. 两种候选共同固定 `deepseek-v4-flash`、温度 `0.2`、Thinking 关闭和同一产品规则。
 4. 基础生成请求为 `18`，全批最多 `3` 次技术失败重试，质量重试为 `0`。
-5. 当前候选确认包（本机私有历史证据：`board7a-six-case-ab-v1-confirmation.md`）指纹为 `32703f687342868a359f3b682b216f0a8965b0608096781f535f4303adc68248`。产品负责人完成单独授权后，六题运行使用 `18/18` 次基础生成请求，技术重试 `0`、质量重试 `0`，两组共 `12` 段用户可见回应均达到技术终态。
+5. 当前[候选确认包](../../../artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-confirmation.md)指纹为 `32703f687342868a359f3b682b216f0a8965b0608096781f535f4303adc68248`。产品负责人完成单独授权后，六题运行使用 `18/18` 次基础生成请求，技术重试 `0`、质量重试 `0`，两组共 `12` 段用户可见回应均达到技术终态。
 6. 产品负责人完成盲评后再揭晓架构和候选 B 的结构化语义；Codex 初评继续独立保存。
 7. 只有单例阻断为 `0`、至少 `4/6` 可用、普通质量失败最多 `2/6` 的候选可以进入两条完整轨迹；完整轨迹另行授权。
 
 该子步使用独立评测数据、Prompt、结构、运行器、预算和 Trace 文件。公开 API、页面、数据库、线上 Prompt、配置和运行开关保持原样；Production 继续使用 `legacy + baseline`。
 
-产品负责人完成盲评后，两种候选按产品裁决均为可直接使用 `4/6`、质量失败 `2/6`、单例阻断 `0`，机械满足上述门槛；候选 B 在 H2 获得唯一相对偏好。方法复核发现，模型实际收到用户任务、模式、预置完整对话和最新用户消息编号；案例数据中的 `stage / evaluationFocus / hardBoundaries / allowedActions` 未进入模型输入。H1、H2、H3 和 T3 的前置 AI 回合也未由当前候选产生，因此只承担条件式局部诊断。共享 Prompt 同时包含模式任务、问停方法、表达要求和证据约束，已经触及板块 7 的产品策略；其证据身份固定为“GI-081 临时 Prompt 下的诊断基线”，用于发现真实失败，架构胜出和正式 Prompt 正确性继续开放。完整结论见六题揭晓与对照（本机私有历史证据：`board7a-six-case-ab-v1-reconciliation.md`）。
+产品负责人完成盲评后，两种候选按产品裁决均为可直接使用 `4/6`、质量失败 `2/6`、单例阻断 `0`，机械满足上述门槛；候选 B 在 H2 获得唯一相对偏好。方法复核发现，模型实际收到用户任务、模式、预置完整对话和最新用户消息编号；案例数据中的 `stage / evaluationFocus / hardBoundaries / allowedActions` 未进入模型输入。H1、H2、H3 和 T3 的前置 AI 回合也未由当前候选产生，因此只承担条件式局部诊断。共享 Prompt 同时包含模式任务、问停方法、表达要求和证据约束，已经触及板块 7 的产品策略；其证据身份固定为“GI-081 临时 Prompt 下的诊断基线”，用于发现真实失败，架构胜出和正式 Prompt 正确性继续开放。完整结论见[六题揭晓与对照](../../../artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-reconciliation.md)。
 
 ### 2.4 GI-082 单任务双分支补证
 
@@ -81,7 +81,7 @@ Production：`继续保持 legacy + baseline；生成式候选入口与发布授
 
 本轮终点为访谈结果分类，暂不运行日志链路。每次用户输入只触发当前分支的一次用户可见回合；匿名身份和结构化语义在两条分支完成盲评前保持封存。建议基础请求上限 `18`、技术失败重试上限 `3`、质量重试 `0`；预算只约束本轮评测资源。
 
-当前运行确认包（本机私有历史证据：`board7a-chat-e2e-ab-v1-confirmation.md`）与用户事实卡（本机私有历史证据：`board7a-chat-e2e-ab-v1-user-fact-card.md`）已建立。等待产品负责人提供第一段真实表达和希望弄清的目标；随后冻结完整 Prompt、匿名映射、包指纹与预算，再提交独立运行授权。当前模型调用 `0`。
+当前[运行确认包](../../../artifacts/generative-interview-board7/2026-08-06-board7a-chat-e2e-ab-v1/board7a-chat-e2e-ab-v1-confirmation.md)与[用户事实卡](../../../artifacts/generative-interview-board7/2026-08-06-board7a-chat-e2e-ab-v1/board7a-chat-e2e-ab-v1-user-fact-card.md)已建立。等待产品负责人提供第一段真实表达和希望弄清的目标；随后冻结完整 Prompt、匿名映射、包指纹与预算，再提交独立运行授权。当前模型调用 `0`。
 
 GI-082 的双分支方法及模型调用 `0` 状态继续保留。当时执行入口由 GI-083 收窄为一次调用透明诊断，先用最简单可行结构发现一条真实轨迹中的问题；重复证据持续指向语义判断与表达生成互相干扰时，再建立两阶段候选做单变量比较。该入口现已由 GI-088 覆盖。
 
@@ -134,7 +134,7 @@ GI-085 当前状态为`真实回归已完成·No-Go`。候选从四个职责重�
 
 静态完成标准已经满足：候选、数据、8 个精确请求、判尺与执行指纹可重复生成；Skill 格式、输出结构、来源、焦点引用、单轮一问、回答机会和自包含状态迁移通过；两个额外新题材的独立前向检查通过；仓库只读检查和正式执行命令已验证，缺少授权时在凭据读取与模型请求前终止。
 
-8 次隔离回归结果（本机私有历史证据：`board7b-semantic-frame-v1-regression-result.json`）与Codex 初评（本机私有历史证据：`board7b-semantic-frame-v1-regression-review.md`）显示：结构有效 `7/8`、程序保护拦截 `1/8`、技术失败 `0`；已知开发回归 `1/2`、全新关系迁移 `1/4`、反事实 `2/2`、普通质量失败 `4`、单例阻断 `0`。固定准入门判定 `No-Go for real trajectory`，真实网页轨迹保持关闭。
+[8 次隔离回归结果](../../../artifacts/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/board7b-semantic-frame-v1-regression-result.json)与[Codex 初评](../../../artifacts/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/board7b-semantic-frame-v1-regression-review.md)显示：结构有效 `7/8`、程序保护拦截 `1/8`、技术失败 `0`；已知开发回归 `1/2`、全新关系迁移 `1/4`、反事实 `2/2`、普通质量失败 `4`、单例阻断 `0`。固定准入门判定 `No-Go for real trajectory`，真实网页轨迹保持关闭。
 
 八题均形成了与用户材料一致的工作焦点，剩余失败集中在 `openPart`：模型会把相互影响的关系压成先选一侧、单侧倾向或模型预设类别。下一停止点为产品讨论“关系焦点进入 `openPart` 时必须保持什么”，并划分 Interview Skill、输出合同与评测各自承担的内容。产品负责人的逐题体验裁决继续单独保存；任何新候选和模型运行均需要新版本、新指纹与新授权。
 
@@ -146,9 +146,9 @@ GI-085 当前状态为`真实回归已完成·No-Go`。候选从四个职责重�
 
 GI-086 已完成 `8/8` 次同期对照，固定门判定 No-Go。其四题小样本只支持停止当前 Thinking 路线；Thinking 的通用能力与真实使用差异继续保持开放。
 
-GI-086 运行结果（本机私有历史证据：`board7b-thinking-capability-v1-result.json`）与透明评审材料（本机私有历史证据：`board7b-thinking-capability-v1-transparent-review.md`）已经生成。Run 指纹为 `627da7ad0cea7b00b222d69ec5762718941fcf986bd8962af67bdb8ee9fadee0`；调用 `8/8`，结构有效 `6`、程序保护 `1`、技术失败 `1`。P1 关闭组触发单轮一问保护，P3 high 组返回空内容，单题能力结论保持开放。
+[GI-086 运行结果](../../../artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/board7b-thinking-capability-v1-result.json)与[透明评审材料](../../../artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/board7b-thinking-capability-v1-transparent-review.md)已经生成。Run 指纹为 `627da7ad0cea7b00b222d69ec5762718941fcf986bd8962af67bdb8ee9fadee0`；调用 `8/8`，结构有效 `6`、程序保护 `1`、技术失败 `1`。P1 关闭组触发单轮一问保护，P3 high 组返回空内容，单题能力结论保持开放。
 
-产品负责人已经完成透明裁决，P1、P2、P4 均判相当，P3 判关闭组更好。Codex 独立九维初评（本机私有历史证据：`board7b-thinking-capability-v1-codex-review.md`）判 P1 high 更差、P2 high 更好、P4 相当，P3 质量结论开放。两套判断均未满足问题样本 `2/2` high 更好的固定门，因此 GI-086 判定 No-Go，返回任务结构讨论。
+产品负责人已经完成透明裁决，P1、P2、P4 均判相当，P3 判关闭组更好。[Codex 独立九维初评](../../../artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/board7b-thinking-capability-v1-codex-review.md)判 P1 high 更差、P2 high 更好、P4 相当，P3 质量结论开放。两套判断均未满足问题样本 `2/2` high 更好的固定门，因此 GI-086 判定 No-Go，返回任务结构讨论。
 
 ### 2.9 GI-087 “共同任务＋当前探查”候选
 
@@ -160,7 +160,7 @@ GI-086 运行结果（本机私有历史证据：`board7b-thinking-capability-v1
 
 [GI-087 候选包](../../../artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/README.md)已完成一次性六题隔离运行。Run 指纹为 `2881fb9d0e1b48f4c8325dfdbe4a813925513a6320cc04f79c27717e0638cfc2`；DeepSeek 调用 `6/6`，结构有效 `5`、程序保护 `1`、模型合同失败 `0`、技术失败 `0`，自动技术重试、质量重试和手动技术重试均为 `0`。PAUSE 同时继续当前任务并把同一任务加入可返回列表，程序保护拒绝整轮结果。
 
-产品负责人完成 AUT1“可直接使用”和 AUT2“轻微问题”两项判断后，在 H1 发现旧候选的“爽还是轻松”问题污染了上下文。六题进一步审计为：AUT1、INDEP 属于纯净起点；AUT2、H1、H2 属于历史条件式探针；PAUSE 属于人工状态下的程序合同探针。原组六题质量门和剩余逐题裁决停止使用，完整结论见上下文资格审计（本机私有历史证据：`board7b-working-task-v1-context-eligibility-audit.md`）。PAUSE 冲突继续作为程序风险保留，等待纯净同候选轨迹复核；真人工作台继续关闭。
+产品负责人完成 AUT1“可直接使用”和 AUT2“轻微问题”两项判断后，在 H1 发现旧候选的“爽还是轻松”问题污染了上下文。六题进一步审计为：AUT1、INDEP 属于纯净起点；AUT2、H1、H2 属于历史条件式探针；PAUSE 属于人工状态下的程序合同探针。原组六题质量门和剩余逐题裁决停止使用，完整结论见[上下文资格审计](../../../artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-working-task-v1-context-eligibility-audit.md)。PAUSE 冲突继续作为程序风险保留，等待纯净同候选轨迹复核；真人工作台继续关闭。
 
 ### 2.10 GI-088 上下文纯净与影响因素调优
 
@@ -175,11 +175,7 @@ GI-086 运行结果（本机私有历史证据：`board7b-thinking-capability-v1
 
 该协议延续方法 v1.0 的规则分流和单变量归因，方法核心、GI-068～080 与 Production 状态保持原样。
 
-#### 当前执行入口｜v7r2 Thinking high Ark Flash
-
-当前候选入口为 [`GI-088 v7r2 Thinking high Ark Flash`](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v7r2-ark-flash/README.md)。v7 的两条 Thinking high 连续性轨迹已封存，并暴露“思考正常结束后可见正文仍可能为空”的可靠性阻断。v7r1 因 Prefix 与 JSON Output 的接口冲突判定 No-Go。v7r2 只改变模型平台，使用 Ark REST `deepseek-v4-flash-ga-260731`，继承 v7 的 Thinking high、JSON 输出、两项任务与恢复上限。本地实现、定向测试、Typecheck、Prisma、Lint 和 Production build 已通过；当前等待受控 Preview 部署、页面回读和 `0/2` 空白批次。
-
-以下 v1 内容继续作为本轮开发评测的方法与失败证据：
+#### 当前执行入口｜真人交互开发评测集 v1
 
 原“最小纯净评测包”计划由 [`GI-088 真人交互开发评测集 v1 与透明 Thinking 对照`](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/README.md)覆盖。历史计划、GI-087 资产和 GI-088 v0 运行证据继续保存，原上下文准入、任务结构、调用数和失败证据仍然有效。
 
@@ -342,11 +338,11 @@ Production 继续保持 `legacy + baseline`。任何 Preview 运行、Production
 
 ## 11. 当前交接
 
-- 当前状态：`GI-087 原六题已退出当前质量门；GI-088 v0～v6 保留分阶段证据；v7 两条真人轨迹已封存；v7r1 No-Go；v7r2 本地验证通过并等待 Preview 回读和 0/2 空白批次`。
+- 当前状态：`GI-087 原六题已退出当前质量门；GI-088 v0 作为历史失败批次保留，v1 在 8/12 主动提前结束并完成首批复盘；Thinking 模式探针 4/4 completed inconclusive，EMPTY_CONTENT 继续开放`。
 - 当前产品事实：`GI-067 / GI-068～080 保持关闭；GI-081 与 GI-083 保留诊断历史，GI-082 保留双分支历史计划证据；GI-084 保留开发与失败血缘`。
 - 当前诊断候选：`GI-087 的 workingTask 与 nextInquiry 任务结构继续保留；原组六题只按纯净起点、历史条件式探针和程序合同探针分别保存证据`。
-- 当前开放内容：`v7r2 Preview 可见正文可靠性、两条真人轨迹体验、PAUSE 程序风险、一次调用长期形态、两阶段触发证据、正式评测结果，以及状态、恢复、日志、Trace 和兼容接入方案`。
+- 当前开放内容：`high 技术失败恢复是否成为下一唯一主要影响因素、PAUSE 程序风险、一次调用长期形态、两阶段触发证据、正式评测结果，以及状态、恢复、日志、Trace 和兼容接入方案`。
 - 历史证据：`04m / 04n / 04o 保留为候选与失败证据，不承担当前产品或实现授权`。
 - 前一板块：`板块 6A｜首批人工卡完成第一轮校准`。
-- 后续路径：`v7r2 受控 Preview 与 0/2 空白批次 → 两条真人连续轨迹 → 可靠性门裁决 → v8 统一问前决策候选 → 正式资产扩建 → 板块 8`。
+- 后续路径：`v1 8/12 主动提前结束与复盘 → 产品负责人确认唯一主要影响因素 → 单变量新候选与静态验证 → 单独授权定向模型测试／Preview → 下一批真人评测 → 正式资产扩建 → 板块 8`。
 - Production：`legacy + baseline`。

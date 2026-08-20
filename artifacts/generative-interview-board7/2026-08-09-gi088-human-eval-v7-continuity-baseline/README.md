@@ -1,6 +1,6 @@
 # GI-088｜v7 连续性底座候选
 
-状态：`两条 Thinking high 真人连续轨迹已完成并封存；连续性底座通过，暴露可见正文可靠性阻断`
+状态：`Preview READY；0/2 空白批次已创建；等待产品负责人完成两条 Thinking high 真人验收`
 
 评测版本：`2026-08-09.gi088-human-eval-v7-continuity-baseline`
 
@@ -55,15 +55,20 @@ v7 只建设连续性底座，保持 Thinking high、模型、JSON mode、阶段
 
 ## 5. 证据与边界
 
+- [当前唯一问题台账](./gi088-current-issue-ledger.json) 完整继承 BC-01～12，并补充 v3～v6 问题、优先级、根因和目标版本。
+- [Manifest](./gi088-human-eval-v7-continuity-baseline-manifest.json) 记录版本、指纹、恢复分账和部署回读。
 - [静态验证](./gi088-v7-continuity-static-validation.md) 记录自动测试、类型、Lint、Prisma、构建和差异检查。
 - v6 完整对话只保存在 `artifacts/local-runtime` 私有目录；正式证据仅保存脱敏数量、指纹、结论和哈希。
 - 隐藏推理正文和密钥不会进入页面、Trace、导出或正式证据。
-- v8 统一问前决策继续排队，等待后续 v7r2 真人可靠性门。
+- v8 统一问前决策继续排队，只有 v7 真人通过后才进入开发与四项真人评测。
 
-## 6. 封存结论
+## 6. Preview 交付
 
-- 两条 Thinking high 真人连续轨迹已完成并封存；
-- 连续性工作台、认识修正、无限轨迹和自然长聊形成真人体验证据；
-- 当前阻断收敛为 Thinking high 正常完成思考后仍可能缺少可见正文，普通恢复也可能连续失败；
-- 完整对话、原始模型输出、Trace 和封存导出继续保存在本机受控目录；
-- Production 页面与 session API 保持关闭，Production 继续为 `legacy + baseline`。
+- 固定入口：`https://xingfuxitong-gi088-v7-continuity.vercel.app/preview/gi088-evaluation`；
+- deployment：`dpl_J5Z8B61j5GxycUNcxr1buPjkfQ8T`，状态 `READY`；
+- 空白批次：`542af23d-ba18-4ee7-bb89-c1250481f0b9`，`running`、`0/2`、revision `0`；
+- 候选、数据集和执行指纹均已逐项回读一致；
+- 整条轨迹调用上限为 `null`，每段用户原话最多三次调用；
+- Codex 创建、部署和回读期间模型调用为 `0`；
+- 页面标题已更新为 v7，工作台显示 Thinking high 单轨迹和“本轨迹不设上限”；
+- Production 页面与 session API 均回读 `404`，继续保持 `legacy + baseline`。

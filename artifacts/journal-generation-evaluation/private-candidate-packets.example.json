@@ -1,0 +1,84 @@
+{
+  "schema_version": "2.0",
+  "privacy_classification": "private_local_only",
+  "run": {
+    "mode": "real"
+  },
+  "execution_fingerprint": "<64 位本次执行 SHA-256>",
+  "candidate_set_id": "<本地候选集合指纹>",
+  "packets": [
+    {
+      "case_id": "private:<source_group_id>:<task_id>:<branch>",
+      "source_group_id": "<source_group_id>",
+      "source_file_sha256": "<64 位来源文件 SHA-256>",
+      "source_projection_sha256": "<64 位来源投影 SHA-256>",
+      "candidate_set_id": "<本地候选集合指纹>",
+      "candidates": [
+        {
+          "candidate_id": "<仅本地可见的候选身份 1>",
+          "daily_output": {
+            "title": "<候选标题>",
+            "record_cards": [
+              {
+                "record_card_id": "<记录卡 ID>",
+                "title": "<记录卡标题>",
+                "text": "<记录卡正文>",
+                "insight": "<有效认识，可为空>",
+                "source_refs": ["<原话消息 ID>"]
+              }
+            ],
+            "paragraphs": [
+              {
+                "text": "<候选正文段落 1>",
+                "source_refs": ["<原话消息 ID>"],
+                "record_card_refs": ["<记录卡 ID>"]
+              }
+            ]
+          },
+          "program_check": {
+            "admitted": true,
+            "metrics": {},
+            "failures": []
+          },
+          "judge": {
+            "status": "not_run",
+            "summary": "Judge 尚未运行"
+          }
+        },
+        {
+          "candidate_id": "<仅本地可见的候选身份 2>",
+          "daily_output": {
+            "title": "<候选标题>",
+            "record_cards": [
+              {
+                "record_card_id": "<记录卡 ID>",
+                "title": "<记录卡标题>",
+                "text": "<记录卡正文>",
+                "insight": "",
+                "source_refs": ["<原话消息 ID>"]
+              }
+            ],
+            "paragraphs": [
+              {
+                "text": "<候选正文段落 1>",
+                "source_refs": ["<原话消息 ID>"],
+                "record_card_refs": ["<记录卡 ID>"]
+              }
+            ]
+          },
+          "program_check": {
+            "admitted": false,
+            "metrics": {},
+            "failures": [
+              {
+                "code": "<检查码>",
+                "message": "<阻断原因>",
+                "refs": ["<规则 ID>"]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

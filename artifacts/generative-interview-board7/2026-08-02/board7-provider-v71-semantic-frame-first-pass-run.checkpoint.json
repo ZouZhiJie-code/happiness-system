@@ -1,0 +1,346 @@
+{
+  "evaluation": "board7_provider_v71_semantic_frame_first_pass",
+  "datasetVersion": "2026-08-01.board7-semantic-frame-v4-offline-confirmation-v1",
+  "caseFingerprint": "ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62",
+  "scopeFingerprint": "960eae47ec6b0026e44fed960520fc92b3cc6c6faf22f4aceae778140c28ed98",
+  "candidateVersions": {
+    "strategy": "5.49.0",
+    "semanticPrompt": "2026-08-01.event-centered-generative-v71-semantic-skeleton",
+    "visiblePrompt": "2026-08-01.event-centered-generative-v71-visible",
+    "fewShot": "quality-patterns.2026-08-01.v28",
+    "semanticArtifact": "event-centered-semantic-plan.v4",
+    "angleCard": "2.12.0"
+  },
+  "runtimeConfig": {
+    "model": "deepseek-v4-flash",
+    "temperature": 0.2,
+    "maxTokens": 1500,
+    "timeoutMs": 12000,
+    "maxRequestsPerTurn": 4,
+    "maxTechnicalRetriesPerStage": 1,
+    "architecture": "two_call",
+    "thinking": "disabled"
+  },
+  "reservationId": "78dd2447-b4f9-4863-bdd7-f6f0c04e24f2",
+  "approvalPath": "/Users/zouzhijie/Desktop/Happiness-system-codex/artifacts/generative-interview-board7/2026-08-02/board7-provider-v71-semantic-frame-first-pass-approval.json",
+  "createdAt": "2026-08-02T06:41:07Z",
+  "completedAt": null,
+  "runs": [
+    {
+      "caseId": "SF4-F-READY-01",
+      "angle": "feeling",
+      "mode": "guided_reflection",
+      "expected": {
+        "state": "ready",
+        "action": "complete",
+        "semanticFrame": {
+          "units": [
+            {
+              "id": "u1",
+              "role": "experience",
+              "evidenceRefs": [
+                "new:1",
+                "new:2",
+                "new:3"
+              ]
+            }
+          ],
+          "relation": null
+        },
+        "questionIntent": null,
+        "limitReason": null,
+        "visibleQuality": {
+          "responseKind": "completion",
+          "perspective": "second_person_or_neutral",
+          "thinkingSummary": "forbidden",
+          "mainField": "insight",
+          "mustCover": [
+            "触壁摘镜",
+            "笑和肩膀放松",
+            "松快"
+          ],
+          "mustAvoid": [
+            "继续追问",
+            "训练建议",
+            "克服恐惧",
+            "长期能力",
+            "semanticFrame 或 unit 等内部字段"
+          ]
+        }
+      },
+      "input": {
+        "currentQuestion": "真正游完以后，你最先有什么变化？",
+        "currentUserText": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了。那一刻就是松快。",
+        "conversationContext": [
+          {
+            "user": "我给自己定了今天连续游十个来回的目标，前九个来回都在数呼吸。",
+            "assistantUnderstanding": "你一直靠数呼吸把自己带到最后一个来回。",
+            "assistantQuestion": "真正游完以后，你最先有什么变化？"
+          }
+        ],
+        "evidenceCatalog": [
+          {
+            "ref": "new:1",
+            "source": "current_user",
+            "quote": "手碰到池壁那一下，我摘下泳镜"
+          },
+          {
+            "ref": "new:2",
+            "source": "current_user",
+            "quote": "才发现自己在笑，肩膀也松了"
+          },
+          {
+            "ref": "new:3",
+            "source": "current_user",
+            "quote": "那一刻就是松快"
+          }
+        ]
+      },
+      "semantic": {
+        "artifact": {
+          "artifactVersion": "event-centered-semantic-plan.v4",
+          "inputBinding": {
+            "phase": "guided_reflection",
+            "activeAngle": "feeling",
+            "currentQuestionTarget": "ten_laps_first_experience_change",
+            "planPromptHash": "e9093d3e2a8bccb8dfe12f0f659d6f98faa658d3a3c158539f83c3f825b50960",
+            "semanticPlanHash": "80f3d3f8b38819957511612bbfc686d10b847c09a3dea2af8a2fd7ded28bbef5"
+          },
+          "understanding": {
+            "eventBoundary": "current_event",
+            "coreEventIdentifiable": true,
+            "answerStatus": "answered",
+            "factDeltas": [
+              {
+                "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了"
+              },
+              {
+                "statement": "那一刻就是松快",
+                "scope": "current_event",
+                "stance": "affirmed",
+                "kind": "event_detail",
+                "quote": "那一刻就是松快"
+              }
+            ],
+            "correctionOrBoundary": null,
+            "tentativeInterpretation": {
+              "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了，同时那一刻就是松快",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ]
+            },
+            "eventOptions": []
+          },
+          "decisionState": "ready",
+          "semanticFrame": {
+            "units": [
+              {
+                "id": "u1",
+                "role": "event",
+                "evidenceRefs": [
+                  "new:1"
+                ]
+              },
+              {
+                "id": "u2",
+                "role": "experience",
+                "evidenceRefs": [
+                  "new:2"
+                ]
+              }
+            ],
+            "relation": {
+              "type": "coexistence",
+              "fromUnitId": "u1",
+              "toUnitId": "u2"
+            }
+          },
+          "providerQuestionIntent": null,
+          "providerLimitReason": null,
+          "understandingCard": {
+            "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了，同时那一刻就是松快",
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ]
+          },
+          "questionIntent": null,
+          "limitReason": null,
+          "semanticPlan": {
+            "action": "complete",
+            "activeAngle": "feeling",
+            "outcomeAssessment": {
+              "state": "ready",
+              "origin": "ai_synthesized",
+              "basis": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了，同时那一刻就是松快",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ],
+              "missingUnderstanding": null
+            },
+            "evidenceRefs": [
+              "new:1",
+              "new:2"
+            ],
+            "insightKind": "connection",
+            "selectedTargetId": null,
+            "expectedUnderstandingDelta": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了，同时那一刻就是松快",
+            "tentativeInterpretation": {
+              "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了，同时那一刻就是松快",
+              "supportEvidenceRefs": [
+                "new:1",
+                "new:2"
+              ]
+            },
+            "stopReason": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了，同时那一刻就是松快",
+            "cognitiveAction": null,
+            "microgoalDelta": null,
+            "realizationContract": {
+              "responseCore": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了，同时那一刻就是松快",
+              "summaryAnchors": [
+                "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了"
+              ]
+            }
+          },
+          "evidenceStatements": [
+            {
+              "ref": "new:1",
+              "statement": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了",
+              "sourceText": "手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了"
+            },
+            {
+              "ref": "new:2",
+              "statement": "那一刻就是松快",
+              "sourceText": "那一刻就是松快"
+            }
+          ],
+          "strategyVersion": "5.49.0",
+          "angleCardVersion": "2.12.0",
+          "fewShotVersion": "quality-patterns.2026-08-01.v28",
+          "fewShotIds": [
+            "CAL-FEELING-GUIDED:user-articulated",
+            "CAL-FEELING-GUIDED:ai-synthesized",
+            "CAL-FEELING-GUIDED:ask"
+          ],
+          "promptVersion": "2026-08-01.event-centered-generative-v71-semantic-skeleton",
+          "promptLineage": [
+            {
+              "promptKey": "interview.event_centered.generative_semantic_plan",
+              "promptVersion": "2026-08-01.event-centered-generative-v71-semantic-skeleton",
+              "resolvedPromptHash": "e9093d3e2a8bccb8dfe12f0f659d6f98faa658d3a3c158539f83c3f825b50960"
+            }
+          ]
+        },
+        "technicalComplete": true,
+        "validationIssues": [],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "extract",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": true,
+            "latencyMs": 533,
+            "tokenUsage": {
+              "promptTokens": 3272,
+              "completionTokens": 330,
+              "totalTokens": 3602,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 3272
+            },
+            "errorCode": null,
+            "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"手碰到池壁那一下，我摘下泳镜，才发现自己在笑，肩膀也松了\"\n      },\n      {\n        \"statement\": \"那一刻就是松快\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"那一刻就是松快\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"state\": \"ready\"\n  },\n  \"semanticFrame\": {\n    \"units\": [\n      {\n        \"id\": \"u1\",\n        \"role\": \"event\",\n        \"evidenceRefs\": [\"new:1\"]\n      },\n      {\n        \"id\": \"u2\",\n        \"role\": \"experience\",\n        \"evidenceRefs\": [\"new:2\"]\n      }\n    ],\n    \"relation\": {\n      \"type\": \"coexistence\",\n      \"fromUnitId\": \"u1\",\n      \"toUnitId\": \"u2\"\n    }\n  },\n  \"questionIntent\": null,\n  \"limitReason\": null\n}"
+          }
+        ]
+      },
+      "visible": {
+        "turn": null,
+        "technicalComplete": false,
+        "response": null,
+        "thinkingSummary": null,
+        "validationIssues": [
+          "INVALID_SCHEMA",
+          "root:invalid_union"
+        ],
+        "qualityDiagnostics": [],
+        "attempts": [
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": 865,
+            "tokenUsage": {
+              "promptTokens": 718,
+              "completionTokens": 51,
+              "totalTokens": 769,
+              "promptCacheHitTokens": 0,
+              "promptCacheMissTokens": 718
+            },
+            "errorCode": "INVALID_SCHEMA",
+            "errorMessage": "root:invalid_union",
+            "responseText": "{\"status\":\"expressible\",\"thinkingSummary\":null,\"question\":null,\"insight\":\"手碰到池壁那一下，你摘下泳镜，才发现自己在笑，肩膀也松了，那一刻就是松快。\",\"honestLimit\":null}"
+          },
+          {
+            "stage": "question",
+            "attempt": 1,
+            "provider": "volcengine-ark",
+            "success": false,
+            "latencyMs": 271,
+            "tokenUsage": {
+              "promptTokens": 718,
+              "completionTokens": 51,
+              "totalTokens": 769,
+              "promptCacheHitTokens": 640,
+              "promptCacheMissTokens": 78
+            },
+            "errorCode": "INVALID_SCHEMA",
+            "errorMessage": "root:invalid_union",
+            "responseText": "{\"status\":\"expressible\",\"thinkingSummary\":null,\"question\":null,\"insight\":\"你手碰到池壁那一下，摘下泳镜，才发现自己在笑，肩膀也松了，那一刻就是松快。\",\"honestLimit\":null}"
+          }
+        ]
+      },
+      "latencyMs": 5447
+    }
+  ],
+  "requestUsage": {
+    "readOnlyModelsPreflightRequests": 1,
+    "attempts": [
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "semantic",
+        "attemptIndex": 1,
+        "status": "valid",
+        "reservedAt": "2026-08-02T06:46:08.801Z",
+        "settledAt": "2026-08-02T06:46:11.303Z",
+        "errorCode": null
+      },
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "visible",
+        "attemptIndex": 1,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T06:46:11.320Z",
+        "settledAt": "2026-08-02T06:46:12.833Z",
+        "errorCode": "INVALID_SCHEMA"
+      },
+      {
+        "caseId": "SF4-F-READY-01",
+        "stage": "visible",
+        "attemptIndex": 2,
+        "status": "technical_failure",
+        "reservedAt": "2026-08-02T06:46:12.836Z",
+        "settledAt": "2026-08-02T06:46:14.245Z",
+        "errorCode": "INVALID_SCHEMA"
+      }
+    ]
+  },
+  "gate": "pending_codex_review",
+  "stopReason": null
+}

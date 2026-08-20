@@ -19,9 +19,9 @@ export function RegisterPageClient({ nextPath = null }: RegisterPageClientProps)
   return (
     <AuthFormShell
       eyebrow="注册"
-      title="先建立账户，再把每天的记录真正归到自己名下。"
-      description="注册完成后，后续的访谈、日志、评分和画像都会和当前账户绑定，支持基础隐私隔离。"
-      footer="创建账户即建立独立的数据空间。"
+      title="创建你的 Daily Light 账户"
+      description="记录、日记和回看内容会保存在这个账户中。"
+      footer="注册完成后会直接进入记录页。"
     >
       <RegisterForm
         nextPath={nextPath}
@@ -54,8 +54,8 @@ export function RegisterPageClient({ nextPath = null }: RegisterPageClientProps)
                 : payload?.error === "USERNAME_ALREADY_EXISTS"
                   ? "这个用户名已经被占用"
                   : payload?.error === "AUTH_STORAGE_NOT_READY"
-                    ? "注册暂时不可用，请先完成数据库初始化"
-                  : "注册失败，请重试";
+                    ? "注册暂时不可用，请稍后再试"
+                    : "注册失败，请重试";
             setError(nextError);
             throw new Error(nextError);
           }
@@ -64,7 +64,7 @@ export function RegisterPageClient({ nextPath = null }: RegisterPageClientProps)
             setLocalAuthUserId(payload.user.id);
           }
           setError(null);
-          router.push(normalizeAuthRedirectPath(nextPath));
+          router.replace(normalizeAuthRedirectPath(nextPath));
           router.refresh();
         }}
       />

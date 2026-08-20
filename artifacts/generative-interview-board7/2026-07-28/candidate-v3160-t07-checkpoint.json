@@ -1,0 +1,232 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T07",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "guided_reflection",
+    "activeAngle": "action",
+    "lastCompletedAngle": null,
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "active",
+        "questionOpportunityCount": 1,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [
+          "关键动作顺序"
+        ],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": {
+      "opportunityNumber": 1,
+      "angle": "action",
+      "target": "关键动作顺序",
+      "surfaceLevel": "open_anchor",
+      "repairCount": 0,
+      "assistantMessageId": null,
+      "cognitiveAction": "anchor_specific"
+    },
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": "3.16.0",
+    "currentMicrogoal": null
+  },
+  "facts": [
+    {
+      "id": "T07-fact-1",
+      "eventId": "evaluation-event-T07",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-1",
+      "createdByRevisionId": null,
+      "statement": "用户想重新画画",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T07-1",
+          "factId": "T07-fact-1",
+          "sourceTurnId": "evaluation-turn-1",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-1",
+          "role": "direct_expression",
+          "quote": "我想重新画画",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T07-fact-2",
+      "eventId": "evaluation-event-T07",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-2",
+      "createdByRevisionId": null,
+      "statement": "整个下午都在整理参考图",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T07-2",
+          "factId": "T07-fact-2",
+          "sourceTurnId": "evaluation-turn-2",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-2",
+          "role": "direct_expression",
+          "quote": "结果整个下午都在整理参考图",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T07-fact-3",
+      "eventId": "evaluation-event-T07",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-3",
+      "createdByRevisionId": null,
+      "statement": "一笔也没画",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T07-3",
+          "factId": "T07-fact-3",
+          "sourceTurnId": "evaluation-turn-3",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-3",
+          "role": "direct_expression",
+          "quote": "一笔也没画",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "recentTurns": [
+    {
+      "user": "我想重新画画，结果整个下午都在整理参考图，一笔也没画。",
+      "assistantUnderstanding": "你想重新画画，但整个下午都在整理参考图，一笔也没画。",
+      "assistantQuestion": "你先做了哪个整理动作，后来又怎样继续下去？"
+    }
+  ],
+  "currentQuestion": "你先做了哪个整理动作，后来又怎样继续下去？",
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "我想重新画画，结果整个下午都在整理参考图，一笔也没画。",
+      "visibleResponse": "你想重新画画，但整个下午都在整理参考图，一笔也没画。\n你先做了哪个整理动作，后来又怎样继续下去？",
+      "finalAction": "ask",
+      "selectedTarget": "关键动作顺序",
+      "cognitiveAction": "anchor_specific",
+      "evidenceUsed": [
+        "T07-fact-1",
+        "T07-fact-2",
+        "T07-fact-3"
+      ],
+      "factDeltas": [
+        {
+          "id": "T07-fact-1",
+          "statement": "用户想重新画画",
+          "quote": "我想重新画画"
+        },
+        {
+          "id": "T07-fact-2",
+          "statement": "整个下午都在整理参考图",
+          "quote": "结果整个下午都在整理参考图"
+        },
+        {
+          "id": "T07-fact-3",
+          "statement": "一笔也没画",
+          "quote": "一笔也没画"
+        }
+      ],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 670,
+          "tokenUsage": {
+            "promptTokens": 2871,
+            "completionTokens": 363,
+            "totalTokens": 3234,
+            "promptCacheHitTokens": 2176,
+            "promptCacheMissTokens": 695
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户想重新画画\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我想重新画画\"\n      },\n      {\n        \"statement\": \"整个下午都在整理参考图\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"结果整个下午都在整理参考图\"\n      },\n      {\n        \"statement\": \"一笔也没画\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"一笔也没画\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"anchor_specific\",\n    \"selectedTarget\": \"关键动作顺序\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"明确用户先做了哪个整理动作，以及后续如何继续\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你想重新画画，但整个下午都在整理参考图，一笔也没画。\",\n    \"question\": \"你先做了哪个整理动作，后来又怎样继续下去？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 3155,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2871,
+          "completionTokens": 363,
+          "totalTokens": 3234,
+          "promptCacheHitTokens": 2176,
+          "promptCacheMissTokens": 695
+        },
+        "estimatedCost": 0.0002050328
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    }
+  ],
+  "awaitingReply": true,
+  "completed": false,
+  "completionReason": null,
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

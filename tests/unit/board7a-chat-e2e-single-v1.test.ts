@@ -73,7 +73,7 @@ describe("GI-083 v1 真实用户直连工作台", () => {
 
   it("网页内开始只创建唯一批准、运行指纹和 A0", () => {
     const checkpoint = createBoard7aChatE2eV1Checkpoint({
-      trajectoryId: "00000000-0000-4000-8000-000000000201",
+      trajectoryId: "8e02c0e6-4e0f-4c83-84f6-8ec0d7cb8507",
       approvedAt: "2026-08-07T04:00:00.000Z"
     });
     expect(checkpoint.approval).toMatchObject({

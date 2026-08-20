@@ -11,7 +11,7 @@ type CardProps<T extends ElementType> = {
 
 /**
  * 唯一的卡片原语。底板内最多一层；卡片内部禁止再嵌套 border+bg 容器，
- * 分区改用 SectionHeading / Divider / 留白（见 docs/design/ui-conventions.md）。
+ * 分区优先使用文字层级与留白；Divider 只用于重复列表或明确边界。
  */
 export function Card<T extends ElementType = "div">({
   as,

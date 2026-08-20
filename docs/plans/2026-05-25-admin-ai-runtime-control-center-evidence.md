@@ -94,7 +94,7 @@
 
 - 结果：成功
 - 关键前置：
-  - 新 API Key：`ark-redacted-operational-id-e7d1d`
+  - 新 API Key：`<redacted-ark-api-key>`
   - 控制台新建 embedding endpoint：`ep-20260525214324-4nnbs`
   - 该 endpoint 实际绑定模型：`doubao-embedding-vision-250615`
   - 官方直连验证表明：

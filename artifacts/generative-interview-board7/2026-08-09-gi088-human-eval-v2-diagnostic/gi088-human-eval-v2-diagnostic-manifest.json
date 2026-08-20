@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "1.0",
+  "status": "historical_diagnostic_completed_superseded_by_v3_empty_recovery",
+  "evaluation": {
+    "id": "gi088_human_eval_v2_diagnostic",
+    "version": "2026-08-09.gi088-human-eval-v2-diagnostic",
+    "serviceVersion": "2026-08-09.gi088-diagnostic-service-v2",
+    "effectiveCandidateFingerprint": "58074d31e96d18c2fd196a344c6f471a98024897f6578b97ed8288913308b884",
+    "datasetFingerprint": "ab74f00de4fb07315045ac5f2d7aff58fc9d8585fe3a00cf18cb2e6d724c7052",
+    "executionFingerprint": "96a555c6ecef0efd8ff2946bbf7ec9c7ee6b717157520a1e6944bb888b29f943"
+  },
+  "historicalSource": {
+    "evaluationVersion": "2026-08-09.gi088-human-eval-v1",
+    "executionFingerprint": "4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2",
+    "snapshotSha256": "130efc938dc2a7fa3d68a7703390cf226b8d9c3d87451417dad677b2f235f0d5",
+    "databaseStatus": "running",
+    "completedTasks": 8,
+    "totalTasks": 12,
+    "mutated": false
+  },
+  "runnerFoundation": {
+    "batchTerminalStates": [
+      "sealed",
+      "early_stopped"
+    ],
+    "partialExportVersion": "2026-08-09.gi088-readonly-export-v0.2",
+    "targetTriggerRequired": true,
+    "targetTriggerValues": [
+      "triggered",
+      "not_triggered",
+      "blocked_by_technical_failure"
+    ],
+    "taskSpecificTriggerPrompts": 12,
+    "taskSpecificCriteria": 12,
+    "providerDiagnostics": [
+      "headersLatencyMs",
+      "bodyLatencyMs",
+      "totalLatencyMs",
+      "timeoutStage",
+      "abortSource",
+      "upstreamRequestId",
+      "httpStatus",
+      "responseModel",
+      "choiceCount",
+      "contentType",
+      "contentLength",
+      "reasoningType"
+    ]
+  },
+  "emptyContentProbe": {
+    "version": "2026-08-09.gi088-empty-content-response-format-probe-v1",
+    "fingerprint": "7c0fbbb98bc9c3804a5614e90acd0ecb4b13f023e3b96ddf68820a241c6c9b65",
+    "cases": [
+      "E1",
+      "E2",
+      "E3"
+    ],
+    "variants": [
+      "json_object",
+      "text_json"
+    ],
+    "maximumCalls": 6,
+    "automaticRetries": 0,
+    "modelCallsCompleted": 6,
+    "authorized": true,
+    "authorizationId": "7c6d9421-9595-4ba2-8c52-0afeb890f7e3",
+    "result": {
+      "jsonObjectValid": 2,
+      "jsonObjectEmptyContent": 1,
+      "textJsonValid": 1,
+      "textJsonEmptyContent": 1,
+      "textJsonSchemaProtected": 1,
+      "removeProviderJsonModeGate": "failed",
+      "codexInitialAssessment": "reject_removing_response_format",
+      "productOwnerJudgment": "confirmed_completed_no_go_retain_json_mode",
+      "confirmedRootCause": null,
+      "emptyContentProblem": "open"
+    }
+  },
+  "thinkingModeProbe": {
+    "version": "2026-08-09.gi088-empty-content-thinking-mode-probe-v1",
+    "fingerprint": "7179da479b614c6380709fc1094034f489d4803d11741b852522616dee7e3498",
+    "status": "completed_inconclusive_no_empty_reproduction_4_of_4",
+    "cases": [
+      "E1",
+      "E3"
+    ],
+    "variants": [
+      "high",
+      "disabled"
+    ],
+    "responseFormat": "json_object",
+    "maxTokensPolicy": "provider_default",
+    "temperaturePolicy": "omitted_for_both_arms",
+    "timeoutMs": 30000,
+    "callOrder": [
+      "E1:high",
+      "E1:disabled",
+      "E3:disabled",
+      "E3:high"
+    ],
+    "maximumCalls": 4,
+    "technicalRetries": 0,
+    "qualityRetries": 0,
+    "fallbackCalls": 0,
+    "modelCallsCompleted": 4,
+    "authorized": true,
+    "authorizationConsumed": true,
+    "authorizationId": "981e1baa-7a44-4843-92d5-a7d11f63f5ec",
+    "disabledArmPurpose": "diagnostic_only",
+    "productBaseline": "retain_thinking_high",
+    "result": {
+      "highValid": 2,
+      "highEmptyContent": 0,
+      "disabledValid": 2,
+      "disabledEmptyContent": 0,
+      "supportsThinkingModeAsPrimaryInfluenceGate": "failed_no_high_empty_content_reproduction",
+      "causalAttributionToThinkingMode": "not_confirmed",
+      "confirmedRootCause": null,
+      "emptyContentProblem": "open"
+    },
+    "manifest": "../2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-manifest.json",
+    "resultAsset": "../2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-result.json",
+    "decisionAsset": "../2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-decision.md"
+  },
+  "queuedAfterEmptyContent": [
+    "timeout_root_cause_and_recovery",
+    "output_contract",
+    "content_and_boundary",
+    "full_12_task_24_trajectory_batch"
+  ],
+  "supersededBy": {
+    "decision": "stop_same_high_reproduction_probe_and_implement_visible_answer_auto_recovery",
+    "evaluationVersion": "2026-08-09.gi088-human-eval-v3-empty-recovery",
+    "executionFingerprint": "3b79fe68ecdb541b867b8c78ff85bf3f6fba222333523e36e47f4f4fa170d23b",
+    "artifact": "../2026-08-09-gi088-human-eval-v3-empty-recovery/README.md"
+  },
+  "preview": {
+    "deployed": false,
+    "newBatchCreated": false
+  },
+  "production": {
+    "changed": false,
+    "mode": "legacy + baseline"
+  }
+}

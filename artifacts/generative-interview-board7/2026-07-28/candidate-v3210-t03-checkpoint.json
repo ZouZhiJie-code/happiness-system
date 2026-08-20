@@ -1,0 +1,232 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T03",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "guided_reflection",
+    "activeAngle": "thought",
+    "lastCompletedAngle": null,
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "active",
+        "questionOpportunityCount": 1,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [
+          "拒绝时的具体依据"
+        ],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": {
+      "opportunityNumber": 1,
+      "angle": "thought",
+      "target": "拒绝时的具体依据",
+      "surfaceLevel": "open_anchor",
+      "repairCount": 0,
+      "assistantMessageId": null,
+      "cognitiveAction": "anchor_specific"
+    },
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": "3.21.0",
+    "currentMicrogoal": null
+  },
+  "facts": [
+    {
+      "id": "T03-fact-1",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-1",
+      "createdByRevisionId": null,
+      "statement": "用户拒绝了一个机会",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "event_detail",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-1",
+          "factId": "T03-fact-1",
+          "sourceTurnId": "evaluation-turn-1",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-1",
+          "role": "direct_expression",
+          "quote": "我明明自己拒绝了",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-2",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-2",
+      "createdByRevisionId": null,
+      "statement": "看到同事接手后感到羡慕",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "inner_experience",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-2",
+          "factId": "T03-fact-2",
+          "sourceTurnId": "evaluation-turn-2",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-2",
+          "role": "direct_expression",
+          "quote": "看到同事接手还是很羡慕",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "T03-fact-3",
+      "eventId": "evaluation-event-T03",
+      "createdBranchSessionId": "evaluation-branch",
+      "pathAnchorMessageId": "evaluation-message-3",
+      "createdByRevisionId": null,
+      "statement": "用户怀疑自己是否选错了",
+      "scope": "current_event",
+      "stance": "affirmed",
+      "kind": "stated_interpretation",
+      "origin": "user_expression",
+      "createdAt": "2026-07-28T00:00:00.000Z",
+      "evidence": [
+        {
+          "id": "evaluation-evidence-T03-3",
+          "factId": "T03-fact-3",
+          "sourceTurnId": "evaluation-turn-3",
+          "contextMessageId": null,
+          "pathAnchorMessageId": "evaluation-message-3",
+          "role": "direct_expression",
+          "quote": "感觉自己是不是选错了",
+          "createdAt": "2026-07-28T00:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "recentTurns": [
+    {
+      "user": "我明明自己拒绝了，看到同事接手还是很羡慕，感觉自己是不是选错了。",
+      "assistantUnderstanding": "你拒绝了一个机会，看到同事接手后感到羡慕，开始怀疑自己是否选错了。",
+      "assistantQuestion": "当时支撑你拒绝的一项具体情况是什么？"
+    }
+  ],
+  "currentQuestion": "当时支撑你拒绝的一项具体情况是什么？",
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "我明明自己拒绝了，看到同事接手还是很羡慕，感觉自己是不是选错了。",
+      "visibleResponse": "你拒绝了一个机会，看到同事接手后感到羡慕，开始怀疑自己是否选错了。\n当时支撑你拒绝的一项具体情况是什么？",
+      "finalAction": "ask",
+      "selectedTarget": "拒绝时的具体依据",
+      "cognitiveAction": "anchor_specific",
+      "evidenceUsed": [
+        "T03-fact-1",
+        "T03-fact-2",
+        "T03-fact-3"
+      ],
+      "factDeltas": [
+        {
+          "id": "T03-fact-1",
+          "statement": "用户拒绝了一个机会",
+          "quote": "我明明自己拒绝了"
+        },
+        {
+          "id": "T03-fact-2",
+          "statement": "看到同事接手后感到羡慕",
+          "quote": "看到同事接手还是很羡慕"
+        },
+        {
+          "id": "T03-fact-3",
+          "statement": "用户怀疑自己是否选错了",
+          "quote": "感觉自己是不是选错了"
+        }
+      ],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": true,
+          "latencyMs": 405,
+          "tokenUsage": {
+            "promptTokens": 2847,
+            "completionTokens": 415,
+            "totalTokens": 3262,
+            "promptCacheHitTokens": 1920,
+            "promptCacheMissTokens": 927
+          },
+          "errorCode": null,
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"current_event\",\n    \"coreEventIdentifiable\": true,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [\n      {\n        \"statement\": \"用户拒绝了一个机会\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"event_detail\",\n        \"quote\": \"我明明自己拒绝了\"\n      },\n      {\n        \"statement\": \"看到同事接手后感到羡慕\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"inner_experience\",\n        \"quote\": \"看到同事接手还是很羡慕\"\n      },\n      {\n        \"statement\": \"用户怀疑自己是否选错了\",\n        \"scope\": \"current_event\",\n        \"stance\": \"affirmed\",\n        \"kind\": \"stated_interpretation\",\n        \"quote\": \"感觉自己是不是选错了\"\n      }\n    ],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": []\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"anchor_specific\",\n    \"selectedTarget\": \"拒绝时的具体依据\",\n    \"evidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"],\n    \"microgoalDelta\": {\n      \"operation\": \"start\",\n      \"statement\": \"将当前判断与具体依据连接\",\n      \"supportEvidenceRefs\": [\"new:1\", \"new:2\", \"new:3\"]\n    },\n    \"expectedValue\": \"明确用户拒绝该机会时依据的一项具体事实或衡量点\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你拒绝了一个机会，看到同事接手后感到羡慕，开始怀疑自己是否选错了。\",\n    \"question\": \"当时支撑你拒绝的一项具体情况是什么？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4138,
+        "attempts": 1,
+        "tokenUsage": {
+          "promptTokens": 2847,
+          "completionTokens": 415,
+          "totalTokens": 3262,
+          "promptCacheHitTokens": 1920,
+          "promptCacheMissTokens": 927
+        },
+        "estimatedCost": 0.000251356
+      },
+      "validationIssues": [],
+      "runtimeError": null
+    }
+  ],
+  "awaitingReply": true,
+  "completed": false,
+  "completionReason": null,
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

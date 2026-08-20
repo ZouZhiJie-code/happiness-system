@@ -1,0 +1,959 @@
+{
+  "reportVersion": "board8.candidate-aware.v4",
+  "generatedAt": "2026-08-04T04:00:51.928Z",
+  "window": {
+    "productionEnabledAt": "2026-08-04T03:54:57.218Z",
+    "observedUntil": "2026-08-04T04:00:09.000Z"
+  },
+  "selection": {
+    "rule": "first_content_after_window_then_root_session_dedupe",
+    "mode": "preview",
+    "candidateStartedAt": "2026-08-04T03:54:57.218Z",
+    "candidateStrategyVersion": "5.57.0",
+    "rootSessionFilterApplied": true,
+    "requested": 8,
+    "selected": 8,
+    "complete": true
+  },
+  "funnel": {
+    "event_centered_entry_exposed": 0,
+    "event_centered_entry_opened": 0,
+    "event_centered_first_content_submitted": 8,
+    "event_centered_response_completed": 34,
+    "event_centered_checkpoint_reached": 20,
+    "event_journal_generation_started": 8,
+    "event_journal_generated": 8,
+    "event_journal_saved": 8,
+    "event_centered_turn_fallback": 10,
+    "event_centered_session_abandoned": 0
+  },
+  "latency": {
+    "sampleCount": 34,
+    "medianMs": 50,
+    "p90Ms": 25389,
+    "releaseBand": "repair"
+  },
+  "interactiveLatency": {
+    "sampleCount": 34,
+    "medianMs": 87,
+    "p90Ms": 25416,
+    "releaseBand": "repair"
+  },
+  "modelLatency": {
+    "sampleCount": 17,
+    "medianMs": 14826,
+    "p90Ms": 27771,
+    "releaseBand": "repair"
+  },
+  "nonModelLatency": {
+    "sampleCount": 17,
+    "medianMs": 66,
+    "p90Ms": 79,
+    "releaseBand": "pass"
+  },
+  "fallback": {
+    "total": 10,
+    "eventRecordingTurnCount": 8,
+    "attemptedGenerativeTurnCount": 17,
+    "generativeRepairCount": 4,
+    "localDeterministicRepairCount": 0,
+    "deterministicControlCount": 9,
+    "runtimeFallbackCount": 10,
+    "providerAttemptCount": 46,
+    "deterministicAttemptCount": 24,
+    "errorCodeDistribution": {
+      "SERVICE_UNAVAILABLE_ERROR": 4,
+      "INVALID_SCHEMA": 1,
+      "visible_turn_uses_unquoted_user_first_person": 1,
+      "TIMEOUT": 2
+    },
+    "maxConsecutive": 5,
+    "recent20EligibleTurns": 17,
+    "recent20FallbackCount": 10,
+    "recent20FallbackRate": 0.5882352941176471
+  },
+  "journal": {
+    "generatedSessions": 8,
+    "savedSessions": 8,
+    "savedWithin24Hours": 8,
+    "savedWithin24HoursRate": 1,
+    "consecutiveUnrecoveredFailures": 0,
+    "aiAcceptedSessions": 8,
+    "titleRepairedSessions": 0,
+    "fullTextFallbackSessions": 0
+  },
+  "rollbackSignals": {
+    "firstTenFallbackThresholdReached": true,
+    "recent20FallbackRateThresholdReached": false,
+    "journalFailureThresholdReached": false
+  },
+  "sessions": [
+    {
+      "sequence": 1,
+      "rootSessionId": "b7a37a4a-8701-4175-b8b5-53a4c6acc9ab",
+      "firstContentSubmittedAt": "2026-08-04T03:54:57.284Z",
+      "entryDate": "2026-08-03",
+      "source": "baseline",
+      "angle": "feeling",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 3,
+        "event_centered_checkpoint_reached": 2,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "eventRecordingTurnCount": 1,
+      "attemptedGenerativeTurnCount": 1,
+      "generativeRepairCount": 1,
+      "localDeterministicRepairCount": 0,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 1,
+      "providerAttemptCount": 4,
+      "deterministicAttemptCount": 3,
+      "generativeErrorCodes": [
+        "SERVICE_UNAVAILABLE_ERROR"
+      ],
+      "responseLatency": {
+        "sampleCount": 3,
+        "medianMs": 50,
+        "p90Ms": 12113,
+        "releaseBand": "pass"
+      },
+      "interactiveLatency": {
+        "sampleCount": 3,
+        "medianMs": 87,
+        "p90Ms": 12146,
+        "releaseBand": "pass"
+      },
+      "modelLatency": {
+        "sampleCount": 1,
+        "medianMs": 12078,
+        "p90Ms": 12078,
+        "releaseBand": "repair"
+      },
+      "nonModelLatency": {
+        "sampleCount": 1,
+        "medianMs": 68,
+        "p90Ms": 68,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "3f49936a-9259-4519-896b-f7716bb49974",
+        "entryId": "3f0e92cf-a155-4585-8a2e-d2f2b40e6fd5",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-04T03:55:13.606Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T03:55:09.543Z",
+          "stage": "interview_turn",
+          "errorCode": "SERVICE_UNAVAILABLE_ERROR",
+          "traceId": "0fc5d45f-535e-40d0-a87f-2fca6d5c4218"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T03:55:09.556Z",
+          "stage": "visible",
+          "errorCode": "SERVICE_UNAVAILABLE_ERROR",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "f916f4a1-e719-489c-a9aa-9493d0f10137",
+        "3ea2c4e8-a814-44ea-a847-f4383e5defb5",
+        "0fc5d45f-535e-40d0-a87f-2fca6d5c4218",
+        "e6edcab3-dc80-48c8-bfc8-2fc74c928d2b"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 2,
+      "rootSessionId": "c5c6e534-9616-4a72-90ed-a61f812b5ea8",
+      "firstContentSubmittedAt": "2026-08-04T03:55:13.637Z",
+      "entryDate": "2026-08-03",
+      "source": "baseline",
+      "angle": "feeling",
+      "stage": "deep_companionship",
+      "checkpoints": [
+        "first",
+        "second",
+        "deep_pause"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 5,
+        "event_centered_checkpoint_reached": 3,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 3,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 3,
+      "eventRecordingTurnCount": 1,
+      "attemptedGenerativeTurnCount": 3,
+      "generativeRepairCount": 1,
+      "localDeterministicRepairCount": 0,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 3,
+      "providerAttemptCount": 10,
+      "deterministicAttemptCount": 6,
+      "generativeErrorCodes": [
+        "SERVICE_UNAVAILABLE_ERROR",
+        "INVALID_SCHEMA"
+      ],
+      "responseLatency": {
+        "sampleCount": 5,
+        "medianMs": 7993,
+        "p90Ms": 23492,
+        "releaseBand": "repair"
+      },
+      "interactiveLatency": {
+        "sampleCount": 5,
+        "medianMs": 8018,
+        "p90Ms": 23534,
+        "releaseBand": "repair"
+      },
+      "modelLatency": {
+        "sampleCount": 3,
+        "medianMs": 14826,
+        "p90Ms": 23459,
+        "releaseBand": "repair"
+      },
+      "nonModelLatency": {
+        "sampleCount": 3,
+        "medianMs": 65,
+        "p90Ms": 75,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "fe877b2e-e193-40d4-8eec-cc79ebafe7ee",
+        "entryId": "8b69b8ee-fabe-434b-9ef5-38789f9ea2a1",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-04T03:56:04.203Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T03:55:28.597Z",
+          "stage": "interview_turn",
+          "errorCode": "SERVICE_UNAVAILABLE_ERROR",
+          "traceId": "7a453d12-dd58-4b27-9d45-d453e4b5e9c2"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T03:55:28.604Z",
+          "stage": "visible",
+          "errorCode": "SERVICE_UNAVAILABLE_ERROR",
+          "traceId": null
+        },
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T03:55:36.622Z",
+          "stage": "interview_turn",
+          "errorCode": "SERVICE_UNAVAILABLE_ERROR",
+          "traceId": "61cd25a1-8b71-4e1d-b93d-5316326bcb3d"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T03:55:36.631Z",
+          "stage": "visible",
+          "errorCode": "SERVICE_UNAVAILABLE_ERROR",
+          "traceId": null
+        },
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T03:56:00.164Z",
+          "stage": "interview_turn",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": "90894979-acb5-4580-8c34-9db858a82f5a"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T03:56:00.172Z",
+          "stage": "visible",
+          "errorCode": "INVALID_SCHEMA",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "978becf7-febb-4f70-8c0f-e3e193c9833a",
+        "00b7e655-886e-43c2-9bb8-ada1ed6d479d",
+        "7a453d12-dd58-4b27-9d45-d453e4b5e9c2",
+        "61cd25a1-8b71-4e1d-b93d-5316326bcb3d",
+        "90894979-acb5-4580-8c34-9db858a82f5a",
+        "36c8d622-08cc-4cba-ace5-98d96885de97"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 3,
+      "rootSessionId": "f12b2558-be4f-4ac5-b1a9-fada81361c22",
+      "firstContentSubmittedAt": "2026-08-04T03:56:04.237Z",
+      "entryDate": "2026-08-03",
+      "source": "baseline",
+      "angle": "thought",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 3,
+        "event_centered_checkpoint_reached": 2,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "eventRecordingTurnCount": 1,
+      "attemptedGenerativeTurnCount": 1,
+      "generativeRepairCount": 0,
+      "localDeterministicRepairCount": 0,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 1,
+      "providerAttemptCount": 2,
+      "deterministicAttemptCount": 3,
+      "generativeErrorCodes": [
+        "SERVICE_UNAVAILABLE_ERROR"
+      ],
+      "responseLatency": {
+        "sampleCount": 3,
+        "medianMs": 22,
+        "p90Ms": 13912,
+        "releaseBand": "pass"
+      },
+      "interactiveLatency": {
+        "sampleCount": 3,
+        "medianMs": 46,
+        "p90Ms": 13953,
+        "releaseBand": "pass"
+      },
+      "modelLatency": {
+        "sampleCount": 1,
+        "medianMs": 13890,
+        "p90Ms": 13890,
+        "releaseBand": "repair"
+      },
+      "nonModelLatency": {
+        "sampleCount": 1,
+        "medianMs": 63,
+        "p90Ms": 63,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "471bc70e-6d28-4e9a-a023-1af3209197ed",
+        "entryId": "c4c9f032-1638-458c-a77b-4444ba759279",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-04T03:56:21.145Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T03:56:18.264Z",
+          "stage": "interview_turn",
+          "errorCode": "SERVICE_UNAVAILABLE_ERROR",
+          "traceId": "34a0c2a1-fd24-4acd-a52a-d2aef127691c"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T03:56:18.278Z",
+          "stage": "semantic",
+          "errorCode": "SERVICE_UNAVAILABLE_ERROR",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "0f6526d0-755b-443c-bff8-a513bed5821a",
+        "54784e9b-3abc-4fc0-8f38-6581d4943089",
+        "34a0c2a1-fd24-4acd-a52a-d2aef127691c",
+        "1c2c5ef0-f23f-43dd-b231-6f1af6e9fb41"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 4,
+      "rootSessionId": "e0388421-1e16-4477-8148-7de7c05af940",
+      "firstContentSubmittedAt": "2026-08-04T03:56:21.179Z",
+      "entryDate": "2026-08-03",
+      "source": "mixed",
+      "angle": "thought",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second",
+        "deep_pause"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 5,
+        "event_centered_checkpoint_reached": 3,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "eventRecordingTurnCount": 1,
+      "attemptedGenerativeTurnCount": 3,
+      "generativeRepairCount": 0,
+      "localDeterministicRepairCount": 0,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 1,
+      "providerAttemptCount": 7,
+      "deterministicAttemptCount": 2,
+      "generativeErrorCodes": [
+        "visible_turn_uses_unquoted_user_first_person"
+      ],
+      "responseLatency": {
+        "sampleCount": 5,
+        "medianMs": 7500,
+        "p90Ms": 11007,
+        "releaseBand": "pass"
+      },
+      "interactiveLatency": {
+        "sampleCount": 5,
+        "medianMs": 7546,
+        "p90Ms": 11027,
+        "releaseBand": "pass"
+      },
+      "modelLatency": {
+        "sampleCount": 3,
+        "medianMs": 7754,
+        "p90Ms": 10974,
+        "releaseBand": "pass"
+      },
+      "nonModelLatency": {
+        "sampleCount": 3,
+        "medianMs": 63,
+        "p90Ms": 79,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "6e3265ab-4b1a-4df6-be59-fd85461c1962",
+        "entryId": "caea1c45-b522-4be9-adca-83ea41dc4123",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-04T03:56:51.076Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T03:56:39.833Z",
+          "stage": "interview_turn",
+          "errorCode": "visible_turn_uses_unquoted_user_first_person",
+          "traceId": "d3e1ee90-8069-4b4d-804d-5280c379b050"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T03:56:39.838Z",
+          "stage": "visible",
+          "errorCode": "visible_turn_uses_unquoted_user_first_person",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "a40ead99-93ed-4523-9852-2f4a66faf7fb",
+        "8fcd6be9-481b-434a-bd07-8d720a296e41",
+        "5ce66e1f-bd54-463e-9224-bc9ec1c27b23",
+        "d3e1ee90-8069-4b4d-804d-5280c379b050",
+        "0cacec27-b6fa-4f61-8d42-a65f253d9e38",
+        "5c90cf6f-b23e-435e-8e3a-58c3dc179eff"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 5,
+      "rootSessionId": "ab907d55-2137-410b-beef-eee76ad7da08",
+      "firstContentSubmittedAt": "2026-08-04T03:56:51.100Z",
+      "entryDate": "2026-08-03",
+      "source": "mixed",
+      "angle": "relationship",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 4,
+        "event_centered_checkpoint_reached": 2,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "eventRecordingTurnCount": 1,
+      "attemptedGenerativeTurnCount": 2,
+      "generativeRepairCount": 0,
+      "localDeterministicRepairCount": 0,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 1,
+      "providerAttemptCount": 4,
+      "deterministicAttemptCount": 3,
+      "generativeErrorCodes": [
+        "SERVICE_UNAVAILABLE_ERROR"
+      ],
+      "responseLatency": {
+        "sampleCount": 4,
+        "medianMs": 16,
+        "p90Ms": 8485,
+        "releaseBand": "pass"
+      },
+      "interactiveLatency": {
+        "sampleCount": 4,
+        "medianMs": 34,
+        "p90Ms": 8525,
+        "releaseBand": "pass"
+      },
+      "modelLatency": {
+        "sampleCount": 2,
+        "medianMs": 2813,
+        "p90Ms": 8461,
+        "releaseBand": "pass"
+      },
+      "nonModelLatency": {
+        "sampleCount": 2,
+        "medianMs": 47,
+        "p90Ms": 64,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "5712b580-61a1-4e81-b62e-9a1dffe29f0d",
+        "entryId": "d461c059-c6c6-4997-9cd4-df23f40c9075",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-04T03:57:11.219Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T03:56:54.019Z",
+          "stage": "interview_turn",
+          "errorCode": "SERVICE_UNAVAILABLE_ERROR",
+          "traceId": "0d025403-6a12-43fb-ac57-225c15173876"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T03:56:54.025Z",
+          "stage": "semantic",
+          "errorCode": "SERVICE_UNAVAILABLE_ERROR",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "0938d35c-d688-4e07-9830-51ecc7404192",
+        "2e4919cf-9113-4dd0-8ae4-6a6067b8e2a0",
+        "0d025403-6a12-43fb-ac57-225c15173876",
+        "ec02b4ba-e6a8-4986-a0db-e3bda33f9221",
+        "d164c6b8-b16e-4f35-8ae1-39023854844c"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 6,
+      "rootSessionId": "36caba37-15c0-4b51-a017-86a96fbb6c27",
+      "firstContentSubmittedAt": "2026-08-04T03:57:11.254Z",
+      "entryDate": "2026-08-03",
+      "source": "mixed",
+      "angle": "relationship",
+      "stage": "deep_companionship",
+      "checkpoints": [
+        "first",
+        "second",
+        "deep_pause"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 5,
+        "event_centered_checkpoint_reached": 3,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 2,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 2,
+      "eventRecordingTurnCount": 1,
+      "attemptedGenerativeTurnCount": 3,
+      "generativeRepairCount": 2,
+      "localDeterministicRepairCount": 0,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 2,
+      "providerAttemptCount": 10,
+      "deterministicAttemptCount": 4,
+      "generativeErrorCodes": [
+        "TIMEOUT"
+      ],
+      "responseLatency": {
+        "sampleCount": 5,
+        "medianMs": 25389,
+        "p90Ms": 33227,
+        "releaseBand": "repair"
+      },
+      "interactiveLatency": {
+        "sampleCount": 5,
+        "medianMs": 25416,
+        "p90Ms": 33256,
+        "releaseBand": "repair"
+      },
+      "modelLatency": {
+        "sampleCount": 3,
+        "medianMs": 25656,
+        "p90Ms": 33189,
+        "releaseBand": "repair"
+      },
+      "nonModelLatency": {
+        "sampleCount": 3,
+        "medianMs": 67,
+        "p90Ms": 71,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "273dbd78-85b9-41f3-bff7-b90308d3b23d",
+        "entryId": "771fa4ca-4f2e-491b-808d-7e24de86d8c9",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-04T03:58:38.301Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T03:58:02.464Z",
+          "stage": "interview_turn",
+          "errorCode": "TIMEOUT",
+          "traceId": "116c841e-dc16-4549-830c-02cb2e0642a9"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T03:58:02.471Z",
+          "stage": "visible",
+          "errorCode": "TIMEOUT",
+          "traceId": null
+        },
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T03:58:35.725Z",
+          "stage": "interview_turn",
+          "errorCode": "TIMEOUT",
+          "traceId": "1ee87d05-9232-4103-97a6-f44d8f0a11aa"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T03:58:35.733Z",
+          "stage": "visible",
+          "errorCode": "TIMEOUT",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "71e73a7a-4314-4f44-8ba6-f1ee1690893a",
+        "35556cd4-99ee-410e-8452-c96878219421",
+        "b470704b-d0fc-4277-81c3-0e369f1b9259",
+        "116c841e-dc16-4549-830c-02cb2e0642a9",
+        "1ee87d05-9232-4103-97a6-f44d8f0a11aa",
+        "16c427f4-69c6-48ba-9dea-48b342bc1ae3"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 7,
+      "rootSessionId": "17082968-bee3-420f-91bb-4390fe746d12",
+      "firstContentSubmittedAt": "2026-08-04T03:58:38.338Z",
+      "entryDate": "2026-08-03",
+      "source": "generative",
+      "angle": "action",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 4,
+        "event_centered_checkpoint_reached": 2,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 0,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 0,
+      "eventRecordingTurnCount": 1,
+      "attemptedGenerativeTurnCount": 1,
+      "generativeRepairCount": 0,
+      "localDeterministicRepairCount": 0,
+      "deterministicControlCount": 2,
+      "runtimeFallbackCount": 0,
+      "providerAttemptCount": 2,
+      "deterministicAttemptCount": 1,
+      "generativeErrorCodes": [],
+      "responseLatency": {
+        "sampleCount": 4,
+        "medianMs": 16,
+        "p90Ms": 15140,
+        "releaseBand": "conditional"
+      },
+      "interactiveLatency": {
+        "sampleCount": 4,
+        "medianMs": 34,
+        "p90Ms": 15140,
+        "releaseBand": "conditional"
+      },
+      "modelLatency": {
+        "sampleCount": 1,
+        "medianMs": 15069,
+        "p90Ms": 15069,
+        "releaseBand": "repair"
+      },
+      "nonModelLatency": {
+        "sampleCount": 1,
+        "medianMs": 71,
+        "p90Ms": 71,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "134e0502-b00d-476b-9fd8-913abc540e49",
+        "entryId": "3921b5f3-8ce9-4728-9709-38d0375c1f1b",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-04T03:58:58.086Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [],
+      "traceIds": [
+        "8088ca68-d460-4eaa-9cca-6ca1f7ae2db0",
+        "11cb0f74-5e60-4240-8a6b-6707eff8a966",
+        "f17b6335-4174-49af-931d-f67608a0e1a1",
+        "6fdaeeaf-165b-451a-9f15-b3df54ffefac",
+        "8da3cc5f-43f8-4807-922a-2c53043c1c2d"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    },
+    {
+      "sequence": 8,
+      "rootSessionId": "75fb4f60-6332-4432-ae94-700d4393d367",
+      "firstContentSubmittedAt": "2026-08-04T03:58:58.112Z",
+      "entryDate": "2026-08-03",
+      "source": "mixed",
+      "angle": "action",
+      "stage": "checkpoint_two",
+      "checkpoints": [
+        "first",
+        "second",
+        "deep_pause"
+      ],
+      "funnel": {
+        "event_centered_entry_exposed": 0,
+        "event_centered_entry_opened": 0,
+        "event_centered_first_content_submitted": 1,
+        "event_centered_response_completed": 5,
+        "event_centered_checkpoint_reached": 3,
+        "event_journal_generation_started": 1,
+        "event_journal_generated": 1,
+        "event_journal_saved": 1,
+        "event_centered_turn_fallback": 1,
+        "event_centered_session_abandoned": 0
+      },
+      "generativeFallbackCount": 1,
+      "eventRecordingTurnCount": 1,
+      "attemptedGenerativeTurnCount": 3,
+      "generativeRepairCount": 0,
+      "localDeterministicRepairCount": 0,
+      "deterministicControlCount": 1,
+      "runtimeFallbackCount": 1,
+      "providerAttemptCount": 7,
+      "deterministicAttemptCount": 2,
+      "generativeErrorCodes": [
+        "TIMEOUT"
+      ],
+      "responseLatency": {
+        "sampleCount": 5,
+        "medianMs": 15125,
+        "p90Ms": 27805,
+        "releaseBand": "repair"
+      },
+      "interactiveLatency": {
+        "sampleCount": 5,
+        "medianMs": 15166,
+        "p90Ms": 27828,
+        "releaseBand": "repair"
+      },
+      "modelLatency": {
+        "sampleCount": 3,
+        "medianMs": 16271,
+        "p90Ms": 27771,
+        "releaseBand": "repair"
+      },
+      "nonModelLatency": {
+        "sampleCount": 3,
+        "medianMs": 69,
+        "p90Ms": 116,
+        "releaseBand": "pass"
+      },
+      "journal": {
+        "eventId": "91df678b-4972-45b1-ad37-cfd7ef2a3a1c",
+        "entryId": "3fe6e056-8de5-4765-97e2-89fd55f453bc",
+        "generationOrigin": "llm",
+        "status": "saved",
+        "generated": true,
+        "saved": true,
+        "savedAt": "2026-08-04T04:00:03.570Z",
+        "savedWithin24Hours": true,
+        "aiAccepted": true,
+        "titleRepaired": false,
+        "fullTextFallback": false
+      },
+      "failures": [
+        {
+          "source": "trace",
+          "occurredAt": "2026-08-04T03:59:41.174Z",
+          "stage": "interview_turn",
+          "errorCode": "TIMEOUT",
+          "traceId": "6fea4738-f038-43dc-b664-3d36dbc852f7"
+        },
+        {
+          "source": "turn_fallback",
+          "occurredAt": "2026-08-04T03:59:41.181Z",
+          "stage": "visible",
+          "errorCode": "TIMEOUT",
+          "traceId": null
+        }
+      ],
+      "traceIds": [
+        "c4752486-8445-4ee0-996c-2b96e659b575",
+        "ad69147c-cbed-4081-ae29-4d11a3509a6b",
+        "fc4589db-8430-494d-99a0-114ec5d0835d",
+        "6fea4738-f038-43dc-b664-3d36dbc852f7",
+        "78f64051-d434-4abe-8dab-126d804bb862",
+        "1b3d435c-9226-48e7-8048-0cd550d5706d"
+      ],
+      "manualReview": {
+        "verdict": null,
+        "sanitizedIssueSummary": null,
+        "reviewer": null,
+        "reviewedAt": null
+      }
+    }
+  ],
+  "privacy": {
+    "contentFieldsExcluded": true,
+    "excludedFields": [
+      "用户原话",
+      "AI 全文",
+      "事件日志标题与正文",
+      "Trace contextSnapshot",
+      "Trace finalOutput",
+      "模型请求与响应正文"
+    ]
+  }
+}

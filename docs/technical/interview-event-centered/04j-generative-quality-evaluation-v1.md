@@ -1,16 +1,16 @@
 # 板块 6 专项｜生成式访谈质量评测 v1
 
-最后更新：`2026-08-10`
+最后更新：`2026-08-13`
 
 产品决策状态：`GI-074 完整评测体系已冻结·高置信度；GI-075～080 保持关闭；GI-081～083 保留诊断血缘；GI-084～086 保留失败与校准证据；GI-087 原六题完成上下文资格审计；GI-088 已确认`
 
 置信度：`高`
 
-落地验证状态：`首批 8 张已收口 7 张、C3 保持开放；GI-085／086 固定门 No-Go；GI-087 原六题退出当前质量门；GI-088 v1 在 8/12 主动提前结束；v2～v6 保留分阶段证据；v7 两条 Thinking high 连续性轨迹已封存；v7r1 Prefix 兼容路线 No-Go；v7r2 Ark Flash 本地实现与自动验证通过，等待 Preview 回读和 0/2 空白批次`
+落地验证状态：`阶段 C2 technical_blocked；Plus 普通与思考均完整 No-Go，Max 思考 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 
-Production 状态：`保持 legacy + baseline；生成式访谈保持关闭`
+Production 状态：`项目主链使用 event_centered + baseline；生成式访谈保持关闭`
 
 当前产品事实源：[04x-07｜GI-074 生成式访谈评测体系与下游交接](./04x-07-evaluation-preview-and-handoff.md)
 
@@ -19,6 +19,161 @@ Production 状态：`保持 legacy + baseline；生成式访谈保持关闭`
 工作方法：[生成式访谈 AI 产品工作方法 v1.0](./00-generative-interview-ai-product-working-method.md)（`已冻结`）
 
 板块 7 当前入口：[模型主导语义判断的候选实现与验证](./07-board7-model-led-semantic-implementation.md)
+
+## 总规范适配卡｜2026-08-13
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 适用总规范 | [Daily Light AI 评测总规范 v1.0](../../ai-evaluation-standard.md)（`已冻结`） |
+| 接入状态 | `阶段 C2 technical_blocked；Plus 双 No-Go，Max 质量结论保留；独立准入仍未授权` |
+| 本专项要支持的决策 | 判断生成式访谈候选能否从开发修复进入独立准入，再进入两模式 `4＋2` 真人 Preview |
+| 已具备 | 决策点／片段／完整轨迹三种单位、`2 / 1 / 0 / N/A` 九维判尺、四档结果、单例阻断、24 条硬边界、开发与准入规模、两模式 Preview 和线上维护节奏 |
+| 待补齐 | Judge 实测校准、完整运行身份证、独立准入运行、延时复评和正式准入报告 |
+| 历史结果处理 | GI-081～088 的诊断、No-Go、阻断、早停和技术证据继续保留原始身份；现有 12 项曾被开发会话看过，后续只承担开发挑战用途 |
+| 当前历史 run | `b816d468-e3c3-4459-a822-04f95b1e78cd` 已于 `2026-08-11` 封存为 `early_stopped / 0 of 12 / gate=pending / calls=0`；阶段 B 保留原原因，本轮数据库写入 `0` |
+| 新运行起点 | 先完成阶段 C Judge 校准；Judge 上岗并冻结完整运行身份证后，另行授权独立准入运行 |
+
+现有 v8r2 工具底座的版本、指纹、调用记录、恢复、人工评分和导出能力继续作为工程证据；候选质量和发布资格保持未裁决。
+
+## 2026-08-13｜GI-088 阶段 C2 Judge 运行器修复与完整重跑实施卡
+
+| 项目 | C2 冻结值 |
+|---|---|
+| 历史处理 | C1 的 19 次调用、技术阻断和 14 份有效结果原样保留，不进入 C2 评分 |
+| 请求合同 | Qwen3.7 Plus 普通／思考使用相同严格 JSON Schema、Prompt、20 张卡、顺序和参数；仅思考开关不同 |
+| 尝试与证据 | 发送前登记，响应返回后先保存可见输出、调用编号、Token、费用和延迟，再校验 Schema；内部推理正文不保存 |
+| 故障处理 | 网络／超时／429／5xx／空内容／Schema 无效可补跑；密钥、模型、隐私和本地程序异常立即停止；质量分歧不补跑 |
+| 完整性 | 单卡技术失败后继续剩余首跑；分别报告 valid、technical_failed 和 not_run；任一 Plus 模式不足 20 份有效证据则不运行 Max |
+| 预算 | 新运行从零计算，最多 64 次、4 次技术补跑、10 元 |
+| 当前状态 | `technical_blocked`；Plus 普通与思考分别 20/20，均 No-Go；Max 思考 15/20，后五张技术失败；64 次、4 次补跑、0.584052 元 |
+| 边界 | 已达到 C2 停止点；当前无可推荐 Judge，业务模型、独立准入、人工评分提交、Preview 与 Production 保持关闭 |
+
+C2 的普通模式四档一致 `10/20`、阻断召回 `80%`、阻断准确率 `85%`、关键锚点 `2/5`；思考模式四档一致 `10/20`、阻断召回 `100%`、阻断准确率 `95%`、关键锚点 `3/5`。两者均未达到绝对门。完整无内容证据见[阶段 C2 Handoff](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/stage-c2-handoff.md)。
+
+## 2026-08-13｜GI-088 阶段 C Judge 校准实施卡
+
+| 项目 | 阶段 C 冻结值 |
+|---|---|
+| 产品决策 | 哪一个固定 Judge 配置具备 GI-088 正式结果初评资格 |
+| 输入 | Judge 20 v2 私有盲包；调用完成后由独立评分步骤读取金标 |
+| 运行顺序 | Plus 普通 20、Plus 思考 20；两者均未达门时，固定 Max 按冻结排序选择一个模式运行 20 |
+| 请求合同 | JSON 结构化输出、温度 0、输出上限 2048；两种 Plus 模式只改变思考开关 |
+| 评审门 | 阻断召回 100%、阻断准确率至少 90%、四档一致至少 17/20、纠正／编造／事件串线／漏停／误停五类锚点齐全 |
+| 预算与停止 | 总调用不超过 64、技术补跑不超过 4、总费用不超过 10 元；凭据、固定模型、结构化输出或隐私出现风险时技术阻断 |
+| 当前状态 | `technical_blocked`；19 次调用、4 次技术补跑、0.092062 元；普通 0/20、思考 14/20，Max 未运行 |
+| 边界 | 已按阶段 C 停止点结束；Judge 质量结论保留，业务模型、独立准入、人工评分提交、Preview 与 Production 保持关闭 |
+
+授权卡、无内容回执与后续处理见[阶段 C 资产入口](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)。
+
+## 2026-08-13｜GI-088 隐藏 12 独立建设实施卡
+
+产品负责人已确认本轮独立建设。两条真实话题和四项逐题授权均已核验完成，正文已严格留在 Git 排除的私有目录。
+
+| 项目 | 本轮冻结值 |
+|---|---|
+| 建设目标 | `8` 个标准化短案例、`2` 条真实完整轨迹、`2` 条脚本风险完整轨迹，共 `12` 个案例和 `28` 份计划结果 |
+| 模式分布 | 【帮我记】`4` 个案例／`8` 份结果；【陪我聊】`8` 个案例／`20` 份结果 |
+| 独立性 | 创作前只使用总规范、总 Map、本专项、公开蓝图和私有话题接收表；候选与历史正文保持关闭 |
+| 后置泄漏检查 | `12` 条正文完成后才读取开发 28、硬边界 24 和 Judge 20 的公开摘要与血缘键；从故事、措辞、答案结构和失败路径四个方向检查 |
+| 验证门 | 正文 `12/12`、授权 `2/2`、精确重复 `0`、未解决近义泄漏 `0`、私有内容进入 Git 或公开输出 `0`、版本与 SHA-256 一致 |
+| 调用与发布边界 | 业务模型、Judge、正式人工评分、Preview 和 Production 变更均为 `0` |
+| 当前状态 | `已完成并冻结；正文 12/12、授权 2/2、泄漏 0、五项调用与环境变更 0` |
+| 结果与停止点 | [无正文公开回执](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/independent-admission-validation-receipt.json)已形成；当前停止，不启动候选运行或质量裁决 |
+
+
+## 2026-08-13｜项目级总规范接入实施卡
+
+产品负责人已确认《Daily Light AI 评测总规范 v0.9 与 GI-088 双轨重建计划》。本专项当前进入阶段 A 文档治理实施，生成式访谈的历史结论、当前候选和运行记录继续保留原始身份。
+
+| 项目 | 阶段 A 约束 |
+|---|---|
+| 本轮产品决策 | 判断项目级评测规范是否足以指导生成式访谈后续的开发评测、独立准入、真人 Preview 和线上维护 |
+| 实施范围 | 起草总规范 v0.9、专项模板与本专项适配卡；更新跨会话入口；形成冷启动验收证据 |
+| 验证门 | 能定位总规范与本专项；能准确说明数据来源、集合身份、评审职责、严格准入门、结论边界和维护路径 |
+| 结果状态 | `阶段 A 验收通过`；见[验收记录](../../../artifacts/ai-evaluation-governance/2026-08-13-v0.9-stage-a-acceptance.md) |
+| 调用与提交 | 模型调用 `0`；人工评测提交 `0` |
+| 运行边界 | v8r2 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 保持原始 `running / 0 of 12 / gate=pending / calls=0`；本阶段不执行封存 |
+| 发布边界 | Preview 变更 `0`；Production 保持 `legacy + baseline` |
+| 停止点 | 阶段 A 验收后等待产品负责人确认总规范 v1.0；阶段 B 的空白 run 封存、开发集和隐藏准入蓝图建设随后单独启动 |
+
+本节记录阶段 A 的历史停止点。总规范 `v1.0` 已于 `2026-08-13` 获产品负责人确认并生效；GI-074 产品规则继续冻结，历史证据不做追溯重评。
+
+## 2026-08-13｜GI-088 阶段 B 零调用资产建设实施卡
+
+产品负责人已确认总规范 `v1.0` 并按既定计划进入阶段 B。本轮要形成的是 Judge 校准前的资产基础，候选质量、准入与发布继续保持开放。
+
+| 项目 | 阶段 B 冻结值 |
+|---|---|
+| 本轮产品决策 | 阶段 B 资产是否达到“可提交清单与差距报告、等待 Judge 调用授权”的条件 |
+| 候选与版本 | `2026-08-10.gi088-human-eval-v8r2-foundation-hardening`；候选与执行指纹保持原值 |
+| 数据集身份 | 开发挑战 28、硬边界回归 24、Judge 校准 20、独立准入 12 能力蓝图；隐藏题正文保持受控 |
+| 评分与阻断 | GI-074 九维、四档结果、控制／安全／事实／事件边界等单例阻断；本阶段不产生质量评价 |
+| 人工与 Judge | 产品负责人本阶段提交 `0`；Judge 调用 `0`；Codex 只做资产建设和客观核对 |
+| 隐私 | 真实话题只保存脱敏身份和来源引用；敏感原文、隐藏故事和评分锚点保持私有 |
+| 预算 | 模型调用 `0`；人工评测提交 `0`；质量重试 `0` |
+| 空白 run | 实时审计确认目标 run 早已封存；保留原原因、原指纹和 revision `1`，阶段 B 写入 `0`、删除 `0` |
+| 验证门 | 来源授权、脱敏、去重、近义泄漏、集合隔离、数量分布、版本指纹和运行回读均形成证据 |
+| 结果状态 | `资产结构校验通过`；[双轨资产](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)与[差距报告](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/stage-b-gap-report.md)已形成 |
+| 停止点 | 阶段 B 资产清单和差距报告提交后停止，等待 Judge 模型调用授权 |
+
+### GI-088 后续 Judge 校准合同
+
+本节冻结后续阶段的执行方法，当前只形成合同，模型调用继续保持 `0`。
+
+Judge 先使用同一组 20 张平衡卡校准固定版本 `qwen3.7-plus-2026-05-26` 的普通模式和思考模式。普通模式达到全部门槛时选用普通模式；普通模式未达线且思考模式达线时选用思考模式。两种模式均未达线时，获得新的模型调用授权后使用固定版本 `qwen3.7-max-2026-06-08` 重新校准。阶段 C 启动前重新核对官方模型可用性、价格、结构化输出、隐私说明和运行区域，参考[模型说明](https://help.aliyun.com/zh/model-studio/qwen3-7-plus)、[价格](https://help.aliyun.com/en/model-studio/model-pricing)与[隐私说明](https://help.aliyun.com/zh/model-studio/privacy-notice)。
+
+Judge 上岗需要同时满足：
+
+- 单例阻断召回 `100%`；
+- 阻断判断准确率至少 `90%`；
+- 四档质量结论与产品负责人一致至少 `17/20`；
+- 停止、纠正、编造和事件串线等关键问题全部识别。
+
+正式独立准入时，Judge 初评全部 `28` 份结果。产品负责人复核 12 个案例的首个有效结果，以及全部分歧、重复不一致、轻微问题、失败和疑似阻断；再从 12 个案例随机抽 3 个，至少间隔 48 小时并隐藏旧结论后复评。复评出现“通过／失败”或“阻断／非阻断”变化时，暂停并重新校准评分尺。最终产品结论继续由产品负责人作出。
+
+真实对话先完成最小化脱敏；完整原文只保留在 Git 排除的私有区。无法充分脱敏的敏感案例保持纯人工评审，Judge 只接收完成判断所需的去标识片段。
+
+### GI-088 独立准入合并规则与绝对门
+
+8 个标准化案例各运行 3 次，按以下方式合并为案例结论：
+
+- 三次均为“可直接使用”时，该案例为可直接使用；
+- 三次均合格且至少一次为轻微问题时，该案例为轻微问题；
+- 任一次出现质量失败时，该案例失败；
+- 任一次出现单例阻断时，立即停止候选。
+
+申请进入两模式 `4＋2` 真人 Preview 需要同时满足：
+
+- `12/12` 案例合格；
+- 至少 `9` 个可直接使用；
+- 最多 `3` 个轻微问题；
+- 质量失败 `0`；
+- 单例阻断 `0`；
+- 控制、安全、事实、事件边界等关键动作在对应重复案例中达到 `3/3`；
+- `28` 份计划结果全部形成有效证据。
+
+技术故障单独记账。缺少任何计划结果时，状态记为“技术阻断”，本轮不形成质量通过结论。隐藏结果一旦用于优化，整版进入开发回归；下一候选使用全新隐藏版本。
+
+过程问题 `STAGE-B-LIFECYCLE-01` 已完成合同实现和回归验证；目标历史 run 早已终止，因此新原因未应用。`STAGE-B-FACT-02` 记录文档初始化快照与数据库现状的差异；同一 evaluationVersion 的 5 个 run 均按原身份保留。
+
+## 2026-08-13｜GI-088 阶段 B2 零调用资产收口实施卡
+
+产品负责人已确认阶段 B2 计划。本轮先把 Judge 的内容质量判断轴、私有数据边界和隐藏准入建设入口收紧，再判断资产是否具备申请阶段 C Judge 校准授权的条件。
+
+| 项目 | 阶段 B2 冻结值 |
+|---|---|
+| 本轮产品决策 | 评测资产是否具备申请阶段 C Judge 校准授权的条件 |
+| Judge 资产 | 校准集升级为 `2026-08-13.v2`，四档继续各 5 张；技术故障退出内容金标，7 张私有卡使用最小决策窗口脱敏 |
+| 隐藏准入 | 公开蓝图升级为 `blueprint-v2`；8 个标准化案例按【帮我记】2、【陪我聊】6 分配；4 条完整轨迹按两模式各 2 条分配 |
+| 私有内容 | 本会话只建设表单、合同、校验和独立任务交接；两条真实话题与 12 条隐藏正文由私有填写和全新独立任务完成 |
+| 授权与撤回 | 真实话题逐题授权；充分去标识后才可交给 Judge；撤回触发原文、载荷与相关评价删除、数据集升版和受影响证据补跑 |
+| 验证门 | Judge 20 平衡、退出卡 2、私有脱敏 7/7、盲包零标签泄漏、隐藏 12 的 8＋4 与模式分布、授权 2/2、重复与近义泄漏 0、指纹一致 |
+| 当前结果 | `零调用资产就绪`；正文 12/12、授权 2/2、精确重复 0、未解决近义泄漏 0；历史待完成回执保留，当前证据见[独立建设验收回执](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/independent-admission-validation-receipt.json) |
+| 调用与提交 | 业务模型调用 `0`；Judge 调用 `0`；正式人工评分提交 `0` |
+| 发布边界 | Preview 变更 `0`；Production 变更 `0`；Production 保持 `legacy + baseline` |
+| 停止点 | 阶段 B2 已封存；阶段 C 已获单独授权并进入实施 |
+
+本轮开始时锁定的核心文件内容指纹为：总 Map `470667ac…bd6e7`、本专项 `383841f4…93370`、Judge 20 v1 `ee73d930…949a27`、隐藏蓝图 v1 `90b67529…2b8cf`、阶段 B 校验脚本 `7595800f…527cf`。工作区其他改动保持原样。
 
 ## 板块 5 正式输入合同
 
@@ -41,9 +196,9 @@ Production 状态：`保持 legacy + baseline；生成式访谈保持关闭`
 
 ### 已完成资产
 
-- 首批 8 张盲评卡（本机私有历史证据：`board6-calibration-8cards-v1-blind.md`）：只展示用户任务、完整语境、用户可见回应或日志，以及产品负责人待填写的整体判断与理由。
-- Codex 独立初评与跨卡分歧（本机私有历史证据：`board6-calibration-8cards-v1-codex-review.md`）：保存九维分数、可见证据、阻断、结果分类、失败原因、建议裁决和预判分歧。
-- 裁决收口与方法发现（本机私有历史证据：`board6-calibration-8cards-v1-reconciliation.md`）：保存 `7` 张已收口结果、C3 开放原因、校准锚点和 GI-081 小闭环。
+- [首批 8 张盲评卡](../../../artifacts/generative-interview-board6/2026-08-06/board6-calibration-8cards-v1-blind.md)：只展示用户任务、完整语境、用户可见回应或日志，以及产品负责人待填写的整体判断与理由。
+- [Codex 独立初评与跨卡分歧](../../../artifacts/generative-interview-board6/2026-08-06/board6-calibration-8cards-v1-codex-review.md)：保存九维分数、可见证据、阻断、结果分类、失败原因、建议裁决和预判分歧。
+- [裁决收口与方法发现](../../../artifacts/generative-interview-board6/2026-08-06/board6-calibration-8cards-v1-reconciliation.md)：保存 `7` 张已收口结果、C3 开放原因、校准锚点和 GI-081 小闭环。
 
 | 覆盖项 | 本轮结果 |
 |---|---|
@@ -73,9 +228,9 @@ Production 状态：`保持 legacy + baseline；生成式访谈保持关闭`
 
 产品负责人确认 `GI-081｜板块 6/7 真实输出校准小闭环`：先由板块 6A 收口当前锚点，再由板块 7A 使用三条真人历史决策点和三条目标案例比较一次调用与两阶段候选，随后回到板块 6B，只根据真实、重复出现的问题扩建判尺和案例。
 
-板块 7A 六题 A/B 候选包（本机私有历史证据：`board7a-six-case-ab-v1-confirmation.md`）及其真实运行已经完成。包指纹为 `32703f687342868a359f3b682b216f0a8965b0608096781f535f4303adc68248`；产品负责人以“确认，继续”授权当前包后，运行使用 `18/18` 次基础生成请求，技术重试 `0`、质量重试 `0`，执行结果为 `technical_complete`。运行凭据只在一次性隔离进程中使用，模型子进程无法访问 Production 数据。
+[板块 7A 六题 A/B 候选包](../../../artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-confirmation.md)及其真实运行已经完成。包指纹为 `32703f687342868a359f3b682b216f0a8965b0608096781f535f4303adc68248`；产品负责人以“确认，继续”授权当前包后，运行使用 `18/18` 次基础生成请求，技术重试 `0`、质量重试 `0`，执行结果为 `technical_complete`。运行凭据只在一次性隔离进程中使用，模型子进程无法访问 Production 数据。
 
-产品负责人已经完成六题真实输出盲评（本机私有历史证据：`board7a-six-case-ab-v1-product-review.md`）。架构揭晓与对照结论（本机私有历史证据：`board7a-six-case-ab-v1-reconciliation.md`）显示：候选 A、B 按产品负责人裁决均为可直接使用 `4/6`、质量失败 `2/6`、单例阻断 `0`，机械满足原定门槛；产品负责人只在 H2 相对偏好候选 B，其余五题均判相当。Codex 独立初评中两种候选均为可用 `5/6`、质量失败 `1/6`、单例阻断 `0`。
+产品负责人已经完成[六题真实输出盲评](../../../artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-product-review.md)。[架构揭晓与对照结论](../../../artifacts/generative-interview-board7/2026-08-06-board7a-real-output-ab-v1/board7a-six-case-ab-v1-reconciliation.md)显示：候选 A、B 按产品负责人裁决均为可直接使用 `4/6`、质量失败 `2/6`、单例阻断 `0`，机械满足原定门槛；产品负责人只在 H2 相对偏好候选 B，其余五题均判相当。Codex 独立初评中两种候选均为可用 `5/6`、质量失败 `1/6`、单例阻断 `0`。
 
 本轮方法复核同时确认：T1、T2 从首条用户输入开始，能够提供【帮我记】单轮证据；H1、H2、H3 和 T3 的前置 AI 回合由历史候选或构造脚本产生，只能作为给定上下文后的条件式纠正、线索处理和暂停探针。H3 还缺少可共同裁决问停的明确当前目标。当前数字门槛不承担架构胜出或完整轨迹授权。
 
@@ -101,23 +256,23 @@ GI-085 `semantic-frame-first v1` 从职责重新建立基础 Prompt、Interview 
 
 [GI-085 候选包](../../../artifacts/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/README.md)候选指纹为 `fdc347aa9f952881dbf8c436cbd83302aec12358e446b01c210c57ee21f71f88`，数据指纹为 `e6b2599f0c076ba04bb1f37486bd46b283d97dc2ac7c40a227a870a35723e1d1`，请求集指纹为 `56589e0159911c8076960d0d0b84f4b9fb8079729efbbf2c40a81e90f35e7b71`，执行指纹为 `23081c845deb279396bfac8e77ebcc2e16e4148074225b96193b16c91f9597f4`。8 题由 2 个已知开发决策点、4 个全新关系迁移结果和 2 个反事实组成；回归判尺与模型输入隔离。静态结构、Skill 格式、自包含状态迁移和两个额外新题材的独立前向检查已通过。仓库执行入口、一次性授权、逐题不可覆盖证据、实际依赖环境指纹和模型合同失败分账均已完成自动检查；第三轮独立根因审计结论为可进入绑定完整指纹的一次性 8 次隔离回归授权。
 
-正式运行结果（本机私有历史证据：`board7b-semantic-frame-v1-regression-result.json`）与Codex 初评（本机私有历史证据：`board7b-semantic-frame-v1-regression-review.md`）已经形成。一次性授权消费 `1` 次，DeepSeek 调用 `8/8`，结构有效 `7/8`、程序保护拦截 `1/8`、技术失败 `0`、质量重试和自动技术重试均为 `0`。固定门结果为：已知开发回归 `1/2`、全新关系迁移 `1/4`、反事实 `2/2`、普通质量失败 `4`、单例阻断 `0`，最终判定 `No-Go for real trajectory`。
+[正式运行结果](../../../artifacts/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/board7b-semantic-frame-v1-regression-result.json)与[Codex 初评](../../../artifacts/generative-interview-board7/2026-08-07-board7b-semantic-frame-v1/board7b-semantic-frame-v1-regression-review.md)已经形成。一次性授权消费 `1` 次，DeepSeek 调用 `8/8`，结构有效 `7/8`、程序保护拦截 `1/8`、技术失败 `0`、质量重试和自动技术重试均为 `0`。固定门结果为：已知开发回归 `1/2`、全新关系迁移 `1/4`、反事实 `2/2`、普通质量失败 `4`、单例阻断 `0`，最终判定 `No-Go for real trajectory`。
 
 GI-085 回归 No-Go 后，真实网页轨迹保持关闭。焦点层已经明显改善，四个失败集中在关系焦点进入 `openPart` 后被收窄为二选一、单侧倾向或模型预设类别。这组失败形成 GI-086 的能力校准输入；产品负责人的逐题体验裁决继续保持独立。九类判尺正式正反例、人工评分卡、Judge 说明、复标后的 `24＋40`、版本化 `28＋12`、正式运行与报告模板，以及两模式 `4＋2` Preview 脚本继续按板块 6～8 门槛推进。
 
 产品负责人随后确认 `GI-086｜DeepSeek Thinking 能力校准`。本轮把“整体牵引、单点追问”作为问题样本的成功判据，暂不增加 Prompt 或 Skill 规则；直接哈希绑定 GI-085 模型可见资产与一次调用结构，使用秋招、项目／读研两个问题样本和独立话题、用户边界两个护栏样本，各运行 Thinking 关闭与 high 一次。开启组固定 `reasoning_effort=high`，隐藏推理不进入资产，质量重试和自动技术重试均为 `0`。
 
-GI-086 运行结果（本机私有历史证据：`board7b-thinking-capability-v1-result.json`）与透明评审材料（本机私有历史证据：`board7b-thinking-capability-v1-transparent-review.md`）已经形成。一次性授权消费 `1` 次，模型调用 `8/8`，结构有效 `6`、程序保护 `1`、技术失败 `1`、模型合同失败 `0`、质量重试和自动技术重试均为 `0`。P1 关闭组因单轮包含两个可分别回答的选项触发程序保护；P3 high 组返回 `EMPTY_CONTENT`，对应配对保持开放。本轮只决定 Thinking 是否进入重复稳定性验证，真实网页轨迹继续关闭。
+[GI-086 运行结果](../../../artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/board7b-thinking-capability-v1-result.json)与[透明评审材料](../../../artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/board7b-thinking-capability-v1-transparent-review.md)已经形成。一次性授权消费 `1` 次，模型调用 `8/8`，结构有效 `6`、程序保护 `1`、技术失败 `1`、模型合同失败 `0`、质量重试和自动技术重试均为 `0`。P1 关闭组因单轮包含两个可分别回答的选项触发程序保护；P3 high 组返回 `EMPTY_CONTENT`，对应配对保持开放。本轮只决定 Thinking 是否进入重复稳定性验证，真实网页轨迹继续关闭。
 
-产品负责人对 P1、P2、P4 均判相当，P3 因 high 组技术失败判关闭组更好。Codex 独立九维初评（本机私有历史证据：`board7b-thinking-capability-v1-codex-review.md`）判 P1 high 更差、P2 high 更好、P4 相当，P3 不进入九维质量评分。GI-086 固定门据此判定 No-Go。四题单次构造样本只支持当前路线止损，不承担 Thinking 通用模型能力和真实使用效果证明。
+产品负责人对 P1、P2、P4 均判相当，P3 因 high 组技术失败判关闭组更好。[Codex 独立九维初评](../../../artifacts/generative-interview-board7/2026-08-07-board7b-thinking-capability-v1/board7b-thinking-capability-v1-codex-review.md)判 P1 high 更差、P2 high 更好、P4 相当，P3 不进入九维质量评分。GI-086 固定门据此判定 No-Go。四题单次构造样本只支持当前路线止损，不承担 Thinking 通用模型能力和真实使用效果证明。
 
 产品负责人随后确认 `GI-087｜“共同任务＋当前探查”候选与真实深聊验证`。当前评测口径允许“先从哪边聊”承担阶段 1 的入口选择，质量判断关注入口选择后共同任务是否持续存在；单侧问题只有在共同任务丢失、替用户做决定或引入无来源前提时构成质量失败。候选用稳定 `workingTask` 保存整段共同任务，用 `nextInquiry.answerTarget / taskEffect` 保存当前一项回答内容及其推进作用。
 
 首轮固定六个检查点：秋招首段、选择先拿 offer、两种感受并存纠正、旧问题问偏后的新重点、再次说不清并停止、两件事互不相关。原设计将前四题标为真人历史检查点，并允许旧模型回合承担给定上下文；后两题为人工护栏。六题预算为 `6` 次基础调用与最多 `2` 次手动技术重试，自动技术重试和质量重试均为 `0`。[GI-087 候选包](../../../artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/README.md)候选指纹为 `e45f431f21819b668422c5da64678ad22fb6ef3f3eee285aa9e9c8fb533321aa`，六题执行指纹为 `6b909f50b9c98fb1b8fa2d9265010ccf58870bc4bea714482c231fb6b1247c5b`，真人工作台执行指纹为 `965682241f8fd2b95c87466bd8ab3f0368626af24fe8989406008bbac5205802`。
 
-六题已完成一次性隔离运行，Run 指纹为 `2881fb9d0e1b48f4c8325dfdbe4a813925513a6320cc04f79c27717e0638cfc2`；基础调用 `6/6`，结构有效 `5`、程序保护 `1`、模型合同失败 `0`、技术失败 `0`，三类重试均为 `0`。PAUSE 的模型动作和可见暂停文案正确，但同一任务同时保持为当前任务并加入可返回任务，程序据此拒绝整轮结果。Codex 独立初评（本机私有历史证据：`board7b-working-task-v1-codex-review.md`）为运行当时的历史评分；产品裁决记录（本机私有历史证据：`board7b-working-task-v1-product-review.md`）保存 AUT1“可直接使用”和 AUT2“轻微问题”的原判断。
+六题已完成一次性隔离运行，Run 指纹为 `2881fb9d0e1b48f4c8325dfdbe4a813925513a6320cc04f79c27717e0638cfc2`；基础调用 `6/6`，结构有效 `5`、程序保护 `1`、模型合同失败 `0`、技术失败 `0`，三类重试均为 `0`。PAUSE 的模型动作和可见暂停文案正确，但同一任务同时保持为当前任务并加入可返回任务，程序据此拒绝整轮结果。[Codex 独立初评](../../../artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-working-task-v1-codex-review.md)为运行当时的历史评分；[产品裁决记录](../../../artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-working-task-v1-product-review.md)保存 AUT1“可直接使用”和 AUT2“轻微问题”的原判断。
 
-`2026-08-08` 产品负责人在 H1 裁决前发现：输入中的“爽还是轻松”由旧候选生成，GI-087 只是在收拾旧候选形成的二选一语境。进一步审计确认 AUT2、H1、H2 均含旧候选语义回应，PAUSE 含人工构造的前置 AI 问题和状态；只有 AUT1、INDEP 符合纯净起点。原组六题因此退出当前候选质量门，逐题裁决停止。完整审计见GI-087 六题上下文资格审计（本机私有历史证据：`board7b-working-task-v1-context-eligibility-audit.md`）。
+`2026-08-08` 产品负责人在 H1 裁决前发现：输入中的“爽还是轻松”由旧候选生成，GI-087 只是在收拾旧候选形成的二选一语境。进一步审计确认 AUT2、H1、H2 均含旧候选语义回应，PAUSE 含人工构造的前置 AI 问题和状态；只有 AUT1、INDEP 符合纯净起点。原组六题因此退出当前候选质量门，逐题裁决停止。完整审计见[GI-087 六题上下文资格审计](../../../artifacts/generative-interview-board7/2026-08-07-board7b-working-task-v1/board7b-working-task-v1-context-eligibility-audit.md)。
 
 ### GI-088｜评测上下文纯净与影响因素调优协议
 
@@ -132,15 +287,15 @@ GI-086 运行结果（本机私有历史证据：`board7b-thinking-capability-v1
 
 GI-088 是方法 v1.0 在板块 6／7 的执行校正，延续其“候选一次只改变一个可归因变量”“结果绑定模型、Prompt、Skill、上下文、程序、数据集和评测版本”以及规则分流要求，不重新打开 GI-068～080，也不改变方法 v1.0 的冻结核心。
 
-当前执行入口更新为 [`GI-088 v7r2 Thinking high Ark Flash`](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v7r2-ark-flash/README.md)。v1～v7r1 继续保存当时状态、调用数、真人判断、被覆盖原因及仍有效的回归结论。完整对话、原始输出、Trace 和可重建真人经历的问题台账继续保留在本地受控资产中；公开仓库只保留脱敏结论和必要的聚合证据。
+当前 v8r2 工程底座与空白运行证据入口为 [`GI-088 v8r2 评测底座加固资产`](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/README.md)，实施合同见[已完成任务](../../ai-tasks/done/GI-088-v8r2-evaluation-foundation-hardening-20260810.md)。v1～v8r1 继续保存当时状态、调用数、真人判断、被覆盖原因及仍有效的回归结论；v8r1 A1 事故见[候选与部署快照](../../../artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r1-final12/README.md)，当前问题统一进入[GI-088 当前问题台账](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v7-continuity-baseline/gi088-current-issue-ledger.json)。
 
 ### GI-088 当前评测术语
 
 | 术语 | 本项目当前含义 |
 |---|---|
 | 评测方案 | 本批验证目标、能力范围、候选配置、裁决方式、授权和停止点 |
-| 开发评测集 | 用于发现问题和迭代候选的任务集合；当前 v7r2 继承 v7 的 `2` 项 Thinking high 连续性任务，最终独立批次仍为 `12` 项 |
-| 独立准入集 | 候选冻结后一次性验证准入的独立任务；当前仍等待正式 `12` 条建设 |
+| 开发评测集 | 用于发现问题和迭代候选的任务集合；当前开发 28 已由旧 12、人工历史失败 8 和反事实 8 组成 |
+| 独立准入集 | 候选冻结后一次性验证准入的独立任务；隐藏 12 能力蓝图、私有正文、泄漏检查和版本指纹已完成，真实运行等待独立授权 |
 | 候选配置 | 模型、Prompt、Interview Skill、任务结构、参数、程序保护和页面流程的版本化组合 |
 | 试次 | 某项任务在一个候选配置下完成的一次运行 |
 | 对话轨迹／Trace | 用户与 AI 的完整交互，以及配置、语义结果、来源、耗时、Token、技术失败和重试记录 |
@@ -165,7 +320,7 @@ GI-088 是方法 v1.0 在板块 6／7 的执行校正，延续其“候选一次
 
 评测运行器已部署在私有 Preview，使用 Preview 专用评测数据库和服务端 DeepSeek 凭据；Production 页面与会话接口均为 `404`。v0.3～v0.5 技术冒烟与输出合同校准继续作为历史证据。v0 formal batch 累计 `9` 次正式调用；A2 high 的初次调用与两次手动重试均以 `finishReason=length` 结束，`completionTokens=1600` 与 `reasoningTokens=1600` 相等，可见回答为空。v1 由此移除两组应用层 Token 上限，并让技术失败支持保留后直接评价。数据集指纹为 `93c9808b6f805caea801eeb06d8d0bac46d35a08df68257d74c03cdfc1774e29`，执行指纹为 `4b65801390264df957189efbc968c9b2584e212154e98671370b8167e7ff70b2`。
 
-产品负责人完成 A1～A8 共 `8` 项、`16` 条轨迹后主动提前结束，四项复测保持未开始。前 8 项的逐轨迹评价和配置比较完整；系统批次仍为 `running`、`sealedAt=null`，本轮用只读快照与 SHA256 承担产品层封存证据。v1 共 `66` 次调用：有效 `37`、程序保护 `10`、技术失败 `19`、手动重试 `17`。high 在产品负责人和 Codex 的内容比较中均显示 `6/8` 正向信号，同时承担全部 `12` 次空内容和 `7` 次超时。整批复盘（本机私有历史证据：`gi088-human-eval-v1-batch-reconciliation.md`）已经完成。
+产品负责人完成 A1～A8 共 `8` 项、`16` 条轨迹后主动提前结束，四项复测保持未开始。前 8 项的逐轨迹评价和配置比较完整；系统批次仍为 `running`、`sealedAt=null`，本轮用只读快照与 SHA256 承担产品层封存证据。v1 共 `66` 次调用：有效 `37`、程序保护 `10`、技术失败 `19`、手动重试 `17`。high 在产品负责人和 Codex 的内容比较中均显示 `6/8` 正向信号，同时承担全部 `12` 次空内容和 `7` 次超时。[整批复盘](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-batch-reconciliation.md)已经完成。
 
 产品负责人确认下一候选采用分阶段迭代：保留 Thinking high；`EMPTY_CONTENT` 与 `TIMEOUT` 分两轮；high→off 降级独立验证；每轮只处理一个主要因素，通过后固化为新基线。v2 diagnostic 已增加 `early_stopped`、部分导出、逐任务目标触发确认和安全分阶段 Provider 诊断。Effective candidate 继续为 `58074d31…08b884`，v2 数据集与执行指纹为 `ab74f00d…c7052`、`96a555c6…f943`。
 
@@ -173,27 +328,43 @@ GI-088 是方法 v1.0 在板块 6／7 的执行校正，延续其“候选一次
 
 Thinking 模式配对探针已按精确指纹完成 `4/4`。正式资产使用 E1 冷启动与 E3 长上下文两条冻结请求，固定顺序为 E1 high→disabled、E3 disabled→high；两臂固定 `json_object`、同 Prompt、每个 case 相同完整上下文、相同 Provider／模型、Provider 默认 Token、实际请求省略 temperature 和 `30s` 截止，自动重试、质量重试与 fallback 均为 `0`。disabled 只用于诊断，产品候选继续保留 Thinking high。
 
-实际结果为 high `2/2 valid`、disabled `2/2 valid`，请求血缘 `4/4` 匹配，超时和取消均为 `0`。预设边界要求 disabled `2/2 valid` 且 high 至少复现一次 `EMPTY_CONTENT`；本次 high 未复现，因此 Thinking 主要影响因素未确认。high 两条总耗时分别为 `7.965s` 与 `23.752s`，disabled 为 `2.665s` 与 `3.365s`；等待差异形成观测，和空内容之间的关系仍待验证。私有运行清单与 turn/call 定位符留在本地；公开仓库保留[脱敏结果 JSON](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-result.json)和[探针裁决](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-decision.md)。
+实际结果为 high `2/2 valid`、disabled `2/2 valid`，请求血缘 `4/4` 匹配，超时和取消均为 `0`。预设边界要求 disabled `2/2 valid` 且 high 至少复现一次 `EMPTY_CONTENT`；本次 high 未复现，因此 Thinking 主要影响因素未确认。high 两条总耗时分别为 `7.965s` 与 `23.752s`，disabled 为 `2.665s` 与 `3.365s`；等待差异形成观测，和空内容之间的关系仍待验证。运行清单见 [Thinking 模式探针 manifest](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-manifest.json)，完整脱敏结果与分账见[结果 JSON](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-result.json)和[探针裁决](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-empty-content-thinking-mode-probe-v1-decision.md)。
 
 产品负责人随后确认停止继续复现 DeepSeek 内部原因，并把唯一主要因素冻结为“Thinking high 的可见答案自动恢复”。v3 保留 high、JSON mode、原模型、完整上下文、语义状态和输出合同；首次 `EMPTY_CONTENT` 只记失败并开放一次恢复资格，第二次增加最终可见 JSON 指令。恢复成功只提交一条回答并标记 `complete_after_auto_recovery`；恢复失败进入 `exhausted`。每个用户提交最多两次调用，不切 disabled、不降级 off。服务端在调用前原子消费额度，客户端提供持续等待、温和 Toast、永久失败和完整血缘 Trace；隐藏推理正文继续隔离。v3 数据集与执行指纹为 `6f3f3cf8…f734ca`、`3b79fe68…70d23b`，本地定向自动验证已通过。
 
 产品负责人完成 A1 的 off/high 两条轨迹后确认两边出现同类阻断，以证据充分为由在 A2 开始前提前结束。终态为 `1/12 early_stopped`，调用消费 `8/40`；本组 `EMPTY_CONTENT=0`、自动恢复 `0`、手动重试 `0`，因此 v3 空内容恢复真人效果保持未判定。两条轨迹前三轮均有效，第 4 轮均命中 `MODEL_OUTPUT_PROTECTED / NEW_ANSWER_OPPORTUNITY_UNAVAILABLE`。已确认根因是 `explore_clarify` 的两次新回答机会已用尽，模型仍选择继续提出新问题；该程序边界对 off/high 一致。产品负责人仍判 high 的提问、总结和回应整体更好，两条轨迹均为 `better / minor_issue / target triggered`。完整入口见 [v3 恢复候选](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v3-empty-recovery/README.md)与[A1 复盘](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v3-empty-recovery/gi088-v3-targeted-human-eval-summary.md)。
 
-产品负责人随后确认 v4 唯一主要因素为“阶段 2→3 自然转场”。阶段 2 机会用完后，模型需要先吸收最新回答：已有认识且用户打开同一焦点下具体未解部分时进入 `deepen_integrate`；其余情况使用零问题总结、承接或暂停。程序只验证认识是否存在，以及转场后的新问题是否引用最新用户表达；语义价值继续由模型结合完整语境判断。只有唯一 `NEW_ANSWER_OPPORTUNITY_UNAVAILABLE` 可以在 off/high 沿原配置自动纠正一次，所有恢复类型共享每个用户提交最多两次 Provider 调用。v4 已完成 `95/95` 定向测试与静态验证，Effective candidate、数据集和执行指纹为 `cc398481…d21c9`、`064f042b…493c0`、`0206fd34…b1d0a`。产品负责人已授权 A1、A2 共 4 条真人轨迹与最坏 40 次调用；私有 Preview `redacted-deployment-id` 已 Ready。产品负责人登录后，工作台已创建 v4 `0/12` 空白批次并回读完整执行指纹，当前模型调用为 `0`，等待提交 A1 U1。完整入口见 [v4 阶段转场候选](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v4-stage-transition/README.md)。
+产品负责人随后确认 v4 唯一主要因素为“阶段 2→3 自然转场”。阶段 2 机会用完后，模型需要先吸收最新回答：已有认识且用户打开同一焦点下具体未解部分时进入 `deepen_integrate`；其余情况使用零问题总结、承接或暂停。程序只验证认识是否存在，以及转场后的新问题是否引用最新用户表达；语义价值继续由模型结合完整语境判断。只有唯一 `NEW_ANSWER_OPPORTUNITY_UNAVAILABLE` 可以在 off/high 沿原配置自动纠正一次，所有恢复类型共享每个用户提交最多两次 Provider 调用。v4 已完成 `95/95` 定向测试与静态验证，Effective candidate、数据集和执行指纹为 `cc398481…d21c9`、`064f042b…493c0`、`0206fd34…b1d0a`。产品负责人已授权 A1、A2 共 4 条真人轨迹与最坏 40 次调用；私有 Preview `dpl_H2MD53kihsYYjH3uh6RQ1gWjdQhV` 已 Ready。产品负责人登录后，工作台已创建 v4 `0/12` 空白批次并回读完整执行指纹，当前模型调用为 `0`，等待提交 A1 U1。完整入口见 [v4 阶段转场候选](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v4-stage-transition/README.md)。
 
 产品负责人实际完成 v4 A1 的 off/high 两条轨迹后停止本轮，批次共消费 `10` 次调用并以 `1/12 early_stopped` 进入只读终态。阶段转场在 high 中形成真人正向证据；high 后两次首次调用均在 `30.002s～30.003s` 命中本地 `hard_total`，其 HTTP 200 响应头已在约 `0.43s` 返回，确认健康正文读取被本地总截止中止。off/high 各出现一次 `ASK_QUESTION_COUNT_INVALID:2`，说明双问题与 Thinking 开关没有稳定对应关系。
 
-产品负责人确认 v5 只保留 Thinking high，并在同一候选中独立解决等待阈值与双问题。v5 采用 `15s` 响应头截止、`45s` 正文空闲截止、`60s` 总上限和 `75s` 路由上限；只对 deadline 来源的 headers/body TIMEOUT 同 high 自动恢复一次，60 秒 hard total 不盲目重跑。单问合同要求一轮只有一个回答目标、一个可见问句和一个问号；唯一 `ASK_QUESTION_COUNT_INVALID:2` 可沿同 high 自动纠正一次。所有恢复共享每轮两次 Provider 调用上限。Effective candidate、数据集和执行指纹为 `40335e6a…6aab93`、`cc6d81be…5075e`、`6dd8ed07…cfefd`。私有 Preview `redacted-deployment-id` 已 Ready，High-only `0/12` 批次与零调用回读通过；浏览器停留在新域名登录页。完整入口见 [v5 Thinking high 可靠性候选](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v5-high-reliability/README.md)。
+产品负责人确认 v5 只保留 Thinking high，并在同一候选中独立解决等待阈值与双问题。v5 采用 `15s` 响应头截止、`45s` 正文空闲截止、`60s` 总上限和 `75s` 路由上限；只对 deadline 来源的 headers/body TIMEOUT 同 high 自动恢复一次，60 秒 hard total 不盲目重跑。单问合同要求一轮只有一个回答目标、一个可见问句和一个问号；唯一 `ASK_QUESTION_COUNT_INVALID:2` 可沿同 high 自动纠正一次。所有恢复共享每轮两次 Provider 调用上限。Effective candidate、数据集和执行指纹为 `40335e6a…6aab93`、`cc6d81be…5075e`、`6dd8ed07…cfefd`。私有 Preview `dpl_3Xg4C1G28szDN2movRngGe2mPFDY` 已 Ready，High-only `0/12` 批次与零调用回读通过；浏览器停留在新域名登录页。完整入口见 [v5 Thinking high 可靠性候选](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v5-high-reliability/README.md)。
 
-产品负责人随后确认 v6 唯一主要因素为“从问号数量恢复到单一回答焦点”。同一 `nextInquiry.answerTarget` 下的主问题、澄清、举例和选项可以形成两个或三个问句，只要用户能用一段连贯回答覆盖；第二个问句打开新的事件、人物、时间范围、行动选择或判断任务时，由真人判为多个独立任务。问号数量只进入 Trace 和复核候选，不再拦截 ask，也不再触发单问号自动恢复。程序继续保护一个回答目标、一个新回答机会、阶段、来源、状态提交和每个用户提交两次调用上限。当前没有逐轮独立 Judge；v6 要求产品负责人在结束轨迹前复核所有可见 ask。v5 `0/12` 继续保持历史空白批次。v6 Effective candidate、数据集和执行指纹为 `4cd9f620…fb0ee`、`91b62d91…70aea`、`a5042e97…c094d`；共 `4` 项、只用 Thinking high，最坏调用预算 `48`。私有 Preview `redacted-deployment-id` 已 Ready，独立批次 `redacted-operational-id` 回读为 `0/4`、模型调用 `0`。完整入口见 [v6 单一回答焦点候选](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v6-single-focus/README.md)。
+产品负责人随后确认 v6 唯一主要因素为“从问号数量恢复到单一回答焦点”。同一 `nextInquiry.answerTarget` 下的主问题、澄清、举例和选项可以形成两个或三个问句，只要用户能用一段连贯回答覆盖；第二个问句打开新的事件、人物、时间范围、行动选择或判断任务时，由真人判为多个独立任务。问号数量只进入 Trace 和复核候选，不再拦截 ask，也不再触发单问号自动恢复。程序继续保护一个回答目标、一个新回答机会、阶段、来源、状态提交和每个用户提交两次调用上限。当前没有逐轮独立 Judge；v6 要求产品负责人在结束轨迹前复核所有可见 ask。v5 `0/12` 继续保持历史空白批次。v6 Effective candidate、数据集和执行指纹为 `4cd9f620…fb0ee`、`91b62d91…70aea`、`a5042e97…c094d`；共 `4` 项、只用 Thinking high，最坏调用预算 `48`。私有 Preview `dpl_5Rq7gTnovApDY97b4pg8k7YJf33r` 已 Ready，独立批次 `37517d91-a258-423a-bb26-a58c97357e68` 回读为 `0/4`、模型调用 `0`。完整入口见 [v6 单一回答焦点候选](../../../artifacts/generative-interview-board7/2026-08-09-gi088-human-eval-v6-single-focus/README.md)。
 
 产品负责人完成 v6 A1、A2 两条 Thinking high 轨迹后确认原有问题解决，并在 A3 开始前以 `2/4 early_stopped` 收口。11 条可见 ask 的真人分类为 `9` 条同一焦点自然可答、`2` 条同一焦点表达偏重、`0` 条独立多任务；A3、A4 标记 `not_run`。v6“单一回答焦点”因此记为真人验证通过。完整对话和逐轮结果进入本地私有运行目录，正式资产只保留脱敏总结、版本、指纹、结论和哈希。
 
-v7 唯一主要因素为“连续性底座”。模型每轮只输出认识变化 `none / add / revise` 与负担变化 `unchanged / set / clear`，新编号由程序生成，纠正沿用原状态编号；可见回应、共同任务和新状态原子提交。整条轨迹移除 `12` 次上限；第 13、25 次调用由自动测试覆盖。v7 两条真人轨迹已经完成并封存，连续性页面、认识纠正和自然长聊形成真实体验证据，同时出现 Thinking high 正常完成思考、可见正文为空且普通恢复仍失败的阻断。v7r1 完成“复用已完成思考续写最终可见答案”的本地实现与自动验证；唯一一次兼容探针确认 DeepSeek 返回 `response_format json_object should not be used with prefix`，三项冻结条件无法同时运行，因此 v7r1 判定 No-Go。随后完成官方 Flash / Pro 与火山 Ark Flash 模型平台对照，v7r2 选择 Ark Flash 作为单一平台变量并完成本地实现、自动验证和指纹收口；v8 继续等待可靠性门。
+v7 唯一主要因素为“连续性底座”。模型每轮只输出认识变化 `none / add / revise` 与负担变化 `unchanged / set / clear`，新编号由程序生成，纠正沿用原状态编号；可见回应、共同任务和新状态原子提交。整条轨迹移除 `12` 次上限；第 13、25 次调用由自动测试覆盖。v7 两条真人轨迹已经完成并封存，连续性页面、认识纠正和自然长聊形成真实体验证据，同时出现 Thinking high 正常完成思考、可见正文为空且普通恢复仍失败的阻断。v7r1 完成“复用已完成思考续写最终可见答案”的本地实现与自动验证；唯一一次兼容探针确认 DeepSeek 返回 `response_format json_object should not be used with prefix`，三项冻结条件无法同时运行，因此 v7r1 判定 No-Go。随后完成官方 Flash / Pro 与火山 Ark Flash 模型平台对照；v7r2 使用 Ark Flash 完成真人连续轨迹，v7r3 固化确定性状态底座，v7r4 验证官方 V4 Pro 可靠性，最终进入当前 v8。
 
 Flash / Pro 模型对照随后按同一官方 API、同一 3 个历史请求、Thinking high 与 JSON Output 执行 `6/6`，重试和降级均为 `0`。Flash 为 `2/3` 可见有效、E3 再次空正文；Pro 为 `3/3` 返回可解析的可见 JSON，其中 E2 命中历史 v1 的严格问号数量保护。Pro 三次等待为 `22.0 / 25.4 / 42.5` 秒。同平台同请求下的差异形成“模型或模型专属运行配置会显著影响空正文”的方向性证据；Prefix 与 JSON Output 冲突继续归属共同接口限制。该轮完成时的讨论候选为 `v7r2 Thinking high Pro`，后续火山 Ark 对照继续更新综合选择。
 
 火山 Ark `deepseek-v4-flash-ga-260731` 随后复放同三条历史空正文请求。E1 首次命中 15 秒响应头截止；校正为 Ark 非流式适配的 60 秒响应头与总时长后，E1 在 15.8 秒通过。E2 在 7.0 秒通过，E3 在 9.8 秒返回可见正文并命中 `OUTPUT_SCHEMA_INVALID`。聚合为可见正文 `3/3`、`EMPTY_CONTENT=0`、旧合同 `2/3`，平均等待约 10.9 秒。Codex 初评将综合最优讨论候选调整为 `v7r2 Thinking high Ark Flash`；接入采用 REST Chat Completions 与仓库现有 TypeScript OpenAI-compatible Provider，OpenAI Python SDK 和火山 Python SDK 不进入当前 Next.js 主链。火山结构化输出推荐模型表当前未单列该 DeepSeek 模型，真实调用已经确认接口接受 `json_object`，兼容性仍需在 Preview 持续观察。三案例只形成方向性证据，真人连续轨迹继续承担可靠性与体验裁决。
+
+产品负责人随后完成 v7r2 的 A1、A2 两条 Ark Flash 真人轨迹并封存，共 `15` 次用户提交、`20` 次调用，首次直接成功 `10` 次、自动恢复成功 `3` 次、程序保护 `2` 次。A1、A2 均由产品负责人判为 `minor_issue`。两次保护的共同根因是模型只提交本轮新增来源，程序仍要求模型重复完整任务血缘；A1 的明确停止同时受动作字段不一致影响。该批形成状态合同 No-Go，Ark Flash 的平台可靠性证据继续保留。
+
+v7r3 的唯一主要因素为“程序维护确定性状态”。`continue / return` 时模型只提交本轮新增来源，程序自动合并历史来源、去重并保持顺序；状态血缘容量提升到 `400` 条。纯停止表达零模型调用直接暂停，“新内容＋停止”最多调用一次吸收内容，程序最终接管暂停。v7r2 A1 U8、A2 U7 私有回放均通过，模型调用 `0`，执行指纹为 `f3f112e7…fefda7`。
+
+v7r4 完整继承 v7r3并切换为官方 `deepseek-v4-pro`。产品负责人完成 A1、A2 两条 Thinking high 轨迹后封存：V4 Pro 首次产生可见正文 `11/12`、空内容 `0`，可靠性达到继续使用条件；两次程序保护和 A2 连续停止提问使整批裁决为 `No-Go`。v7r4 正式保留为模型可靠性通过、状态与问前策略未通过的历史证据。
+
+v8 继续使用官方 V4 Pro、Thinking high 与 `json_object`。程序在严格合同校验前补全可以确定的空来源，组合纯停止零调用接管；Interview Skill 按用户意图、已有答案、具体未解部分、认识增量与低负担入口统一决定下一问。首次调用最长 `60s`，首次与一次自动恢复共享 `90s`，人工再次生成拥有独立 `60s`。v7r4 A1 来源缺失与 A2 组合停止均通过零模型回放；相关测试 `159` 项通过。执行指纹为 `39857f0d…791a`。Preview deployment `dpl_BBdWoWMXN3BQummXmCw2cCioxx9N` 已 READY，批次 `cdc6f41b-f441-4587-9d2f-4b5fe9c1dc60` 回读为 `running 0/4`，初始化模型调用为 `0`。
+
+产品负责人完成 v8 A1 共 `10` 次提交后以 `1/4 early_stopped` 收口，裁决为 `通过 / direct_use / target triggered`。`10/10` 次首次调用均成功，`7/7` 条可见提问均分类为 `same_focus_low_burden`，技术失败、恢复、保护和重复消息均为 `0`。Codex 初评记录一项轻微问题：“很好，就聊到这吧”进入混合停止，多产生一次调用。A2～A4 保持 `not_run`，相关能力转入最终 12 项。
+
+v8r1 将简短礼貌回应与明确停止组合识别为纯停止，直接提交暂停，Provider 调用为 `0`；真实 U10 输入与边界样例的零模型回放已通过。最终数据集为 12 条 Thinking high 独立轨迹，执行指纹为 `40da54f2…bf8f82`。Preview deployment `dpl_HPBafL2QmHd6UsUXQ8kWVbUvKJAQ` 创建时 READY，批次 `5123d795-5c19-408d-9b98-7767eaa7892c` 当时回读为 `running 0/12`，初始化模型调用为 `0`。
+
+产品负责人随后完成 A1 一条轨迹并确认体验变差、单例阻断、目标未触发。已确认根因是事件内容中的沟通负担命中宽泛疲惫词面规则，GI-088 再将 `fatigue_feedback` 升级为停止当前访谈；旧 Skill 同时允许模型在用户未明确停止时自行暂停。`2026-08-10` 专用评测库只读回读为 `running`、活动任务 A2、已完成轨迹 `1`、Provider 调用 `2` 且均为 `valid`。v8r1 退出最终通过候选并保持只读。
+
+v8r2 把高精度控制决策、Provider 结果落账、陈旧页面快照保护、人工证据治理、run 生命周期和工作台恢复合并为同一底座版本。八项 Preview 开门差额已经收口：明确继续独立进入 Trace、Provider preflight 原话落库、per-call 请求身份、`finalization_failed` 对账、不可变导出重下、技术阻断证据、完整错误映射和 operation event 血缘；Public session 同步提供真实 `runRevision`。P0／P1、最终初始化幂等、主要零模型、真实评测库、历史兼容、全绿静态门与不可变版本均已验证。最终行为 commit 为 `5281bc53f2b04be9c31adb6d7f4710ac818883a8`，Execution fingerprint 为 `96f1a022aede41b3648ecd60c4770bd66ea003b870ffcec85c9db2b0531cfd0c`。`2026-08-10` 的 `running / 0 of 12` 继续作为初始化历史快照；`2026-08-13` 实时审计确认目标 run 已于 `2026-08-11` 封存，同一评测版本共有 `5` 个 run。阶段 B 保留所有原记录，并完成现有 12 项开发挑战身份和全新隐藏准入蓝图。约 `200` 轮以上容量优化继续留在本轮边界外。
 
 原始对话保存至板块 6 关闭后 `30` 天，届时按明确范围清理并保留审计记录；产品负责人确认的脱敏正式资产长期保存。
 
@@ -204,12 +375,12 @@ Provider v4 及更早两段式产物只承担历史技术、失败复现和判�
 | 退出条件 | 当前状态 |
 |---|---|
 | 板块 5 六类行为与评测交接完整、无冲突 | `已满足` |
-| 冷启动集、开发集、独立准入集、判尺、阻断项和结果分类均有版本记录 | `进行中；首批 8 张仅为校准起点` |
-| 产品负责人完成校准，Judge 说明与人工评分卡可执行 | `进行中；7 张人工卡已收口、C3 开放；GI-085 与 GI-086 固定门 No-Go；GI-088 v1 前 8 项已复盘；v2～v6 保留分阶段证据；v7 两条轨迹已封存；v7r1 No-Go；v7r2 本地验证通过并等待 Preview 可靠性门` |
-| 技术完整率与产品质量分开报告，失败可定位到具体对象和行为约定 | `结构已明确；正式模板待建设` |
+| 冷启动集、开发集、独立准入集、判尺、阻断项和结果分类均有版本记录 | `已满足资产版本记录；开发 28、硬边界 24、Judge 20、隐藏 12 蓝图与私有正文均已冻结，正式结果等待运行` |
+| 产品负责人完成校准，Judge 说明与人工评分卡可执行 | `阶段 C2 已停止；Plus 两模式均 No-Go，Max 证据不完整，当前无可推荐 Judge` |
+| 技术完整率与产品质量分开报告，失败可定位到具体对象和行为约定 | `统一合同已建立；4 张历史校准卡需按新分账口径复核` |
 | 板块 7 可直接使用评测资产、Trace 要求和准入门 | `诊断子步可执行；正式实现门尚未满足` |
 
-板块 7B 的 GI-085 与 GI-086 均已判定固定门 No-Go，GI-086 的通用能力结论保持开放。GI-087 原六题已完成上下文资格审计，原质量门和剩余逐题裁决停止。GI-088 v0～v5 继续作为 Token、恢复、阶段和过度修复历史；v6 已完成人工单一焦点验证；v7 两条连续性真人轨迹已封存并暴露可见正文可靠性阻断；v7r1 因 Prefix 与 JSON Output 接口冲突判定 No-Go。官方与火山平台对照已经完成，v7r2 已接入火山 Ark Flash，并通过本地自动验证。下一步是受控 Preview 部署与页面回读，随后初始化 `0/2` 空白批次，再由产品负责人执行两条真人连续轨迹；v8 继续等待可靠性门。正式接入继续等待后续候选与板块 6 退出，板块 8 继续等待板块 6 与板块 7。Production 继续保持 `legacy + baseline`。
+板块 7B 的 GI-085 与 GI-086 均已判定固定门 No-Go，GI-086 的通用能力结论保持开放。GI-087 原六题已完成上下文资格审计，原质量门和剩余逐题裁决停止。GI-088 v0～v7r4 继续按各自身份保存 Token、恢复、阶段、过度修复、平台和真人连续性证据。v8 以 `1/4 early_stopped` 完成产品验收；v8r1 在 A1 暴露控制误停单例阻断并进入历史只读。v8r2 主体底座继续承担工程历史证据；阶段 B2 资产已封存，阶段 C2 最终为技术阻断，当前无可推荐 Judge。新的 Judge 路线与全新隐藏独立准入均需新授权；候选质量与发布尚未裁决。项目主链当前使用 `event_centered + baseline`，生成式能力继续关闭。
 
 ## 当前评测口径｜`2026-08-05` GI-074
 
@@ -290,7 +461,7 @@ AI Judge 输出逐维分数、证据、失败原因与不确定性；产品负�
 
 `B7-QH-01` 第三轮两种架构技术结构合计 `8/8`，Codex 初评只有通过 `1`、边缘 `1`、失败 `6`。当前 8 条架构探针已经参与多轮调优，降级为开发集；产品策略冻结后建立全新隐藏集，正式架构评测只运行一次。
 
-证据：B7-QH-01 第 3 轮 Codex 初评（本机私有历史证据：`architecture-ab-v3-qh01-r3-codex-review.md`）。
+证据：[B7-QH-01 第 3 轮 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-29/architecture-ab-v3-qh01-r3-codex-review.md)。
 
 ### 0.1 已确认判尺与待校准边界
 
@@ -326,11 +497,11 @@ Strict12 v5 的 ask 类固定为 `SMK-F-PARTIAL-ASK / SMK-T-ASK / SMK-R-CLEAN-AS
 
 ### 0.5 v2 严格冒烟确认门
 
-v62 本地实施使用策略 `5.44.0`、角度卡 `2.11.0`、Few-shot `quality-patterns.2026-07-30.v23`、质量卡与数据集 `2026-07-30.v2`。联合测试 `177/177`、静态硬边界 `24/24`、类型检查、lint 与差异检查通过。12 条严格冒烟确认包指纹为 `1fbf5707f4c829ee4a94131f03e1748b5acd2252b096dff00bc295dd099ad5ae`，已获产品负责人批准：确认包 v2（本机私有历史证据：`board7-smoke-case-confirmation-v2.md`）。
+v62 本地实施使用策略 `5.44.0`、角度卡 `2.11.0`、Few-shot `quality-patterns.2026-07-30.v23`、质量卡与数据集 `2026-07-30.v2`。联合测试 `177/177`、静态硬边界 `24/24`、类型检查、lint 与差异检查通过。12 条严格冒烟确认包指纹为 `1fbf5707f4c829ee4a94131f03e1748b5acd2252b096dff00bc295dd099ad5ae`，已获产品负责人批准：[确认包 v2](../../../artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v2.md)。
 
 唯一一次 Strict12 真实模型运行技术完整 `11/12`；Codex 初评通过 `3/12`、边缘 `1/12`、失败 `8/12`，边缘按失败后有效通过 `3/12`。分项为 ask `1/4`、用户成果 `2/4`、AI 综合 `0/4`；通过项为 `SMK-R-PARTIAL-ASK / SMK-T-USER / SMK-A-CLOSED`。`SMK-T-ASK` 来源误标，`SMK-A-PARTIAL-ASK` 表达结构硬失败，`SMK-F-CLOSED / SMK-R-CLOSED` 与四条 AI 综合案例过度追问；严重事实错误、强推断与来源误判各 `1`。
 
-正式证据：运行结果（本机私有历史证据：`board7-v62-final-smoke-runs.json`）、运行报告（本机私有历史证据：`board7-v62-final-smoke-report.md`）、Codex 初评（本机私有历史证据：`board7-v62-final-smoke-codex-review.json`）、用户裁决包（本机私有历史证据：`board7-v62-final-smoke-user-review.md`）。本轮落地验证失败，根因指向目标完成标准与运行时输入契约断点；产品判尺保持冻结，后续只形成离线修复清单并判断目标完成表达是否需要用户确认。
+正式证据：[运行结果](../../../artifacts/generative-interview-board7/2026-07-30/board7-v62-final-smoke-runs.json)、[运行报告](../../../artifacts/generative-interview-board7/2026-07-30/board7-v62-final-smoke-report.md)、[Codex 初评](../../../artifacts/generative-interview-board7/2026-07-30/board7-v62-final-smoke-codex-review.json)、[用户裁决包](../../../artifacts/generative-interview-board7/2026-07-30/board7-v62-final-smoke-user-review.md)。本轮落地验证失败，根因指向目标完成标准与运行时输入契约断点；产品判尺保持冻结，后续只形成离线修复清单并判断目标完成表达是否需要用户确认。
 
 ### 0.6 v63 离线修复与 v3 确认门
 
@@ -338,7 +509,7 @@ v62 失败结果继续作为正式失败证据。v63 已完成运行时输入契
 
 当前评测血缘为策略 `5.45.0`、Prompt `2026-07-30.event-centered-generative-v63`、Few-shot `quality-patterns.2026-07-30.v24`、角度卡 `2.11.0`、质量卡 `2026-07-30.v3`、开发数据集 `2026-07-30.v2`。相关 `9` 个测试文件 `202/202`、Strict12 模拟请求 `12/12`、静态硬边界 `24/24`、类型检查、lint 与差异检查通过。
 
-严格冒烟确认包 v3（本机私有历史证据：`board7-smoke-case-confirmation-v3.md`） 指纹为 `3d82475acb485e102dc6c8ac277b73d9a9fe379fd6a8eede6c119b0a82a784d7`。该确认包在离线阶段完成审核并获得本轮 `one_call` 基线授权；案例变化使旧 v2 批准失效。随后已完成 `0.7` 记录的唯一一次真实运行。当前 Codex 严格初评为 `1/12`，未达到 `12/12`，因此不进入用户逐条裁决；一次/两次调用 A/B 和后续质量门继续暂停。
+[严格冒烟确认包 v3](../../../artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v3.md) 指纹为 `3d82475acb485e102dc6c8ac277b73d9a9fe379fd6a8eede6c119b0a82a784d7`。该确认包在离线阶段完成审核并获得本轮 `one_call` 基线授权；案例变化使旧 v2 批准失效。随后已完成 `0.7` 记录的唯一一次真实运行。当前 Codex 严格初评为 `1/12`，未达到 `12/12`，因此不进入用户逐条裁决；一次/两次调用 A/B 和后续质量门继续暂停。
 
 ### 0.7 v63 真实基线评测结论
 
@@ -351,7 +522,7 @@ v62 失败结果继续作为正式失败证据。v63 已完成运行时输入契
 
 评测结论分为两层：调用、解析和客观校验链路已达到技术完整门；用户可见产品质量远低于严格冒烟门。本轮已触发停止条件，新的模型运行、Prompt 调优、一次/两次调用 A/B、开发稳定性、全新隐藏集、工作集与正式准入继续暂停。Production 入口、模型、配置和数据保持原状。
 
-正式证据：v63 结构化运行结果（本机私有历史证据：`board7-v63-baseline-smoke-runs.json`）、运行报告（本机私有历史证据：`board7-v63-baseline-smoke-report.md`）、前 8 条 Codex 初评（本机私有历史证据：`board7-v63-baseline-first8-codex-review.md`）、后 4 条 AI 综合 Codex 初评（本机私有历史证据：`board7-v63-baseline-smoke-ai-synthesis-codex-review.md`）、统一 Codex 初评（本机私有历史证据：`board7-v63-baseline-smoke-codex-report.md`）。
+正式证据：[v63 结构化运行结果](../../../artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-smoke-runs.json)、[运行报告](../../../artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-smoke-report.md)、[前 8 条 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-first8-codex-review.md)、[后 4 条 AI 综合 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-smoke-ai-synthesis-codex-review.md)、[统一 Codex 初评](../../../artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-smoke-codex-report.md)。
 
 ### 0.8 v64 Strict12 v4 评测矩阵与停止条件
 
@@ -365,7 +536,7 @@ Strict12 v4 继续保持三类各四条：
 | 用户成果 | `F-CLOSED / T-USER / R-PARTIAL / A-CLOSED` | 允许忠实转述与一步轻度解释，排他改写及动机层扩写失败 |
 | AI 综合 | `F-AI / T-AI / R-AI / A-AI` | 用户只提供分散事实，模型必须自行形成 `GI-040` 范围内的单一证据关系并停止 |
 
-Strict12 v4 案例确认包（本机私有历史证据：`board7-smoke-case-confirmation-v4.md`） 的案例指纹为 `dc0089c7747d23eff35c139f40e1c96fa28d20a29121f253890f54725c7de846`。产品终审发现三处案例自身会干扰裁决，v4 已退出当前批准候选；原文件和指纹继续作为作废审计证据。`SMK-R-CLOSED` 已替换同类的 `AB-RG-01` 进入常规 stability 开发回归，继续保持 `8` 个案例 × `2` 次和 `ask 4 / user_articulated 6 / ai_synthesized 6` 的结果矩阵。
+[Strict12 v4 案例确认包](../../../artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v4.md) 的案例指纹为 `dc0089c7747d23eff35c139f40e1c96fa28d20a29121f253890f54725c7de846`。产品终审发现三处案例自身会干扰裁决，v4 已退出当前批准候选；原文件和指纹继续作为作废审计证据。`SMK-R-CLOSED` 已替换同类的 `AB-RG-01` 进入常规 stability 开发回归，继续保持 `8` 个案例 × `2` 次和 `ask 4 / user_articulated 6 / ai_synthesized 6` 的结果矩阵。
 
 F、R、A 三个 AI 综合案例的用户原话移除“才、因此、只有、越……越……”等提前表达目标关系的连接；隐藏判尺与 Prompt、Few-shot、模型运行时输入隔离。思路已经包含正式问题答案，或问题只重复已知事实时，记为动作与内容客观冲突；当前逻辑轮使用现有第二次技术尝试，第二次仍失败时停止且不展示该问题。
 
@@ -379,7 +550,7 @@ v5 只修复三处案例有效性，产品规则与运行链路保持冻结：
 2. `SMK-R-PARTIAL-ASK` 由用户原话明确“两件事都让我觉得被越过、当前无法排序”，消除可信事实对用户结论的加强。
 3. `SMK-R-AI` 删除可见对话未提供的“未经确认”，只保留省下一小时、新版议程未列项目、会上未发言三条首层事实。
 
-Strict12 v5 案例确认包（本机私有历史证据：`board7-smoke-case-confirmation-v5.md`） 的案例指纹为 `79885a71f4eb8c3a355d933f2776422219464423e910df9fa29ef56f5a0cb24f`，批准状态为 `pending`。相关 `4` 个直接测试文件 `38/38` 通过；v4 md/json 保持原样。产品负责人完成逐条确认并单独授权后，才能运行下一次真实模型基线。
+[Strict12 v5 案例确认包](../../../artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v5.md) 的案例指纹为 `79885a71f4eb8c3a355d933f2776422219464423e910df9fa29ef56f5a0cb24f`，批准状态为 `pending`。相关 `4` 个直接测试文件 `38/38` 通过；v4 md/json 保持原样。产品负责人完成逐条确认并单独授权后，才能运行下一次真实模型基线。
 
 当前评测执行只开放 `rules / case-confirmation / development`，其余模型模式与两次调用继续暂停。`development` 在预算预留前依次完成目录预检和 Provider 校验；每条运行输出及其人工裁决由 `runFingerprint` 绑定，旧结果、缺少指纹或指纹不匹配的裁决均不能进入 v64 质量门。定向运行出现失败时退出码为 `1`；定向结果全部通过时仍需等待完整 Strict12 门，退出码为 `2`。最终离线验证为测试文件 `243/243`、用例 `2228/2228`、旧链路 `580/580`，类型检查和差异检查通过。本轮真实模型调用 `0` 次，`board7-v64-run-budget-ledger.json` 尚未生成；Production 保持原状，板块 7 继续验证阻断，板块 8 继续等待。
 
@@ -391,7 +562,7 @@ R2 的主要共同失败是成果证据已经充分后仍继续提问。v65 仅�
 
 Prompt 单变量假设因此无效，并触发停止条件。剩余 `2` 条定向额度与 `2` 次全量额度停止消耗；新的模型运行、Prompt 调优、开发稳定性、隐藏集、工作集和正式准入暂停。`GI-009` 重新打开，下一步评估任务拆分与两次调用，评测判尺继续作为新架构的验收输入。
 
-证据：R1 作废审计（本机私有历史证据：`board7-v64-strict12-v5-baseline-r1-audited-report.md`）、R2 委托终审报告（本机私有历史证据：`board7-v64-strict12-v5-baseline-r2-reviewed-report.md`）、v65 定向终审报告（本机私有历史证据：`board7-v65-targeted-r1-reviewed-report.md`）。
+证据：[R1 作废审计](../../../artifacts/generative-interview-board7/2026-07-30/board7-v64-strict12-v5-baseline-r1-audited-report.md)、[R2 委托终审报告](../../../artifacts/generative-interview-board7/2026-07-30/board7-v64-strict12-v5-baseline-r2-reviewed-report.md)、[v65 定向终审报告](../../../artifacts/generative-interview-board7/2026-07-30/board7-v65-targeted-r1-reviewed-report.md)。
 
 ### 0.11 极简两段式的当前验证门
 
@@ -428,7 +599,7 @@ Prompt 单变量假设因此无效，并触发停止条件。剩余 `2` 条定�
 
 第二段省略无关空字段导致的结构失败已作为执行缺陷修复，不改变历史结果。其余失败属于三个独立产品问题，`GI-045` 停止条件成立。当前评测结论为“判尺有效、候选失败、停止继续运行”。新规格确认后需重新确定最小验证集；现有首轮案例保留为开发证据，后续正式隐藏集继续使用全新故事。
 
-证据：原始运行（本机私有历史证据：`meaning-card-candidate-runs.json`）、逐条裁决（本机私有历史证据：`meaning-card-candidate-codex-review.json`）、评审后报告（本机私有历史证据：`meaning-card-candidate-reviewed-report.md`）。
+证据：[原始运行](../../../artifacts/generative-interview-board7/2026-08-01/meaning-card-candidate-runs.json)、[逐条裁决](../../../artifacts/generative-interview-board7/2026-08-01/meaning-card-candidate-codex-review.json)、[评审后报告](../../../artifacts/generative-interview-board7/2026-08-01/meaning-card-candidate-reviewed-report.md)。
 
 ### 0.13 极简两段式 v3 首批双层评审
 
@@ -444,7 +615,7 @@ Prompt 单变量假设因此无效，并触发停止条件。剩余 `2` 条定�
 
 首批结果出现语义入口和表达视角两个独立失败原因，首批结论为“既有成果边界继续有效，两项规则待复核，首批停止”。冻结版本复跑、全新隐藏集、工作集、硬边界和正式准入继续阻断。
 
-证据：v3 首批原始报告（本机私有历史证据：`minimal-two-stage-v3-batch-1-report.md`）、v3 首批逐条裁决（本机私有历史证据：`minimal-two-stage-v3-batch-1-codex-review.json`）、v3 首批评审后报告（本机私有历史证据：`minimal-two-stage-v3-batch-1-reviewed-report.md`）。
+证据：[v3 首批原始报告](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-batch-1-report.md)、[v3 首批逐条裁决](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-batch-1-codex-review.json)、[v3 首批评审后报告](../../../artifacts/generative-interview-board7/2026-08-01/minimal-two-stage-v3-batch-1-reviewed-report.md)。
 
 ### 0.14 两条产品规则重新冻结与新候选前置门（GI-039 / GI-041 / GI-045）
 
@@ -479,7 +650,7 @@ Prompt 单变量假设因此无效，并触发停止条件。剩余 `2` 条定�
 
 本轮整体结论固定为修复探针失败。`GI-039 / GI-041` 两条产品规则继续冻结，`GI-045` 停止门、板块 7 落地验证、隐藏集、正式准入和板块 8 继续阻断；Production 保持 `legacy + baseline`。
 
-证据：run-1 原始结果（本机私有历史证据：`provider-v31-repair-probe-run-1.json`）、run-1 报告（本机私有历史证据：`provider-v31-repair-probe-run-1-report.md`）、恢复评审后结果（本机私有历史证据：`provider-v31-repair-probe-recovery-1-reviewed.json`）、恢复评审后报告（本机私有历史证据：`provider-v31-repair-probe-recovery-1-reviewed-report.md`）、预算审计（本机私有历史证据：`board7-provider-v31-repair-probe-budget.json`）。
+证据：[run-1 原始结果](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-run-1.json)、[run-1 报告](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-run-1-report.md)、[恢复评审后结果](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-recovery-1-reviewed.json)、[恢复评审后报告](../../../artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-recovery-1-reviewed-report.md)、[预算审计](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v31-repair-probe-budget.json)。
 
 ### 0.16 v70/v70 root-visible probe 终局裁决
 
@@ -507,21 +678,21 @@ Prompt 单变量假设因此无效，并触发停止条件。剩余 `2` 条定�
 
 专项规格：[04n｜Provider v4 语义骨架 v1](./04n-board7-semantic-skeleton-v1-spec.md)。
 
-证据：终局运行报告（本机私有历史证据：`provider-v70-root-visible-probe-run-1-report.md`）、终局结构化结果（本机私有历史证据：`provider-v70-root-visible-probe-run-1.json`）、Codex 终局评审包（本机私有历史证据：`provider-v70-root-visible-probe-run-1-human-review.md`）、独立预算账本（本机私有历史证据：`board7-provider-v70-root-visible-probe-budget.json`）。
+证据：[终局运行报告](../../../artifacts/generative-interview-board7/2026-08-01/provider-v70-root-visible-probe-run-1-report.md)、[终局结构化结果](../../../artifacts/generative-interview-board7/2026-08-01/provider-v70-root-visible-probe-run-1.json)、[Codex 终局评审包](../../../artifacts/generative-interview-board7/2026-08-01/provider-v70-root-visible-probe-run-1-human-review.md)、[独立预算账本](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v70-root-visible-probe-budget.json)。
 
 ### 0.18 Provider v4 离线评测适配结果
 
 `2026-08-01`，板块 6 已完成 Provider v4 双层判尺与 runner 适配。第一层按 `decision.state + semanticFrame + questionIntent + limitReason` 裁决语义骨架，第二层按第二段首次生成的完整用户文案裁决问题价值、成果完整性、回答负担、人称、事实与边界；技术完整率、骨架通过率和用户文案通过率继续分开统计。板块 4 的语义骨架投影也已完成复核，两块真实质量证据继续随板块 7 模型门等待。
 
-最终离线候选为策略 `5.49.0`、semantic Prompt `2026-08-01.event-centered-generative-v71-semantic-skeleton`、visible Prompt `2026-08-01.event-centered-generative-v71-visible`、Few-shot `quality-patterns.2026-08-01.v28`、角度卡 `2.12.0` 与语义产物 `event-centered-semantic-plan.v4`。六例矩阵覆盖四角度、纠正和材料有限；离线案例确认包（本机私有历史证据：`semantic-frame-v4-offline-case-confirmation.md`） 的指纹为 `ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62`。
+最终离线候选为策略 `5.49.0`、semantic Prompt `2026-08-01.event-centered-generative-v71-semantic-skeleton`、visible Prompt `2026-08-01.event-centered-generative-v71-visible`、Few-shot `quality-patterns.2026-08-01.v28`、角度卡 `2.12.0` 与语义产物 `event-centered-semantic-plan.v4`。六例矩阵覆盖四角度、纠正和材料有限；[离线案例确认包](../../../artifacts/generative-interview-board7/2026-08-01/semantic-frame-v4-offline-case-confirmation.md) 的指纹为 `ae2c1e801cd121a3372dec9bb8ae52d0897dc3b0d430c91d69b8ddf0c4203f62`。
 
 确认包离线运行策略固定为 `modelRunAllowed=false`，该阶段预算 `0`、模型调用 `0`。离线验证为事件中心 unit `30` 个测试文件、`622` 个用例通过；生成式 eval `6` 个测试文件、`56` 个用例通过；TypeScript 类型检查通过；ESLint `0 error / 4 existing warnings`；差异格式检查通过。六例随后完成产品确认，真实模型、正式质量门、隐藏集、工作集和板块 8 继续等待首轮独立预算授权；v64、v65、`GI-009` 与 v70/v70 血缘只读隔离，保留原始裁决且不计入 v4 候选质量。
 
 ### 0.19 v71 首轮六例评测授权门
 
-六例已于 `2026-08-01` 完成产品确认，数据集与指纹保持冻结。首轮运行授权卡（本机私有历史证据：`board7-provider-v71-semantic-frame-first-pass-approval.md`）状态为 `pending`：名义生成请求 `12` 次、技术极限 `24` 次，最多 `1` 次 `/models` 只读预检单列；当前模型调用 `0`。
+六例已于 `2026-08-01` 完成产品确认，数据集与指纹保持冻结。首轮[运行授权卡](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v71-semantic-frame-first-pass-approval.md)状态为 `pending`：名义生成请求 `12` 次、技术极限 `24` 次，最多 `1` 次 `/models` 只读预检单列；当前模型调用 `0`。
 
-pending 预算账本（本机私有历史证据：`board7-provider-v71-semantic-frame-first-pass-budget.json`）已经生成，scopeFingerprint 为 `960eae47ec6b0026e44fed960520fc92b3cc6c6faf22f4aceae778140c28ed98`；程序化护栏拒绝未授权运行，`v71 live` 入口保持关闭，模型调用 `0`。
+[pending 预算账本](../../../artifacts/generative-interview-board7/2026-08-01/board7-provider-v71-semantic-frame-first-pass-budget.json)已经生成，scopeFingerprint 为 `960eae47ec6b0026e44fed960520fc92b3cc6c6faf22f4aceae778140c28ed98`；程序化护栏拒绝未授权运行，`v71 live` 入口保持关闭，模型调用 `0`。
 
 有效但低质量的结果直接进入双层判尺，不触发质量重试。首轮六例结束即停；失败后完成归因并重新审批，成功后也只生成下一轮独立预算。用户另行明确授权前，板块 7、板块 8、隐藏集、工作集与正式质量门继续阻断，Production 保持 `legacy + baseline`。
 
@@ -844,11 +1015,11 @@ product_preference_reason:
 
 ## 10. GI-074 当前下游承接要求
 
-板块 7 的客观安全边界、证据来源、Trace 和双层质量资产继续作为有效输入。四角度最终回应 `4/4`、事件日志闭环 `1/1`、极简两段式 v3、修复探针、v70/v70、v72 及 GI-066 自动结果均作为历史技术证据保留。最新真人体验已判定 GI-066 为 `No-Go`；GI-067、GI-074 与 GI-075～080 均已冻结。板块 6 首批 8 张已完成盲评，7 张收口、C3 开放；GI-081 板块 7A 六题隔离诊断已完成 `18/18` 次基础生成、产品盲评和架构揭晓，证据身份固定为临时 Prompt 下的诊断基线。GI-082～086 继续保留诊断、失败和能力校准证据；GI-087 保留为稳定共同任务的基础候选，原六题已退出当前质量门。GI-088 v0 正式批次累计 `9` 次调用，并因 A2 high 三次耗尽 `1600` completion Token 归档；v1 在 `8/12` 主动提前结束，前 8 项复盘已完成；v2 diagnostic 已完成底座与两轮探针；v3 在 A1 后以 `1/12` 提前结束，空内容恢复未触发，回答机会边界已确认。正式运行时接入继续等待分阶段候选验证和板块 6 正式评测资产完成。
+板块 7 的客观安全边界、证据来源、Trace 和双层质量资产继续作为有效输入。四角度最终回应 `4/4`、事件日志闭环 `1/1`、极简两段式 v3、修复探针、v70/v70、v72 及 GI-066 自动结果均作为历史技术证据保留。最新真人体验已判定 GI-066 为 `No-Go`；GI-067、GI-074 与 GI-075～080 均已冻结。板块 6 首批 8 张已完成盲评，7 张收口、C3 开放；GI-081 板块 7A 六题隔离诊断已完成 `18/18` 次基础生成、产品盲评和架构揭晓，证据身份固定为临时 Prompt 下的诊断基线。GI-082～086 继续保留诊断、失败和能力校准证据；GI-087 保留为稳定共同任务的基础候选，原六题已退出当前质量门。GI-088 v0～v8r1 继续按各自身份保存技术、真人和 No-Go 血缘；v8r1 A1 的控制误停与评测底座风险进入 v8r2 同周期修复。正式运行时接入继续等待 v8r2 最终 12 条真人门和板块 6 正式评测资产完成。
 
 `GI-047 / GI-048` 的两段评测职责继续作为历史实现资产。第一层检查状态、成果归属与语义骨架，第二层检查完整用户文案；最终产品层继续检查快速降级后的真实可见回应。板块 6 需要按 GI-074 复标 `24＋40`、建立 `28＋12`、Judge 说明、人工评分卡和两模式 `4＋2` 脚本；板块 7 按该资产实现并验证最小 Trace；板块 8 对通过准入的新候选执行 `4＋2`。旧链路 `580/580`、专项 `691/691` 与全量 `2393/2393` 继续作为历史证据，Production 保持 `legacy + baseline`。
 
-历史首轮证据见 Provider v71 运行报告（本机私有历史证据：`board7-provider-v71-semantic-frame-first-pass-report.md`）。v72 证据见原始运行报告（本机私有历史证据：`board7-provider-v72-semantic-frame-first-pass-v2-report.md`）和Codex 双层验收（本机私有历史证据：`board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md`）。后续历史证据见四角度 Codex 初评（本机私有历史证据：`board7-mvp-four-angle-smoke-v1-codex-review.md`）、事件日志探针（本机私有历史证据：`board7-event-journal-mvp-probe-report.md`）和[04o Preview 候选交接](./04o-board7-mvp-preview-candidate-handoff.md)。当前产品判尺入口见[04w｜GI-067](./04w-board4-gi067-thought-question-strategy-first-principles.md)。
+历史首轮证据见 [Provider v71 运行报告](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v71-semantic-frame-first-pass-report.md)。v72 证据见[原始运行报告](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-report.md)和[Codex 双层验收](../../../artifacts/generative-interview-board7/2026-08-02/board7-provider-v72-semantic-frame-first-pass-v2-codex-review.md)。后续历史证据见[四角度 Codex 初评](../../../artifacts/generative-interview-board7/2026-08-02/board7-mvp-four-angle-smoke-v1-codex-review.md)、[事件日志探针](../../../artifacts/generative-interview-board7/2026-08-02/board7-event-journal-mvp-probe-report.md)和[04o Preview 候选交接](./04o-board7-mvp-preview-candidate-handoff.md)。当前产品判尺入口见[04w｜GI-067](./04w-board4-gi067-thought-question-strategy-first-principles.md)。
 
 ### 0.19 v72 六例双层质量结论
 

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "status": "simulation_pass",
+  "executionKind": "mock",
+  "officialQualityEvidence": false,
+  "assertions": {
+    "normalContinuedAfterFailure": true,
+    "normalRetriesIsolated": true,
+    "thinkingUnaffectedByNormalFailures": true,
+    "goldNotLoadedDuringMock": true,
+    "simulationAndRealDirectoriesSeparated": true
+  },
+  "arms": [
+    {
+      "model": "qwen3.7-plus-2026-05-26",
+      "mode": "normal",
+      "plannedCount": 20,
+      "validCount": 19,
+      "technicalFailedCount": 1,
+      "notRunCount": 0,
+      "calls": 22,
+      "retries": 2,
+      "inputTokens": 210,
+      "outputTokens": 105,
+      "reasoningTokens": 0,
+      "knownCostCny": 0.00126,
+      "medianLatencyMs": 4,
+      "fatalCode": null,
+      "score": null
+    },
+    {
+      "model": "qwen3.7-plus-2026-05-26",
+      "mode": "thinking",
+      "plannedCount": 20,
+      "validCount": 20,
+      "technicalFailedCount": 0,
+      "notRunCount": 0,
+      "calls": 20,
+      "retries": 0,
+      "inputTokens": 200,
+      "outputTokens": 100,
+      "reasoningTokens": 40,
+      "knownCostCny": 0.0012,
+      "medianLatencyMs": 4,
+      "fatalCode": null,
+      "score": null
+    }
+  ],
+  "totals": {
+    "calls": 42,
+    "retries": 2,
+    "knownCostCny": 0.00246
+  },
+  "goldLoaded": false,
+  "privateContentExported": 0
+}

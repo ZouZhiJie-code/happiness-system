@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "board7_codex_ai_synthesis_review.v1",
+  "sourceRunsPath": "artifacts/generative-interview-board7/2026-07-30/board7-v63-baseline-smoke-runs.json",
+  "sourceConfirmationPath": "artifacts/generative-interview-board7/2026-07-30/board7-smoke-case-confirmation-v3.json",
+  "decisionBoundary": "GI-040",
+  "reviewedAt": "2026-07-30T10:35:38-04:00",
+  "reviewedBy": "codex",
+  "scope": {
+    "caseIds": [
+      "SMK-F-AI",
+      "SMK-T-AI",
+      "SMK-R-AI",
+      "SMK-A-AI"
+    ],
+    "description": "v63 one_call Strict12 后四条 AI 综合案例"
+  },
+  "summary": {
+    "total": 4,
+    "technicalComplete": 4,
+    "passed": 0,
+    "borderline": 0,
+    "failed": 4,
+    "evidenceGatePassed": 4,
+    "expectedDirectSynthesis": 4,
+    "actualDirectSynthesis": 1,
+    "strictActionMatched": 1,
+    "strictOriginMatched": 0,
+    "strongInferenceCases": 0,
+    "sourceMisattributionCases": 1,
+    "gateState": "failed"
+  },
+  "automaticErrorAudit": {
+    "reportedSourceMisattribution": 1,
+    "reportedSeriousBoundaryErrors": 1,
+    "independentIncidentCount": 1,
+    "caseId": "SMK-T-AI",
+    "errorCode": "outcome_origin_misattribution",
+    "finding": "来源误判计数与严重错误计数来自同一结构化错误：可见回应形成了 AI 新增的证据关系，semanticPlan 却把 origin 标为 user_articulated。自动统计准确捕获该错误，两个汇总值不代表两起独立事故。",
+    "strongInferenceAudit": "本组未新增独立 strong_inference。SMK-T-AI 的‘更指向时间压力下的答题节奏，而不是知识基础本身’接近 GI-040 上限，但保留了比较语气，且由不限时九十分、限时六十二分、错题集中于第四十分钟后反复读题三条事实支撑；本次按表达边界风险记录，不升级为严重强推断。"
+  },
+  "singleRuns": [
+    {
+      "runId": "SMK-F-AI-R1",
+      "caseId": "SMK-F-AI",
+      "severeErrors": [],
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T10:35:38-04:00",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "用户已说清结果正常时仍坐得很直，监测夹取下后才靠回椅背并摊开手。两条证据足以直接形成‘结果确认早于身体放松’的关系，回应仍追问夹子取下与靠回椅背是先后还是其他关系，重复询问已由‘才’表达的内容。",
+        "finalVerdict": null,
+        "rootCause": "模型把已经可观察的先后关系当成只能由用户补充的主观缺口，未触发 GI-040 的 AI 综合停止条件。",
+        "resolution": "失败；应直接 complete / ai_synthesized，等待产品负责人裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": {
+          "action": "complete",
+          "origin": "ai_synthesized"
+        },
+        "actual": {
+          "action": "ask",
+          "origin": null
+        },
+        "evidenceCount": 2,
+        "evidenceRefs": [
+          "fact_01",
+          "fact_02"
+        ],
+        "evidenceGate": "pass",
+        "shouldDirectSynthesize": true,
+        "actualDirectSynthesis": false,
+        "strictActionAndOrigin": "fail",
+        "strongInference": false,
+        "sourceMisattribution": false,
+        "automaticSevereErrors": [],
+        "gi040Relation": "先后 / 条件",
+        "acceptableSynthesis": "检查结果正常先被告知，身体直到监测夹取下后才放松；结果确认与身体结束警觉并不同步。"
+      }
+    },
+    {
+      "runId": "SMK-T-AI-R1",
+      "caseId": "SMK-T-AI",
+      "severeErrors": [],
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T10:35:38-04:00",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "context_or_assumption",
+        "visibleEvidence": "回应把不限时九十分、限时后段反复读题和错题集中连接成‘更指向时间压力下的答题节奏’的新关系，用户原话只提供了三项事实。动作 pause 正确，结构化 origin 却标成 user_articulated。",
+        "finalVerdict": null,
+        "rootCause": "成果来源判断把‘用户提供了形成关系所需的事实’等同于‘用户已经说出了该关系’，导致 AI 综合被记到用户名下。",
+        "resolution": "失败；可见综合可保留，origin 必须为 ai_synthesized，等待产品负责人裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": {
+          "action": "pause",
+          "origin": "ai_synthesized"
+        },
+        "actual": {
+          "action": "pause",
+          "origin": "user_articulated"
+        },
+        "evidenceCount": 3,
+        "evidenceRefs": [
+          "fact_01",
+          "fact_02",
+          "fact_03"
+        ],
+        "evidenceGate": "pass",
+        "shouldDirectSynthesize": true,
+        "actualDirectSynthesis": true,
+        "strictActionAndOrigin": "fail",
+        "strongInference": false,
+        "strongInferenceBoundaryRisk": "‘而不是知识基础本身’比确认包建议的‘单次低分不能单独代表知识基础’更强，当前由‘更指向’的比较语气和三条对比事实支撑，保留为质量风险。",
+        "sourceMisattribution": true,
+        "automaticSevereErrors": [
+          "outcome_origin_misattribution"
+        ],
+        "gi040Relation": "区别 / 条件",
+        "acceptableSynthesis": "不限时正确率较高，限时错误集中在后段反复读题；单次限时低分不能单独代表知识基础。"
+      }
+    },
+    {
+      "runId": "SMK-R-AI-R1",
+      "caseId": "SMK-R-AI",
+      "severeErrors": [],
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T10:35:38-04:00",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "用户已给出幻灯片省时、负责内容未进入议程、会上没有发言三项结果。回应仍要求用户解释省时与未发言之间有什么实际联系，当前成果只需呈现同一次协作同时带来的帮助和参与机会退出。",
+        "finalVerdict": null,
+        "rootCause": "模型把并列且可观察的实际影响误当成需要用户补充的因果关系，未触发 GI-040 的直接综合。",
+        "resolution": "失败；应直接 complete / ai_synthesized，等待产品负责人裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": {
+          "action": "complete",
+          "origin": "ai_synthesized"
+        },
+        "actual": {
+          "action": "ask",
+          "origin": null
+        },
+        "evidenceCount": 3,
+        "evidenceRefs": [
+          "fact_01",
+          "fact_02",
+          "fact_03"
+        ],
+        "evidenceGate": "pass",
+        "shouldDirectSynthesize": true,
+        "actualDirectSynthesis": false,
+        "strictActionAndOrigin": "fail",
+        "strongInference": false,
+        "sourceMisattribution": false,
+        "automaticSevereErrors": [],
+        "gi040Relation": "实际影响",
+        "acceptableSynthesis": "幻灯片准备省下了时间，议程调整同时让用户负责的内容没有进入会议，也失去了发言机会。"
+      }
+    },
+    {
+      "runId": "SMK-A-AI-R1",
+      "caseId": "SMK-A-AI",
+      "severeErrors": [],
+      "review": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-30T10:35:38-04:00",
+        "primaryReason": "ask_stop_timing",
+        "secondaryReason": "answer_burden",
+        "visibleEvidence": "用户已说清整理使二十多张卡片越来越清楚，客户投诉仍压在最下面且到下班都没点开。回应继续问投诉在用户面前‘是什么状态’，既重复现有事实，又把回答入口变得抽象。",
+        "finalVerdict": null,
+        "rootCause": "模型把已经成立的可观察结果关系当成未完成的主观解释目标，继续收集材料。",
+        "resolution": "失败；应直接 pause / ai_synthesized，等待产品负责人裁决。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "audit": {
+        "technicalComplete": true,
+        "expected": {
+          "action": "pause",
+          "origin": "ai_synthesized"
+        },
+        "actual": {
+          "action": "ask",
+          "origin": null
+        },
+        "evidenceCount": 2,
+        "evidenceRefs": [
+          "fact_01",
+          "fact_02"
+        ],
+        "evidenceGate": "pass",
+        "shouldDirectSynthesize": true,
+        "actualDirectSynthesis": false,
+        "strictActionAndOrigin": "fail",
+        "strongInference": false,
+        "sourceMisattribution": false,
+        "automaticSevereErrors": [],
+        "gi040Relation": "可观察结果",
+        "acceptableSynthesis": "整理增加了清晰和秩序，客户投诉仍未进入处理；清晰感与关键任务推进在这次分开了。"
+      }
+    }
+  ]
+}

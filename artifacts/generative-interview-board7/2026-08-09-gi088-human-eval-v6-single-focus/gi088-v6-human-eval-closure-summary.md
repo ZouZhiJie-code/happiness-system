@@ -20,8 +20,8 @@
 - 已确认根因：v5 使用问号数量代替回答焦点，形成了过度修复；v6 改为“一个独立回答任务＋逐轮人工复核”后，原问题消除。
 - v6 新发现：A1 最终回合因旧完整状态合同中的 `burdenSignal.ref` 被拒绝，进入 v7 语义变化合同处理。
 - 脱敏血缘：
-  - A1 turn：`redacted-operational-id`；call：`redacted-operational-id`；错误：`OUTPUT_SCHEMA_INVALID:semantic.burdenSignal:unrecognized_keys`。
-  - A2 turn：`redacted-operational-id`；首次 call：`redacted-operational-id`；错误：`TIMEOUT`；最终状态：`complete_after_auto_recovery`。
+  - A1 turn：`99ba2324-9df7-439e-b62d-3f077c3848b0`；call：`12e923c3-c206-427f-908b-f3286da93706`；错误：`OUTPUT_SCHEMA_INVALID:semantic.burdenSignal:unrecognized_keys`。
+  - A2 turn：`02ab24a0-4179-434f-b160-80be5822a24c`；首次 call：`2f4d8907-97d1-4668-b062-ebb84ac93375`；错误：`TIMEOUT`；最终状态：`complete_after_auto_recovery`。
 
 ## 4. 私有完整结果
 
@@ -35,7 +35,7 @@
 
 ## 5. 批次边界
 
-- 批次：`redacted-operational-id`
+- 批次：`37517d91-a258-423a-bb26-a58c97357e68`
 - 评测版本：`2026-08-09.gi088-human-eval-v6-single-focus`
 - 执行指纹：`a5042e9700f09b7d9d5a9746e87091e9ed8b4cc0cee4e7741435ce7badfc094d`
 - Production：`legacy + baseline`。

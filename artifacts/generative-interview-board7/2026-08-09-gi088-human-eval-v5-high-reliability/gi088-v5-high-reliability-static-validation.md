@@ -38,6 +38,6 @@
 
 ## 4. 下一步
 
-私有 Preview `redacted-deployment-id` 已 Ready，固定入口为 `https://xingfuxitong-gi088-v5-high-reliability.vercel.app/preview/gi088-evaluation`。专用评测库已创建批次 `redacted-operational-id`，回读结果为 `high_only`、活动分支 `high`、`0/12`、revision `0`、模型调用 `0`、执行指纹完全一致。Production 页面和 session API 继续返回 `404`。
+私有 Preview `dpl_3Xg4C1G28szDN2movRngGe2mPFDY` 已 Ready，固定入口为 `https://xingfuxitong-gi088-v5-high-reliability.vercel.app/preview/gi088-evaluation`。专用评测库已创建批次 `60cf7e22-9183-466a-889f-a446baefa92d`，回读结果为 `high_only`、活动分支 `high`、`0/12`、revision `0`、模型调用 `0`、执行指纹完全一致。Production 页面和 session API 继续返回 `404`。
 
 浏览器已停留在新域名的 Daily Light 登录页。产品负责人完成一次登录后可直接开始 A1；Codex 在交接前不发起模型调用。

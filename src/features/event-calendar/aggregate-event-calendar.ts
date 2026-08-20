@@ -100,15 +100,6 @@ function uniqueActions(actions: EventCalendarAction[]) {
   return eventCalendarActionPriority.filter((action) => actions.includes(action));
 }
 
-function isEligibleSavedEntry(entry: EventCalendarEventEntrySource) {
-  return (
-    entry.status === "saved" &&
-    entry.savedAt !== null &&
-    entry.savedRevision !== null &&
-    entry.savedRevision === entry.contentRevision
-  );
-}
-
 function toEventRecord(
   event: EventCalendarEventSource,
   entry: EventCalendarEventEntrySource | null
@@ -154,23 +145,19 @@ function buildDailyJournalStatus(input: {
   eventEntries: EventCalendarEventEntrySource[];
   dailyJournals?: EventCalendarDailyJournalSource[];
 }): EventCalendarDailyJournalStatus {
-  const eligibleSavedEntries = input.eventEntries.filter(isEligibleSavedEntry);
-  const pendingSaveEntryIds = input.eventEntries
-    .filter((entry) => entry.status === "draft" || entry.status === "modified")
-    .map((entry) => entry.entryId)
-    .sort();
+  const currentEntries = input.eventEntries;
+  const pendingSaveEntryIds: string[] = [];
   const collection =
-    eligibleSavedEntries.length === 0
+    currentEntries.length === 0
       ? "empty"
-      : eligibleSavedEntries.length === 1
+      : currentEntries.length === 1
         ? "single_entry"
         : "multiple_entries";
   const currentSignature = buildJournalDailySourceSignature(
-    eligibleSavedEntries.map((entry) => ({
-      eventId: entry.eventId,
+    currentEntries.map((entry) => ({
       entryId: entry.entryId,
       daySequence: entry.daySequence,
-      savedRevision: entry.savedRevision!
+      contentRevision: entry.contentRevision
     }))
   );
   const dailyJournal = sortByLatestUpdated(
@@ -181,15 +168,11 @@ function buildDailyJournalStatus(input: {
     : dailyJournal.sourceSignature === currentSignature
       ? dailyJournal.status
       : "stale";
-  const pendingSave = pendingSaveEntryIds.length > 0;
-  const updateBlockedByPendingSave = collection === "multiple_entries" && pendingSave;
+  const pendingSave = false;
+  const updateBlockedByPendingSave = false;
   const actions: EventCalendarAction[] = [];
 
-  if (collection === "single_entry") {
-    actions.push("view_event_entry");
-  }
-
-  if (collection === "multiple_entries" && !updateBlockedByPendingSave) {
+  if (collection !== "empty") {
     if (freshness === "none") {
       actions.push("generate_daily_journal");
     } else if (freshness === "draft" || freshness === "modified") {
@@ -206,11 +189,11 @@ function buildDailyJournalStatus(input: {
     freshness,
     entryId: dailyJournal?.entryId ?? null,
     title: dailyJournal?.title ?? null,
-    sourceEntryCount: eligibleSavedEntries.length,
+    sourceEntryCount: currentEntries.length,
     pendingSaveEntryIds,
     pendingSave,
     updateBlockedByPendingSave,
-    directEntryId: collection === "single_entry" ? eligibleSavedEntries[0]!.entryId : null,
+    directEntryId: null,
     actions: uniqueActions(actions)
   };
 }

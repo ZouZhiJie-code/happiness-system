@@ -1,0 +1,140 @@
+{
+  "architecturePairs": [
+    {
+      "pairId": "ARCH-AB-TG-01-R1",
+      "pairFingerprint": "a0a9fc8a809311632cfa52f08df62e573d235c88f503d216130853d52a073657",
+      "optionAReview": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-29T13:22:52.000Z",
+        "primaryReason": "insight_value",
+        "secondaryReason": null,
+        "visibleEvidence": "用户已经明确说过亲手收拾才算勤快；输出把这条规则换了一次说法，没有连接省时效果与亲手付出分别代表什么。",
+        "finalVerdict": null,
+        "rootCause": "完成判断把复述显式规则视为认识增量。",
+        "resolution": "用户已经说清表面规则时，成果需要连接两种衡量依据，或者继续追问亲手完成为何成为必要条件。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "optionBReview": {
+        "initialVerdict": "borderline",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-29T13:22:52.000Z",
+        "primaryReason": "insight_value",
+        "secondaryReason": null,
+        "visibleEvidence": "思路层同时保留了两小时完成、腾出时间和亲手才算勤快，承接完整；正式成果仍停在用户已经说出的判断标准。",
+        "finalVerdict": null,
+        "rootCause": "认识层与信息整理层的完成边界仍然重叠。",
+        "resolution": "将效率收益与勤快标准之间的差异提炼成新的判断依据，达到这一步后再完成。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "initialPreference": "B",
+      "initialReason": "B 保留了效率收益与用户标准两侧信息，承接更完整；两项都未达到正式通过门。",
+      "preference": null,
+      "reason": null
+    },
+    {
+      "pairId": "ARCH-AB-TG-01-R2",
+      "pairFingerprint": "c9304bee031d87a888871b325fa9cea3dad597ea178556886a8059334e55a6df",
+      "optionAReview": {
+        "initialVerdict": "pass",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-29T13:22:52.000Z",
+        "primaryReason": null,
+        "secondaryReason": null,
+        "visibleEvidence": "输出把节省时间与是否算勤快分成两套衡量依据，并用用户事实支撑了这个区别。",
+        "finalVerdict": null,
+        "rootCause": null,
+        "resolution": null,
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "optionBReview": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-29T13:22:52.000Z",
+        "primaryReason": "insight_value",
+        "secondaryReason": null,
+        "visibleEvidence": "输出只重复亲手收拾比保洁完成更能算勤快，省时事实及两套衡量依据都被省略。",
+        "finalVerdict": null,
+        "rootCause": "表达调用压缩语义计划时只保留了结论句，丢失了认识增量。",
+        "resolution": "表达层必须保留语义计划里的两侧依据及其关系；无法保留时返回结构化失败。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "initialPreference": "A",
+      "initialReason": "A 形成了效率与勤快标准的有效区分，B 只做同义复述。",
+      "preference": null,
+      "reason": null
+    },
+    {
+      "pairId": "ARCH-AB-RD-01-R1",
+      "pairFingerprint": "fc60a501d5dabf95ad0180b71945397f5390c300268490aa4f9112ba32540999",
+      "optionAReview": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-29T13:22:52.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "系统进入检查点，正式成果却写成“你是否觉得……还会看……”，这仍是一条待用户回答的问题；思路层也遗漏了没有被看见的关键线索。",
+        "finalVerdict": null,
+        "rootCause": "语义计划过早选择完成，表达层又把未确认的关系标准包装为成果。",
+        "resolution": "完成态只展示有证据的陈述式认识；仍需确认时继续提一个低负担问题。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "optionBReview": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-29T13:22:52.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "expression_naturalness",
+        "visibleEvidence": "思路层清楚提炼了照顾日程与真正被看见的区别；正式成果仍写成“你是否觉得……”，并被检查点重复成已经完成的认识。",
+        "finalVerdict": null,
+        "rootCause": "一次调用已经生成有效理解，但动作选择与用户可见回应类型互相冲突。",
+        "resolution": "保留当前思路层认识，随后选择陈述式完成；若模型仍存疑，则改为 ask 并等待用户确认。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "initialPreference": "B",
+      "initialReason": "B 的思路层覆盖了实际减负和未被看见两侧信息；A 遗漏关系空缺。两项的完成动作都不成立。",
+      "preference": null,
+      "reason": null
+    },
+    {
+      "pairId": "ARCH-AB-RD-01-R2",
+      "pairFingerprint": "7fc9ee4edf6cc0eafa2c9f798e340e32db6213bb70ef6357a2bce260e96f00cc",
+      "optionAReview": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-29T13:22:52.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "expression_naturalness",
+        "visibleEvidence": "思路层用“张力、关系回应”等分析语言说明继续理解，正式回应却进入检查点并把待确认问题当作成果。",
+        "finalVerdict": null,
+        "rootCause": "继续探索、试探确认和完成收束三种动作缺少清晰的产品边界。",
+        "resolution": "已能陈述两侧关系时使用自然陈述；还要理解具体回应时继续问；每轮只保留一种用户任务。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "optionBReview": {
+        "initialVerdict": "fail",
+        "initialReviewedBy": "codex",
+        "initialReviewedAt": "2026-07-29T13:22:52.000Z",
+        "primaryReason": "plan_expression_alignment",
+        "secondaryReason": "insight_value",
+        "visibleEvidence": "思路层只说送饭减轻负担和线索能对上，关系中的空缺没有形成认识；正式成果继续使用待确认问句。",
+        "finalVerdict": null,
+        "rootCause": "语义计划的关系认识没有稳定传递到表达层，完成判断仍然早于成果形成。",
+        "resolution": "表达层必须保留实际照顾与状态被看见之间的区别；缺少这项认识时维持 ask 或 honest_limit。",
+        "reviewedBy": null,
+        "reviewedAt": null
+      },
+      "initialPreference": "A",
+      "initialReason": "A 至少完整呈现了关系体验的两侧，B 主要复述送饭减负；两项都未达到自然完成标准。",
+      "preference": null,
+      "reason": null
+    }
+  ]
+}

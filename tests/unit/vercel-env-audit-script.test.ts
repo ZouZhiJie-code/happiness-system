@@ -31,7 +31,7 @@ APP_URL="https://your-domain.example.com" # optional: user-defined APP_URL is op
 `;
 
 const vercelEnvLsTable = `Vercel CLI 39.1.0
-> Environment Variables found for example-team/xingfuxitong [221ms]
+> Environment Variables found for zouzhijies-projects/xingfuxitong [221ms]
 
  name          value       environments                      created
  DATABASE_URL  Encrypted   Production, Preview, Development  2d ago
@@ -185,7 +185,7 @@ describe("vercel env audit script", () => {
           "user-defined APP_URL is optional only when Vercel system env exposure/runtime readback is verified elsewhere"
       }
     ]);
-    expect(result.project).toBe("example-team/xingfuxitong");
+    expect(result.project).toBe("zouzhijies-projects/xingfuxitong");
   });
 
   it("classifies optional variables from explanatory contract annotations instead of a hardcoded variable name list", async () => {
@@ -266,7 +266,7 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
       };
     };
 
-    expect(parsed.project).toBe("example-team/xingfuxitong");
+    expect(parsed.project).toBe("zouzhijies-projects/xingfuxitong");
     expect(parsed.audit.Preview.missingRequired).toContain("AI_PROVIDER");
     expect(parsed.audit.Preview.missingRequired).not.toContain("APP_URL");
     expect(parsed.audit.Preview.presentOptional).toContain("APP_URL");
@@ -298,7 +298,9 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
       required: [
         "DATABASE_URL",
         "EVALUATION_DATABASE_URL",
+        "EVALUATION_DATABASE_URL_UNPOOLED",
         "EVALUATION_POSTGRES_HOST",
+        "EVALUATION_PGHOST_UNPOOLED",
         "EVALUATION_POSTGRES_DATABASE",
         "GI088_EVALUATION_DATABASE_SCHEMA",
         "GI088_EVALUATION_SCHEMA_DEPLOY",
@@ -313,6 +315,7 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
         "AI_PROVIDER",
         "INTERVIEW_INTENT_V2_MODE",
         "INTERVIEW_EVENT_CENTERED_MODE",
+        "EVENT_CENTERED_GENERATIVE_MODEL",
         "INTERVIEW_REGENERATION_ENABLED",
         "DEEPSEEK_API_KEY",
         "DEEPSEEK_MODEL",
@@ -320,11 +323,14 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
         "VOLCENGINE_ARK_API_KEY",
         "VOLCENGINE_ARK_BASE_URL",
         "EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL",
-        "EVENT_CENTERED_JUDGE_TIMEOUT_MS"
+        "EVENT_CENTERED_JUDGE_TIMEOUT_MS",
+        "EVENT_CENTERED_JUDGE_QWEN_API_KEY",
+        "EVENT_CENTERED_JUDGE_QWEN_BASE_URL",
+        "EVENT_CENTERED_JUDGE_QWEN_MODEL",
+        "EVENT_CENTERED_JUDGE_QWEN_THINKING_MODE"
       ],
       optional: [
         "INTERVIEW_EVENT_CENTERED_STRATEGY",
-        "EVENT_CENTERED_GENERATIVE_MODEL",
         "VOLCENGINE_ARK_MODEL",
         "VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID",
         "APP_URL"
@@ -350,7 +356,11 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
         "DEEPSEEK_MODEL",
         "DEEPSEEK_BASE_URL",
         "EVENT_CENTERED_JUDGE_DEEPSEEK_MODEL",
-        "EVENT_CENTERED_JUDGE_TIMEOUT_MS"
+        "EVENT_CENTERED_JUDGE_TIMEOUT_MS",
+        "EVENT_CENTERED_JUDGE_QWEN_API_KEY",
+        "EVENT_CENTERED_JUDGE_QWEN_BASE_URL",
+        "EVENT_CENTERED_JUDGE_QWEN_MODEL",
+        "EVENT_CENTERED_JUDGE_QWEN_THINKING_MODE"
       ],
       optional: [
         "INTERVIEW_EVENT_CENTERED_STRATEGY",
@@ -376,13 +386,13 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
 
     const cwd = resolveVercelCommandCwd({
       currentCwd:
-        "/tmp/Happiness-system-codex/.worktrees/launch-ai-env-and-product-smoke",
+        "/Users/zouzhijie/Desktop/Happiness-system-codex/.worktrees/launch-ai-env-and-product-smoke",
       env: { ...process.env },
       fileExists: (targetPath) =>
-        targetPath === "/tmp/Happiness-system-codex/.vercel/project.json"
+        targetPath === "/Users/zouzhijie/Desktop/Happiness-system-codex/.vercel/project.json"
     });
 
-    expect(cwd).toBe("/tmp/Happiness-system-codex");
+    expect(cwd).toBe("/Users/zouzhijie/Desktop/Happiness-system-codex");
   });
 
   it("fails fast when --project does not match the audited project", () => {
@@ -396,13 +406,13 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
       "--input-file",
       inputPath,
       "--project",
-      "example-team/some-other-project"
+      "zouzhijies-projects/some-other-project"
     ]);
 
     expect(result.status).toBe(1);
     expect(result.stdout).toBe("");
     expect(result.stderr).toMatch(/expected project .*some-other-project/i);
-    expect(result.stderr).toMatch(/audited project .*example-team\/xingfuxitong/i);
+    expect(result.stderr).toMatch(/audited project .*zouzhijies-projects\/xingfuxitong/i);
   });
 
   it("supports --input-file project validation without touching the network path", async () => {
@@ -432,7 +442,7 @@ VOLCENGINE_ARK_EMBEDDING_ENDPOINT_ID=""
       vercelEnvLsText: readFileSync(inputPath, "utf8")
     });
 
-    expect(result.project).toBe("example-team/xingfuxitong");
+    expect(result.project).toBe("zouzhijies-projects/xingfuxitong");
     expect(mockedExecFileSync).not.toHaveBeenCalled();
     vi.doUnmock("node:child_process");
   });

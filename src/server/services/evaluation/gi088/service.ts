@@ -16,6 +16,8 @@ import {
   GI088_EVALUATION_VERSION,
   GI088_FIXED_OPENING,
   GI088_MAXIMUM_PROVIDER_CALLS_PER_USER_SUBMISSION,
+  GI088_MANUAL_RECOVERY_POLICY,
+  GI088_SHARED_RECOVERY_DEADLINE_POLICY,
   GI088_TASKS,
   GI088_TIMEOUT_POLICY,
   GI088_TIMEOUT_RECOVERY_POLICY,
@@ -49,7 +51,7 @@ import {
   sanitizeAIProviderDiagnostics,
   takeAIReasoningOnlyContinuation
 } from "@/server/services/ai/ai-provider";
-import { createGi088ArkProvider } from "@/server/services/evaluation/gi088/ark-runtime";
+import { createGi088ProProvider } from "@/server/services/evaluation/gi088/pro-runtime";
 import { requireGi088ModelCallAuthorization } from "@/server/services/evaluation/gi088/access";
 import { createGi088OutputSchemaIssues } from "@/server/services/evaluation/gi088/schema-diagnostics";
 import {
@@ -63,13 +65,23 @@ import {
   createGi088QuestionObservation
 } from "@/server/services/evaluation/gi088/single-focus";
 import {
+  GI088_DETERMINISTIC_STATE_POLICY_VERSION,
+  assessGi088ExplicitStop,
+  createGi088DeterministicPauseOutput,
+  normalizeGi088DeterministicStateOutput
+} from "@/server/services/evaluation/gi088/deterministic-state";
+import {
   applyGi088SemanticDeltaValidatedResult,
-  parseGi088SemanticDeltaOutput,
+  assertGi088SemanticDeltaOutput,
+  parseGi088SemanticDeltaCandidateOutput,
   renderGi088SemanticDeltaVisible,
   toBoard7bWorkingTaskV1CompatibilityOutput,
   validateGi088SemanticDeltaOutput,
   type Gi088SemanticDeltaOutput
 } from "@/server/services/evaluation/gi088/semantic-delta";
+import { Gi088EvaluationError } from "@/server/services/evaluation/gi088/errors";
+
+export { Gi088EvaluationError } from "@/server/services/evaluation/gi088/errors";
 
 export const GI088_STALE_PROCESSING_AFTER_MS = 120_000;
 
@@ -100,23 +112,23 @@ function requestedRecoveryTrigger(
   return null;
 }
 
-export class Gi088EvaluationError extends Error {
-  constructor(
-    readonly code: string,
-    readonly status = 409,
-    readonly retryable = false
-  ) {
-    super(code);
-    this.name = "Gi088EvaluationError";
-  }
-}
-
 function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
 function nowIso(now: () => Date) {
   return now().toISOString();
+}
+
+function createAutomaticDeadlineAt(startedAt: string) {
+  return new Date(
+    new Date(startedAt).getTime() +
+      GI088_SHARED_RECOVERY_DEADLINE_POLICY.automaticChainDeadlineMs
+  ).toISOString();
+}
+
+function remainingAutomaticDeadlineMs(deadlineAt: string, now: Date) {
+  return Math.max(0, new Date(deadlineAt).getTime() - now.getTime());
 }
 
 function createEmptyTrajectory(branch: Gi088BranchKey): Gi088Trajectory {
@@ -444,7 +456,7 @@ export function createGi088PublicSession(
 }
 
 function createDefaultProvider() {
-  return createGi088ArkProvider(process.env);
+  return createGi088ProProvider(process.env);
 }
 
 type ServiceDependencies = {
@@ -515,6 +527,23 @@ export class Gi088EvaluationService {
 
   private async recoverStaleProcessing(batch: Gi088StoredBatch) {
     if (batch.status !== "running") return batch;
+    for (const task of batch.state.tasks) {
+      for (const branch of ["off", "high"] as const) {
+        const trajectory = task.branches[branch];
+        const pendingTurn = trajectory.pendingTurnId
+          ? trajectory.turns.find(
+              (turn) => turn.id === trajectory.pendingTurnId
+            )
+          : null;
+        if (
+          pendingTurn?.status === "processing" &&
+          pendingTurn.calls.length === 0 &&
+          pendingTurn.stateMaintenance?.explicitStop === "pure"
+        ) {
+          return this.executeReservedTurn(batch, task.taskId, branch);
+        }
+      }
+    }
     const state = structuredClone(batch.state);
     let changed = false;
     const now = this.now();
@@ -637,7 +666,14 @@ export class Gi088EvaluationService {
     if (!input.clientTurnId.trim() || input.clientTurnId.length > 160) {
       throw new Gi088EvaluationError("GI088_CLIENT_TURN_ID_INVALID", 400);
     }
-    this.authorizeModelCall("off");
+    if (
+      assessGi088ExplicitStop({
+        content,
+        lastAssistantMessage: GI088_FIXED_OPENING
+      }) !== "pure"
+    ) {
+      this.authorizeModelCall("off");
+    }
     let batch = await this.getOrCreateBatch(input.ownerUserId);
     this.assertTaskCanStart(batch, input.taskId);
     const existing = taskState(batch.state, input.taskId);
@@ -688,7 +724,6 @@ export class Gi088EvaluationService {
     clientTurnId?: string;
     onProgress?: (progress: Gi088ExecutionProgress) => void;
   }) {
-    this.authorizeModelCall("high");
     let batch = await this.getOrCreateBatch(input.ownerUserId);
     if (evaluationMode(batch.state) === "high_only") {
       const content = input.initialUserMessage?.trim() ?? "";
@@ -698,6 +733,14 @@ export class Gi088EvaluationService {
       }
       if (!clientTurnId || clientTurnId.length > 160) {
         throw new Gi088EvaluationError("GI088_CLIENT_TURN_ID_INVALID", 400);
+      }
+      if (
+        assessGi088ExplicitStop({
+          content,
+          lastAssistantMessage: GI088_FIXED_OPENING
+        }) !== "pure"
+      ) {
+        this.authorizeModelCall("high");
       }
       this.assertTaskCanStart(batch, input.taskId);
       const existing = taskState(batch.state, input.taskId);
@@ -744,6 +787,7 @@ export class Gi088EvaluationService {
         )
       );
     }
+    this.authorizeModelCall("high");
     this.assertMutable(batch);
     const task = taskState(batch.state, input.taskId);
     if (batch.state.activeTaskId !== input.taskId) {
@@ -800,7 +844,6 @@ export class Gi088EvaluationService {
     if (!input.clientTurnId.trim() || input.clientTurnId.length > 160) {
       throw new Gi088EvaluationError("GI088_CLIENT_TURN_ID_INVALID", 400);
     }
-    this.authorizeModelCall(input.branch);
     let batch = await this.getOrCreateBatch(input.ownerUserId);
     this.assertMutable(batch);
     if (evaluationMode(batch.state) === "high_only" && input.branch !== "high") {
@@ -825,6 +868,14 @@ export class Gi088EvaluationService {
     }
     if (trajectory.status !== "running" || trajectory.pendingTurnId) {
       throw new Gi088EvaluationError("GI088_TRAJECTORY_NOT_READY", 409);
+    }
+    const lastAssistantMessage = [...trajectory.messages]
+      .reverse()
+      .find((message) => message.role === "assistant")?.content;
+    if (
+      assessGi088ExplicitStop({ content, lastAssistantMessage }) !== "pure"
+    ) {
+      this.authorizeModelCall(input.branch);
     }
     const state = structuredClone(batch.state);
     batch = await this.reserveTurn({
@@ -870,7 +921,14 @@ export class Gi088EvaluationService {
       semanticState: structuredClone(trajectory.semanticState)
     };
     const completionParams = this.createCompletionParams(input.branch, turnInput);
-    const call: Gi088Call = {
+    const lastAssistantMessage = [...trajectory.messages]
+      .reverse()
+      .find((item) => item.role === "assistant")?.content;
+    const explicitStop = assessGi088ExplicitStop({
+      content: input.content,
+      lastAssistantMessage
+    });
+    const call: Gi088Call | null = explicitStop === "pure" ? null : {
       id: randomUUID(),
       attempt: 1,
       kind: input.kind,
@@ -887,7 +945,15 @@ export class Gi088EvaluationService {
       parentCallId: null,
       retryTrigger: null,
       retryOrdinal: null,
-      effectiveConfig: this.createEffectiveConfig(input.branch, null)
+      effectiveConfig: this.createEffectiveConfig(input.branch, null, {
+        hardTimeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
+        sharedDeadlineMs:
+          GI088_SHARED_RECOVERY_DEADLINE_POLICY.automaticChainDeadlineMs,
+        remainingSharedDeadlineMs:
+          GI088_SHARED_RECOVERY_DEADLINE_POLICY.automaticChainDeadlineMs,
+        recoveryPolicyVersion:
+          GI088_SHARED_RECOVERY_DEADLINE_POLICY.version
+      })
     };
     const turn: Gi088Turn = {
       id: turnId,
@@ -901,9 +967,24 @@ export class Gi088EvaluationService {
       validationIssues: [],
       semanticStateBefore: structuredClone(trajectory.semanticState),
       semanticStateAfter: null,
-      calls: [call],
+      calls: call ? [call] : [],
       recovery: null,
-      questionObservation: null
+      questionObservation: null,
+      stateMaintenance: {
+        policyVersion: GI088_DETERMINISTIC_STATE_POLICY_VERSION,
+        workingTaskLineage: "not_applicable",
+        inheritedEvidenceCount: 0,
+        submittedEvidenceCount: 0,
+        effectiveEvidenceCount: 0,
+        explicitStop,
+        providerCallBypassed: explicitStop === "pure",
+        providerFailureAbsorbed: false,
+        sourceCompletion: {
+          appliedFields: [],
+          insertedEvidenceRefs: [],
+          reviewCandidate: null
+        }
+      }
     };
     trajectory.turns.push(turn);
     trajectory.pendingTurnId = turnId;
@@ -914,7 +995,8 @@ export class Gi088EvaluationService {
   private createCompletionParams(
     branch: Gi088BranchKey,
     turnInput: Board7bWorkingTaskV1TurnInput,
-    recoveryTrigger: Gi088RecoveryTrigger | null = null
+    recoveryTrigger: Gi088RecoveryTrigger | null = null,
+    hardTimeoutMs: number = GI088_TIMEOUT_POLICY.hardTimeoutMs
   ): AICompletionParams {
     const config = GI088_CONFIGS[branch];
     const recoveryInstruction =
@@ -941,10 +1023,16 @@ export class Gi088EvaluationService {
       ],
       useProviderDefaultMaxTokens:
         config.maxTokensPolicy === "provider_default",
-      timeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
-      headersTimeoutMs: GI088_TIMEOUT_POLICY.headersTimeoutMs,
-      bodyIdleTimeoutMs: GI088_TIMEOUT_POLICY.bodyIdleTimeoutMs,
-      hardTimeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
+      timeoutMs: hardTimeoutMs,
+      headersTimeoutMs: Math.min(
+        GI088_TIMEOUT_POLICY.headersTimeoutMs,
+        hardTimeoutMs
+      ),
+      bodyIdleTimeoutMs: Math.min(
+        GI088_TIMEOUT_POLICY.bodyIdleTimeoutMs,
+        hardTimeoutMs
+      ),
+      hardTimeoutMs,
       responseFormat: config.responseFormat,
       thinking: config.thinking
     };
@@ -959,9 +1047,17 @@ export class Gi088EvaluationService {
 
   private createEffectiveConfig(
     branch: Gi088BranchKey,
-    recoveryTrigger: Gi088RecoveryTrigger | null
+    recoveryTrigger: Gi088RecoveryTrigger | null,
+    options: {
+      hardTimeoutMs?: number;
+      sharedDeadlineMs?: number | null;
+      remainingSharedDeadlineMs?: number | null;
+      recoveryPolicyVersion?: string | null;
+    } = {}
   ): Gi088CallEffectiveConfig {
     const config = GI088_CONFIGS[branch];
+    const hardTimeoutMs = options.hardTimeoutMs ??
+      GI088_TIMEOUT_POLICY.hardTimeoutMs;
     return {
       branch,
       thinking: config.thinking,
@@ -969,10 +1065,16 @@ export class Gi088EvaluationService {
       temperature: config.temperature,
       responseFormat: config.responseFormat,
       maxTokensPolicy: config.maxTokensPolicy,
-      timeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
-      headersTimeoutMs: GI088_TIMEOUT_POLICY.headersTimeoutMs,
-      bodyIdleTimeoutMs: GI088_TIMEOUT_POLICY.bodyIdleTimeoutMs,
-      hardTimeoutMs: GI088_TIMEOUT_POLICY.hardTimeoutMs,
+      timeoutMs: hardTimeoutMs,
+      headersTimeoutMs: Math.min(
+        GI088_TIMEOUT_POLICY.headersTimeoutMs,
+        hardTimeoutMs
+      ),
+      bodyIdleTimeoutMs: Math.min(
+        GI088_TIMEOUT_POLICY.bodyIdleTimeoutMs,
+        hardTimeoutMs
+      ),
+      hardTimeoutMs,
       timeoutPolicyVersion: GI088_TIMEOUT_POLICY.version,
       recoveryInstructionVersion:
         recoveryTrigger === "EMPTY_CONTENT"
@@ -984,8 +1086,10 @@ export class Gi088EvaluationService {
       reasoningReplay: null,
       visiblePrefix: null,
       requestHashScope: "full",
-      sharedDeadlineMs: null,
-      recoveryPolicyVersion: null
+      sharedDeadlineMs: options.sharedDeadlineMs ?? null,
+      remainingSharedDeadlineMs:
+        options.remainingSharedDeadlineMs ?? null,
+      recoveryPolicyVersion: options.recoveryPolicyVersion ?? null
     };
   }
 
@@ -1029,6 +1133,16 @@ export class Gi088EvaluationService {
       semanticState: turn.semanticStateBefore
     };
     const activeCall = turn.calls.at(-1);
+    const explicitStop = turn.stateMaintenance?.explicitStop ?? "none";
+    if (!activeCall && explicitStop === "pure") {
+      return this.finishDeterministicStop({
+        batch,
+        taskId,
+        branch,
+        turnId: turn.id,
+        explicitStop: "pure"
+      });
+    }
     if (!activeCall || activeCall.status !== "processing") {
       throw new Gi088EvaluationError("GI088_RESERVED_CALL_NOT_FOUND", 409);
     }
@@ -1047,17 +1161,40 @@ export class Gi088EvaluationService {
         this.createCompletionParams(
           branch,
           turnInput,
-          completionRecoveryTrigger
+          completionRecoveryTrigger,
+          activeCall.effectiveConfig.hardTimeoutMs ??
+            GI088_TIMEOUT_POLICY.hardTimeoutMs
         )
       );
     } catch (error) {
       takeAIReasoningOnlyContinuation(error)?.dispose();
+      if (explicitStop === "mixed") {
+        return this.finishDeterministicStop({
+          batch,
+          taskId,
+          branch,
+          turnId: turn.id,
+          explicitStop: "mixed",
+          technicalError: error
+        });
+      }
       return this.finishTechnicalFailure(batch, taskId, branch, turn.id, error);
     }
     let output: Gi088SemanticDeltaOutput;
     try {
-      output = parseGi088SemanticDeltaOutput(completion.content);
+      output = parseGi088SemanticDeltaCandidateOutput(completion.content);
     } catch (error) {
+      if (explicitStop === "mixed") {
+        return this.finishDeterministicStop({
+          batch,
+          taskId,
+          branch,
+          turnId: turn.id,
+          explicitStop: "mixed",
+          completion,
+          protectedIssues: createGi088OutputSchemaIssues(error)
+        });
+      }
       return this.finishProtectedFailure({
         batch,
         taskId,
@@ -1068,18 +1205,64 @@ export class Gi088EvaluationService {
         output: null
       });
     }
+    const normalized = normalizeGi088DeterministicStateOutput({
+      turnInput,
+      output,
+      explicitStop
+    });
+    let effectiveOutput: Gi088SemanticDeltaOutput;
+    try {
+      effectiveOutput = assertGi088SemanticDeltaOutput(normalized.output);
+    } catch (error) {
+      if (explicitStop === "mixed") {
+        return this.finishDeterministicStop({
+          batch,
+          taskId,
+          branch,
+          turnId: turn.id,
+          explicitStop: "mixed",
+          completion,
+          protectedIssues: createGi088OutputSchemaIssues(error)
+        });
+      }
+      return this.finishProtectedFailure({
+        batch,
+        taskId,
+        branch,
+        turnId: turn.id,
+        completion,
+        issues: createGi088OutputSchemaIssues(error),
+        output
+      });
+    }
+    const validationOutput = effectiveOutput;
     const compatibilityOutput = toBoard7bWorkingTaskV1CompatibilityOutput(
       turnInput,
-      output
+      validationOutput
     );
     const issues = [
-      ...validateGi088SemanticDeltaOutput({ input: turnInput, output }),
+      ...validateGi088SemanticDeltaOutput({
+        input: turnInput,
+        output: validationOutput,
+        deterministicStateMaintenance: true
+      }),
       ...validateGi088StageTransitionOutput({
         input: turnInput,
         output: compatibilityOutput
       })
     ].filter((issue) => !/^ASK_QUESTION_COUNT_INVALID:\d+$/u.test(issue));
     if (issues.length) {
+      if (explicitStop === "mixed") {
+        return this.finishDeterministicStop({
+          batch,
+          taskId,
+          branch,
+          turnId: turn.id,
+          explicitStop: "mixed",
+          completion,
+          protectedIssues: issues
+        });
+      }
       return this.finishProtectedFailure({
         batch,
         taskId,
@@ -1092,7 +1275,7 @@ export class Gi088EvaluationService {
     }
     const nextSemanticState = applyGi088SemanticDeltaValidatedResult({
       input: turnInput,
-      output
+      output: effectiveOutput
     });
     const state = structuredClone(batch.state);
     const mutableTrajectory = taskState(state, taskId).branches[branch];
@@ -1116,14 +1299,17 @@ export class Gi088EvaluationService {
       mutableTurn.recovery.status = "recovered";
       mutableTurn.recovery.completedAt = nowIso(this.now);
     }
-    mutableTurn.semantic = output.semantic;
-    mutableTurn.visible = output.visible;
-    mutableTurn.visibleText = renderGi088SemanticDeltaVisible(output);
+    mutableTurn.semantic = effectiveOutput.semantic;
+    mutableTurn.visible = effectiveOutput.visible;
+    mutableTurn.visibleText = renderGi088SemanticDeltaVisible(effectiveOutput);
     mutableTurn.evidenceExcerpts = this.evidenceExcerpts(
       mutableTrajectory.messages,
-      output
+      effectiveOutput
     );
-    mutableTurn.questionObservation = createGi088QuestionObservation(output);
+    mutableTurn.questionObservation = createGi088QuestionObservation(
+      effectiveOutput
+    );
+    mutableTurn.stateMaintenance = normalized.maintenance;
     mutableTurn.semanticStateAfter = nextSemanticState;
     mutableTrajectory.semanticState = nextSemanticState;
     mutableTrajectory.pendingTurnId = null;
@@ -1134,6 +1320,94 @@ export class Gi088EvaluationService {
       content: mutableTurn.visibleText
     });
     return this.save(batch, state);
+  }
+
+  private async finishDeterministicStop(input: {
+    batch: Gi088StoredBatch;
+    taskId: string;
+    branch: Gi088BranchKey;
+    turnId: string;
+    explicitStop: "pure" | "mixed";
+    completion?: Awaited<ReturnType<AIProvider["complete"]>>;
+    technicalError?: unknown;
+    protectedIssues?: string[];
+  }) {
+    const state = structuredClone(input.batch.state);
+    const trajectory = taskState(state, input.taskId).branches[input.branch];
+    const turn = trajectory.turns.find((item) => item.id === input.turnId);
+    if (!turn || turn.status !== "processing") {
+      throw new Gi088EvaluationError("GI088_RESERVED_TURN_NOT_FOUND", 409);
+    }
+    const turnInput: Board7bWorkingTaskV1TurnInput = {
+      mode: "accompany_chat",
+      conversation: trajectory.messages,
+      latestUserMessageId: turn.userMessageId,
+      semanticState: turn.semanticStateBefore
+    };
+    const deterministic = createGi088DeterministicPauseOutput({
+      turnInput,
+      explicitStop: input.explicitStop
+    });
+    const nextSemanticState = applyGi088SemanticDeltaValidatedResult({
+      input: turnInput,
+      output: deterministic.output
+    });
+    const call = turn.calls.at(-1);
+    if (call) {
+      call.completedAt = nowIso(this.now);
+      if (input.technicalError !== undefined) {
+        const errorCode = getAIProviderFailureCode(input.technicalError);
+        const diagnostics = getAIProviderDiagnostics(input.technicalError);
+        call.status = "technical_failure";
+        call.errorCode = errorCode;
+        call.latencyMs = diagnostics?.latencyMs ?? null;
+        call.tokenUsage = diagnostics?.tokenUsage ?? null;
+        call.providerDiagnostics = diagnostics;
+        turn.validationIssues = [
+          ...new Set([
+            ...turn.validationIssues,
+            `DETERMINISTIC_STOP_ABSORBED:${errorCode}`
+          ])
+        ];
+      } else if (input.completion && input.protectedIssues?.length) {
+        call.status = "protected_failure";
+        call.errorCode = "MODEL_OUTPUT_PROTECTED";
+        call.responseHash = sha256(input.completion.content);
+        call.rawFinalOutput = input.completion.content;
+        call.latencyMs = input.completion.latencyMs;
+        call.tokenUsage = sanitizeAICompletionTokenUsage(
+          input.completion.tokenUsage
+        );
+        call.providerDiagnostics = sanitizeAIProviderDiagnostics(
+          input.completion.diagnostics
+        );
+        turn.validationIssues = [
+          ...new Set([...turn.validationIssues, ...input.protectedIssues])
+        ];
+      }
+    }
+    turn.status = "valid";
+    turn.semantic = deterministic.output.semantic;
+    turn.visible = deterministic.output.visible;
+    turn.visibleText = renderGi088SemanticDeltaVisible(deterministic.output);
+    turn.evidenceExcerpts = this.evidenceExcerpts(
+      trajectory.messages,
+      deterministic.output
+    );
+    turn.questionObservation = null;
+    turn.stateMaintenance = deterministic.maintenance;
+    turn.semanticStateAfter = nextSemanticState;
+    turn.recovery = null;
+    trajectory.semanticState = nextSemanticState;
+    trajectory.pendingTurnId = null;
+    trajectory.status = "running";
+    trajectory.technicalError = null;
+    trajectory.messages.push({
+      id: `A${trajectory.messages.filter((message) => message.role === "assistant").length}`,
+      role: "assistant",
+      content: turn.visibleText
+    });
+    return this.save(input.batch, state);
   }
 
   private async finishTechnicalFailure(
@@ -1186,6 +1460,9 @@ export class Gi088EvaluationService {
         manualRetryCount: 0,
         manualRetryCallId: null,
         eligibleAt,
+        automaticDeadlineAt: createAutomaticDeadlineAt(
+          turn.calls[0]?.startedAt ?? call.startedAt
+        ),
         startedAt: null,
         completedAt: null
       };
@@ -1247,6 +1524,9 @@ export class Gi088EvaluationService {
         manualRetryCount: 0,
         manualRetryCallId: null,
         eligibleAt: nowIso(this.now),
+        automaticDeadlineAt: createAutomaticDeadlineAt(
+          turn.calls[0]?.startedAt ?? call.startedAt
+        ),
         startedAt: null,
         completedAt: null
       };
@@ -1427,6 +1707,51 @@ export class Gi088EvaluationService {
     ) {
       throw new Gi088EvaluationError("GI088_TECHNICAL_RETRY_UNAVAILABLE", 409);
     }
+    const automaticDeadlineAt = isAutomaticRecovery
+      ? turn.recovery?.automaticDeadlineAt ??
+        createAutomaticDeadlineAt(turn.calls[0]?.startedAt ?? previousCall.startedAt)
+      : null;
+    const remainingSharedDeadlineMs = automaticDeadlineAt
+      ? remainingAutomaticDeadlineMs(automaticDeadlineAt, this.now())
+      : null;
+    if (isAutomaticRecovery && remainingSharedDeadlineMs === 0) {
+      const expiredState = structuredClone(batch.state);
+      const expiredTurn = taskState(expiredState, input.taskId)
+        .branches[input.branch].turns.find((item) => item.id === input.turnId)!;
+      if (expiredTurn.recovery) {
+        expiredTurn.recovery.status = "manual_available";
+        expiredTurn.recovery.automaticDeadlineAt = automaticDeadlineAt;
+        expiredTurn.recovery.completedAt = nowIso(this.now);
+      }
+      try {
+        batch = await this.save(batch, expiredState);
+      } catch (error) {
+        if (
+          error instanceof Gi088EvaluationError &&
+          error.code === "GI088_CONCURRENT_UPDATE"
+        ) {
+          const current = await this.store.findByOwnerAndVersion(
+            input.ownerUserId,
+            GI088_EVALUATION_VERSION
+          );
+          if (current) return createGi088PublicSession(current);
+        }
+        throw error;
+      }
+      return createGi088PublicSession(batch);
+    }
+    const effectiveHardTimeoutMs = isAutomaticRecovery
+      ? Math.max(
+          1,
+          Math.min(
+            GI088_SHARED_RECOVERY_DEADLINE_POLICY.maximumSingleCallMs,
+            remainingSharedDeadlineMs ??
+              GI088_SHARED_RECOVERY_DEADLINE_POLICY.maximumSingleCallMs
+          )
+        )
+      : isManualAfterAutoRecovery
+        ? GI088_SHARED_RECOVERY_DEADLINE_POLICY.manualRetryHardTimeoutMs
+        : GI088_TIMEOUT_POLICY.hardTimeoutMs;
     this.authorizeModelCall(input.branch);
     const state = structuredClone(batch.state);
     const mutableTrajectory = taskState(state, input.taskId).branches[input.branch];
@@ -1441,10 +1766,14 @@ export class Gi088EvaluationService {
     const effectiveRecoveryTrigger = isManualAfterAutoRecovery
       ? mutableTurn.recovery!.trigger
       : recoveryTrigger;
+    const completionRecoveryTrigger = isManualAfterAutoRecovery
+      ? null
+      : effectiveRecoveryTrigger;
     const completionParams = this.createCompletionParams(
       input.branch,
       turnInput,
-      effectiveRecoveryTrigger
+      completionRecoveryTrigger,
+      effectiveHardTimeoutMs
     );
     const recoveryCallId = randomUUID();
     mutableTurn.calls.push({
@@ -1473,11 +1802,26 @@ export class Gi088EvaluationService {
           : null,
       effectiveConfig: this.createEffectiveConfig(
         input.branch,
-        isManualAfterAutoRecovery ? null : effectiveRecoveryTrigger
+        completionRecoveryTrigger,
+        {
+          hardTimeoutMs: effectiveHardTimeoutMs,
+          sharedDeadlineMs: isAutomaticRecovery
+            ? GI088_SHARED_RECOVERY_DEADLINE_POLICY.automaticChainDeadlineMs
+            : null,
+          remainingSharedDeadlineMs: isAutomaticRecovery
+            ? remainingSharedDeadlineMs
+            : null,
+          recoveryPolicyVersion: isAutomaticRecovery
+            ? GI088_SHARED_RECOVERY_DEADLINE_POLICY.version
+            : isManualAfterAutoRecovery
+              ? GI088_MANUAL_RECOVERY_POLICY.version
+              : null
+        }
       )
     });
     if (isAutomaticRecovery && mutableTurn.recovery) {
       mutableTurn.recovery.status = "retrying";
+      mutableTurn.recovery.automaticDeadlineAt = automaticDeadlineAt;
       mutableTurn.recovery.automaticRetryCount += 1;
       mutableTurn.recovery.recoveryCallId = recoveryCallId;
       mutableTurn.recovery.startedAt = nowIso(this.now);

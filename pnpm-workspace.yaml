@@ -1,6 +1,18 @@
+packages:
+  - "."
+
+# pnpm 11 reads allowBuilds; pnpm 10 and Vercel continue to read the explicit
+# onlyBuiltDependencies allowlist. Both lists stay identical by policy.
 allowBuilds:
-  '@prisma/client': set this to true or false
-  '@prisma/engines': set this to true or false
-  esbuild: set this to true or false
-  prisma: set this to true or false
-  sharp: set this to true or false
+  "@prisma/client": true
+  "@prisma/engines": true
+  esbuild: true
+  prisma: true
+  sharp: true
+
+onlyBuiltDependencies:
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "esbuild"
+  - "prisma"
+  - "sharp"

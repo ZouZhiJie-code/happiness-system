@@ -1,0 +1,214 @@
+{
+  "evaluation": "board8_gi058_deepseek_official_preview",
+  "candidate": {
+    "strategyVersion": "5.55.0",
+    "semanticArtifactVersion": "event-centered-semantic-plan.v8",
+    "model": "deepseek-v4-flash",
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "eventMode": "optional",
+    "eventStrategy": "generative"
+  },
+  "startedAt": "2026-08-03T15:05:53.750Z",
+  "completedAt": "2026-08-03T15:06:04.627Z",
+  "database": "happiness_board8_preview_20260803_gi058_local",
+  "rootSessionIds": [
+    "639c966c-25e9-4bc2-badf-87be835c0333"
+  ],
+  "cases": [
+    {
+      "id": "relationship-2",
+      "label": "关系 2｜深聊",
+      "material": "risk",
+      "angle": "relationship",
+      "depth": "deep",
+      "rootSessionId": "639c966c-25e9-4bc2-badf-87be835c0333",
+      "eventId": null,
+      "entryId": "33d32855-bf65-480f-b011-9b0343e90b90",
+      "status": "passed",
+      "startedAt": "2026-08-03T15:05:53.751Z",
+      "completedAt": "2026-08-03T15:06:04.626Z",
+      "firstCheckpoint": {
+        "reached": true,
+        "equalFourAngles": true,
+        "inputHidden": true,
+        "logHidden": true
+      },
+      "focusSelection": null,
+      "correction": null,
+      "closedAngle": true,
+      "journal": {
+        "generated": true,
+        "origin": "llm",
+        "edited": true,
+        "saved": true,
+        "reopened": true,
+        "traceId": "d1864833-f827-485b-bfca-69aaf1a83a0d"
+      },
+      "refresh": {
+        "afterFirstCheckpoint": true,
+        "afterJournalSave": true
+      },
+      "steps": [
+        {
+          "action": "reply",
+          "durationMs": 78,
+          "snapshot": {
+            "phase": "checkpoint_one",
+            "activeAngle": null,
+            "checkpoint": "first",
+            "availableAngles": [
+              "feeling",
+              "thought",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle"
+            ],
+            "latestMessageSequence": 2,
+            "lastAssistantTraceId": "2b90cb09-b02d-4040-bd5f-d46db1bf66b8",
+            "lastQuestion": null
+          }
+        },
+        {
+          "action": "select_exploration_angle",
+          "durationMs": 60,
+          "snapshot": {
+            "phase": "guided_reflection",
+            "activeAngle": "relationship",
+            "checkpoint": null,
+            "availableAngles": [
+              "feeling",
+              "thought",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event"
+            ],
+            "latestMessageSequence": 4,
+            "lastAssistantTraceId": "4625ce26-3677-443e-9d16-837910c9e103",
+            "lastQuestion": {
+              "phase": "guided_reflection",
+              "angle": "relationship",
+              "target": "relationship_expectation",
+              "surfaceLevel": "open_anchor",
+              "opportunityNumber": 1
+            }
+          }
+        },
+        {
+          "action": "reply",
+          "durationMs": 4617,
+          "snapshot": {
+            "phase": "checkpoint_two",
+            "activeAngle": null,
+            "checkpoint": "second",
+            "availableAngles": [
+              "feeling",
+              "thought",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration",
+              "generate_event_journal"
+            ],
+            "latestMessageSequence": 6,
+            "lastAssistantTraceId": "fa20c9a3-5ad0-42ba-aa89-53c9f206442a",
+            "lastQuestion": null
+          }
+        },
+        {
+          "action": "continue_exploration",
+          "durationMs": 53,
+          "snapshot": {
+            "phase": "deep_companionship",
+            "activeAngle": "relationship",
+            "checkpoint": null,
+            "availableAngles": [
+              "feeling",
+              "thought",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "continue_exploration"
+            ],
+            "latestMessageSequence": 8,
+            "lastAssistantTraceId": "44ff2710-3b47-41bf-bdda-aa6a63c5953a",
+            "lastQuestion": {
+              "phase": "deep_companionship",
+              "angle": "relationship",
+              "target": "deep_open_point",
+              "surfaceLevel": "open_anchor",
+              "opportunityNumber": null
+            }
+          }
+        },
+        {
+          "action": "reply",
+          "durationMs": 3196,
+          "snapshot": {
+            "phase": "checkpoint_two",
+            "activeAngle": null,
+            "checkpoint": "second",
+            "availableAngles": [
+              "feeling",
+              "thought",
+              "action"
+            ],
+            "closedAngles": [
+              "relationship"
+            ],
+            "allowedActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration",
+              "generate_event_journal"
+            ],
+            "latestMessageSequence": 10,
+            "lastAssistantTraceId": "18e4766b-d486-4224-8532-015ee8e18706",
+            "lastQuestion": null
+          }
+        }
+      ],
+      "issues": []
+    }
+  ],
+  "smokes": [],
+  "technicalSummary": {
+    "mainTrajectoriesCompleted": 1,
+    "journalLoopsCompleted": 1,
+    "failures": 0,
+    "status": "ready_for_board8_audit"
+  }
+}

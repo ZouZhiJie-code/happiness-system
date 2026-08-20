@@ -1,0 +1,141 @@
+{
+  "runtimeVersion": "2026-07-28.board7-runtime-v1",
+  "datasetVersion": "2026-07-28.v1",
+  "caseId": "T06",
+  "split": "work",
+  "state": {
+    "kind": "event_centered",
+    "schemaVersion": 3,
+    "phase": "deep_companionship",
+    "activeAngle": "relationship",
+    "lastCompletedAngle": "relationship",
+    "lightAnchorOpportunityCount": 0,
+    "angleRuns": {
+      "feeling": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "thought": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "relationship": {
+        "status": "active",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      },
+      "action": {
+        "status": "available",
+        "questionOpportunityCount": 0,
+        "currentOutcomeId": null,
+        "answeredTargets": [],
+        "askedTargets": [],
+        "deniedTargets": []
+      }
+    },
+    "currentQuestion": null,
+    "focusOptions": [],
+    "focusSummary": "",
+    "pendingUnderstandingClaimId": null,
+    "pendingAngleOutcomeRepairIds": [],
+    "repairPendingAngles": [],
+    "lastProcessedTurnId": null,
+    "strategyMode": "generative",
+    "strategyVersion": null,
+    "currentMicrogoal": null
+  },
+  "facts": [],
+  "recentTurns": [],
+  "currentQuestion": null,
+  "turns": [
+    {
+      "index": 1,
+      "rawText": "他会上说得很直接，我很难堪，可会后又认真帮我改了很久。",
+      "visibleResponse": null,
+      "finalAction": null,
+      "selectedTarget": null,
+      "cognitiveAction": null,
+      "evidenceUsed": [],
+      "factDeltas": [],
+      "microgoal": null,
+      "attempts": [
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 261,
+          "tokenUsage": {
+            "promptTokens": 2673,
+            "completionTokens": 233,
+            "totalTokens": 2906,
+            "promptCacheHitTokens": 1792,
+            "promptCacheMissTokens": 881
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "understanding.eventOptions.0:invalid_type;understanding.eventOptions.1:invalid_type",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"multiple_events\",\n    \"coreEventIdentifiable\": false,\n    \"answerStatus\": \"answered\",\n    \"factDeltas\": [],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": [\n      \"会上他说得很直接，让你难堪\",\n      \"会后又认真帮你改了很久\"\n    ]\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"anchor_specific\",\n    \"selectedTarget\": \"会上直接表达时的互动细节\",\n    \"evidenceRefs\": [],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"获得一个具体的可观察互动，了解当时双方的实际言行\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"会上他说得很直接，让你难堪，会后又认真帮你改了很久，这两类互动同时存在。\",\n    \"question\": \"会上他指出问题时，你当时有解释的机会吗？\"\n  }\n}"
+        },
+        {
+          "stage": "question",
+          "attempt": 1,
+          "provider": "volcengine-ark",
+          "success": false,
+          "latencyMs": 159,
+          "tokenUsage": {
+            "promptTokens": 2708,
+            "completionTokens": 232,
+            "totalTokens": 2940,
+            "promptCacheHitTokens": 1792,
+            "promptCacheMissTokens": 916
+          },
+          "errorCode": "INVALID_SCHEMA",
+          "errorMessage": "understanding.eventOptions.0:invalid_type;understanding.eventOptions.1:invalid_type",
+          "responseText": "{\n  \"understanding\": {\n    \"eventBoundary\": \"multiple_events\",\n    \"coreEventIdentifiable\": false,\n    \"answerStatus\": \"unknown\",\n    \"factDeltas\": [],\n    \"correctionOrBoundary\": null,\n    \"tentativeInterpretation\": null,\n    \"eventOptions\": [\n      \"会上他说得很直接，我很难堪\",\n      \"会后又认真帮我改了很久\"\n    ]\n  },\n  \"decision\": {\n    \"turnAction\": \"ask\",\n    \"cognitiveAction\": \"anchor_specific\",\n    \"selectedTarget\": \"会上直接指出时的互动细节\",\n    \"evidenceRefs\": [],\n    \"microgoalDelta\": null,\n    \"expectedValue\": \"获得一个可观察的互动片段，以便后续连接用户的期待或边界\",\n    \"stopReason\": null,\n    \"outcomeCandidate\": null\n  },\n  \"reply\": {\n    \"naturalUnderstanding\": \"你提到会上他说得很直接，让你难堪，会后又认真帮你改了很久。\",\n    \"question\": \"会上他指出问题时，你当时有解释的机会吗？\"\n  }\n}"
+        }
+      ],
+      "metrics": {
+        "latencyMs": 4773,
+        "attempts": 2,
+        "tokenUsage": {
+          "promptTokens": 5381,
+          "completionTokens": 465,
+          "totalTokens": 5846,
+          "promptCacheHitTokens": 3584,
+          "promptCacheMissTokens": 1797
+        },
+        "estimatedCost": 0.0003918152
+      },
+      "validationIssues": [
+        "INVALID_SCHEMA",
+        "understanding.eventOptions.0:invalid_type;understanding.eventOptions.1:invalid_type"
+      ],
+      "runtimeError": "MODEL_OUTPUT_UNAVAILABLE"
+    }
+  ],
+  "awaitingReply": false,
+  "completed": true,
+  "completionReason": "runtime_incomplete",
+  "productReview": {
+    "initialVerdict": null,
+    "primaryReason": null,
+    "secondaryReason": null,
+    "visibleEvidence": null,
+    "finalVerdict": null,
+    "rootCause": null,
+    "resolution": null,
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+}

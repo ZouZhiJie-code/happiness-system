@@ -60,4 +60,4 @@ high 两条都同时形成隐藏推理与可见回答。E1 约有 `311` 个可�
 
 本轮继续停留在 `EMPTY_CONTENT`。按已确认迭代策略，证据不足时先继续定位，TIMEOUT、输出合同、内容与边界问题保持排队，定向真人复测也继续等待可验证修复。
 
-下一轮建议只验证一个因素：相同 high 请求的空内容复现稳定性。可使用 E1 与 E3 的冻结请求做交错重复，继续保留 `json_object`、Thinking high、Provider 默认 Token 和零重试；调用次数、停止门与新指纹需先形成静态清单，再由产品负责人单独授权。完整脱敏数据见 [结果 JSON](./gi088-empty-content-thinking-mode-probe-v1-result.json)；含 turn/call 定位符的运行合同留在本地受控资产中。
+下一轮建议只验证一个因素：相同 high 请求的空内容复现稳定性。可使用 E1 与 E3 的冻结请求做交错重复，继续保留 `json_object`、Thinking high、Provider 默认 Token 和零重试；调用次数、停止门与新指纹需先形成静态清单，再由产品负责人单独授权。完整脱敏数据见 [结果 JSON](./gi088-empty-content-thinking-mode-probe-v1-result.json)，运行合同见 [探针 manifest](./gi088-empty-content-thinking-mode-probe-v1-manifest.json)。

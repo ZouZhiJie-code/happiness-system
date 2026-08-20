@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "0c91ed7a6d73317c",
+  "status": "technical_blocked",
+  "recommendation": null,
+  "identity": {
+    "region": "cn-beijing",
+    "endpointExposure": "host_only",
+    "judgeDatasetVersion": "2026-08-13.v2",
+    "blindPackageSha256": "0b5cf9ac4e7833687a9f32f554e20b18adccdeb62a119b0a26e48a11e70ae696",
+    "promptVersion": "2026-08-13.gi088-judge-prompt-v1",
+    "promptSha256": "6426061d719ba51e5464116579fbea3d55157d60bbd344382f1d7186a3b7bf41",
+    "runnerSha256": "dffa058c8f135a1f49bc51f46f1b5abe3d7be3441cdb809bd60caca15ef6a359",
+    "scoringCoreSha256": "772bf179cfedc08d60eac1fa83efc664cc1c58d1e8d9f66f3a960d44862806e2"
+  },
+  "arms": [
+    {
+      "model": "qwen3.7-plus-2026-05-26",
+      "mode": "normal",
+      "validResults": 0,
+      "calls": 1,
+      "retries": 1,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "reasoningTokens": 0,
+      "reasoningObservedCount": 0,
+      "costCny": 0,
+      "technicalFailureCount": 1
+    },
+    {
+      "model": "qwen3.7-plus-2026-05-26",
+      "mode": "thinking",
+      "validResults": 14,
+      "calls": 17,
+      "retries": 3,
+      "inputTokens": 9462,
+      "outputTokens": 8879,
+      "reasoningTokens": 7204,
+      "reasoningObservedCount": 14,
+      "costCny": 0.089956,
+      "technicalFailureCount": 1
+    }
+  ],
+  "totals": {
+    "calls": 19,
+    "retries": 4,
+    "costCny": 0.092062
+  },
+  "technicalSummary": {
+    "plusNormal": "首个请求后的本地异常计数缺陷已封存；同卡唯一补跑发生网络请求失败，形成 0/20 有效结果。",
+    "plusThinking": "形成 14/20 有效结果；结构化输出技术补跑消耗完毕后，CAL-015 仍返回无效四档字段。",
+    "max": "Plus 两组证据不完整，未进入质量比较与 Max 路线。",
+    "qualityConclusion": "withheld_due_to_incomplete_evidence",
+    "privateVisibleOutputsRetained": 14,
+    "reasoningBodiesRetained": 0,
+    "publicPrivateContentCount": 0
+  },
+  "conclusionBoundary": "仅判断 Judge 配置能否承担 GI-088 初评；独立准入、人工评分、Preview 和 Production 保持关闭。"
+}

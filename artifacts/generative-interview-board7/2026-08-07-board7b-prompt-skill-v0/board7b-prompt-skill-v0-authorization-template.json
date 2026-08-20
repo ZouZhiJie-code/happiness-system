@@ -1,0 +1,16 @@
+{
+  "template": true,
+  "authorizationVersion": "2026-08-07.board7b-prompt-skill-authorization-v0",
+  "decision": "pending",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0",
+  "candidateFingerprint": "84c17021fe079d9b3060092ea279dc3c41bfc0bb34addcaa51912fcfabf45541",
+  "factCardFingerprint": null,
+  "authorizationScope": null,
+  "authorizedModelCallBudget": 0,
+  "authorizedEnvironment": null,
+  "approvedBy": null,
+  "approvedAt": null,
+  "expiresAt": null,
+  "productionChangeAuthorized": false,
+  "confirmationText": "等待产品负责人针对已确认事实卡、候选指纹和具体运行范围单独授权。"
+}

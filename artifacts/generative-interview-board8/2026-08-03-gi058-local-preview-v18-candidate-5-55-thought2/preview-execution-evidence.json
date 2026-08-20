@@ -1,0 +1,209 @@
+{
+  "evaluation": "board8_gi058_deepseek_official_preview",
+  "candidate": {
+    "strategyVersion": "5.55.0",
+    "semanticArtifactVersion": "event-centered-semantic-plan.v8",
+    "model": "deepseek-v4-flash",
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "eventMode": "optional",
+    "eventStrategy": "generative"
+  },
+  "startedAt": "2026-08-03T15:05:53.750Z",
+  "completedAt": "2026-08-03T15:06:29.979Z",
+  "database": "happiness_board8_preview_20260803_gi058_local",
+  "rootSessionIds": [
+    "60ec6aec-0405-4d9d-9a48-ba91352ca91a"
+  ],
+  "cases": [
+    {
+      "id": "thought-2",
+      "label": "想法 2｜深聊",
+      "material": "real",
+      "angle": "thought",
+      "depth": "deep",
+      "rootSessionId": "60ec6aec-0405-4d9d-9a48-ba91352ca91a",
+      "eventId": null,
+      "entryId": "76ff8a55-96d6-49e7-b50d-9c123938473c",
+      "status": "passed",
+      "startedAt": "2026-08-03T15:05:53.750Z",
+      "completedAt": "2026-08-03T15:06:29.978Z",
+      "firstCheckpoint": {
+        "reached": true,
+        "equalFourAngles": true,
+        "inputHidden": true,
+        "logHidden": true
+      },
+      "focusSelection": null,
+      "correction": null,
+      "closedAngle": null,
+      "journal": {
+        "generated": true,
+        "origin": "llm",
+        "edited": true,
+        "saved": true,
+        "reopened": true,
+        "traceId": "2213767f-022f-40db-807f-378df45f78dc"
+      },
+      "refresh": {
+        "afterFirstCheckpoint": true,
+        "afterJournalSave": true
+      },
+      "steps": [
+        {
+          "action": "reply",
+          "durationMs": 85,
+          "snapshot": {
+            "phase": "checkpoint_one",
+            "activeAngle": null,
+            "checkpoint": "first",
+            "availableAngles": [
+              "feeling",
+              "thought",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle"
+            ],
+            "latestMessageSequence": 2,
+            "lastAssistantTraceId": "781955a3-bf51-4be7-b0ff-e781608ff0da",
+            "lastQuestion": null
+          }
+        },
+        {
+          "action": "select_exploration_angle",
+          "durationMs": 61,
+          "snapshot": {
+            "phase": "guided_reflection",
+            "activeAngle": "thought",
+            "checkpoint": null,
+            "availableAngles": [
+              "feeling",
+              "thought",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event"
+            ],
+            "latestMessageSequence": 4,
+            "lastAssistantTraceId": "acf736c6-0dc7-4935-8d95-237120fe3be9",
+            "lastQuestion": {
+              "phase": "guided_reflection",
+              "angle": "thought",
+              "target": "immediate_thought",
+              "surfaceLevel": "open_anchor",
+              "opportunityNumber": 1
+            }
+          }
+        },
+        {
+          "action": "reply",
+          "durationMs": 9846,
+          "snapshot": {
+            "phase": "checkpoint_two",
+            "activeAngle": null,
+            "checkpoint": "second",
+            "availableAngles": [
+              "feeling",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "select_exploration_angle",
+              "continue_exploration",
+              "generate_event_journal"
+            ],
+            "latestMessageSequence": 6,
+            "lastAssistantTraceId": "359d7776-a529-4ed5-bc0a-60f330d7f7f8",
+            "lastQuestion": null
+          }
+        },
+        {
+          "action": "continue_exploration",
+          "durationMs": 66,
+          "snapshot": {
+            "phase": "deep_companionship",
+            "activeAngle": "thought",
+            "checkpoint": null,
+            "availableAngles": [
+              "feeling",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "continue_exploration"
+            ],
+            "latestMessageSequence": 8,
+            "lastAssistantTraceId": "28c55da8-be9d-48e4-b064-c2edd77bcca6",
+            "lastQuestion": {
+              "phase": "deep_companionship",
+              "angle": "thought",
+              "target": "deep_open_point",
+              "surfaceLevel": "open_anchor",
+              "opportunityNumber": null
+            }
+          }
+        },
+        {
+          "action": "reply",
+          "durationMs": 23616,
+          "snapshot": {
+            "phase": "deep_companionship",
+            "activeAngle": "thought",
+            "checkpoint": null,
+            "availableAngles": [
+              "feeling",
+              "relationship",
+              "action"
+            ],
+            "closedAngles": [],
+            "allowedActions": [
+              "reply",
+              "correct_understanding",
+              "regenerate_response",
+              "switch_response_version",
+              "exit_event",
+              "continue_exploration",
+              "generate_event_journal"
+            ],
+            "latestMessageSequence": 10,
+            "lastAssistantTraceId": "86177494-3d26-4ea7-9f5d-f0558724c67c",
+            "lastQuestion": null
+          }
+        }
+      ],
+      "issues": []
+    }
+  ],
+  "smokes": [],
+  "technicalSummary": {
+    "mainTrajectoriesCompleted": 1,
+    "journalLoopsCompleted": 1,
+    "failures": 0,
+    "status": "ready_for_board8_audit"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "template": true,
+  "authorizationVersion": "2026-08-07.board7b-prompt-skill-authorization-v0.4",
+  "decision": "pending",
+  "candidateVersion": "2026-08-07.board7b-prompt-skill-v0.4",
+  "candidateFingerprint": "5e2970977ada18b1f1c16df052391700f158f076d3adb7ac48a4c1bdda16fb55",
+  "authorizationScope": "eight_case_hidden_regression",
+  "plannedModelCallBudget": 8,
+  "authorizedModelCallBudget": 0,
+  "authorizedEnvironment": "isolated_local_evaluation",
+  "approvedBy": null,
+  "approvedAt": null,
+  "productionChangeAuthorized": false,
+  "confirmationText": "等待产品负责人针对 GI-084 v0.4 新指纹单独授权。v0.3 的批准记录已经消耗完毕，不能复用。"
+}

@@ -220,7 +220,7 @@ recovery-1 已完成并以 `stop` 封口。以下命令作为该次真实执行�
 npm run eval:event-centered:generative -- \
   --mode=provider-v31-repair-probe-recovery \
   --recovery-source-runs-json=artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-run-1.json \
-  --recovery-reservation-id=<recovery-reservation-id> \
+  --recovery-reservation-id=056d21bd-c880-46e2-b2d3-1447443ba6f1 \
   --confirm-model-run \
   --pricing-json=evals/event-centered-generative/deepseek-v4-flash-pricing-2026-07-28.json \
   --output=artifacts/generative-interview-board7/2026-08-01/provider-v31-repair-probe-recovery-1-report.md \

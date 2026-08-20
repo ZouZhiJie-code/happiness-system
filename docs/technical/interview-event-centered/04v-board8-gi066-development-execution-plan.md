@@ -637,12 +637,12 @@ git diff --check
 
 ### 13.4 证据与下一步
 
-- 候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）
-- 10×3 Markdown 报告（本机历史证据，公开精简包未收录：`report.md`）
-- 10×3 JSON 报告（本机历史证据，公开精简包未收录：`report.json`）
-- 8+2 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）
-- Board8 Markdown 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）
-- Board8 JSON 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.json`）
+- [候选血缘](../../../artifacts/generative-interview-board8/2026-08-04-gi066-scripted-deepseek-official-preview-v8/candidate-lineage.md)
+- [10×3 Markdown 报告](../../../artifacts/generative-interview-board8/2026-08-04-gi066-thought-stability/report.md)
+- [10×3 JSON 报告](../../../artifacts/generative-interview-board8/2026-08-04-gi066-thought-stability/report.json)
+- [8+2 执行证据](../../../artifacts/generative-interview-board8/2026-08-04-gi066-scripted-deepseek-official-preview-v8/preview-execution-evidence.md)
+- [Board8 Markdown 审计](../../../artifacts/generative-interview-board8/2026-08-04-gi066-scripted-deepseek-official-preview-v8/board8-preview-candidate-audit.md)
+- [Board8 JSON 审计](../../../artifacts/generative-interview-board8/2026-08-04-gi066-scripted-deepseek-official-preview-v8/board8-preview-candidate-audit.json)
 
 以上为自动层交付完成时点的历史下一步。最新真人实聊已将 GI-066 候选裁决为 `No-Go`，剩余人工批次停止，后续按 GI-067 重新形成候选。
 
@@ -678,10 +678,10 @@ git diff --check
 - 本机人工工作台曾重新开放于 `http://127.0.0.1:3010/preview/board8-gi066-review`，其后两条最新真人实聊用于本次 No-Go 裁决；
 - Production 持续保持 `legacy + baseline`，未执行生产部署、开关切换或生产数据写入。
 
-最终证据见候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）、10×3（本机历史证据，公开精简包未收录：`report.md`）、8+2（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）和Board8 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）。修复前稳定性报告与第一次自动失败记录继续保留为历史证据。
+最终证据见[候选血缘](../../../artifacts/generative-interview-board8/2026-08-04-gi066-fix-scripted-deepseek-official-preview-v3/candidate-lineage.md)、[10×3](../../../artifacts/generative-interview-board8/2026-08-04-gi066-fix-thought-stability/report.md)、[8+2](../../../artifacts/generative-interview-board8/2026-08-04-gi066-fix-scripted-deepseek-official-preview-v3/preview-execution-evidence.md)和[Board8 审计](../../../artifacts/generative-interview-board8/2026-08-04-gi066-fix-scripted-deepseek-official-preview-v3/board8-preview-candidate-audit.md)。修复前稳定性报告与第一次自动失败记录继续保留为历史证据。
 
 ## 16. 最新真人 No-Go 与 GI-067 交接
 
-GI-066 修复候选在两条最新真人事件中继续出现产品级阻断：已回答内容仍被换句重复索取；用户主动留下的重要线索未进入选题；复合纠正撤销旧方向后未承接新重点；缺少有效来源时仍使用抽象判断标准兜底。根会话为 `redacted-operational-id` 与 `redacted-operational-id`，完整内容继续留在隔离 Preview 数据库。
+GI-066 修复候选在两条最新真人事件中继续出现产品级阻断：已回答内容仍被换句重复索取；用户主动留下的重要线索未进入选题；复合纠正撤销旧方向后未承接新重点；缺少有效来源时仍使用抽象判断标准兜底。根会话为 `8b8df99c-4e56-4501-a7aa-584c5c66632f` 与 `b03b9868-3cce-4a0a-a419-020f074a79d2`，完整内容继续留在隔离 Preview 数据库。
 
 产品负责人将最新真人体验裁决为 `No-Go`。GI-066 候选因此失效，剩余人工批次停止；本计划的代码、版本、自动测试和运行报告继续保存为历史技术证据。正式提问策略已转交 [04w｜GI-067](./04w-board4-gi067-thought-question-strategy-first-principles.md)，推进顺序为“板块 4 产品设计 → 板块 7 实现 → 板块 8 真人验收”。Production 继续保持 `legacy + baseline`。

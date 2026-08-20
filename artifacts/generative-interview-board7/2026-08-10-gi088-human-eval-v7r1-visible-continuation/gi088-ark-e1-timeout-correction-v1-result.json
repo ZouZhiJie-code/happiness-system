@@ -1,0 +1,66 @@
+{
+  "probeVersion": "2026-08-10.gi088-ark-e1-60s-header-correction-v1",
+  "probeFingerprint": "3d2d6b6f48bc787638a08150883908dc221868669af84104027b01745bc1df2a",
+  "sourceProbeFingerprint": "7bec10fdf529471625ef33e73a825d5efecbbf9e75da46a1ac86a3979741034e",
+  "sourceCaseId": "E1",
+  "sourceCallId": "44e549d5-352f-4ecb-bc36-8eb904bfc90f",
+  "sourceRequestHash": "2f4e1e38bbd64e93f6e740ab07da9e61f2b04f98da499d556e44cb983d689912",
+  "requestHash": "1376a4fa599836f9e3a8460ae0414695ed8698840a08e230fb8105a2c215c448",
+  "runtime": {
+    "transport": "direct_rest_openai_compatible",
+    "provider": "volcengine_ark",
+    "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+    "baseUrlHost": "ark.cn-beijing.volces.com",
+    "model": "deepseek-v4-flash-ga-260731",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "responseFormat": "json_object",
+    "useProviderDefaultTemperature": true,
+    "useProviderDefaultMaxTokens": true,
+    "headersTimeoutMs": 60000,
+    "bodyIdleTimeoutMs": 60000,
+    "hardTimeoutMs": 60000,
+    "automaticRetries": 0,
+    "fallbackCalls": 0
+  },
+  "authorizedCallBudget": 1,
+  "modelGenerationCalls": 1,
+  "executionAuthorized": true,
+  "completedAt": "2026-08-10T07:34:19.437Z",
+  "result": {
+    "status": "valid",
+    "errorCode": null,
+    "responseHash": "99a0f773ba52a53d462b3c6aad1387a74f01d9079843257d9facc07ff5d096e6",
+    "validationIssues": [],
+    "latencyMs": 15777,
+    "tokenUsage": {
+      "promptTokens": 2362,
+      "completionTokens": 1148,
+      "totalTokens": 3510
+    },
+    "providerDiagnostics": {
+      "finishReason": "stop",
+      "reasoningPresent": true,
+      "reasoningLength": 3090,
+      "reasoningTokens": 801,
+      "latencyMs": 15777,
+      "tokenUsage": {
+        "promptTokens": 2362,
+        "completionTokens": 1148,
+        "totalTokens": 3510
+      },
+      "upstreamRequestId": "389cba4721409f763e8b14178883b8fbcd1cdefc0ab8a546051aa12e0cdcea4c",
+      "httpStatus": 200,
+      "responseModel": "deepseek-v4-flash-ga-260731",
+      "choiceCount": 1,
+      "contentType": "string",
+      "contentLength": 887,
+      "reasoningType": "string",
+      "headersLatencyMs": 15775,
+      "bodyLatencyMs": 2,
+      "totalLatencyMs": 15777,
+      "timeoutStage": null,
+      "abortSource": null
+    }
+  }
+}

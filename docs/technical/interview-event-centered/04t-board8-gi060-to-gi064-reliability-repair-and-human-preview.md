@@ -18,7 +18,7 @@ Production：`继续保持 legacy + baseline；本轮未执行生产部署、开
 
 当前产品事实源：[生成式访谈重构总 Map](../../generative-interview-refactor-map.md)与[04x-07｜GI-074 评测体系及下游交接](./04x-07-evaluation-preview-and-handoff.md)
 
-最终候选证据：GI-064 候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）、Preview 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）、Board8 Markdown 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）、Board8 JSON 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.json`）
+最终候选证据：[GI-064 候选血缘](../../../artifacts/generative-interview-board8/2026-08-04-gi064-scripted-deepseek-official-preview-r2/candidate-lineage.md)、[Preview 执行证据](../../../artifacts/generative-interview-board8/2026-08-04-gi064-scripted-deepseek-official-preview-r2/preview-execution-evidence.md)、[Board8 Markdown 审计](../../../artifacts/generative-interview-board8/2026-08-04-gi064-scripted-deepseek-official-preview-r2/board8-audit/board8-preview-candidate-audit.md)、[Board8 JSON 审计](../../../artifacts/generative-interview-board8/2026-08-04-gi064-scripted-deepseek-official-preview-r2/board8-audit/board8-preview-candidate-audit.json)
 
 ## 1. 当前结论
 

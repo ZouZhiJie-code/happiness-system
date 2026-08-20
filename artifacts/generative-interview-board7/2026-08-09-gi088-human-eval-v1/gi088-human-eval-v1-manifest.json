@@ -50,8 +50,8 @@
   },
   "runner": {
     "serviceVersion": "2026-08-09.gi088-preview-service-v0.6",
-    "deploymentId": "redacted-deployment-id",
-    "deploymentUrl": "https://xingfuxitong-5vak37bgb-example-team.vercel.app",
+    "deploymentId": "dpl_9VjwswqWK9QUoojXXKNs5BWjBvCS",
+    "deploymentUrl": "https://xingfuxitong-5vak37bgb-zouzhijies-projects.vercel.app",
     "readyState": "READY",
     "modelCallScope": "batch",
     "currentModelCallAuthorization": "closed_after_product_owner_early_stop",

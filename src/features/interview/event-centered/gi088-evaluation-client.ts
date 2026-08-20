@@ -1,11 +1,25 @@
+import {
+  Gi088ExportDownloadError,
+  downloadVerifiedGi088EvaluationExport
+} from "@/features/interview/event-centered/gi088-evaluation-export";
+
 export const GI088_EVALUATION_VERSION =
-  "2026-08-10.gi088-human-eval-v7r2-ark-flash" as const;
+  "2026-08-10.gi088-human-eval-v8r2-foundation-hardening" as const;
 
 export type Gi088GenerationProgress = {
-  type: "recovery_started";
-  trigger: "EMPTY_CONTENT";
+  type:
+    | "turn_reserved"
+    | "provider_started"
+    | "heartbeat"
+    | "recovery_started";
+  trigger?:
+    | "EMPTY_CONTENT"
+    | "TIMEOUT"
+    | "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
+    | "ASK_QUESTION_COUNT_INVALID:2"
+    | "UNAUTHORIZED_PAUSE";
   turnId: string;
-  callId: string;
+  callId?: string;
 };
 
 export type Gi088BranchKey = "off" | "high";
@@ -31,12 +45,14 @@ export type Gi088QuestionReviewClassification =
   | "same_focus_heavy"
   | "multiple_independent_tasks"
   | "uncertain";
+export type Gi088QuestionPresence = "present" | "absent" | "uncertain";
 
 export type Gi088TaskStatus =
   | "ready"
   | "locked"
   | "active"
   | "completed"
+  | "aborted"
   | "not_run";
 
 export type Gi088TrajectoryStatus =
@@ -44,7 +60,22 @@ export type Gi088TrajectoryStatus =
   | "running"
   | "technical_failure"
   | "protected_failure"
+  | "aborted"
   | "completed";
+
+export type Gi088GateStatus =
+  | "pending"
+  | "no_go"
+  | "ready_for_final_review"
+  | "legacy_unknown";
+
+export type Gi088IssueAction =
+  | "read_latest_state"
+  | "return_to_current_task"
+  | "reconfirm_submission"
+  | "generate_again"
+  | "seal_and_export"
+  | "none";
 
 export type Gi088EvaluationMessage = {
   id: string;
@@ -121,6 +152,7 @@ export type Gi088CallMetadata = {
     | "TIMEOUT"
     | "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
     | "ASK_QUESTION_COUNT_INVALID:2"
+    | "UNAUTHORIZED_PAUSE"
     | null;
   retryOrdinal?: number | null;
   effectiveConfig?: {
@@ -141,8 +173,21 @@ export type Gi088CallMetadata = {
     visiblePrefix?: "{" | null;
     requestHashScope?: "full" | "redacted_hidden_reasoning";
     sharedDeadlineMs?: number | null;
+    remainingSharedDeadlineMs?: number | null;
     recoveryPolicyVersion?: string | null;
   };
+  ledgerStatus?:
+    | "reserved"
+    | "dispatched"
+    | "provider_succeeded"
+    | "provider_failed"
+    | "finalized"
+    | "interrupted_unknown_dispatch"
+    | "finalization_failed"
+    | "superseded";
+  executionDeadlineAt?: string | null;
+  automaticDeadlineAt?: string | null;
+  finalizationError?: string | null;
 };
 
 export type Gi088ProviderDiagnostics = {
@@ -219,27 +264,60 @@ export type Gi088TrajectoryTurn = {
       | "EMPTY_CONTENT"
       | "TIMEOUT"
       | "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE"
-      | "ASK_QUESTION_COUNT_INVALID:2";
+      | "ASK_QUESTION_COUNT_INVALID:2"
+      | "UNAUTHORIZED_PAUSE";
     automaticRetryCount: number;
     initialCallId: string;
     recoveryCallId: string | null;
     manualRetryCount?: number;
     manualRetryCallId?: string | null;
     eligibleAt: string;
+    automaticDeadlineAt?: string | null;
     startedAt: string | null;
     completedAt: string | null;
   } | null;
   questionObservation?: {
+    questionPresence?: Gi088QuestionPresence;
     questionMarkCount: number;
     reviewCandidate:
       | "none"
       | "zero_question_mark"
       | "multiple_question_marks";
     review: {
-      classification: Gi088QuestionReviewClassification;
+      questionPresence?: Gi088QuestionPresence;
+      classification?: Gi088QuestionReviewClassification;
       note: string;
       reviewedAt: string;
     } | null;
+    observationFingerprint?: string;
+  } | null;
+  stateMaintenance?: {
+    policyVersion: string;
+    workingTaskLineage:
+      | "not_applicable"
+      | "unchanged"
+      | "merged";
+    inheritedEvidenceCount: number;
+    submittedEvidenceCount: number;
+    effectiveEvidenceCount: number;
+    explicitStop: "none" | "pure" | "mixed";
+    providerCallBypassed: boolean;
+    providerFailureAbsorbed: boolean;
+    sourceCompletion?: {
+      appliedFields: Array<
+        | "semantic.workingTask.evidenceRefs"
+        | "semantic.nextInquiry.evidenceRefs"
+      >;
+      insertedEvidenceRefs: string[];
+      reviewCandidate: "program_source_completion" | null;
+    };
+  } | null;
+  activeCallId?: string | null;
+  baseAssistantMessageId?: string | null;
+  failedOutputDiagnostic?: {
+    errorCode: string;
+    responseHash: string | null;
+    validationIssues: string[];
   } | null;
 };
 
@@ -278,6 +356,13 @@ export type Gi088Trajectory = {
   review: Gi088TrajectoryReview | null;
   startedAt?: string | null;
   completedAt?: string | null;
+  abortedAt?: string | null;
+  abortReason?: string | null;
+  dialogueAnchor?: {
+    lastAssistantMessageId: string | null;
+    lastCommittedTurnId: string | null;
+  };
+  reviewSnapshotFingerprint?: string;
 };
 
 export type Gi088TaskSummary = {
@@ -296,6 +381,91 @@ export type Gi088Comparison = {
   preference: Gi088Preference;
   reason: string;
 } | null;
+
+export type Gi088GateReason = {
+  code: string;
+  sourceType: "technical_fact" | "current_human_conclusion";
+  sourceId: string;
+  detail: string;
+  createdAt: string;
+};
+
+export type Gi088ProgramInterventionReviewOutcome =
+  | "correct"
+  | "false_positive"
+  | "uncertain";
+
+export type Gi088ProgramIntervention = {
+  id: string;
+  taskId: string;
+  branch: Gi088BranchKey;
+  turnId: string | null;
+  callId: string | null;
+  interventionType: string;
+  originalAction: string | null;
+  effectiveAction: string;
+  evidenceSpan: string | null;
+  observationFingerprint: string;
+  reviewOutcome: Gi088ProgramInterventionReviewOutcome | null;
+  reviewReason: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+};
+
+export type Gi088ReviewRevision = {
+  id: string;
+  subjectType: string;
+  subjectId: string;
+  oldValue: unknown;
+  newValue: unknown;
+  reason: string;
+  actorUserId?: string;
+  clientOperationId: string;
+  createdAt: string;
+};
+
+export type Gi088EvaluationMetrics = {
+  version?: string;
+  eligibleModelSubmissionCount: number;
+  firstVisibleSuccessCount: number;
+  firstVisibleSuccessRate: number | null;
+  zeroCallControlCount: number;
+  rawTechnicalEventCount: number;
+  rawProtectedEventCount?: number;
+  autoRecoverySuccessCount: number;
+  finalFailureCount: number;
+  manualThirdGenerationCount: number;
+  consecutiveRecoveryCount: number;
+  duplicateMessageCount: number;
+  programInterventionCount: number;
+  programInterventionFalsePositiveCount?: number;
+  falsePositiveCount?: number;
+  programInterventionReviewCoverage: number | null;
+  visibleQuestionCount?: number;
+  visibleQuestionReviewedCount?: number;
+  visibleQuestionReviewCoverage: number | null;
+  multipleIndependentTasksCount: number;
+  gateFacts?: Record<string, number | boolean>;
+};
+
+export type Gi088RunSummary = {
+  runId: string;
+  runOrdinal: number;
+  evaluationVersion: string;
+  status: "running" | "sealed" | "early_stopped";
+  gateStatus: Gi088GateStatus;
+  completedTaskCount: number;
+  totalTasks: number;
+  readOnly: boolean;
+  createdAt: string;
+  updatedAt: string;
+  sealedAt: string | null;
+};
+
+export type Gi088RunsResponse = {
+  runs: Gi088RunSummary[];
+  session?: Gi088EvaluationSession;
+};
 
 export type Gi088EvaluationSession = {
   evaluation: {
@@ -325,6 +495,16 @@ export type Gi088EvaluationSession = {
       reviewedTrajectoryCount: number;
       totalTrajectoryCount: number;
     };
+    runId?: string;
+    runOrdinal?: number;
+    revision?: number;
+    gate?: {
+      status: Gi088GateStatus;
+      reasons: Gi088GateReason[];
+      frozen: boolean;
+    };
+    readOnly?: boolean;
+    readOnlyReason?: string | null;
   };
   tasks: Gi088TaskSummary[];
   activeTask: {
@@ -337,13 +517,30 @@ export type Gi088EvaluationSession = {
     branches: Record<Gi088BranchKey, Gi088Trajectory>;
     comparison: Gi088Comparison;
     readOnly?: boolean;
+    reviewSnapshot?: {
+      fingerprint: string;
+      trajectoryReview: Gi088TrajectoryReview | null;
+      questionReviews: Array<{
+        turnId: string;
+        observationFingerprint: string;
+        review: NonNullable<Gi088TrajectoryTurn["questionObservation"]>["review"];
+      }>;
+      programInterventions: Gi088ProgramIntervention[];
+    };
   } | null;
+  metrics?: Gi088EvaluationMetrics;
+  programInterventions?: Gi088ProgramIntervention[];
+  reviewRevisions?: Gi088ReviewRevision[];
 };
 
 export type Gi088EvaluationIssue = {
   code: string;
   message: string;
   retryable: boolean;
+  dataSaved?: "yes" | "partial" | "no" | "unknown";
+  impact?: "request" | "turn" | "task" | "run" | "environment";
+  action?: Gi088IssueAction;
+  requestId?: string;
 };
 
 export type Gi088TechnicalSmoke = {
@@ -378,156 +575,8 @@ export function createGi088ClientTurnId() {
   return createOperationId("gi088-turn");
 }
 
-export const GI088_OUTBOX_STORAGE_KEY =
-  "daily-light:gi088:evaluation-outbox:v7-continuity" as const;
-
-export type Gi088OutboxEntry = {
-  version: typeof GI088_EVALUATION_VERSION;
-  kind: "start_off" | "start_high" | "turn";
-  batchId: string;
-  taskId: string;
-  branch: Gi088BranchKey;
-  content: string;
-  clientTurnId: string;
-  createdAt: string;
-};
-
-function outboxStorage(storage?: Storage | null) {
-  if (storage !== undefined) return storage;
-  if (typeof window === "undefined") return null;
-  try {
-    return window.sessionStorage;
-  } catch {
-    return null;
-  }
-}
-
-function validOutboxEntry(value: unknown): value is Gi088OutboxEntry {
-  if (!value || typeof value !== "object") return false;
-  const entry = value as Partial<Gi088OutboxEntry>;
-  return entry.version === GI088_EVALUATION_VERSION &&
-    (entry.kind === "start_off" || entry.kind === "start_high" || entry.kind === "turn") &&
-    typeof entry.batchId === "string" && entry.batchId.length > 0 &&
-    typeof entry.taskId === "string" && entry.taskId.length > 0 &&
-    (entry.branch === "off" || entry.branch === "high") &&
-    typeof entry.content === "string" && entry.content.length > 0 &&
-    typeof entry.clientTurnId === "string" && entry.clientTurnId.length > 0 &&
-    typeof entry.createdAt === "string";
-}
-
-export function readGi088Outbox(storage?: Storage | null) {
-  const target = outboxStorage(storage);
-  if (!target) return null;
-  try {
-    const raw = target.getItem(GI088_OUTBOX_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as unknown;
-    if (validOutboxEntry(parsed)) return parsed;
-    try {
-      target.removeItem(GI088_OUTBOX_STORAGE_KEY);
-    } catch {
-      return null;
-    }
-  } catch {
-    try {
-      target.removeItem(GI088_OUTBOX_STORAGE_KEY);
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-export function prepareGi088Outbox(
-  input: Omit<Gi088OutboxEntry, "version" | "clientTurnId" | "createdAt">,
-  storage?: Storage | null
-) {
-  const target = outboxStorage(storage);
-  if (!target) {
-    throw new Gi088EvaluationRequestError({
-      code: "GI088_OUTBOX_UNAVAILABLE",
-      message: "浏览器暂时无法保存待发送内容。为避免重复调用，本次请求已停止；请允许会话存储后重试。",
-      retryable: false
-    });
-  }
-  const normalizedContent = input.content.trim();
-  const existing = readGi088Outbox(target);
-  if (
-    existing &&
-    existing.kind === input.kind &&
-    existing.batchId === input.batchId &&
-    existing.taskId === input.taskId &&
-    existing.branch === input.branch &&
-    existing.content === normalizedContent
-  ) {
-    return existing;
-  }
-
-  const entry: Gi088OutboxEntry = {
-    version: GI088_EVALUATION_VERSION,
-    ...input,
-    content: normalizedContent,
-    clientTurnId: createGi088ClientTurnId(),
-    createdAt: new Date().toISOString()
-  };
-  try {
-    target.setItem(GI088_OUTBOX_STORAGE_KEY, JSON.stringify(entry));
-  } catch {
-    throw new Gi088EvaluationRequestError({
-      code: "GI088_OUTBOX_WRITE_FAILED",
-      message: "待发送内容暂时无法安全保存。为避免重复调用，本次请求已停止；请释放浏览器存储空间后重试。",
-      retryable: false
-    });
-  }
-  return entry;
-}
-
-export function invalidateGi088OutboxOnContentChange(input: {
-  batchId: string;
-  taskId: string;
-  branch: Gi088BranchKey;
-  content: string;
-}, storage?: Storage | null) {
-  const target = outboxStorage(storage);
-  const existing = readGi088Outbox(target);
-  if (!existing) return;
-  if (
-    existing.batchId === input.batchId &&
-    existing.taskId === input.taskId &&
-    existing.branch === input.branch &&
-    existing.content !== input.content.trim()
-  ) {
-    try {
-      target?.removeItem(GI088_OUTBOX_STORAGE_KEY);
-    } catch {
-      return;
-    }
-  }
-}
-
-export function gi088SessionConfirmsOutbox(session: Gi088EvaluationSession, entry: Gi088OutboxEntry) {
-  const task = session.activeTask;
-  if (!task || task.taskId !== entry.taskId) return false;
-  return task.branches[entry.branch].turns.some((turn) => turn.clientTurnId === entry.clientTurnId);
-}
-
-export function clearGi088OutboxIfConfirmed(
-  session: Gi088EvaluationSession,
-  entry: Gi088OutboxEntry,
-  storage?: Storage | null
-) {
-  const target = outboxStorage(storage);
-  if (!target || !gi088SessionConfirmsOutbox(session, entry)) return false;
-  const current = readGi088Outbox(target);
-  if (current?.clientTurnId === entry.clientTurnId) {
-    try {
-      target.removeItem(GI088_OUTBOX_STORAGE_KEY);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-  return false;
+export function createGi088ClientOperationId(kind = "operation") {
+  return createOperationId(`gi088-${kind}`);
 }
 
 async function readPayload(response: Response): Promise<unknown> {
@@ -539,12 +588,46 @@ function issueFromPayload(payload: unknown, response: Response): Gi088Evaluation
     const outer = payload as { error?: unknown; issue?: unknown };
     const candidate = outer.error ?? outer.issue;
     if (candidate && typeof candidate === "object") {
-      const issue = candidate as { code?: unknown; message?: unknown; retryable?: unknown };
+      const issue = candidate as {
+        code?: unknown;
+        message?: unknown;
+        retryable?: unknown;
+        dataSaved?: unknown;
+        impact?: unknown;
+        action?: unknown;
+        requestId?: unknown;
+      };
       if (typeof issue.code === "string" && typeof issue.message === "string") {
         return {
           code: issue.code,
           message: issue.message,
-          retryable: typeof issue.retryable === "boolean" ? issue.retryable : response.status >= 500
+          retryable: typeof issue.retryable === "boolean"
+            ? issue.retryable
+            : response.status >= 500,
+          ...(issue.dataSaved === "yes" ||
+          issue.dataSaved === "partial" ||
+          issue.dataSaved === "no" ||
+          issue.dataSaved === "unknown"
+            ? { dataSaved: issue.dataSaved }
+            : {}),
+          ...(issue.impact === "request" ||
+          issue.impact === "turn" ||
+          issue.impact === "task" ||
+          issue.impact === "run" ||
+          issue.impact === "environment"
+            ? { impact: issue.impact }
+            : {}),
+          ...(issue.action === "read_latest_state" ||
+          issue.action === "return_to_current_task" ||
+          issue.action === "reconfirm_submission" ||
+          issue.action === "generate_again" ||
+          issue.action === "seal_and_export" ||
+          issue.action === "none"
+            ? { action: issue.action }
+            : {}),
+          ...(typeof issue.requestId === "string"
+            ? { requestId: issue.requestId }
+            : {})
         };
       }
     }
@@ -553,7 +636,10 @@ function issueFromPayload(payload: unknown, response: Response): Gi088Evaluation
   return {
     code: `GI088_HTTP_${response.status || "NETWORK"}`,
     message: "评测工作台暂时无法完成这一步。当前内容仍然保留，可以刷新后继续。",
-    retryable: response.status >= 500 || response.status === 0
+    retryable: response.status >= 500 || response.status === 0,
+    dataSaved: "unknown",
+    impact: "request",
+    action: "read_latest_state"
   };
 }
 
@@ -572,12 +658,36 @@ async function requestSession(path: string, init?: RequestInit) {
     throw new Gi088EvaluationRequestError({
       code: "GI088_NETWORK_UNAVAILABLE",
       message: "评测工作台暂时无法连接。当前内容仍在，请恢复网络后重试。",
-      retryable: true
+      retryable: true,
+      dataSaved: "unknown",
+      impact: "environment",
+      action: "read_latest_state"
     });
   }
   const payload = await readPayload(response);
   if (!response.ok) throw new Gi088EvaluationRequestError(issueFromPayload(payload, response));
   return sessionFromPayload(payload);
+}
+
+async function requestPayload(path: string, init?: RequestInit) {
+  let response: Response;
+  try {
+    response = await fetch(path, { cache: "no-store", ...init });
+  } catch {
+    throw new Gi088EvaluationRequestError({
+      code: "GI088_NETWORK_UNAVAILABLE",
+      message: "评测工作台暂时无法连接。当前内容仍在，请恢复网络后读取最新状态。",
+      retryable: true,
+      dataSaved: "unknown",
+      impact: "environment",
+      action: "read_latest_state"
+    });
+  }
+  const payload = await readPayload(response);
+  if (!response.ok) {
+    throw new Gi088EvaluationRequestError(issueFromPayload(payload, response));
+  }
+  return payload;
 }
 
 async function requestStreamingSession(
@@ -592,7 +702,10 @@ async function requestStreamingSession(
     throw new Gi088EvaluationRequestError({
       code: "GI088_NETWORK_UNAVAILABLE",
       message: "评测工作台暂时无法连接。当前内容仍在，请恢复网络后读取最新状态。",
-      retryable: true
+      retryable: true,
+      dataSaved: "unknown",
+      impact: "environment",
+      action: "read_latest_state"
     });
   }
   if (!response.ok) {
@@ -606,7 +719,10 @@ async function requestStreamingSession(
     throw new Gi088EvaluationRequestError({
       code: "GI088_STREAM_RESPONSE_MISSING",
       message: "生成状态返回不完整。你的原话已经保留，请读取最新状态。",
-      retryable: true
+      retryable: true,
+      dataSaved: "unknown",
+      impact: "turn",
+      action: "read_latest_state"
     });
   }
   const reader = response.body.getReader();
@@ -628,19 +744,27 @@ async function requestStreamingSession(
       session = event.session;
       return;
     }
-    if (event.type === "recovery_started") {
-      if (
-        event.trigger === "EMPTY_CONTENT" &&
-        typeof event.turnId === "string" &&
-        typeof event.callId === "string"
-      ) {
-        onProgress?.({
-          type: "recovery_started",
-          trigger: "EMPTY_CONTENT",
-          turnId: event.turnId,
-          callId: event.callId
-        });
-      }
+    if (
+      (event.type === "turn_reserved" ||
+        event.type === "provider_started" ||
+        event.type === "heartbeat" ||
+        event.type === "recovery_started") &&
+      typeof event.turnId === "string"
+    ) {
+      const trigger =
+        event.trigger === "EMPTY_CONTENT" ||
+        event.trigger === "TIMEOUT" ||
+        event.trigger === "NEW_ANSWER_OPPORTUNITY_UNAVAILABLE" ||
+        event.trigger === "ASK_QUESTION_COUNT_INVALID:2" ||
+        event.trigger === "UNAUTHORIZED_PAUSE"
+          ? event.trigger
+          : undefined;
+      onProgress?.({
+        type: event.type,
+        turnId: event.turnId,
+        ...(typeof event.callId === "string" ? { callId: event.callId } : {}),
+        ...(trigger ? { trigger } : {})
+      });
       return;
     }
     if (event.type === "error") {
@@ -660,7 +784,10 @@ async function requestStreamingSession(
     throw new Gi088EvaluationRequestError({
       code: "GI088_STREAM_SESSION_MISSING",
       message: "生成结果返回不完整。你的原话已经保留，请读取最新状态。",
-      retryable: true
+      retryable: true,
+      dataSaved: "unknown",
+      impact: "turn",
+      action: "read_latest_state"
     });
   }
   return session;
@@ -702,112 +829,391 @@ function jsonRequest(body: unknown): RequestInit {
   };
 }
 
-export function getGi088EvaluationSession(taskId?: string) {
-  const query = taskId ? `?taskId=${encodeURIComponent(taskId)}` : "";
-  return requestSession(`/api/preview/gi088/session${query}`);
+function rejectHighOnlyMutation(message: string) {
+  return Promise.reject(new Gi088EvaluationRequestError({
+    code: "GI088_HIGH_ONLY_EVALUATION",
+    message,
+    retryable: false,
+    dataSaved: "yes",
+    impact: "run",
+    action: "return_to_current_task"
+  }));
 }
 
-export function startGi088OffTrajectory(taskId: string, initialUserMessage: string, clientTurnId: string) {
-  return requestSession(
-    "/api/preview/gi088/start-task",
-    jsonRequest({
-      taskId,
-      action: "start_off",
-      initialUserMessage,
-      clientTurnId
-    })
+function rejectInvalidTurnAnchor() {
+  return Promise.reject(new Gi088EvaluationRequestError({
+    code: "GI088_TURN_INPUT_INVALID",
+    message: "当前所见回复缺少可校验的消息锚点，请先读取最新状态。",
+    retryable: false,
+    dataSaved: "yes",
+    impact: "turn",
+    action: "read_latest_state"
+  }));
+}
+
+function runIdFromSession(session: Gi088EvaluationSession) {
+  return session.batch.runId ?? session.batch.id;
+}
+
+function legacyRunSummary(session: Gi088EvaluationSession): Gi088RunSummary {
+  return {
+    runId: runIdFromSession(session),
+    runOrdinal: session.batch.runOrdinal ?? 1,
+    evaluationVersion: session.evaluation.version,
+    status: session.batch.status,
+    gateStatus: session.batch.gate?.status ?? "legacy_unknown",
+    completedTaskCount: session.batch.completedTaskCount,
+    totalTasks: session.batch.totalTasks,
+    readOnly: Boolean(session.batch.readOnly),
+    createdAt: "",
+    updatedAt: "",
+    sealedAt: session.batch.sealedAt
+  };
+}
+
+function normalizeRunSummary(value: unknown): Gi088RunSummary | null {
+  if (!value || typeof value !== "object") return null;
+  const run = value as Record<string, unknown>;
+  const runId = typeof run.runId === "string"
+    ? run.runId
+    : typeof run.id === "string"
+      ? run.id
+      : null;
+  const status = run.status ?? run.collectionStatus;
+  if (
+    !runId ||
+    (status !== "running" && status !== "sealed" && status !== "early_stopped")
+  ) {
+    return null;
+  }
+  const gateStatus = run.gateStatus;
+  return {
+    runId,
+    runOrdinal: typeof run.runOrdinal === "number" ? run.runOrdinal : 1,
+    evaluationVersion: typeof run.evaluationVersion === "string"
+      ? run.evaluationVersion
+      : GI088_EVALUATION_VERSION,
+    status,
+    gateStatus:
+      gateStatus === "pending" ||
+      gateStatus === "no_go" ||
+      gateStatus === "ready_for_final_review" ||
+      gateStatus === "legacy_unknown"
+        ? gateStatus
+        : "legacy_unknown",
+    completedTaskCount: typeof run.completedTaskCount === "number"
+      ? run.completedTaskCount
+      : 0,
+    totalTasks: typeof run.totalTasks === "number" ? run.totalTasks : 12,
+    readOnly: run.readOnly === true,
+    createdAt: typeof run.createdAt === "string" ? run.createdAt : "",
+    updatedAt: typeof run.updatedAt === "string" ? run.updatedAt : "",
+    sealedAt: typeof run.sealedAt === "string" ? run.sealedAt : null
+  };
+}
+
+function runsFromPayload(payload: unknown): Gi088RunsResponse {
+  if (payload && typeof payload === "object" && "evaluation" in payload) {
+    const session = payload as Gi088EvaluationSession;
+    return { runs: [legacyRunSummary(session)], session };
+  }
+  if (payload && typeof payload === "object") {
+    const value = payload as { runs?: unknown; session?: unknown };
+    if (Array.isArray(value.runs)) {
+      const session = value.session
+        ? sessionFromPayload(value.session)
+        : undefined;
+      const runs = value.runs
+        .map(normalizeRunSummary)
+        .filter((run): run is Gi088RunSummary => Boolean(run));
+      return {
+        runs: session && runs.length === 0
+          ? [legacyRunSummary(session)]
+          : runs,
+        ...(session ? { session } : {})
+      };
+    }
+    if (value.session) {
+      const session = sessionFromPayload(value.session);
+      return { runs: [legacyRunSummary(session)], session };
+    }
+  }
+  throw new Gi088EvaluationRequestError({
+    code: "GI088_RUN_RESPONSE_INVALID",
+    message: "评测运行列表返回格式异常，请重新读取。",
+    retryable: true,
+    dataSaved: "unknown",
+    impact: "run",
+    action: "read_latest_state"
+  });
+}
+
+export async function getGi088EvaluationRuns() {
+  return runsFromPayload(await requestPayload("/api/preview/gi088/runs"));
+}
+
+export async function createGi088EvaluationRun(
+  clientOperationId = createGi088ClientOperationId("create-run")
+) {
+  return runsFromPayload(await requestPayload(
+    "/api/preview/gi088/runs",
+    jsonRequest({ clientOperationId })
+  ));
+}
+
+export function getGi088EvaluationSession(input: {
+  runId: string;
+  taskId?: string;
+}) {
+  const query = new URLSearchParams({ runId: input.runId });
+  if (input.taskId) query.set("taskId", input.taskId);
+  return requestSession(`/api/preview/gi088/session?${query.toString()}`);
+}
+
+export function startGi088OffTrajectory(input: {
+  runId: string;
+  taskId: string;
+  initialUserMessage: string;
+  clientTurnId: string;
+  baseAssistantMessageId?: string | null;
+}) {
+  void input;
+  return rejectHighOnlyMutation(
+    "当前 v8r2 运行只开放 Thinking high；历史双分支运行保持只读。"
   );
 }
 
 export function startGi088HighTrajectory(
-  taskId: string,
-  initialUserMessage?: string,
-  clientTurnId?: string,
+  input: {
+    runId: string;
+    taskId: string;
+    initialUserMessage?: string;
+    clientTurnId?: string;
+    clientOperationId?: string;
+    baseAssistantMessageId?: string | null;
+  },
   onProgress?: (progress: Gi088GenerationProgress) => void
 ) {
+  if (!input.initialUserMessage?.trim()) {
+    return Promise.reject(new Gi088EvaluationRequestError({
+      code: "GI088_START_INPUT_INVALID",
+      message: "开始任务需要提交第一段表达，请保留草稿后重试。",
+      retryable: false,
+      dataSaved: "yes",
+      impact: "task",
+      action: "reconfirm_submission"
+    }));
+  }
+  const clientOperationId = input.clientTurnId ??
+    input.clientOperationId ??
+    createGi088ClientOperationId("start-high");
   return requestStreamingSession(
     "/api/preview/gi088/start-task",
     jsonRequest({
-      taskId,
+      runId: input.runId,
+      taskId: input.taskId,
+      ...(input.initialUserMessage
+        ? { initialUserMessage: input.initialUserMessage }
+        : {}),
       action: "start_high",
-      ...(initialUserMessage === undefined
-        ? {}
-        : { initialUserMessage, clientTurnId })
+      clientOperationId
     }),
     onProgress
   );
 }
 
 export function submitGi088Turn(input: {
+  runId: string;
   taskId: string;
   branch: Gi088BranchKey;
   content: string;
-  clientTurnId?: string;
+  clientTurnId: string;
+  baseAssistantMessageId: string;
 }, onProgress?: (progress: Gi088GenerationProgress) => void) {
+  if (input.branch !== "high") {
+    return rejectHighOnlyMutation(
+      "当前 v8r2 运行只接受 Thinking high 分支提交。"
+    );
+  }
+  if (!input.baseAssistantMessageId.trim()) return rejectInvalidTurnAnchor();
   return requestStreamingSession(
     "/api/preview/gi088/turn",
-    jsonRequest({ ...input, clientTurnId: input.clientTurnId ?? createGi088ClientTurnId() }),
+    jsonRequest({ ...input, clientOperationId: input.clientTurnId }),
     onProgress
   );
 }
 
 export function retryGi088Turn(input: {
+  runId: string;
   taskId: string;
   branch: Gi088BranchKey;
   turnId: string;
-  trigger:
-    | "manual"
-    | "automatic_empty_content"
-    | "automatic_timeout"
-    | "automatic_stage_transition"
-    | "manual_after_auto_recovery";
-}) {
-  return requestSession("/api/preview/gi088/retry", jsonRequest(input));
+  trigger: "manual_after_auto_recovery";
+  clientOperationId?: string;
+}, onProgress?: (progress: Gi088GenerationProgress) => void) {
+  if (input.branch !== "high") {
+    return rejectHighOnlyMutation(
+      "当前 v8r2 运行只接受 Thinking high 分支再次生成。"
+    );
+  }
+  return requestStreamingSession(
+    "/api/preview/gi088/retry",
+    jsonRequest({
+      ...input,
+      clientOperationId: input.clientOperationId ??
+        createGi088ClientOperationId("manual-retry")
+    }),
+    onProgress
+  );
 }
 
 export function reviewGi088Question(input: {
+  runId: string;
   taskId: string;
   branch: Gi088BranchKey;
   turnId: string;
-  classification: Gi088QuestionReviewClassification;
+  questionPresence: Gi088QuestionPresence;
+  classification?: Gi088QuestionReviewClassification;
   note?: string;
+  observationFingerprint: string;
+  revisionReason?: string;
+  clientOperationId?: string;
 }) {
+  if (input.branch !== "high") {
+    return rejectHighOnlyMutation(
+      "当前 v8r2 运行只接受 Thinking high 分支问题复核。"
+    );
+  }
   return requestSession(
     "/api/preview/gi088/question-review",
-    jsonRequest({ ...input, note: input.note ?? "" })
+    jsonRequest({
+      ...input,
+      note: input.note ?? "",
+      clientOperationId: input.clientOperationId ??
+        createGi088ClientOperationId("question-review")
+    })
   );
 }
 
 export function endGi088Trajectory(input: {
+  runId: string;
   taskId: string;
   branch: Gi088BranchKey;
   feeling: Gi088Feeling;
   quality: Gi088Quality;
   targetTrigger: Exclude<Gi088TargetTrigger, "legacy_unknown">;
   reason: string;
+  reviewSnapshotFingerprint: string;
+  revisionReason?: string;
+  clientOperationId?: string;
 }) {
-  return requestSession("/api/preview/gi088/end-trajectory", jsonRequest(input));
+  if (input.branch !== "high") {
+    return rejectHighOnlyMutation(
+      "当前 v8r2 运行只接受 Thinking high 分支轨迹评价。"
+    );
+  }
+  return requestSession("/api/preview/gi088/end-trajectory", jsonRequest({
+    ...input,
+    clientOperationId: input.clientOperationId ??
+      createGi088ClientOperationId("trajectory-review")
+  }));
 }
 
 export function compareGi088Trajectories(input: {
+  runId: string;
   taskId: string;
   preference: Gi088Preference;
   reason: string;
+  clientOperationId?: string;
 }) {
-  return requestSession("/api/preview/gi088/compare", jsonRequest(input));
+  return requestSession("/api/preview/gi088/compare", jsonRequest({
+    ...input,
+    clientOperationId: input.clientOperationId ??
+      createGi088ClientOperationId("compare")
+  }));
 }
 
-export function sealGi088EvaluationBatch() {
-  return requestSession("/api/preview/gi088/seal", jsonRequest({ confirmation: true }));
+export function sealGi088EvaluationBatch(input: {
+  runId: string;
+  clientOperationId?: string;
+}) {
+  return requestSession("/api/preview/gi088/seal", jsonRequest({
+    ...input,
+    confirmation: true,
+    clientOperationId: input.clientOperationId ??
+      createGi088ClientOperationId("seal")
+  }));
 }
 
 export function earlyStopGi088EvaluationBatch(input: {
+  runId: string;
   reasonCode: Gi088EarlyStopReasonCode;
   reason: string;
+  clientOperationId?: string;
 }) {
   return requestSession(
     "/api/preview/gi088/early-stop",
-    jsonRequest({ ...input, confirmation: true })
+    jsonRequest({
+      ...input,
+      confirmation: true,
+      clientOperationId: input.clientOperationId ??
+        createGi088ClientOperationId("early-stop")
+    })
+  );
+}
+
+export function abortGi088CurrentTask(input: {
+  runId: string;
+  taskId: string;
+  reason: string;
+  abandonRecovery?: boolean;
+  clientOperationId?: string;
+}) {
+  return requestSession(
+    "/api/preview/gi088/abort-current-task",
+    jsonRequest({
+      ...input,
+      confirmation: true,
+      clientOperationId: input.clientOperationId ??
+        createGi088ClientOperationId("abort-task")
+    })
+  );
+}
+
+export function reviewGi088ProgramIntervention(input: {
+  runId: string;
+  interventionId: string;
+  observationFingerprint: string;
+  outcome: Gi088ProgramInterventionReviewOutcome;
+  reason: string;
+  clientOperationId?: string;
+}) {
+  return requestSession(
+    "/api/preview/gi088/program-intervention-review",
+    jsonRequest({
+      ...input,
+      clientOperationId: input.clientOperationId ??
+        createGi088ClientOperationId("intervention-review")
+    })
+  );
+}
+
+export async function reportGi088OperationEvent(input: {
+  runId: string;
+  taskId?: string;
+  turnId?: string;
+  route: string;
+  code: string;
+  safeSummary?: Record<string, string | number | boolean | null>;
+  clientOperationId?: string;
+}) {
+  return requestPayload(
+    "/api/preview/gi088/operation-events",
+    jsonRequest({
+      ...input,
+      clientOperationId: input.clientOperationId ??
+        createGi088ClientOperationId("operation-event")
+    })
   );
 }
 
@@ -815,36 +1221,33 @@ export const GI088_EVALUATION_EXPORT_PATH = "/api/preview/gi088/export";
 
 export async function downloadGi088EvaluationExport(input: {
   evaluationVersion: string;
-  batchId: string;
+  runId: string;
   completedTaskCount: number;
   totalTasks: number;
 }) {
-  let response: Response;
+  const path = `${GI088_EVALUATION_EXPORT_PATH}?runId=${encodeURIComponent(input.runId)}`;
+  const envelope = await requestPayload(path);
   try {
-    response = await fetch(GI088_EVALUATION_EXPORT_PATH, {
-      cache: "no-store"
+    return await downloadVerifiedGi088EvaluationExport({
+      envelope,
+      evaluationVersion: input.evaluationVersion,
+      runId: input.runId,
+      completedTaskCount: input.completedTaskCount,
+      totalTasks: input.totalTasks
     });
-  } catch {
-    throw new Gi088EvaluationRequestError({
-      code: "GI088_EXPORT_NETWORK_UNAVAILABLE",
-      message: "完整结果暂时无法下载。批次已经安全收口，可以稍后再次下载。",
-      retryable: true
-    });
+  } catch (error) {
+    if (error instanceof Gi088ExportDownloadError) {
+      throw new Gi088EvaluationRequestError({
+        code: error.code,
+        message: error.code === "GI088_EXPORT_VERIFICATION_FAILED"
+          ? "导出收据校验失败，已停止下载。请重新读取运行状态后再试。"
+          : "当前浏览器无法准备下载，请稍后重试。",
+        retryable: true,
+        dataSaved: "yes",
+        impact: "run",
+        action: "seal_and_export"
+      });
+    }
+    throw error;
   }
-  const payload = await readPayload(response);
-  if (!response.ok) {
-    throw new Gi088EvaluationRequestError(issueFromPayload(payload, response));
-  }
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {
-    type: "application/json;charset=utf-8"
-  });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${input.evaluationVersion}-${input.batchId}-${input.completedTaskCount}-of-${input.totalTasks}.json`;
-  anchor.hidden = true;
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
 }

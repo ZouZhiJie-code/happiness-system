@@ -1,283 +1,203 @@
 ---
 name: Daily Light
-description: 用结构化访谈与记录日历组织每日开心、充实、思考、改进与感谢的记录界面。
+description: 从一句话开始，把生活片段整理成日记，并通过真实记录认识自己的个人记录界面。
+status: "第二轮视觉基线已验收并于 2026-08-13 发布 Production"
+document_role: "稳定合同"
+document_status: "现役"
+last_verified: "2026-08-13"
+authority: "docs/README.md"
 colors:
-  warm-wood-base: "#855a34"
-  warm-paper-soft: "#edd8b5"
-  warm-paper-main: "#f8e9cc"
-  warm-paper-deep: "#996534"
+  canvas: "#F4E3C5"
+  workspace: "#F8EAD2"
+  content: "#FFF7E8"
+  sidebar: "#E9D1AE"
   text-ink: "#302114"
-  accent-amber: "#a96f3d"
-  calendar-ink: "#604529"
-  calendar-panel: "#f5ecdb"
-  calendar-surface: "#fff9f0"
-  status-empty: "#7a6857"
-  status-in-progress: "#8a5d17"
-  status-draft: "#7c5568"
-  status-completed: "#45644a"
-  status-mixed: "#8e5638"
-  dimension-joy: "#d68a5a"
-  dimension-fulfillment: "#74927a"
-  dimension-reflection: "#a17a97"
-  dimension-improvement: "#7d9771"
-  dimension-gratitude: "#b8848d"
+  action: "#915B32"
+  text-muted: "#6B5542"
 typography:
   display:
-    fontFamily: "Baskerville, Iowan Old Style, Times New Roman, Songti SC, serif"
-    lineHeight: 1
+    fontFamily: "Baskerville, Iowan Old Style, Songti SC, STSong, serif"
   body:
-    fontFamily: "Charter, Georgia, PingFang SC, Hiragino Sans GB, serif"
+    fontFamily: "Charter, Georgia, Songti SC, STSong, serif"
   ui:
     fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, SF Pro Text, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif"
-  mono:
-    fontFamily: "IBM Plex Mono, SFMono-Regular, Menlo, monospace"
 rounded:
-  shell: "28px"
-  card: "20px"
-  control: "12px"
-  pill: "999px"
-spacing:
-  xs: "8px"
-  sm: "12px"
-  md: "16px"
-  lg: "20px"
-  xl: "24px"
-components:
-  page-shell:
-    backgroundColor: "{colors.warm-paper-main}"
-    textColor: "{colors.text-ink}"
-    rounded: "{rounded.shell}"
-  calendar-shell:
-    backgroundColor: "{colors.calendar-panel}"
-    textColor: "{colors.calendar-ink}"
-    rounded: "{rounded.shell}"
-  calendar-card:
-    backgroundColor: "{colors.calendar-surface}"
-    textColor: "{colors.calendar-ink}"
-    rounded: "{rounded.card}"
-    padding: "20px"
-  button-primary:
-    backgroundColor: "{colors.calendar-ink}"
-    textColor: "#f8fbff"
-    rounded: "{rounded.pill}"
-    padding: "10px 14px"
-  chip-default:
-    backgroundColor: "{colors.calendar-surface}"
-    textColor: "#334155"
-    rounded: "{rounded.pill}"
-    padding: "6px 12px"
+  control: "10px"
+  message: "16px"
+  reading: "20px"
 ---
 
-# Design System: Daily Light
+# Daily Light Design System
 
-## Document Map
+## 1. 当前状态与发布边界
 
-| 文档 | 职责 |
+本文件只描述目标产品：
+
+```text
+首页 → 记录 → 日记 → 认识自己
+```
+
+第二轮页面结构与视觉方向已经由产品负责人验收通过。后续字体放大与浅色交互组件候选在真人验收中未通过，目标版本已经恢复第二轮视觉基线，并完成隔离功能 Preview、全量回归和发布前运行依赖安全验证。该候选的截图与部署继续保留为历史证据，不再承担后续功能联调或 Production 发布依据。
+
+Production 已使用第二轮视觉基线和 `event_centered + baseline`。旧五维、旧 Calendar 操作台、旧分析／画像和历史视觉候选的适用环境、回退入口与退出条件统一记录在 [旧页面兼容与回退边界](docs/design/legacy-compatibility.md)。
+
+文档职责：
+
+| 文档 | 唯一职责 |
 | --- | --- |
-| **本文件 `DESIGN.md`** | 创意方向、页面形态、组件语义、Do/Don't |
-| **[docs/design/ui-conventions.md](docs/design/ui-conventions.md)** | 容器层级、圆角/边框 token、共享原语清单（工程必遵） |
-| **`docs/plans/`** | 历史决策过程；若与 DESIGN 或代码冲突，以 DESIGN + 代码为准 |
+| [PRODUCT.md](PRODUCT.md) | 用户、场景、价值、产品结构、能力和发布边界 |
+| 本文件 | 视觉世界、页面结构、交互语言和页面设计合同 |
+| [ui-conventions.md](docs/design/ui-conventions.md) | 尺寸、状态、组件、键盘和无障碍工程规则 |
+| [design-rule-reconciliation.md](docs/design/design-rule-reconciliation.md) | 第二轮规则来源、去向、验证证据和状态 |
 
-### Changelog
+## 2. 视觉世界
 
-1. **2026-06-12｜全站单层卡片制**：每页最多 Surface 底板 + 一层 Card；卡片内用眉题 / hairline / 留白分区，禁止再嵌套 border+bg 子容器。
-2. **2026-07-18｜流动交互原语**：按钮和交互卡片统一按下反馈；segmented 与横向分页改用可重定向 spring；画像和分析内容支持横向滑动；日志书页、菜单和确认弹窗补齐空间连续性、键盘操作和焦点恢复。
-3. **2026-07-20｜分析页 IA 收束**：页面保留 `trends / dimensions` 两段纵向阅读区与顶部锚点切换；旧 `overview / score / rhythm` 归一到 `trends`，旧 `insights / correlation / review` 归一到 `dimensions`。
-4. **量化趋势段**：只读读数台（`GET /api/analysis/range`），无评分录入、无热力点选、无补漏 CTA。
-5. **2026-07-21｜访谈换问法反馈**：生成状态只由目标回复气泡承担；操作区保留静态禁用入口，避免同一动作出现两套加载提示。回复版本切换在同一位置完成，并优先呈现已预加载版本。
-6. **2026-08-02｜事件中心 MVP 候选**：复用访谈工作台、轻量检查点和日志书页，Batch C 作为事件日志生成、编辑暂存、保存与恢复的实现对照；板块 8独立负责 Preview 与发布验收。
+### 2.1 核心气质
 
-视觉参考 mockup：[`docs/plans/analysis-ia-mockups/scheme-d-scroll-tabs.html`](docs/plans/analysis-ia-mockups/scheme-d-scroll-tabs.html)、[`trends-final-preview.html`](docs/plans/analysis-ia-mockups/trends-final-preview.html)。
+Daily Light 是一张在自然光里摊开的暖纸工作台。用户能够低压力地说下一件事，也能安静地阅读一段长期保留的文字。
 
----
+界面需要同时保留三种感受：
 
-## Overview
+- 温暖：延续原 dailylight.chat 的暖米黄和暖棕情绪。
+- 清楚：产品工作台保持平整，标题、留白和开放列表承担层级。
+- 可停留：日记正文拥有舒适行宽、稳定排版和足够的呼吸感。
 
-**Creative North Star: "温暖档案室里的紧凑工作台"**
+### 2.2 色彩
 
-这个产品不是通用 SaaS，也不是极简效率工具。全局母系统服务的是“记录、整理、回看”这件事本身，所以主界面保留木纹、纸张、暖色墨迹和书卷体标题，但页面组织已经从“大卡套大卡”改为更平铺的暖色工作台。它应该像一张被摊开认真整理的记录纸，而不是一块匿名后台。
+| 角色 | 色值 | 使用位置 |
+| --- | --- | --- |
+| 画布 | `#F4E3C5` | 全站背景与品牌环境 |
+| 工作区 | `#F8EAD2` | 页面主区与连续工作台 |
+| 内容面 | `#FFF7E8` | 日记阅读面、消息和输入内容 |
+| 侧栏 | `#E9D1AE` | 记录与日记侧栏 |
+| 正文 | `#302114` | 标题与正文 |
+| 主动作 | `#915B32` | 主按钮、当前项与焦点强调 |
+| 辅助文字 | `#6B5542` | 日期、状态补充和次级信息 |
 
-记录日历是这套母系统里的明确子系统。它不是再讲一遍产品氛围，而是承担判断、分发、下一步动作，所以它应当切到更紧凑的工作台 register：保留暖纸张和墨色基调，同时显著降低纹理密度、阴影厚度和冗余高度。
+透明和模糊集中用于顶部栏与悬浮输入框。页面主区、侧栏、消息和阅读面使用稳定纯色。文字与背景达到 WCAG 2.2 AA。
 
-**Key Characteristics**
+### 2.3 字体与层级
 
-- 全局界面优先保留温暖、低压、可书写的气质，同时减少整页外框、厚圆角和重复模块间隙。
-- **单层卡片制（2026-06-12）**：section 用眉题 + hairline + 留白分区；只有可点击单元或需边界感的数据块才配 Card，纯信息分组不配卡片外壳。
-- 顶部导航是全宽暖色工具栏，不再作为居中大卡片悬浮；主导航当前页使用贴近文字的暖棕实线下划线，选中项字号略大。
-- 首页、设置页、管理员页优先采用连续工作台：内容顺着一张主纸面展开。
-- **分析页**是纵向 scroll 报告体：量化趋势与五维记录两段同屏 + 顶部锚点切换；职责是读数与理解，不承担补漏推进。
-- calendar 优先判断效率，减少装饰性纹理和厚重阴影。
-- serif 标题贯穿全站，工作台正文和操作信息更紧凑克制。
-- 状态色回答“现在是什么阶段”，维度色回答“这是哪一类记录”。
+- 页面控件、导航、聊天、状态和操作使用无衬线 UI 字体。
+- 日记、周记、月记的标题与正文使用适合中文长文阅读的宋体回退。
+- 大桌面页面标题使用 `32px`，紧凑桌面使用 `28px`；分区标题 `20px`，条目标题 `16px`，通用正文 `15px`，辅助信息最低 `13px`。
+- 对话气泡与输入文字使用 `15px / 26px`，保持第二轮验收通过的阅读节奏。
+- 每个画布只保留一个最大标题；分区标题、条目标题、正文和辅助信息逐级降低。
+- 页面说明最多一句；空状态最多两句；界面文案围绕用户当前动作与下一步。
 
-## Colors
+### 2.4 形状与深度
 
-### Global Foundation
+- 控件圆角 `10px`，消息圆角 `16px`，阅读面圆角 `20px`。
+- 普通内容保持平整；菜单、弹窗和悬浮输入框可以使用轻阴影。
+- 主动作使用深暖棕表面和浅色文字；次级动作、选中项与内容面保持既有暖纸层级。
+- 时间轴、归档和来源通过开放列表表达，减少卡片套卡片、装饰横线和状态竖条。
+- 小型状态可以使用胶囊形态；内容容器保持明确边界与舒适圆角。
 
-- **Warm Wood Base** (`#855a34`)：页面环境色，主要存在于全局背景和氛围纹理里，不直接拿来做高频按钮。
-- **Warm Paper Soft** (`#edd8b5`) 与 **Warm Paper Main** (`#f8e9cc`)：主产品的纸面、面板和内容承载底色。
-- **Warm Paper Deep** (`#996534`) 与 **Text Ink** (`#302114`)：正文、边界和标题的暖墨色，避免纯黑。
-- **Accent Amber** (`#a96f3d`)：强调、选中、选择区域和局部强调使用的暖色点缀。
+## 3. 首页设计合同
 
-全局母系统的颜色目标不是“高对比科技感”，而是“可长期停留的记录感”。中性色必须带暖调，不使用纯黑白，不把冷蓝灰扩散到首页、访谈和设置等主叙事页面。
+首页需要在首个视口内同时回答三个问题：Daily Light 做什么、用户怎样开始、一次记录会怎样留下来。
 
-新代码禁止手写 `border-[rgba(...)]` / `bg-[rgba(...)]` 任意值；统一引用 CSS 变量（见 `globals.css :root`）或 Tailwind 命名色（`ink / sand / clay / paper / ember / line`）。
+- 主标题固定为“从一句话开始，留下一份日记”。标题上方不放眉题。
+- 首屏说明使用 [PRODUCT.md](PRODUCT.md) 中的固定文案。
+- 【开始记录】是唯一主动作。
+- 产品演示在第一屏完整出现，左侧展示【陪我聊】的一轮真实节奏，右侧展示当天日记与记录时间轴。
+- 【陪我聊】为主入口，说明“我来问，你来说”；【帮我记】为轻量入口，说明“你来说，我在听”。
+- 产品演示中的理解与提问使用两个连续同款 AI 气泡。
+- 事件放在日记下方的时间轴中，【已记下】位于条目右侧。
+- 背景图片保持可见，正文区域通过稳定暖色遮罩保证对比度。
 
-### Calendar Workspace Override
+## 4. 记录页设计合同
 
-- **Calendar Ink** (`#604529`)：calendar 主动作、活动 segmented、焦点描边和高优先级文字的统一暖墨色。
-- **Calendar Panel** (`#f5ecdb`) 与 **Calendar Surface** (`#fff9f0`)：calendar shell、panel、card 的浅暖工作台表面。
+### 4.1 页面结构
 
-#### Status Palette
+记录页由可调宽会话侧栏和单一对话主区组成。选择记录方式、对话、恢复、完成和只读回看共享同一骨架。
 
-- **Empty** (`#7a6857`)：未记录或无结果，必须安静、退后。
-- **In Progress** (`#8a5d17`)：仍在访谈中。
-- **Draft** (`#7c5568`)：已有草稿、待编辑。
-- **Completed** (`#45644a`)：已保存可查看。
-- **Mixed** (`#8e5638`)：同一天混有多种状态。
+- 侧栏顶部承载【新建记录】，下方按日期展示真实会话。
+- 会话切换期间保留侧栏和对话骨架，使用覆盖层表达“正在打开记录”。
+- 侧栏宽度变化时，标题、消息和输入轨道一起移动，与侧栏距离保持稳定。
+- 收起按钮固定在侧栏边界，可见圆形克制，命中区域完整。
 
-#### Dimension Identity
+### 4.2 记录方式
 
-- **Joy** (`#d68a5a`)：开心 · **Fulfillment** (`#74927a`)：充实 · **Reflection** (`#a17a97`)：思考 · **Improvement** (`#7d9771`)：改进 · **Gratitude** (`#b8848d`)：感谢
+- 左侧主入口：【陪我聊】—“我来问，你来说”。
+- 右侧次入口：【帮我记】—“你来说，我在听”。
+- 用户选择后，选项原位显示准备状态并直接进入会话。
+- 两条未完成记录达到上限时，当前会话保持原位，页面显示清楚的恢复提示。
 
-**The Two-Layer Rule.** 状态色与维度色各司其职，不能互相替代。
+### 4.3 对话
 
-**The Warm Workspace Rule.** calendar 收束成更浅、更平、更紧凑的暖色工作台，不能重新长回木纹叠纸页，也不能分叉成蓝灰后台。
+- AI 靠左，用户靠右；消息轨道与悬浮输入框严格同宽。
+- 一次正式 AI 回复按“理解气泡 → 提问气泡 → 单组操作”呈现。
+- 两个 AI 气泡使用相同背景、字号、字重、圆角和宽度。
+- 创建会话时的固定开场只承担引导，不显示赞、踩、重新生成或版本切换。
+- 流式、失败和继续生成都留在对应气泡内，避免生成前后改变页面语法。
+- 悬浮输入框是记录页唯一使用透明模糊材质的内容区域；减少透明度时回到近实色暖纸面。
 
-## Typography
+## 5. 日记设计合同
 
-### Global Foundation
+### 5.1 共同框架
 
-- **Display:** `Baskerville, Iowan Old Style, Times New Roman, Songti SC, serif`
-- **Body:** `Charter, Georgia, PingFang SC, Hiragino Sans GB, serif`
-- **UI:** `ui-sans-serif, -apple-system, BlinkMacSystemFont, SF Pro Text, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif`
-- **Mono:** `IBM Plex Mono, SFMono-Regular, Menlo, monospace`（仅程序化数据）
+`/calendar?view=day|week|month&date=YYYY-MM-DD` 是目标产品的日记地址。
 
-品牌标题和日志正文继续使用 display / body；导航、按钮、状态、图表标签和输入控件使用 UI 字体。新增或调整的核心工具文字以 `0.75rem` 为最低基线，非关键图表刻度与装饰性标记可按空间单独评估。
+- 左侧栏顶部固定【日／周／月】，下方展示对应真实归档。
+- 右侧正文使用同一阅读结构：日期或周期标题、状态、唯一主动作、正文、时间轴。
+- 日记、周记、月记使用相同标题尺度、正文宽度、状态位置和操作位置。
+- 日期占位标题在界面中隐藏或去重；语义标题生成由后续写作质量专项承担。
+- 状态标签在侧栏和正文中保持相同形态与宽度。
 
-### Calendar Workspace Override
+### 5.2 日时间轴
 
-- calendar 保留 serif 标题，尺寸和节奏更紧凑；摘要、动作、统计统一回到 body 信息层。
+- 位于日记正文下方，以 `HH:mm` 为锚点展示当天事件。
+- 每行依次呈现时间、事件标题与摘要、右侧状态。
+- 条目可以进入对应记录，已有编辑能力继续保留。
 
-**The Scannable Sentence Rule.** 工作台文案优先服务扫读，标题短、按钮短。
+### 5.3 周时间轴
 
-## Elevation & Radius
+- 位于周记正文下方，以具体日期为锚点。
+- 优先展示当天已保存日记；缺少日记时展示当天事件素材。
+- 每行可以进入对应日期日记。
 
-### Radius（2026-06-12 三档，与 `globals.css` 一致）
+### 5.4 月时间轴
 
-| 档位 | 值 | CSS 变量 | 用途 |
-| --- | --- | --- | --- |
-| shell | 28px | `--radius-shell` | 页面底板、对话框 |
-| card | 20px | `--radius-card` | 唯一卡片层 |
-| control | 12px | `--radius-control` | 输入件、小型 tile、图表容器 |
-| pill | 999px | — | chip / 胶囊按钮 |
+- 位于月记正文下方，以周日期范围为锚点。
+- 优先展示已保存周记；缺少周记时展示该周回退素材。
+- 每行可以进入对应周记或日期。
 
-新代码禁止新增 `14/16/18/22/24/26/30/32px` 等中间圆角。calendar 遗留 class 若仍用更大圆角，逐步迁移，不得在新页面复制。
+### 5.5 来源与历史
 
-### Shadows & Borders
+日／周／月时间轴承担默认回看入口。旧五维历史保留在独立、默认收起的【历史记录】中。生成机制和内部来源签名保持在兼容或诊断界面，不占据默认阅读页面。
 
-- 边框两档：`--line-soft`（默认）/ `--line-strong`（选中、强调）。
-- 底板保留全局类自带阴影；卡片只允许 `shadow-sm` 或无阴影；hover 最多 `shadow-md`。
-- calendar 降级装饰：轻边框 + 浅暖表面 + 低强度阴影（shell `0 16px 34px rgba(103,66,34,0.12)` 等）。
+## 6. 「认识自己」设计合同
 
-**The Flat-Enough Rule.** 能靠边框、背景和留白成立的，不再叠木纹、纸纹和重阴影。
+「认识自己」是一张连续工作台，页面内容依次承接趋势、画像和记忆。
 
-## Components
+- 趋势／画像／记忆使用紧凑暖色分段导航。
+- 大桌面放在页面标题右侧；紧凑桌面移动到标题下方。
+- 当前项使用暖色滑块，避免与一级导航的文字下划线重复。
+- 分段导航保留标准 URL、方向键、Home、End 和清楚的焦点状态。
+- 趋势周期选择留在内容区，以更轻的控件表达。
+- 趋势和画像只使用新版真实记录；记忆只显示“即将上线”。
 
-### Shared UI Primitives
+## 7. 设置、账户与法律页面合同
 
-新页面禁止手写卡片样式；先扩展原语再使用。实现见 [`src/components/ui/`](src/components/ui/)，工程规则见 [ui-conventions.md](docs/design/ui-conventions.md)。
+- 登录后的一级导航保持【记录／日记／认识自己】。
+- 设置、隐私政策、用户协议和退出登录集中在账户菜单。
+- 设置页使用一张连续工作台，按账户、安全、数据和法律入口自然分组。
+- 删除账户使用明确确认弹窗，焦点安全、可取消、关闭后回到触发位置。
+- 法律页面使用稳定阅读宽度和清楚的标题层级。
 
-| 原语 | 职责 |
-| --- | --- |
-| `Surface` | 页面底板（吸收 `page-shell` / `calendar-shell`） |
-| `Card` | 唯一卡片层，`interactive` 自带 hover/focus |
-| `SectionHeading` | 眉题式分组标题 |
-| `Divider` | hairline 分隔线 |
-| `ActionButton` | primary / secondary / ghost 三态按钮 |
-| `SlidingSegmentedControl` | 可重定向 spring 滑块；支持滚动容器内自动显露选中项 |
-| `HorizontalPager` | 内容分页轨；按需启用横向 swipe 与速度投影 |
-| `ActionMenu` | 带方向键导航、焦点恢复和上下翻转的菜单 |
-| `ConfirmDialog` | 带焦点圈定、Escape 关闭和安全初始焦点的确认弹窗 |
+## 8. 全站交互语言
 
-### Shells
+- 每个画布只有一个主动作；加载、空白、错误和恢复状态保持页面骨架稳定。
+- 状态回答“现在发生了什么”，动作回答“接下来可以做什么”。
+- 复杂菜单、弹窗、提示和分段控件使用统一交互原语。
+- 鼠标、键盘和触屏笔记本获得一致的可达结果；核心热区达到 `44 × 44px`。
+- 动效服务空间连续性，侧栏拖拽、会话切换和加载过程避免布局跳动。
+- 减少动态、减少透明度和增强对比度偏好获得完整替代样式。
 
-- **Global shells**：`page-shell / paper-panel / paper-sheet / wood-dialog` 允许纹理与暖色，但整页层级优先平铺，避免大卡套大卡。
-- **Calendar shell**：浅暖背景、轻阴影，不套木纹。
-- **Settings / Home / Admin shell**：一张连续主纸面；控制区用 Divider 分行，不再各自漂浮成大卡。
-- **Analysis shell（2026-06-12）**：
-  - 单页两段同屏：`trends` / `dimensions`
-  - `SiteHeader` 中区：周期 preset（本周/本月/自定义）+ 两段锚点 tab + contextual chip
-  - 导航：tab 点击 → 锚点滚动；用户滚动 → scroll spy 更新 URL `section`
-  - 段间：`Divider` + 留白；段内眉题用 `AnalysisSection` / `SectionHeading`
-  - **量化趋势**：只读读数台（周期摘要、总分柱线、日志天数色块、8 要素雷达/棒棒糖）；数据来自 `GET /api/analysis/range`
-  - **五维记录**：按月聚合（`GET /api/analysis/month`），展示五维线索与代表片段
-  - 旧 URL `overview|score|rhythm` 映射到 `trends`；`insights|correlation|review` 映射到 `dimensions`
+## 9. 工程规范与兼容边界
 
-### Panels and Cards
-
-- **Calendar card**：单日、单维度或摘要块；浅面、轻边框。
-- **Global content sections**：纯文案分组、设置行、管理员表格——用眉题 + Divider，**不配** Card。
-- **Analysis data blocks**：图表、可点 tile 等需要边界感的块可用一层 Card；段标题区不用 Card。
-- **层级预算**：每页最多 Surface + 一层 Card；Card 内禁止再嵌套 border+bg 容器。
-
-calendar 遗留圆角带（`24–32px`）仅作兼容参考，新代码遵循三档 token。
-
-### Chips and Badges
-
-- **Calendar chip / summary chip / status badge / dimension badge**：规则不变；维度 badge 单字 `悦/实/思/改/谢`。
-
-### Actions
-
-- **Primary**：最直接下一步（calendar：`查看当天`、`继续访谈`）。
-- **Secondary / ghost**：补充或只读跳转。
-- **Disabled**：低对比、去阴影，一眼不可点。
-- **Pressed**：按钮缩放约 `0.97`，大卡片约 `0.985`；反馈在 pointer-down 当帧出现，只改变 `transform / opacity / color / box-shadow`。
-
-分析页趋势段：**不做**补漏 primary CTA；若保留链接，只用 ghost 级只读「查看来源」。
-
-### Segmented and Navigation Controls
-
-- **View switcher**：月/周/日 segmented，当前项 `Calendar Ink` 填充。
-- **Header middle lane**：维度条、calendar toolbar、analysis toolbar 平铺在中区，用 `｜` 分隔，不套独立外框。
-- **Analysis anchor tabs**：两段 tab 与 scroll spy 双向联动。
-- **Motion**：点击重定向采用无回弹 spring，响应窗口约 `0.32–0.4s`；横向 swipe 采用约 `10px` 方向判定、1:1 跟手、速度投影与边界阻尼。
-- **Responsive header**：小于 `1024px` 时，品牌/主导航与上下文工具栏分成两行；上下文工具栏可横向滚动，并通过边缘渐隐提示剩余内容。
-
-### Sheets, Menus and Dialogs
-
-- 日志书页在桌面从右侧进入，在移动端从底部进入；移动端可向下拖动关闭，关闭与反向打开沿当前运动位置继续。
-- `ActionMenu` 从触发点展开，并根据视口空间选择向上或向下；支持方向键、Home、End、Escape 和关闭后的焦点恢复。
-- `ConfirmDialog` 圈定 Tab 焦点，Escape 或遮罩关闭后把焦点还给触发元素；危险操作默认聚焦取消按钮。
-- `prefers-reduced-motion` 关闭拖动、平滑滚动和按压缩放，spring 收敛为短缓动或透明度过渡；`prefers-reduced-transparency` 使用近实色材质；`prefers-contrast: more` 提升边界与文字对比度。
-
-### Day Cells and Boards
-
-- **Month day cell**：入口，不是详情页。
-- **Week board card**：七天等权比较。
-- **Day dimension card**：五维紧凑操作台。
-
-**The One Surface, One Job Rule.** 一个容器只承担一个主任务。
-
-## Do's and Don'ts
-
-### Do
-
-- 保留“温暖记录产品”母系统基调。
-- 遵循单层卡片制：Surface + 最多一层 Card + hairline 分区。
-- 分析页用单页 scroll + 锚点 tab；趋势段只陈述数据。
-- calendar 优先工作台判断效率。
-- 状态色与维度色各司其职。
-- 标题保留 serif，摘要与操作服务快速扫描。
-- 统一按钮三态与 focus-visible。
-- 保持触摸按下反馈、拖动方向判定和纵向滚动互不抢占。
-
-### Don't
-
-- 不做大卡套大卡、panel 套 panel。
-- 不把 calendar 做回木纹厚阴影页或蓝灰后台。
-- **分析页**：不做互斥 tab 只渲染一块；不做「建议先看 / 待整合 / 待成文」补漏导向；不做 narrative + 数据 + 证据条三层 dashboard；不用冷色 SaaS 蓝灰。
-- 不把设置页做成 dashboard 式多模块堆叠。
-- 不用纯黑、纯白或高饱和科技蓝。
-- 不手写 rgba 任意值或中间圆角。
-- 不新增玻璃拟态、霓虹深色台、通用 SaaS 渐变页等未出现过的视觉家族。
+- 精确尺寸、状态映射、共享组件、键盘和无障碍规则见 [ui-conventions.md](docs/design/ui-conventions.md)。
+- 第二轮规则来源、分类与证据见 [design-rule-reconciliation.md](docs/design/design-rule-reconciliation.md)。
+- 旧五维、旧 Calendar、旧分析／画像和紧急回退见 [legacy-compatibility.md](docs/design/legacy-compatibility.md)。
+- 第二轮结构与视觉方向是当前目标基线；字体与色阶增强候选已退出目标版本并转入历史证据。

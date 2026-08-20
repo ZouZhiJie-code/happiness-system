@@ -12,7 +12,7 @@ Production：`保持 legacy + baseline；本轮未执行生产切换、部署或
 
 板块事实源：[04p｜内部 Preview、Go/No-Go 与生产授权](./04p-board8-preview-go-no-go-production-authorization.md)
 
-候选目录：GI-058 DeepSeek 官方 API 独立 Preview 证据（本机历史证据，公开精简包未收录：`candidate-lineage.md`）
+候选目录：[GI-058 DeepSeek 官方 API 独立 Preview 证据](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/candidate-lineage.md)
 
 后续专项：[04s｜GI-059 提问思路、深聊完成与真实体验复验](./04s-board8-gi059-question-thinking-deep-completion-and-real-experience-reverification.md)
 
@@ -101,9 +101,9 @@ GI-058 以一次共同根因修复为边界，补齐可见文本和可继续操�
 
 报告文件：
 
-- Board8 JSON 只读报告（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.json`）
-- Board8 Markdown 只读报告（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`）
-- 脱敏执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）
+- [Board8 JSON 只读报告](../../../artifacts/generative-interview-board8/2026-08-03-gi058-candidate/board8-preview-candidate-audit.json)
+- [Board8 Markdown 只读报告](../../../artifacts/generative-interview-board8/2026-08-03-gi058-candidate/board8-preview-candidate-audit.md)
+- [脱敏执行证据](../../../artifacts/generative-interview-board8/2026-08-03-gi058-candidate/preview-execution-evidence.md)
 
 ### 4.3 Provider 事实校准
 
@@ -120,7 +120,7 @@ GI-058 以一次共同根因修复为边界，补齐可见文本和可继续操�
 - 事件日志 LLM 接受 `8/8`，标题修复 `0`，全文安全 fallback `0`，8 条均在 24 小时内保存。
 - 当前技术裁决为 `Go`；产品负责人仍需完成逐条人工裁决和独立 Production 授权。
 
-当前证据：候选血缘（本机历史证据，公开精简包未收录：`candidate-lineage.md`）、8+2 执行证据（本机历史证据，公开精简包未收录：`preview-execution-evidence.md`）、Board8 Markdown 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.md`） 与 JSON 审计（本机历史证据，公开精简包未收录：`board8-preview-candidate-audit.json`）。
+当前证据：[候选血缘](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/candidate-lineage.md)、[8+2 执行证据](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/preview-execution-evidence.md)、[Board8 Markdown 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/board8-preview-candidate-audit.md) 与 [JSON 审计](../../../artifacts/generative-interview-board8/2026-08-03-gi058-local-preview-v21-candidate-5-56-consolidated/board8-preview-candidate-audit.json)。
 
 ## 5. 发布裁决
 
