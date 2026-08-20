@@ -9,7 +9,7 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；其余阶段继续按专项记录推进。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 本地发布线已验证，PR／Preview 保持 pending。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
@@ -30,6 +30,12 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已 READY／PROMOTED，正式域名匿名 `401`、普通用户 `403`、注册登录、session、空 joy session 和非法日期合同均通过；模型端点调用 `0`，抽查 `19` 条日志的 `5xx / error / fatal / warning` 均为 `0`。
 - 管理员白名单存在 `1` 个身份；当前缺少合法凭证且两种受控浏览器环境均无既有登录态，管理员成功读取保持 pending。完整证据见[数据口径 v2 回执](../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)。
 - smoke 创建的固定验收账号、`AuthSession` 和空 `InterviewSession` 继续保留，清理等待产品负责人单独确认；Production 运行依赖审计为 `0`，Vite／Vitest 开发测试工具链告警进入独立治理。
+
+阶段 2 本地发布线证据：
+
+- 分支已 rebase 到 `origin/main@305f209`，24 个阶段 2 文件边界清楚，Prisma 变更为 `0`。
+- rebase 后类型检查、目标 Lint、文档和差异检查通过；guard `9/9`，浏览器 `11/11`，`AIRequestLog=0`、12 条 Trace 四类违规 `0`、临时 Schema 残留 `0`。
+- 历史完整三连跑继续保留原始运行身份；分支推送、PR、远程 CI、Preview 和 Production 均保持 pending。阶段 2 Production 等待阶段 1 管理员成功读取门完成。
 
 实施并行覆盖数据口径、零模型 E2E 与评测资产；Production 发布按阶段 1 → 2 → 4 串行。GI-088 原工作区的状态冲突已经按最终证据收口，`175` 项成果由检查点 `199aa94` 封存并推送；原分支、worktree 与私有现场继续保留，清理仍等待最终单独确认。该封存不开放新的模型调用，也不改变本轮 Production 范围。
 

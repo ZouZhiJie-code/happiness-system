@@ -43,7 +43,7 @@
 - 产品判断：自动 E2E 必须零真实模型调用。
 - Codex 评估：需要仅测试环境可启用、Production 启动即拒绝的确定性 AI 替身，并同时断言请求日志和 Trace 的模型执行字段。
 - 待验证假设：现有 Provider 注入点足以实现 fail-closed 测试替身，不改变正式路径。
-- 当前处理状态：阶段 2 待实现。
+- 当前处理状态：本地发布线已实现并验证。历史三连跑与 rebase 到 `origin/main@305f209` 后的独立复跑均为 `11/11`；零模型 guard `9/9`，每轮 `AIRequestLog=0`、12 条 Trace 四类违规为 `0`，临时 Schema 残留 `0`。PR、远程 CI、Preview 和 Production 保持 pending。
 
 ## PEH-006｜月度分析当前数据源与 Production 主链不一致
 

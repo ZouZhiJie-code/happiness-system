@@ -107,7 +107,7 @@
 |---|---|---|
 | 0. 保护现场与工作线 | 已完成 | GI-088 `175` 项成果完成指纹与隐私检查；最终 No-Go 状态已由检查点 `199aa94` 封存并推送，原工作区干净，分支与私有现场继续保留 |
 | 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
-| 2. 零模型 E2E | 待验证 | 只读审计完成，等待实现 |
+| 2. 零模型 E2E | 本地发布线已验证·PR／Preview pending | rebase 后 24 文件边界；guard `9/9`、浏览器 `11/11`、`AIRequestLog=0`、12 条 Trace 四类违规 `0`、临时 Schema 残留 `0` |
 | 3. Golden Set v2 | 待验证 | 数据治理审计进行中，真实样本数量待只读核验 |
 | 4. 主链重构 | 待验证 | 等待阶段 2 回归保护 |
 | 5. 月度洞察评估 | 待验证 | 数据源差异已入账，候选尚未运行 |
@@ -131,3 +131,11 @@
 - smoke 创建固定验收账号、`AuthSession` 和空 `InterviewSession`；当前保留并等待产品负责人单独确认清理。后续治理见 `PEH-021`。
 - 管理员白名单存在 `1` 个身份；当前执行环境缺少合法凭证且两种受控浏览器环境均无既有登录态，Production 管理员成功读取保持 pending。
 - Production 运行依赖审计为 `0`；全依赖审计的 `3 moderate / 1 high / 1 critical` 位于 Vite／Vitest 开发测试工具链，已进入 `PEH-019` 独立治理。
+
+### 阶段 2 PR 前证据封存｜2026-08-20
+
+- 独立发布分支已 rebase 到 `origin/main@305f209`，重复的阶段 1 测试治理提交自动移除；差异收敛为 24 个阶段 2 文件，Prisma 变更为 `0`。
+- rebase 后实现提交为 `5d0e795`，本地验证头为 `f12bf27`；类型检查、目标 Lint、文档检查和差异检查均通过，零模型 guard 为 `9/9`。
+- 安全 E2E 使用本机 loopback 专用测试库完成 `11/11`：1440×900 覆盖 10 项，1024×768 覆盖 1 项；`AIRequestLog=0`、12 条 Trace 四类模型调用违规为 `0`，临时 Schema 已删除且残留为 `0`。
+- 历史完整三连跑继续由[零模型 E2E 原始回执](../../../artifacts/production-evidence-hardening/2026-08-19/e2e-zero-model/README.md)承担；当前单轮只证明 rebase 后发布线未发生工程漂移。
+- 分支推送、Pull Request、远程 CI、Preview 人工主链、Production 发布均保持 pending；阶段 2 Production 继续受阶段 1 管理员成功读取门约束。
