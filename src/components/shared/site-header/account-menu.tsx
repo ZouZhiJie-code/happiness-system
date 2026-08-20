@@ -67,6 +67,7 @@ export function AccountMenu({ pathname }: { pathname: string }) {
 
       clearInterviewClientState();
       router.replace("/");
+      router.refresh();
     } catch (logoutError) {
       setError(logoutError instanceof Error ? logoutError.message : "退出失败，请稍后再试");
       setLoggingOut(false);

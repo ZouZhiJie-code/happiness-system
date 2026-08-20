@@ -7,8 +7,9 @@ import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { interviewSessionStorageKey } from "@/features/interview/dimensions";
 import { renderWithCalendarChrome } from "../helpers/render-with-calendar-chrome";
 
-const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
+const { mockPathname, mockRouterRefresh, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
   mockPathname: { value: "/calendar" },
+  mockRouterRefresh: vi.fn(),
   mockRouterReplace: vi.fn(),
   mockSearchParams: {
     value: {
@@ -27,7 +28,7 @@ const resizeObserverState = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   usePathname: () => mockPathname.value,
-  useRouter: () => ({ replace: mockRouterReplace }),
+  useRouter: () => ({ refresh: mockRouterRefresh, replace: mockRouterReplace }),
   useSearchParams: () => ({
     get: (key: string) => mockSearchParams.value[key as keyof typeof mockSearchParams.value] ?? null
   })
@@ -53,6 +54,7 @@ describe("site header journal toolbar", () => {
     vi.stubGlobal("ResizeObserver", ResizeObserverMock);
     global.fetch = vi.fn(async () => new Response(null, { status: 404 })) as typeof fetch;
     mockPathname.value = "/calendar";
+    mockRouterRefresh.mockReset();
     mockRouterReplace.mockReset();
     mockSearchParams.value = {
       dimension: null,
@@ -144,6 +146,7 @@ describe("site header journal toolbar", () => {
 
     await waitFor(() => {
       expect(mockRouterReplace).toHaveBeenCalledWith("/");
+      expect(mockRouterRefresh).toHaveBeenCalledOnce();
     });
     expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBeNull();
     expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-1`)).toBeNull();
