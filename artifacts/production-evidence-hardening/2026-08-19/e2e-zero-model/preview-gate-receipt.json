@@ -2,7 +2,7 @@
   "receiptVersion": "2026-08-20.stage2-preview-gate.v2",
   "sealedOn": "2026-08-20",
   "privacyClass": "public_zero_body",
-  "status": "merged_preview_update_partial_ci_fix_initial_remote_pass_final_docs_pending_production_blocked",
+  "status": "merged_preview_update_partial_ci_fix_second_local_engineering_pass_remote_pending_production_blocked",
   "identity": {
     "pullRequest": 41,
     "headSha": "e7e15416b491585865f67b48cff447eaf3c38a86",
@@ -126,7 +126,7 @@
     "interpretation": "asynchronous_test_variance_not_stage5_product_failure"
   },
   "localHotfixVerification": {
-    "status": "local_engineering_passed_remote_pending",
+    "status": "second_local_engineering_passed_remote_pending",
     "scope": {
       "testFiles": [
         "tests/unit/gi088-evaluation-workbench.test.tsx",
@@ -160,6 +160,68 @@
       "completeFileStress": "passed_20_of_20_p4"
     },
     "combinedHighLoad": "passed_270_of_270_p4",
+    "orderedMockRace": {
+      "confirmedByRandomizedReproduction": true,
+      "reproducedSeed": 24,
+      "backgroundRequest": "/api/preview/gi088/operation-events",
+      "affectedBusinessRequests": [
+        "/api/preview/gi088/start-task",
+        "/api/preview/gi088/turn"
+      ],
+      "cause": "background_observation_consumed_position_based_mock_response",
+      "fix": "route_responses_by_url_and_count_business_requests_independently",
+      "productionSourceFilesChanged": 0
+    },
+    "secondLocalPressure": {
+      "randomizedSingleFile": {
+        "seeds": "1_through_50",
+        "processConcurrency": 8,
+        "testExecutions": 750,
+        "passed": 750,
+        "failed": 0
+      },
+      "focusedRaceCases": {
+        "processRuns": 100,
+        "processConcurrency": 12,
+        "testExecutions": 200,
+        "passed": 200,
+        "failed": 0,
+        "unknownRequests": 0,
+        "duplicateTargetRequests": 0
+      },
+      "reproducedSeedNowPassed": 24,
+      "fullEngineeringGate": {
+        "consecutiveFullSuiteRuns": 3,
+        "testFilesPassedPerRun": 361,
+        "testFilesSkippedPerRun": 16,
+        "testsPassedPerRun": 3216,
+        "testsSkippedPerRun": 82,
+        "failuresPerRun": 0,
+        "durationsSeconds": [
+          29.4,
+          30.19,
+          29.97
+        ],
+        "typecheck": "passed",
+        "fullLint": "passed_0_errors_43_inherited_warnings",
+        "build": "passed_77_of_77_with_16_inherited_tracing_warnings",
+        "prismaValidate": "passed_with_dummy_loopback",
+        "docsCheck": "passed_24_core_843_links_1_current_entry",
+        "diffCheck": "passed",
+        "zeroModelE2e": {
+          "tests": "passed_11_of_11",
+          "playwrightSeconds": 5.9,
+          "wallSeconds": 17.52,
+          "aiRequestLogCount": 0,
+          "traceCount": 12,
+          "modelCallViolations": 0,
+          "temporarySchema": "daily_light_e2e_mt17xxl8_247c07e5db",
+          "temporarySchemaDropped": true,
+          "temporarySchemaResidualCount": 0
+        }
+      },
+      "remoteVerification": "pending"
+    },
     "currentEngineeringGates": {
       "testCommit": "0e5907b",
       "consecutiveFullSuiteRuns": 3,
@@ -212,7 +274,39 @@
         "state": "READY",
         "url": "https://xingfuxitong-p7juqhbux-zouzhijies-projects.vercel.app"
       },
-      "finalDocsOnlyHead": "pending"
+      "docsOnlyHead": {
+        "headSha": "c897d7a1d1cef93159c07bd081e169c4dfc3543b",
+        "changeScope": "8_docs_and_artifacts_files_only",
+        "pushRun": {
+          "runId": 32343781979,
+          "attempts": 1,
+          "retries": 0,
+          "conclusion": "success",
+          "testsPassed": 3216,
+          "testsSkipped": 82,
+          "zeroModelE2e": "passed_11_of_11"
+        },
+        "pullRequestRun": {
+          "runId": 32343785173,
+          "attempts": 1,
+          "retries": 0,
+          "conclusion": "failure",
+          "testsPassed": 3215,
+          "testsSkipped": 82,
+          "testsFailed": 1,
+          "failedFile": "tests/unit/gi088-evaluation-workbench.test.tsx",
+          "failedCase": "typed issue.action=read_latest_state only reads latest session",
+          "failedWaitMs": 30194,
+          "zeroModelE2e": "passed_11_of_11"
+        },
+        "preview": {
+          "deploymentId": "dpl_DbMX4YLQDLiNsMHwTWmiS5Y4romE",
+          "state": "READY",
+          "url": "https://xingfuxitong-l6zwxkkqn-zouzhijies-projects.vercel.app"
+        },
+        "interpretation": "position_based_fetch_double_race_confirmed_and_fixed_locally"
+      },
+      "nextHead": "pending_remote_verification"
     }
   },
   "releaseBoundary": {
