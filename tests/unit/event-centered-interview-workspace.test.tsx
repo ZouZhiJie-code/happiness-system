@@ -5,7 +5,10 @@ import {
   buildEventCenteredWorkspaceHref,
   EventCenteredInterviewWorkspace
 } from "@/components/interview/event-centered/event-centered-interview-workspace";
-import type { EventCenteredWorkspaceSession } from "@/types/event-centered-dialogue";
+import type {
+  EventCenteredRespondRequest,
+  EventCenteredWorkspaceSession
+} from "@/types/event-centered-dialogue";
 import type {
   EventCenteredSessionListItem,
   EventCenteredSessionListView
@@ -358,6 +361,205 @@ describe("EventCenteredInterviewWorkspace", () => {
     });
     await waitFor(() => expect(screen.queryByRole("button", { name: "继续生成" })).not.toBeInTheDocument());
     expect(screen.getAllByText(userMessage.rawText)).toHaveLength(1);
+  });
+
+  it("keeps composer drafts scoped to the active response branch", async () => {
+    const branchOne = buildWorkspace({
+      dialogue: {
+        ...buildWorkspace().dialogue,
+        allowedActions: ["reply", "switch_response_version"]
+      },
+      messages: [{
+        ...buildWorkspace().messages[0],
+        responseVersion: {
+          groupId: "group-1",
+          version: 1,
+          versionCount: 2,
+          canRegenerate: true,
+          canSwitch: true,
+          versions: [
+            { messageId: "assistant-1", branchSessionId: "branch-1", version: 1, active: true },
+            { messageId: "assistant-2", branchSessionId: "branch-2", version: 2, active: false }
+          ]
+        }
+      }]
+    });
+    const branchTwo = buildWorkspace({
+      activeBranchSessionId: "branch-2",
+      branchStateId: "state-2",
+      dialogue: {
+        ...buildWorkspace().dialogue,
+        allowedActions: ["reply", "switch_response_version"]
+      },
+      messages: [{
+        ...buildWorkspace().messages[0],
+        id: "assistant-2",
+        responseVersion: {
+          groupId: "group-1",
+          version: 2,
+          versionCount: 2,
+          canRegenerate: true,
+          canSwitch: true,
+          versions: [
+            { messageId: "assistant-1", branchSessionId: "branch-1", version: 1, active: false },
+            { messageId: "assistant-2", branchSessionId: "branch-2", version: 2, active: true }
+          ]
+        }
+      }]
+    });
+    const respondBodies: EventCenteredRespondRequest[] = [];
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/session/root-1") return jsonResponse(branchOne);
+      if (url === "/api/interview/event-centered/sessions?limit=30") {
+        return jsonResponse(buildSessionList([buildListItem()]));
+      }
+      if (url === "/api/interview/event-centered/session/respond/stream") {
+        const request = JSON.parse(String(init?.body)) as EventCenteredRespondRequest;
+        respondBodies.push(request);
+        const nextWorkspace = request.action === "switch_response_version" &&
+          request.targetBranchSessionId === "branch-2"
+          ? branchTwo
+          : branchOne;
+        return sseResponse([{ event: "session", data: { session: nextWorkspace } }]);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
+    const input = await screen.findByLabelText("输入当前事件");
+    fireEvent.change(input, { target: { value: "第一版分支草稿" } });
+    fireEvent.click(screen.getByRole("button", { name: "查看下一个回复版本" }));
+
+    await waitFor(() => expect(input).toHaveValue(""));
+    fireEvent.change(input, { target: { value: "第二版分支草稿" } });
+    fireEvent.click(screen.getByRole("button", { name: "查看上一个回复版本" }));
+
+    await waitFor(() => expect(input).toHaveValue("第一版分支草稿"));
+    expect(respondBodies).toHaveLength(2);
+    expect(respondBodies.map((request) => request.baseBranchSessionId)).toEqual(["branch-1", "branch-2"]);
+  });
+
+  it("reuses the same client turn id when a failed outbox is submitted again", async () => {
+    const initial = buildWorkspace();
+    const respondBodies: EventCenteredRespondRequest[] = [];
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/session/root-1") return jsonResponse(initial);
+      if (url === "/api/interview/event-centered/sessions?limit=30") {
+        return jsonResponse(buildSessionList([buildListItem()]));
+      }
+      if (url === "/api/interview/event-centered/session/respond/stream") {
+        const request = JSON.parse(String(init?.body)) as EventCenteredRespondRequest;
+        respondBodies.push(request);
+        if (respondBodies.length === 1) {
+          return jsonResponse({
+            issue: {
+              code: "EVENT_CENTERED_TRANSIENT_PROVIDER_FAILURE",
+              title: "回复暂时中断",
+              message: "原话还在，可以重试。",
+              retryable: true,
+              action: "refresh"
+            }
+          }, 503);
+        }
+        const nextWorkspace = buildWorkspace({
+          latestMessageSequence: 3,
+          messages: [
+            ...initial.messages,
+            {
+              id: "user-retried",
+              role: "user",
+              content: request.rawText ?? "",
+              rawText: request.rawText ?? "",
+              sequence: 3,
+              userTurnId: "turn-retried",
+              clientTurnId: request.clientTurnId,
+              assistantPayload: null,
+              responseVersion: null,
+              createdAt: "2026-07-22T08:01:00.000Z"
+            }
+          ]
+        });
+        return sseResponse([{ event: "session", data: { session: nextWorkspace } }]);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
+    const input = await screen.findByLabelText("输入当前事件");
+    fireEvent.change(input, { target: { value: "这次重试请沿用同一轮次" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("原话还在，可以重试。");
+    await waitFor(() => expect(input).toHaveValue("这次重试请沿用同一轮次"));
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    await waitFor(() => expect(respondBodies).toHaveLength(2));
+    expect(respondBodies[1]?.clientTurnId).toBe(respondBodies[0]?.clientTurnId);
+  });
+
+  it("clears an accepted outbox after the user turn is visible on the server", async () => {
+    const initial = buildWorkspace();
+    let workspaceReads = 0;
+    let acceptedClientTurnId = "";
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/session/root-1") {
+        workspaceReads += 1;
+        if (workspaceReads === 1) return jsonResponse(initial);
+        return jsonResponse(buildWorkspace({
+          latestMessageSequence: 3,
+          messages: [
+            ...initial.messages,
+            {
+              id: "user-visible",
+              role: "user",
+              content: "服务端已经收到了这句话",
+              rawText: "服务端已经收到了这句话",
+              sequence: 3,
+              userTurnId: "turn-visible",
+              clientTurnId: acceptedClientTurnId,
+              assistantPayload: null,
+              responseVersion: null,
+              createdAt: "2026-07-22T08:01:00.000Z"
+            }
+          ]
+        }));
+      }
+      if (url === "/api/interview/event-centered/sessions?limit=30") {
+        return jsonResponse(buildSessionList([buildListItem()]));
+      }
+      if (url === "/api/interview/event-centered/session/respond/stream") {
+        const request = JSON.parse(String(init?.body)) as EventCenteredRespondRequest;
+        acceptedClientTurnId = request.clientTurnId;
+        return sseResponse([
+          { event: "turn", data: { clientTurnId: request.clientTurnId } },
+          {
+            event: "error",
+            data: {
+              issue: {
+                code: "EVENT_CENTERED_TRANSIENT_PROVIDER_FAILURE",
+                title: "回复暂时中断",
+                message: "原话已经保存。",
+                retryable: true,
+                action: "refresh"
+              }
+            }
+          }
+        ]);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
+    const input = await screen.findByLabelText("输入当前事件");
+    fireEvent.change(input, { target: { value: "服务端已经收到了这句话" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    expect(await screen.findAllByText("服务端已经收到了这句话")).toHaveLength(1);
+    await waitFor(() => expect(workspaceReads).toBe(2));
+    await waitFor(() => expect(window.sessionStorage.length).toBe(0));
   });
 
   it("keeps new record focusable and shows a top toast when two unfinished records already exist", async () => {
