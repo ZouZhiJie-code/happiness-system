@@ -210,11 +210,11 @@ export function decideMonthlyInsightGoNoGo({
   if ([...synthetic, ...real].some((review) => review.blockers.length > 0)) {
     return { decision: "No-Go", reason: "blocker_present" };
   }
+  if (synthetic.length < 6 || real.length < 4) {
+    return { decision: "No-Go", reason: "insufficient_evidence" };
+  }
   if (synthetic.length !== 6 || synthetic.some((review) => review.verdict !== "pass")) {
     return { decision: "No-Go", reason: "synthetic_boundary_failed" };
-  }
-  if (real.length < 4) {
-    return { decision: "No-Go", reason: "insufficient_evidence" };
   }
   if (real.some((review) => !["pass", "minor"].includes(review.verdict))) {
     return { decision: "No-Go", reason: "real_quality_failed" };

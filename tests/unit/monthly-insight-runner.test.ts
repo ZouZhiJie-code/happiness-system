@@ -111,4 +111,26 @@ describe("monthly insight evaluation runner", () => {
       real: Array.from({ length: 3 }, (_, index) => ({ id: `R${index}`, verdict: "pass" as const, blockers: [] }))
     })).toEqual({ decision: "No-Go", reason: "insufficient_evidence" });
   });
+
+  it("closes as insufficient evidence when the authorized evaluation set is empty", () => {
+    expect(decideMonthlyInsightGoNoGo({ synthetic: [], real: [] })).toEqual({
+      decision: "No-Go",
+      reason: "insufficient_evidence"
+    });
+  });
+
+  it("keeps a completed synthetic failure distinct from missing evidence", () => {
+    expect(decideMonthlyInsightGoNoGo({
+      synthetic: Array.from({ length: 6 }, (_, index) => ({
+        id: `S${index}`,
+        verdict: index === 5 ? "fail" as const : "pass" as const,
+        blockers: []
+      })),
+      real: Array.from({ length: 4 }, (_, index) => ({
+        id: `R${index}`,
+        verdict: "pass" as const,
+        blockers: []
+      }))
+    })).toEqual({ decision: "No-Go", reason: "synthetic_boundary_failed" });
+  });
 });
