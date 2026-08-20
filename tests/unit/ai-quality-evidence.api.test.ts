@@ -35,6 +35,7 @@ describe("AI quality candidate evidence API", () => {
     );
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(getAIOptimizationCandidateEvidence).toHaveBeenCalledWith({
       candidateId: "candidate-1",
       adminUsername: "admin_user",
@@ -48,6 +49,7 @@ describe("AI quality candidate evidence API", () => {
       params: Promise.resolve({ candidateId: "candidate-1" })
     });
     expect(forbidden.status).toBe(403);
+    expect(forbidden.headers.get("cache-control")).toBe("private, no-store");
 
     requireAdminRequest.mockResolvedValue({ id: "admin-1", username: "admin_user" });
     getAIOptimizationCandidateEvidence.mockRejectedValue(new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND"));
@@ -55,5 +57,6 @@ describe("AI quality candidate evidence API", () => {
       params: Promise.resolve({ candidateId: "missing" })
     });
     expect(missing.status).toBe(404);
+    expect(missing.headers.get("cache-control")).toBe("private, no-store");
   });
 });

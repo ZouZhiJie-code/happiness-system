@@ -117,6 +117,7 @@ describe("AI iteration service", () => {
 
     expect(repository.reviewOptimizationCandidateStatus).toHaveBeenCalledWith({
       id: "candidate-1",
+      expectedStatus: "draft",
       status: "rejected",
       adminUsername: "admin",
       reviewReason: "证据不足，请补充具体对话。"

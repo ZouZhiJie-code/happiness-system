@@ -8,7 +8,8 @@ const {
   mockTxUserSettingsCreate,
   mockTxUserCreate,
   mockUserCreate,
-  mockUserFindUnique
+  mockUserFindUnique,
+  mockUserUpdateMany
 } = vi.hoisted(() => ({
   mockAuthSessionCreate: vi.fn(),
   mockAuthSessionDeleteMany: vi.fn(),
@@ -19,7 +20,8 @@ const {
   mockTxUserSettingsCreate: vi.fn(),
   mockTxUserCreate: vi.fn(),
   mockUserCreate: vi.fn(),
-  mockUserFindUnique: vi.fn()
+  mockUserFindUnique: vi.fn(),
+  mockUserUpdateMany: vi.fn()
 }));
 
 vi.mock("@/server/db/prisma", () => ({
@@ -33,7 +35,8 @@ vi.mock("@/server/db/prisma", () => ({
     },
     user: {
       create: mockUserCreate,
-      findUnique: mockUserFindUnique
+      findUnique: mockUserFindUnique,
+      updateMany: mockUserUpdateMany
     }
   }
 }));
@@ -45,6 +48,7 @@ import {
   deleteAuthSessionByTokenHash,
   findAuthSessionByTokenHash,
   findUserByUsername,
+  ensureAIQualityParticipation,
   touchAuthSessionByTokenHash
 } from "@/server/repositories/auth.repository";
 
@@ -100,6 +104,30 @@ describe("auth.repository", () => {
         userId: "user-1",
         tokenHash: "hashed-token"
       })
+    });
+  });
+
+  it("keeps a withdrawn user excluded when login calibrates quality participation", async () => {
+    const consentAt = new Date("2026-08-19T00:00:00.000Z");
+    mockUserUpdateMany.mockResolvedValue({ count: 0 });
+
+    await ensureAIQualityParticipation("user-1", "2026-07-19", consentAt);
+
+    expect(mockUserUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "user-1",
+        aiQualityConsentRevokedAt: null,
+        OR: [
+          { aiQualityConsentVersion: { not: "2026-07-19" } },
+          { aiQualityConsentAt: null }
+        ]
+      },
+      data: {
+        privacyPolicyVersion: "2026-07-19",
+        aiQualityConsentVersion: "2026-07-19",
+        aiQualityConsentAt: consentAt,
+        aiQualityConsentRevokedAt: null
+      }
     });
   });
 

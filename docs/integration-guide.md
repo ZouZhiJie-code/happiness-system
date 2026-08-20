@@ -646,7 +646,7 @@ GET /api/analysis/month?month=2026-07
 
 ### 8.2 质量政策
 
-`GET /api/ai-feedback/consent` 返回当前政策版本、参与状态和审计时间。产品默认参与；提交：
+`GET /api/ai-feedback/consent` 返回当前政策版本、是否需要重新决定和参与状态。注册默认参与，用户可在设置页提交：
 
 ```json
 {"participate":false}
@@ -655,10 +655,10 @@ GET /api/analysis/month?month=2026-07
 返回：
 
 ```json
-{"error":"AI_QUALITY_PARTICIPATION_REQUIRED"}
+{"policyVersion":"2026-07-19","decisionRequired":false,"participated":false}
 ```
 
-HTTP 状态为 `409`。
+HTTP 状态为 `200`。退出会撤回当前有效反馈、退役对应 Few-shot，并在后续登录中持续生效。再次提交 `{"participate":true}` 会形成新的同意时间。
 
 ## 9. AI 质量治理
 

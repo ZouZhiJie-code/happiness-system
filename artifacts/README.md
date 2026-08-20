@@ -2,12 +2,12 @@
 
 - 文档职责：证据索引
 - 文档状态：现役
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-20`
 - 权威入口：[`docs/README.md`](../docs/README.md)
 
-最后更新：`2026-08-19`
+最后更新：`2026-08-20`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 阶段 C2 technical_blocked：Plus 双 No-Go，Max 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
+当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 已完成独立复审、最新 main 干净重基线和本地完整门，P0=0／P1=0／P2=3，完整轨迹 0/30，PR、远程门、Preview 与样本收集 pending；月度洞察为 No-Go／insufficient_evidence；GI-088 阶段 C2 历史证据保持原身份，独立准入继续关闭`
 
 ## 1. 为什么需要这份规则
 
@@ -34,6 +34,8 @@
 
 - [Daily Light 五阶段 Production Evidence Hardening 证据索引](./production-evidence-hardening/2026-08-19/README.md)
 - [Daily Light 五阶段问题台账](./production-evidence-hardening/2026-08-19/issue-ledger.md)
+- [Golden Set v2 Production 零正文元数据盘点](./production-evidence-hardening/2026-08-19/golden-set-v2/production-metadata-inventory.json)
+- [Golden Set v2 同意撤回 PostgreSQL 并发回执](./production-evidence-hardening/2026-08-19/golden-set-v2/consent-concurrency-postgres-receipt.json)
 
 - [AI 评测总规范 v0.9 阶段 A 验收记录](./ai-evaluation-governance/2026-08-13-v0.9-stage-a-acceptance.md)
 - [项目级 AI 评测总规范 v1.0](../docs/ai-evaluation-standard.md)

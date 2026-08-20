@@ -4,6 +4,7 @@ import {
   hasCurrentAIQualityConsent
 } from "@/features/ai-feedback/feedback-config";
 import {
+  AIFeedbackRepositoryError,
   findFeedbackContext,
   getAIQualityConsent,
   recordAIQualityConsentDecision,
@@ -17,7 +18,6 @@ export class AIFeedbackError extends Error {
       | "TRACE_NOT_FOUND"
       | "CONSENT_REQUIRED"
       | "INVALID_FEEDBACK_TAG"
-      | "AI_QUALITY_PARTICIPATION_REQUIRED"
   ) {
     super(code);
   }
@@ -35,9 +35,6 @@ export async function getAIQualityConsentState(userId: string) {
 }
 
 export async function updateAIQualityConsent(userId: string, participate: boolean) {
-  if (!participate) {
-    throw new AIFeedbackError("AI_QUALITY_PARTICIPATION_REQUIRED");
-  }
   const user = await recordAIQualityConsentDecision(userId, participate);
   return {
     policyVersion: CURRENT_PRIVACY_POLICY_VERSION,
@@ -86,13 +83,24 @@ export async function submitAIResponseFeedback(input: {
     throw new AIFeedbackError("INVALID_FEEDBACK_TAG");
   }
 
-  const feedback = await saveAIResponseFeedback({
-    traceId: input.traceId,
-    userId: input.userId,
-    vote: input.vote,
-    tags: input.tags,
-    comment: input.comment?.trim() || null
-  });
+  let feedback;
+  try {
+    feedback = await saveAIResponseFeedback({
+      traceId: input.traceId,
+      userId: input.userId,
+      vote: input.vote,
+      tags: input.tags,
+      comment: input.comment?.trim() || null
+    });
+  } catch (error) {
+    if (
+      error instanceof AIFeedbackRepositoryError
+      && error.code === "CONSENT_REQUIRED"
+    ) {
+      throw new AIFeedbackError("CONSENT_REQUIRED");
+    }
+    throw error;
+  }
   if (!feedback) throw new AIFeedbackError("TRACE_NOT_FOUND");
 
   return feedback;

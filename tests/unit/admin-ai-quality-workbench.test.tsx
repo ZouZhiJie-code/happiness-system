@@ -38,19 +38,6 @@ function candidate(
   };
 }
 
-const validationResult = {
-  traceId: "trace-repeat",
-  kind: "target",
-  passed: true,
-  baselineScore: 62,
-  candidateScore: 91,
-  reason: "候选回复已通过问题场景质量门。",
-  candidateOutput: {
-    thinkingSummary: "你已经回答了具体场景，我会换一个更低压的角度。",
-    question: "当时最先冒出的顾虑是什么？"
-  }
-};
-
 const candidates: AIOptimizationCandidateView[] = [
   candidate({
     id: "candidate-publish",
@@ -69,8 +56,7 @@ const candidates: AIOptimizationCandidateView[] = [
       averageScoreDelta: 29,
       summary: "验证通过。",
       errorCode: null,
-      completedAt: "2026-07-20T01:00:00.000Z",
-      results: [validationResult]
+      completedAt: "2026-07-20T01:00:00.000Z"
     }
   }),
   candidate({
@@ -181,9 +167,10 @@ describe("Admin AI quality review workbench", () => {
     fireEvent.click(screen.getByRole("button", { name: "感谢 · 追问重复：查看问题证据，共 1 条" }));
 
     await waitFor(() => expect(screen.getAllByText("能再讲讲具体场景吗？").length).toBeGreaterThan(0));
-    await waitFor(() => expect(screen.getByText(/当时最先冒出的顾虑是什么/)).toBeInTheDocument());
-    expect(screen.getByText("62 分")).toBeInTheDocument();
-    expect(screen.getByText("91 分 · 通过")).toBeInTheDocument();
+    await waitFor(() => expect(
+      screen.getByText(/逐例候选正文需要通过单独的受控读取流程查看/)
+    ).toBeInTheDocument());
+    expect(screen.queryByText(/当时最先冒出的顾虑是什么/)).not.toBeInTheDocument();
     expect(global.fetch).toHaveBeenCalledWith("/api/admin/ai-quality/candidates/candidate-publish/evidence?page=1");
   });
 

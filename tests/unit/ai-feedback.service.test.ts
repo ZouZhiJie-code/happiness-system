@@ -1,18 +1,28 @@
 const {
+  AIFeedbackRepositoryError,
   findFeedbackContext,
   getAIQualityConsent,
   recordAIQualityConsentDecision,
   revokeAIResponseFeedback,
   saveAIResponseFeedback
-} = vi.hoisted(() => ({
-  findFeedbackContext: vi.fn(),
-  getAIQualityConsent: vi.fn(),
-  recordAIQualityConsentDecision: vi.fn(),
-  revokeAIResponseFeedback: vi.fn(),
-  saveAIResponseFeedback: vi.fn()
-}));
+} = vi.hoisted(() => {
+  class RepositoryError extends Error {
+    constructor(readonly code: "CONSENT_REQUIRED") {
+      super(code);
+    }
+  }
+  return {
+    AIFeedbackRepositoryError: RepositoryError,
+    findFeedbackContext: vi.fn(),
+    getAIQualityConsent: vi.fn(),
+    recordAIQualityConsentDecision: vi.fn(),
+    revokeAIResponseFeedback: vi.fn(),
+    saveAIResponseFeedback: vi.fn()
+  };
+});
 
 vi.mock("@/server/repositories/ai-feedback.repository", () => ({
+  AIFeedbackRepositoryError,
   findFeedbackContext,
   getAIQualityConsent,
   recordAIQualityConsentDecision,
@@ -104,10 +114,37 @@ describe("AI feedback service", () => {
     });
   });
 
-  it("keeps AI quality participation enabled through the public service", async () => {
-    await expect(updateAIQualityConsent("user-1", false)).rejects.toEqual(
-      expect.objectContaining({ code: "AI_QUALITY_PARTICIPATION_REQUIRED" })
+  it("maps a transaction-time consent withdrawal to the public consent error", async () => {
+    getAIQualityConsent.mockResolvedValue(currentConsent);
+    findFeedbackContext.mockResolvedValue({
+      id: "trace-1",
+      artifactType: "interview_turn",
+      feedback: null
+    });
+    saveAIResponseFeedback.mockRejectedValue(
+      new AIFeedbackRepositoryError("CONSENT_REQUIRED")
     );
-    expect(recordAIQualityConsentDecision).not.toHaveBeenCalled();
+
+    await expect(submitAIResponseFeedback({
+      traceId: "trace-1",
+      userId: "user-1",
+      vote: "upvote",
+      tags: []
+    })).rejects.toEqual(expect.objectContaining({ code: "CONSENT_REQUIRED" }));
+  });
+
+  it("persists consent withdrawal through the public service", async () => {
+    recordAIQualityConsentDecision.mockResolvedValue({
+      ...currentConsent,
+      aiQualityConsentAt: null,
+      aiQualityConsentRevokedAt: new Date("2026-08-19T00:00:00.000Z")
+    });
+
+    await expect(updateAIQualityConsent("user-1", false)).resolves.toEqual({
+      policyVersion: CURRENT_PRIVACY_POLICY_VERSION,
+      decisionRequired: false,
+      participated: false
+    });
+    expect(recordAIQualityConsentDecision).toHaveBeenCalledWith("user-1", false);
   });
 });

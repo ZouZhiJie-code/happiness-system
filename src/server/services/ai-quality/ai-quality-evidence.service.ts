@@ -7,7 +7,6 @@ import type {
   AdminEvidenceConversationMessage
 } from "@/features/ai-quality/admin-evidence";
 import { getAssistantDisplayParts, parseAssistantTurnPayload } from "@/features/joy-interview/assistant-turn";
-import { recordAdminAuditLog } from "@/server/repositories/admin-analytics.repository";
 import {
   findOptimizationCandidateEvidencePage,
   type AIQualityEvidenceTrace
@@ -190,20 +189,13 @@ export async function getAIOptimizationCandidateEvidence(input: {
 }) {
   const page = Math.max(1, Math.floor(input.page ?? 1));
   const pageSize = Math.max(1, Math.min(Math.floor(input.pageSize ?? DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE));
-  const result = await findOptimizationCandidateEvidencePage({ candidateId: input.candidateId, page, pageSize });
+  const result = await findOptimizationCandidateEvidencePage({
+    candidateId: input.candidateId,
+    adminUsername: input.adminUsername,
+    page,
+    pageSize
+  });
   if (!result) throw new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND");
-
-  await Promise.all(
-    result.traces.map((trace) =>
-      recordAdminAuditLog({
-        adminUsername: input.adminUsername,
-        targetUserId: trace.userId,
-        resourceType: "ai_quality_evidence",
-        resourceId: trace.id,
-        action: "view_content"
-      })
-    )
-  );
 
   const items = result.traces.map(mapAIQualityEvidenceTrace);
 

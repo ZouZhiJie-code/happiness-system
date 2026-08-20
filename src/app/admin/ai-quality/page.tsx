@@ -48,8 +48,7 @@ export default async function AdminAIQualityPage() {
           averageScoreDelta: candidate.validations[0].averageScoreDelta,
           summary: candidate.validations[0].summary,
           errorCode: candidate.validations[0].errorCode,
-          completedAt: candidate.validations[0].completedAt?.toISOString() ?? null,
-          results: candidate.validations[0].results
+          completedAt: candidate.validations[0].completedAt?.toISOString() ?? null
         }
       : null
   }));

@@ -22,8 +22,9 @@ const { createAIRequestLog } = vi.hoisted(() => ({
   createAIRequestLog: vi.fn()
 }));
 
-const { resolveOptimizedPromptEnvelope } = vi.hoisted(() => ({
-  resolveOptimizedPromptEnvelope: vi.fn(async (envelope: unknown) => envelope)
+const { runWithOptimizedPromptEnvelope } = vi.hoisted(() => ({
+  runWithOptimizedPromptEnvelope: vi.fn(async (envelope: unknown, operation: (value: unknown) => unknown) =>
+    operation(envelope))
 }));
 
 const { info, warn, error } = vi.hoisted(() => ({
@@ -66,7 +67,7 @@ vi.mock("@/server/repositories/joy-interview.repository", () => ({
 }));
 
 vi.mock("@/server/services/ai-quality/prompt-optimization.service", () => ({
-  resolveOptimizedPromptEnvelope
+  runWithOptimizedPromptEnvelope
 }));
 
 vi.mock("@/server/lib/logger", () => ({

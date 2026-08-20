@@ -1,10 +1,121 @@
-import { Prisma, type AIGenerationArtifactType, type AIOptimizationPath } from "@prisma/client";
+import {
+  Prisma,
+  type AIGenerationArtifactType,
+  type AIOptimizationPath,
+  type AIOptimizationStatus
+} from "@prisma/client";
 
 import { CURRENT_PRIVACY_POLICY_VERSION } from "@/features/ai-feedback/feedback-config";
 import { prisma } from "@/server/db/prisma";
 
 function toJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
+
+export const CURRENT_CONSENT_USER_FILTER = {
+  aiQualityConsentVersion: CURRENT_PRIVACY_POLICY_VERSION,
+  aiQualityConsentAt: { not: null },
+  aiQualityConsentRevokedAt: null
+} as const;
+
+export const CURRENT_CONSENT_TRACE_FILTER = {
+  user: { is: CURRENT_CONSENT_USER_FILTER }
+} as const;
+
+type CandidateMutableStatus = Extract<AIOptimizationStatus, "draft" | "approved">;
+
+const OPTIMIZATION_VALIDATION_METADATA_SELECT = {
+  id: true,
+  status: true,
+  targetCaseCount: true,
+  targetPassedCount: true,
+  regressionCaseCount: true,
+  regressionPassedCount: true,
+  criticalRegressionCount: true,
+  averageScoreDelta: true,
+  summary: true,
+  errorCode: true,
+  startedAt: true,
+  completedAt: true
+} as const;
+
+function uniqueSorted(values: string[]) {
+  return Array.from(new Set(values)).sort((left, right) => left.localeCompare(right));
+}
+
+function sameStringSet(left: string[], right: string[]) {
+  const leftSorted = uniqueSorted(left);
+  const rightSorted = uniqueSorted(right);
+  return leftSorted.length === rightSorted.length
+    && leftSorted.every((value, index) => value === rightSorted[index]);
+}
+
+export async function lockCurrentConsentForTraceIds(
+  tx: Prisma.TransactionClient,
+  traceIds: string[]
+) {
+  const orderedTraceIds = uniqueSorted(traceIds);
+  if (orderedTraceIds.length === 0) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  // First gate: only currently consented trace owners may reach the lock step.
+  const traceOwners = await tx.aIGenerationTrace.findMany({
+    where: {
+      id: { in: orderedTraceIds },
+      ...CURRENT_CONSENT_TRACE_FILTER
+    },
+    select: { id: true, userId: true }
+  });
+  if (traceOwners.length !== orderedTraceIds.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  const orderedUserIds = uniqueSorted(traceOwners.map((trace) => trace.userId));
+  const lockedUsers = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+    SELECT "id"
+    FROM "User"
+    WHERE "id" IN (${Prisma.join(orderedUserIds)})
+    ORDER BY "id" ASC
+    FOR SHARE
+  `);
+  if (lockedUsers.length !== orderedUserIds.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  // Second gate: re-read consent while every related User row is share-locked.
+  const currentUsers = await tx.user.findMany({
+    where: {
+      id: { in: orderedUserIds },
+      ...CURRENT_CONSENT_USER_FILTER
+    },
+    select: { id: true }
+  });
+  if (currentUsers.length !== orderedUserIds.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  return {
+    traceOwners,
+    traceIds: orderedTraceIds,
+    userIds: orderedUserIds
+  };
+}
+
+async function lockCandidateAtExpectedStatus(
+  tx: Prisma.TransactionClient,
+  candidateId: string,
+  expectedStatuses: AIOptimizationStatus[],
+  errorCode: string
+) {
+  const lockedRows = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+    SELECT "id"
+    FROM "AIOptimizationCandidate"
+    WHERE "id" = ${candidateId}
+      AND "status"::text IN (${Prisma.join(expectedStatuses)})
+    FOR UPDATE
+  `);
+  if (lockedRows.length !== 1) throw new Error(errorCode);
 }
 
 export const AI_QUALITY_EVIDENCE_INCLUDE = Prisma.validator<Prisma.AIGenerationTraceInclude>()({
@@ -43,7 +154,18 @@ export async function loadOptimizationEvidence(periodStart: Date, periodEnd: Dat
     prisma.aICase.findMany({
       where: {
         classification: { in: ["bad", "review"] },
-        updatedAt: { gte: periodStart, lt: periodEnd }
+        updatedAt: { gte: periodStart, lt: periodEnd },
+        trace: {
+          is: {
+            user: {
+              is: {
+                aiQualityConsentVersion: CURRENT_PRIVACY_POLICY_VERSION,
+                aiQualityConsentAt: { not: null },
+                aiQualityConsentRevokedAt: null
+              }
+            }
+          }
+        }
       },
       include: {
         trace: {
@@ -101,6 +223,8 @@ export async function createClusterAndCandidate(input: {
 }) {
   try {
     return await prisma.$transaction(async (tx) => {
+      const traceIds = uniqueSorted(input.traceIds);
+      await lockCurrentConsentForTraceIds(tx, traceIds);
       const existing = await tx.aIOptimizationCandidate.findUnique({ where: { dedupeKey: input.dedupeKey } });
       if (existing) return { candidate: existing, created: false as const };
 
@@ -111,7 +235,7 @@ export async function createClusterAndCandidate(input: {
           dimension: input.dimension,
           issueCode: input.issueCode,
           caseCount: input.caseCount,
-          traceIds: input.traceIds,
+          traceIds,
           summary: input.summary,
           suggestedPath: input.path
         }
@@ -128,7 +252,7 @@ export async function createClusterAndCandidate(input: {
           title: input.title,
           rationale: input.rationale,
           proposal: toJson(input.proposal),
-          evidenceTraceIds: input.traceIds,
+          evidenceTraceIds: traceIds,
           riskLevel: input.riskLevel
         }
       });
@@ -158,8 +282,19 @@ export async function createFewShotCandidate(input: {
 }) {
   try {
     return await prisma.$transaction(async (tx) => {
+      const traceById = new Map(input.traces.map((trace) => [trace.id, trace]));
+      const traceIds = uniqueSorted(Array.from(traceById.keys()));
+      await lockCurrentConsentForTraceIds(tx, traceIds);
       const existing = await tx.aIOptimizationCandidate.findUnique({ where: { dedupeKey: input.dedupeKey } });
       if (existing) return { candidate: existing, created: false as const };
+
+      const alreadyBoundExamples = await tx.aIFewShotExample.findMany({
+        where: { sourceTraceId: { in: traceIds } },
+        select: { sourceTraceId: true }
+      });
+      if (alreadyBoundExamples.length > 0) {
+        throw new Error("OPTIMIZATION_FEW_SHOT_SOURCE_ALREADY_BOUND");
+      }
 
       const candidate = await tx.aIOptimizationCandidate.create({
         data: {
@@ -170,17 +305,18 @@ export async function createFewShotCandidate(input: {
           dimension: input.dimension,
           promptKey: input.promptKey,
           title: `Few-shot 更新：${input.promptKey}`,
-          rationale: `${input.traces.length} 条获得点赞且自动评分不低于 85 分的回复可进入动态示例库。`,
-          proposal: toJson({ sourceTraceIds: input.traces.map((trace) => trace.id), maxActiveExamples: 6 }),
-          evidenceTraceIds: input.traces.map((trace) => trace.id),
+          rationale: `${traceIds.length} 条获得点赞且自动评分不低于 85 分的回复可进入动态示例库。`,
+          proposal: toJson({ sourceTraceIds: traceIds, maxActiveExamples: 6 }),
+          evidenceTraceIds: traceIds,
           riskLevel: "medium"
         }
       });
 
-      for (const trace of input.traces) {
-        await tx.aIFewShotExample.upsert({
-          where: { sourceTraceId: trace.id },
-          create: {
+      for (const traceId of traceIds) {
+        const trace = traceById.get(traceId);
+        if (!trace) throw new Error("OPTIMIZATION_FEW_SHOT_SOURCE_MISSING");
+        await tx.aIFewShotExample.create({
+          data: {
             sourceTraceId: trace.id,
             candidateId: candidate.id,
             promptKey: input.promptKey,
@@ -189,12 +325,6 @@ export async function createFewShotCandidate(input: {
             inputSnapshot: toJson(compactFewShotContext(trace.contextSnapshot)),
             output: toJson(trace.finalOutput),
             qualityScore: trace.evaluation?.totalScore ?? 85
-          },
-          update: {
-            candidateId: candidate.id,
-            qualityScore: trace.evaluation?.totalScore ?? 85,
-            inputSnapshot: toJson(compactFewShotContext(trace.contextSnapshot)),
-            output: toJson(trace.finalOutput)
           }
         });
       }
@@ -259,10 +389,46 @@ export function listOptimizationCandidates(status?: "draft" | "approved" | "publ
   return prisma.aIOptimizationCandidate.findMany({
     where: status ? { status } : undefined,
     include: {
-      cluster: true,
-      releases: { orderBy: { version: "desc" } },
-      fewShotExamples: true,
-      validations: { orderBy: { startedAt: "desc" }, take: 1 }
+      cluster: { select: { issueCode: true, caseCount: true } },
+      releases: {
+        orderBy: { version: "desc" },
+        select: {
+          id: true,
+          status: true,
+          version: true,
+          publishedAt: true,
+          rolledBackAt: true
+        }
+      },
+      fewShotExamples: {
+        select: {
+          id: true,
+          status: true,
+          qualityScore: true,
+          promotedAt: true,
+          retiredAt: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      },
+      validations: {
+        orderBy: { startedAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          status: true,
+          targetCaseCount: true,
+          targetPassedCount: true,
+          regressionCaseCount: true,
+          regressionPassedCount: true,
+          criticalRegressionCount: true,
+          averageScoreDelta: true,
+          summary: true,
+          errorCode: true,
+          startedAt: true,
+          completedAt: true
+        }
+      }
     },
     orderBy: { createdAt: "desc" },
     take: 100
@@ -279,20 +445,124 @@ export function listOptimizationRuns(limit = 10) {
 export function findOptimizationCandidate(id: string) {
   return prisma.aIOptimizationCandidate.findUnique({
     where: { id },
-    include: {
-      fewShotExamples: true,
-      releases: { orderBy: { version: "desc" } },
-      validations: { orderBy: { startedAt: "desc" }, take: 1 }
-    }
+    select: { id: true, status: true }
   });
 }
 
-export async function loadOptimizationValidationInput(candidateId: string) {
-  const candidate = await prisma.aIOptimizationCandidate.findUnique({
-    where: { id: candidateId },
-    include: { fewShotExamples: true }
+async function loadOptimizationValidationInputWithinTransaction(
+  tx: Prisma.TransactionClient,
+  input: {
+    candidateId: string;
+    rubricVersion: string;
+    adminUsername: string;
+  }
+) {
+  // This snapshot contains only identity and relation metadata. Content is
+  // selected after the related User rows are share-locked and rechecked.
+  const snapshot = await tx.aIOptimizationCandidate.findUnique({
+    where: { id: input.candidateId },
+    select: {
+      id: true,
+      status: true,
+      path: true,
+      artifactType: true,
+      dimension: true,
+      promptKey: true,
+      evidenceTraceIds: true,
+      fewShotExamples: { select: { id: true, sourceTraceId: true } }
+    }
   });
-  if (!candidate) return null;
+  if (!snapshot) return null;
+  if (!(snapshot.status === "draft" || snapshot.status === "approved")) {
+    throw new Error("OPTIMIZATION_CANDIDATE_NOT_VALIDATABLE");
+  }
+  if (snapshot.path === "engineering") {
+    throw new Error("ENGINEERING_CANDIDATE_REQUIRES_MANUAL_VALIDATION");
+  }
+
+  const evidenceTraceIds = uniqueSorted(snapshot.evidenceTraceIds);
+  const targetMetadata = await tx.aIGenerationTrace.findMany({
+    where: {
+      id: { in: evidenceTraceIds },
+      ...CURRENT_CONSENT_TRACE_FILTER
+    },
+    select: { id: true, userId: true }
+  });
+  if (targetMetadata.length !== evidenceTraceIds.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  const regressionMetadata = snapshot.promptKey
+    ? await tx.aIGenerationTrace.findMany({
+        where: {
+          id: { notIn: evidenceTraceIds },
+          artifactType: snapshot.artifactType ?? undefined,
+          dimension: snapshot.dimension,
+          status: "completed",
+          feedback: { is: { status: "active", vote: "upvote" } },
+          evaluation: { is: { totalScore: { gte: 85 } } },
+          invocations: { some: { success: true, promptKey: snapshot.promptKey } },
+          ...CURRENT_CONSENT_TRACE_FILTER
+        },
+        select: { id: true, userId: true },
+        orderBy: { createdAt: "desc" },
+        take: 3
+      })
+    : [];
+  const eligibleFewShotMetadata = snapshot.fewShotExamples.length
+    ? await tx.aIFewShotExample.findMany({
+        where: {
+          id: { in: snapshot.fewShotExamples.map((example) => example.id) },
+          sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER }
+        },
+        select: { id: true, sourceTraceId: true }
+      })
+    : [];
+  if (eligibleFewShotMetadata.length !== snapshot.fewShotExamples.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  const consentTraceIds = uniqueSorted([
+    ...evidenceTraceIds,
+    ...regressionMetadata.map((trace) => trace.id),
+    ...eligibleFewShotMetadata.map((example) => example.sourceTraceId)
+  ]);
+  await lockCurrentConsentForTraceIds(tx, consentTraceIds);
+  await lockCandidateAtExpectedStatus(
+    tx,
+    snapshot.id,
+    [snapshot.status],
+    "OPTIMIZATION_CANDIDATE_STATE_CHANGED"
+  );
+
+  const runningValidation = await tx.aIOptimizationValidation.findFirst({
+    where: { candidateId: snapshot.id, status: "running" },
+    select: { id: true }
+  });
+  if (runningValidation) {
+    throw new Error("OPTIMIZATION_VALIDATION_ALREADY_RUNNING");
+  }
+
+  const candidate = await tx.aIOptimizationCandidate.findUnique({
+    where: { id: snapshot.id },
+    include: {
+      fewShotExamples: {
+        where: { sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER } },
+        include: { sourceTrace: { select: { userId: true } } }
+      }
+    }
+  });
+  if (
+    !candidate
+    || candidate.status !== snapshot.status
+    || !sameStringSet(candidate.evidenceTraceIds, evidenceTraceIds)
+    || !sameStringSet(
+      candidate.fewShotExamples.map((example) => example.id),
+      snapshot.fewShotExamples.map((example) => example.id)
+    )
+  ) {
+    throw new Error("OPTIMIZATION_CANDIDATE_STATE_CHANGED");
+  }
 
   const invocationSelect = {
     requestMessages: true,
@@ -301,73 +571,120 @@ export async function loadOptimizationValidationInput(candidateId: string) {
     promptKey: true,
     promptVersion: true
   } as const;
-  const targetTraces = await prisma.aIGenerationTrace.findMany({
-      where: { id: { in: candidate.evidenceTraceIds } },
-      include: {
-        evaluation: true,
-        feedback: true,
-        invocations: {
-          where: { success: true, ...(candidate.promptKey ? { promptKey: candidate.promptKey } : {}) },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: invocationSelect
-        }
+  const selectedTargetTraceIds = evidenceTraceIds.slice(0, 3);
+  const targetTraces = await tx.aIGenerationTrace.findMany({
+    where: {
+      id: { in: selectedTargetTraceIds },
+      ...CURRENT_CONSENT_TRACE_FILTER
+    },
+    include: {
+      evaluation: true,
+      feedback: true,
+      invocations: {
+        where: { success: true, ...(candidate.promptKey ? { promptKey: candidate.promptKey } : {}) },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: invocationSelect
       }
-    });
-  const regressionTraces = candidate.promptKey
-      ? await prisma.aIGenerationTrace.findMany({
-          where: {
-            id: { notIn: candidate.evidenceTraceIds },
-            artifactType: candidate.artifactType ?? undefined,
-            dimension: candidate.dimension,
-            status: "completed",
-            feedback: { is: { status: "active", vote: "upvote" } },
-            evaluation: { is: { totalScore: { gte: 85 } } },
-            invocations: { some: { success: true, promptKey: candidate.promptKey } }
-          },
-          include: {
-            evaluation: true,
-            feedback: true,
-            invocations: {
-              where: { success: true, promptKey: candidate.promptKey },
-              orderBy: { createdAt: "desc" },
-              take: 1,
-              select: invocationSelect
-            }
-          },
-          orderBy: { createdAt: "desc" },
-          take: 3
-        })
-      : [];
+    }
+  });
+  if (targetTraces.length !== selectedTargetTraceIds.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  const regressionTraceIds = regressionMetadata.map((trace) => trace.id);
+  const regressionTraces = regressionTraceIds.length
+    ? await tx.aIGenerationTrace.findMany({
+        where: {
+          id: { in: regressionTraceIds },
+          ...CURRENT_CONSENT_TRACE_FILTER
+        },
+        include: {
+          evaluation: true,
+          feedback: true,
+          invocations: {
+            where: { success: true, promptKey: candidate.promptKey ?? undefined },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: invocationSelect
+          }
+        }
+      })
+    : [];
+  if (regressionTraces.length !== regressionTraceIds.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
 
   const targetById = new Map(targetTraces.map((trace) => [trace.id, trace]));
-  return {
-    candidate,
-    targetTraces: candidate.evidenceTraceIds.flatMap((id) => {
-      const trace = targetById.get(id);
-      return trace ? [trace] : [];
-    }).slice(0, 3),
-    regressionTraces
-  };
-}
+  const regressionById = new Map(regressionTraces.map((trace) => [trace.id, trace]));
+  const orderedTargets = selectedTargetTraceIds.flatMap((traceId) => {
+    const trace = targetById.get(traceId);
+    return trace ? [trace] : [];
+  });
+  const orderedRegressions = regressionTraceIds.flatMap((traceId) => {
+    const trace = regressionById.get(traceId);
+    return trace ? [trace] : [];
+  });
 
-export function createOptimizationValidation(input: {
-  candidateId: string;
-  rubricVersion: string;
-  createdBy: string;
-}) {
-  return prisma.aIOptimizationValidation.create({
+  const auditRows = [
+    ...orderedTargets.map((trace) => ({
+      adminUsername: input.adminUsername,
+      targetUserId: trace.userId,
+      resourceType: "ai_optimization_validation_trace",
+      resourceId: trace.id,
+      action: "validate_content"
+    })),
+    ...orderedRegressions.map((trace) => ({
+      adminUsername: input.adminUsername,
+      targetUserId: trace.userId,
+      resourceType: "ai_optimization_validation_trace",
+      resourceId: trace.id,
+      action: "validate_content"
+    })),
+    ...candidate.fewShotExamples.map((example) => ({
+      adminUsername: input.adminUsername,
+      targetUserId: example.sourceTrace.userId,
+      resourceType: "ai_optimization_validation_few_shot",
+      resourceId: example.id,
+      action: "validate_content"
+    }))
+  ];
+  if (auditRows.length > 0) {
+    await tx.adminAuditLog.createMany({ data: auditRows });
+  }
+
+  const validation = await tx.aIOptimizationValidation.create({
     data: {
-      candidateId: input.candidateId,
+      candidateId: candidate.id,
       rubricVersion: input.rubricVersion,
-      createdBy: input.createdBy,
+      createdBy: input.adminUsername,
       results: []
     }
   });
+
+  return {
+    validation,
+    expectedStatus: snapshot.status as CandidateMutableStatus,
+    consentTraceIds,
+    candidate,
+    targetTraces: orderedTargets,
+    regressionTraces: orderedRegressions
+  };
 }
 
-export function completeOptimizationValidation(input: {
-  validationId: string;
+export function loadOptimizationValidationInput(input: {
+  candidateId: string;
+  rubricVersion: string;
+  adminUsername: string;
+}) {
+  return prisma.$transaction((tx) => loadOptimizationValidationInputWithinTransaction(tx, input));
+}
+
+export type OptimizationValidationLeaseInput = NonNullable<
+  Awaited<ReturnType<typeof loadOptimizationValidationInputWithinTransaction>>
+>;
+
+export type OptimizationValidationCompletion = {
   status: "passed" | "failed";
   targetCaseCount: number;
   targetPassedCount: number;
@@ -377,9 +694,32 @@ export function completeOptimizationValidation(input: {
   averageScoreDelta: number;
   summary: string;
   results: unknown;
-}) {
-  return prisma.aIOptimizationValidation.update({
-    where: { id: input.validationId },
+};
+
+type CompleteOptimizationValidationInput = OptimizationValidationCompletion & {
+  validationId: string;
+  candidateId: string;
+  expectedCandidateStatus: CandidateMutableStatus;
+  consentTraceIds: string[];
+};
+
+async function completeOptimizationValidationWithinTransaction(
+  tx: Prisma.TransactionClient,
+  input: CompleteOptimizationValidationInput
+) {
+  await lockCurrentConsentForTraceIds(tx, input.consentTraceIds);
+  await lockCandidateAtExpectedStatus(
+    tx,
+    input.candidateId,
+    [input.expectedCandidateStatus],
+    "OPTIMIZATION_CANDIDATE_STATE_CHANGED"
+  );
+  const result = await tx.aIOptimizationValidation.updateMany({
+    where: {
+      id: input.validationId,
+      candidateId: input.candidateId,
+      status: "running"
+    },
     data: {
       status: input.status,
       targetCaseCount: input.targetCaseCount,
@@ -393,56 +733,186 @@ export function completeOptimizationValidation(input: {
       completedAt: new Date()
     }
   });
+  if (result.count !== 1) throw new Error("OPTIMIZATION_VALIDATION_NOT_RUNNING");
+  return tx.aIOptimizationValidation.findUniqueOrThrow({
+    where: { id: input.validationId },
+    select: OPTIMIZATION_VALIDATION_METADATA_SELECT
+  });
 }
 
-export function failOptimizationValidation(validationId: string, errorCode: string) {
-  return prisma.aIOptimizationValidation.update({
-    where: { id: validationId },
+export function completeOptimizationValidation(input: CompleteOptimizationValidationInput) {
+  return prisma.$transaction((tx) => completeOptimizationValidationWithinTransaction(tx, input));
+}
+
+async function failOptimizationValidationWithinTransaction(
+  tx: Prisma.TransactionClient,
+  validationId: string,
+  errorCode: string
+) {
+  return tx.aIOptimizationValidation.updateMany({
+    where: { id: validationId, status: "running" },
     data: { status: "error", errorCode, completedAt: new Date() }
   });
 }
 
+export function failOptimizationValidation(validationId: string, errorCode: string) {
+  return failOptimizationValidationWithinTransaction(prisma, validationId, errorCode);
+}
+
+export async function runOptimizationValidationWithConsentLease(
+  input: {
+    candidateId: string;
+    rubricVersion: string;
+    adminUsername: string;
+  },
+  operation: (
+    validationInput: OptimizationValidationLeaseInput
+  ) => Promise<OptimizationValidationCompletion>
+) {
+  const outcome = await prisma.$transaction(async (tx) => {
+    const validationInput = await loadOptimizationValidationInputWithinTransaction(tx, input);
+    if (!validationInput) throw new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND");
+
+    try {
+      const completion = await operation(validationInput);
+      const validation = await completeOptimizationValidationWithinTransaction(tx, {
+        validationId: validationInput.validation.id,
+        candidateId: validationInput.candidate.id,
+        expectedCandidateStatus: validationInput.expectedStatus,
+        consentTraceIds: validationInput.consentTraceIds,
+        ...completion
+      });
+      return { ok: true as const, validation };
+    } catch (error) {
+      const code = error instanceof Error && /^[A-Z][A-Z0-9_]{2,119}$/u.test(error.message)
+        ? error.message
+        : "OPTIMIZATION_VALIDATION_FAILED";
+      await failOptimizationValidationWithinTransaction(
+        tx,
+        validationInput.validation.id,
+        code
+      );
+      return { ok: false as const, error };
+    }
+  }, { maxWait: 5_000, timeout: 55_000 });
+
+  if (!outcome.ok) throw outcome.error;
+  return outcome.validation;
+}
+
 export async function findOptimizationCandidateEvidencePage(input: {
   candidateId: string;
+  adminUsername: string;
   page: number;
   pageSize: number;
 }) {
-  const candidate = await prisma.aIOptimizationCandidate.findUnique({
-    where: { id: input.candidateId },
-    select: { id: true, evidenceTraceIds: true }
-  });
-  if (!candidate) return null;
+  return prisma.$transaction(async (tx) => {
+    const candidate = await tx.aIOptimizationCandidate.findUnique({
+      where: { id: input.candidateId },
+      select: { id: true, evidenceTraceIds: true }
+    });
+    if (!candidate) return null;
 
-  const total = candidate.evidenceTraceIds.length;
-  const start = (input.page - 1) * input.pageSize;
-  const traceIds = candidate.evidenceTraceIds.slice(start, start + input.pageSize);
-  const traces = traceIds.length
-    ? await prisma.aIGenerationTrace.findMany({
-        where: { id: { in: traceIds } },
-        include: AI_QUALITY_EVIDENCE_INCLUDE
+    const eligibleTraceRows = candidate.evidenceTraceIds.length
+      ? await tx.aIGenerationTrace.findMany({
+        where: {
+          id: { in: candidate.evidenceTraceIds },
+          ...CURRENT_CONSENT_TRACE_FILTER
+        },
+        select: { id: true, userId: true }
       })
-    : [];
-  const traceById = new Map(traces.map((trace) => [trace.id, trace]));
+      : [];
+    const eligibleTraceIds = new Set(eligibleTraceRows.map((trace) => trace.id));
+    const orderedEligibleTraceIds = candidate.evidenceTraceIds.filter((traceId) =>
+      eligibleTraceIds.has(traceId)
+    );
+    const total = orderedEligibleTraceIds.length;
+    const start = (input.page - 1) * input.pageSize;
+    const traceIds = orderedEligibleTraceIds.slice(start, start + input.pageSize);
+    if (traceIds.length === 0) {
+      return { candidateId: candidate.id, total, traces: [] };
+    }
 
-  return {
-    candidateId: candidate.id,
-    total,
-    traces: traceIds.flatMap((traceId) => {
+    await lockCurrentConsentForTraceIds(tx, traceIds);
+    const lockedCandidates = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+      SELECT "id"
+      FROM "AIOptimizationCandidate"
+      WHERE "id" = ${candidate.id}
+      FOR SHARE
+    `);
+    if (lockedCandidates.length !== 1) return null;
+
+    const currentCandidate = await tx.aIOptimizationCandidate.findUnique({
+      where: { id: candidate.id },
+      select: { evidenceTraceIds: true }
+    });
+    if (
+      !currentCandidate
+      || traceIds.some((traceId) => !currentCandidate.evidenceTraceIds.includes(traceId))
+    ) {
+      throw new Error("OPTIMIZATION_CANDIDATE_STATE_CHANGED");
+    }
+
+    const traces = await tx.aIGenerationTrace.findMany({
+        where: {
+          id: { in: traceIds },
+          ...CURRENT_CONSENT_TRACE_FILTER
+        },
+        include: AI_QUALITY_EVIDENCE_INCLUDE
+      });
+    if (traces.length !== traceIds.length) {
+      throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+    }
+    const traceById = new Map(traces.map((trace) => [trace.id, trace]));
+    const orderedTraces = traceIds.flatMap((traceId) => {
       const trace = traceById.get(traceId);
       return trace ? [trace] : [];
-    })
-  };
+    });
+    await tx.adminAuditLog.createMany({
+      data: orderedTraces.map((trace) => ({
+        adminUsername: input.adminUsername,
+        targetUserId: trace.userId,
+        resourceType: "ai_quality_evidence",
+        resourceId: trace.id,
+        action: "view_content"
+      }))
+    });
+
+    return { candidateId: candidate.id, total, traces: orderedTraces };
+  });
 }
 
 export function reviewOptimizationCandidateStatus(input: {
   id: string;
+  expectedStatus: CandidateMutableStatus;
   status: "approved" | "rejected";
   adminUsername: string;
   reviewReason?: string | null;
 }) {
   return prisma.$transaction(async (tx) => {
-    const candidate = await tx.aIOptimizationCandidate.update({
+    const snapshot = await tx.aIOptimizationCandidate.findUnique({
       where: { id: input.id },
+      select: {
+        id: true,
+        evidenceTraceIds: true,
+        fewShotExamples: { select: { sourceTraceId: true } }
+      }
+    });
+    if (!snapshot) throw new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND");
+    await lockCurrentConsentForTraceIds(tx, [
+      ...snapshot.evidenceTraceIds,
+      ...snapshot.fewShotExamples.map((example) => example.sourceTraceId)
+    ]);
+    await lockCandidateAtExpectedStatus(
+      tx,
+      input.id,
+      [input.expectedStatus],
+      input.status === "approved"
+        ? "OPTIMIZATION_CANDIDATE_NOT_DRAFT"
+        : "OPTIMIZATION_CANDIDATE_NOT_REVIEWABLE"
+    );
+    const updated = await tx.aIOptimizationCandidate.updateMany({
+      where: { id: input.id, status: input.expectedStatus },
       data: {
         status: input.status,
         reviewedBy: input.adminUsername,
@@ -450,6 +920,13 @@ export function reviewOptimizationCandidateStatus(input: {
         reviewReason: input.status === "rejected" ? input.reviewReason?.trim() ?? null : null
       }
     });
+    if (updated.count !== 1) {
+      throw new Error(
+        input.status === "approved"
+          ? "OPTIMIZATION_CANDIDATE_NOT_DRAFT"
+          : "OPTIMIZATION_CANDIDATE_NOT_REVIEWABLE"
+      );
+    }
     await tx.adminAuditLog.create({
       data: {
         adminUsername: input.adminUsername,
@@ -458,7 +935,7 @@ export function reviewOptimizationCandidateStatus(input: {
         action: input.status === "approved" ? "approve" : "reject"
       }
     });
-    return candidate;
+    return tx.aIOptimizationCandidate.findUniqueOrThrow({ where: { id: input.id } });
   });
 }
 
@@ -501,21 +978,87 @@ function readProposal(value: Prisma.JsonValue) {
     : {};
 }
 
+async function loadValidationTraceIds(
+  tx: Prisma.TransactionClient,
+  validationId: string
+) {
+  const rows = await tx.$queryRaw<Array<{ traceId: string | null }>>(Prisma.sql`
+    SELECT DISTINCT result_item ->> 'traceId' AS "traceId"
+    FROM "AIOptimizationValidation" AS validation
+    CROSS JOIN LATERAL jsonb_array_elements(
+      CASE
+        WHEN jsonb_typeof(validation."results") = 'array' THEN validation."results"
+        ELSE '[]'::jsonb
+      END
+    ) AS result_item
+    WHERE validation."id" = ${validationId}
+      AND result_item ? 'traceId'
+  `);
+  return uniqueSorted(rows.flatMap((row) =>
+    typeof row.traceId === "string" && row.traceId ? [row.traceId] : []
+  ));
+}
+
 export async function publishOptimizationCandidate(candidateId: string, adminUsername: string) {
   return prisma.$transaction(async (tx) => {
+    const snapshot = await tx.aIOptimizationCandidate.findUnique({
+      where: { id: candidateId },
+      select: {
+        id: true,
+        status: true,
+        evidenceTraceIds: true,
+        fewShotExamples: { select: { id: true, sourceTraceId: true } },
+        validations: {
+          where: { status: "passed" },
+          orderBy: { startedAt: "desc" },
+          take: 1,
+          select: { id: true }
+        }
+      }
+    });
+    if (!snapshot) throw new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND");
+    if (snapshot.status !== "approved") throw new Error("OPTIMIZATION_CANDIDATE_NOT_APPROVED");
+    if (snapshot.validations.length === 0) throw new Error("OPTIMIZATION_VALIDATION_REQUIRED");
+    const validationTraceIds = await loadValidationTraceIds(tx, snapshot.validations[0].id);
+    await lockCurrentConsentForTraceIds(tx, [
+      ...snapshot.evidenceTraceIds,
+      ...snapshot.fewShotExamples.map((example) => example.sourceTraceId),
+      ...validationTraceIds
+    ]);
+    await lockCandidateAtExpectedStatus(
+      tx,
+      candidateId,
+      ["approved"],
+      "OPTIMIZATION_CANDIDATE_NOT_APPROVED"
+    );
     const candidate = await tx.aIOptimizationCandidate.findUnique({
       where: { id: candidateId },
       include: {
-        fewShotExamples: true,
-        validations: { where: { status: "passed" }, orderBy: { startedAt: "desc" }, take: 1 }
+        fewShotExamples: {
+          where: { sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER } }
+        },
+        validations: {
+          where: { status: "passed" },
+          orderBy: { startedAt: "desc" },
+          take: 1,
+          select: { id: true }
+        }
       }
     });
-
-    if (!candidate) throw new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND");
-    if (candidate.status !== "approved") throw new Error("OPTIMIZATION_CANDIDATE_NOT_APPROVED");
+    if (
+      !candidate
+      || candidate.status !== "approved"
+      || !sameStringSet(candidate.evidenceTraceIds, snapshot.evidenceTraceIds)
+      || !sameStringSet(
+        candidate.fewShotExamples.map((example) => example.id),
+        snapshot.fewShotExamples.map((example) => example.id)
+      )
+      || candidate.validations[0]?.id !== snapshot.validations[0].id
+    ) {
+      throw new Error("OPTIMIZATION_CANDIDATE_STATE_CHANGED");
+    }
     if (candidate.path === "engineering") throw new Error("ENGINEERING_CANDIDATE_CANNOT_PUBLISH");
     if (!candidate.promptKey) throw new Error("OPTIMIZATION_PROMPT_KEY_MISSING");
-    if (candidate.validations.length === 0) throw new Error("OPTIMIZATION_VALIDATION_REQUIRED");
 
     const now = new Date();
     const proposal = readProposal(candidate.proposal);
@@ -534,7 +1077,11 @@ export async function publishOptimizationCandidate(candidateId: string, adminUse
     }
 
     const rankedExamples = await tx.aIFewShotExample.findMany({
-      where: { promptKey: candidate.promptKey, status: "active" },
+      where: {
+        promptKey: candidate.promptKey,
+        status: "active",
+        sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER }
+      },
       select: { id: true },
       orderBy: [{ qualityScore: "desc" }, { promotedAt: "desc" }]
     });
@@ -563,10 +1110,11 @@ export async function publishOptimizationCandidate(candidateId: string, adminUse
         publishedBy: adminUsername
       }
     });
-    await tx.aIOptimizationCandidate.update({
-      where: { id: candidate.id },
+    const published = await tx.aIOptimizationCandidate.updateMany({
+      where: { id: candidate.id, status: "approved" },
       data: { status: "published", publishedBy: adminUsername, publishedAt: now }
     });
+    if (published.count !== 1) throw new Error("OPTIMIZATION_CANDIDATE_NOT_APPROVED");
     await tx.adminAuditLog.create({
       data: {
         adminUsername,
@@ -617,18 +1165,94 @@ export async function rollbackOptimizationCandidate(candidateId: string, adminUs
   });
 }
 
-export function loadActivePromptOptimization(promptKey: string) {
-  return Promise.all([
+export type ActivePromptOptimization = {
+  promptCandidate: {
+    id: string;
+    proposal: Prisma.JsonValue;
+    publishedAt: Date | null;
+  } | null;
+  fewShotExamples: Array<{
+    id: string;
+    inputSnapshot: Prisma.JsonValue;
+    output: Prisma.JsonValue;
+    qualityScore: number;
+  }>;
+};
+
+export async function runWithActivePromptOptimizationConsentLease<T>(
+  promptKey: string,
+  operation: (optimization: ActivePromptOptimization) => Promise<T>
+) {
+  const [promptCandidate, exampleMetadata] = await Promise.all([
     prisma.aIOptimizationCandidate.findFirst({
       where: { promptKey, path: "system_prompt", status: "published" },
       select: { id: true, proposal: true, publishedAt: true },
       orderBy: { publishedAt: "desc" }
     }),
     prisma.aIFewShotExample.findMany({
-      where: { promptKey, status: "active" },
-      select: { id: true, inputSnapshot: true, output: true, qualityScore: true },
+      where: {
+        promptKey,
+        status: "active",
+        sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER }
+      },
+      select: { id: true, sourceTraceId: true },
       orderBy: [{ qualityScore: "desc" }, { promotedAt: "desc" }],
       take: 6
     })
-  ]).then(([promptCandidate, fewShotExamples]) => ({ promptCandidate, fewShotExamples }));
+  ]);
+
+  if (exampleMetadata.length === 0) {
+    return operation({ promptCandidate, fewShotExamples: [] });
+  }
+
+  return prisma.$transaction(async (tx) => {
+    await lockCurrentConsentForTraceIds(
+      tx,
+      exampleMetadata.map((example) => example.sourceTraceId)
+    );
+
+    const orderedExampleIds = uniqueSorted(exampleMetadata.map((example) => example.id));
+    const lockedExamples = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+      SELECT "id"
+      FROM "AIFewShotExample"
+      WHERE "id" IN (${Prisma.join(orderedExampleIds)})
+      ORDER BY "id" ASC
+      FOR SHARE
+    `);
+    if (lockedExamples.length !== orderedExampleIds.length) {
+      throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+    }
+
+    const fewShotExamples = await tx.aIFewShotExample.findMany({
+      where: {
+        id: { in: orderedExampleIds },
+        promptKey,
+        status: "active",
+        sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER }
+      },
+      select: {
+        id: true,
+        sourceTraceId: true,
+        inputSnapshot: true,
+        output: true,
+        qualityScore: true
+      },
+      orderBy: [{ qualityScore: "desc" }, { promotedAt: "desc" }]
+    });
+    if (
+      fewShotExamples.length !== exampleMetadata.length
+      || !sameStringSet(
+        fewShotExamples.map((example) => example.id),
+        exampleMetadata.map((example) => example.id)
+      )
+      || fewShotExamples.some((example) =>
+        exampleMetadata.find((metadata) => metadata.id === example.id)?.sourceTraceId
+          !== example.sourceTraceId
+      )
+    ) {
+      throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+    }
+
+    return operation({ promptCandidate, fewShotExamples });
+  }, { maxWait: 5_000, timeout: 55_000 });
 }

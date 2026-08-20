@@ -4,10 +4,7 @@ const repository = vi.hoisted(() => ({
   findAIQualityImpactTraces: vi.fn(),
   findAIQualityImpactEvidencePage: vi.fn()
 }));
-const recordAdminAuditLog = vi.hoisted(() => vi.fn());
-
 vi.mock("@/server/repositories/ai-quality-impact.repository", () => repository);
-vi.mock("@/server/repositories/admin-analytics.repository", () => ({ recordAdminAuditLog }));
 vi.mock("@/server/services/admin-read-retry", () => ({
   withAdminReadRetry: (operation: () => Promise<unknown>) => operation()
 }));
@@ -157,7 +154,7 @@ describe("AI quality impact service", () => {
     );
   });
 
-  it("paginates impact evidence and records content-view audits after the read succeeds", async () => {
+  it("passes administrator identity into the atomic impact-evidence read", async () => {
     repository.findAIQualityImpactRelease.mockResolvedValue({
       id: "candidate-1",
       path: "system_prompt",
@@ -192,8 +189,6 @@ describe("AI quality impact service", () => {
         interviewMessage: null
       }]
     });
-    recordAdminAuditLog.mockResolvedValue({ id: "audit-1" });
-
     const result = await getAIQualityCandidateImpactEvidence({
       candidateId: "candidate-1",
       adminUsername: "admin_user",
@@ -203,12 +198,12 @@ describe("AI quality impact service", () => {
     });
 
     expect(result).toMatchObject({ total: 1, pageSize: 5, items: [{ traceId: "trace-evidence" }] });
-    expect(recordAdminAuditLog).toHaveBeenCalledWith({
+    expect(repository.findAIQualityImpactEvidencePage).toHaveBeenCalledWith(expect.objectContaining({
+      candidateId: "candidate-1",
       adminUsername: "admin_user",
-      targetUserId: "user-1",
-      resourceType: "ai_quality_impact_evidence",
-      resourceId: "trace-evidence",
-      action: "view_content"
-    });
+      kind: "positive",
+      page: 1,
+      pageSize: 5
+    }));
   });
 });

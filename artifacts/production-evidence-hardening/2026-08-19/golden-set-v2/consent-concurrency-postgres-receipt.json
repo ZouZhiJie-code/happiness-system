@@ -1,0 +1,204 @@
+{
+  "schemaVersion": "1.0",
+  "gateId": "stage3-ai-quality-consent-postgres-v4",
+  "status": "passed",
+  "executedAt": "2026-08-20",
+  "environment": {
+    "kind": "dedicated_local_loopback_postgresql",
+    "database": "daily_light_e2e_validation_20260819",
+    "pgvectorSchema": "public",
+    "productionDatabaseUsed": false
+  },
+  "preflight": {
+    "noActiveE2EOrProductServer": true,
+    "existingE2ESchemaCount": 0,
+    "existingStage3ConsentSchemaCount": 0,
+    "targetSchemaExisted": false
+  },
+  "setupAttempts": [
+    {
+      "schema": "daily_light_stage3_consent_da9559a29e3b",
+      "status": "test_fixture_rejected_before_concurrency",
+      "reasonCode": "INTERVIEW_SESSION_MODE_DIMENSION_FIXTURE_CONSTRAINT",
+      "schemaDropped": true,
+      "residualSchemaCount": 0,
+      "modelCallCount": 0
+    },
+    {
+      "schema": "daily_light_stage3_consent_3338f103fff4",
+      "status": "test_fixture_rejected_before_concurrency",
+      "reasonCode": "INTERVIEW_SESSION_PROTOCOL_FIXTURE_CONSTRAINT",
+      "schemaDropped": true,
+      "residualSchemaCount": 0,
+      "modelCallCount": 0
+    },
+    {
+      "schema": "daily_light_stage3_consent_874fab294180",
+      "status": "test_harness_rejected_before_lock_observation",
+      "reasonCode": "ADVISORY_LOCK_VOID_DESERIALIZATION",
+      "schemaDropped": true,
+      "residualSchemaCount": 0,
+      "modelCallCount": 0
+    }
+  ],
+  "finalRun": {
+    "schema": "daily_light_stage3_consent_5f621b969f9e5945",
+    "migrationsApplied": 45,
+    "testFileCount": 1,
+    "testCaseCount": 12,
+    "scenarioCount": 18,
+    "passedScenarioCount": 18,
+    "failedScenarioCount": 0,
+    "scenarios": [
+      {
+        "id": "candidate_create_then_withdrawal",
+        "candidateOperationResult": "completed_before_waiting_withdrawal",
+        "finalCandidateStatus": "rejected"
+      },
+      {
+        "id": "candidate_approve_then_withdrawal",
+        "candidateOperationResult": "completed_before_waiting_withdrawal",
+        "finalCandidateStatus": "rejected"
+      },
+      {
+        "id": "candidate_publish_then_withdrawal",
+        "candidateOperationResult": "completed_before_waiting_withdrawal",
+        "finalCandidateStatus": "published_history_preserved"
+      },
+      {
+        "id": "candidate_validation_start_then_withdrawal",
+        "candidateOperationResult": "started_before_waiting_withdrawal",
+        "validationCompletionResult": "rejected_consent_required"
+      },
+      {
+        "id": "withdrawal_then_candidate_create",
+        "withdrawalResult": "completed_before_waiting_candidate_operation",
+        "candidateOperationResult": "rejected_consent_required"
+      },
+      {
+        "id": "withdrawal_then_candidate_approve",
+        "withdrawalResult": "completed_before_waiting_candidate_operation",
+        "candidateOperationResult": "rejected_consent_or_state_changed"
+      },
+      {
+        "id": "withdrawal_then_candidate_publish",
+        "withdrawalResult": "completed_before_waiting_candidate_operation",
+        "candidateOperationResult": "rejected_consent_or_state_changed"
+      },
+      {
+        "id": "withdrawal_then_candidate_validation",
+        "withdrawalResult": "completed_before_waiting_candidate_operation",
+        "candidateOperationResult": "rejected_consent_or_state_changed"
+      },
+      {
+        "id": "active_few_shot_then_new_draft_reuse",
+        "candidateOperationResult": "rejected_source_already_bound",
+        "activeFewShotBodyResult": "unchanged"
+      },
+      {
+        "id": "concurrent_validation_start",
+        "firstValidationResult": "running_created",
+        "secondValidationResult": "rejected_already_running",
+        "runningValidationCount": 1
+      },
+      {
+        "id": "multi_user_reverse_evidence_then_withdrawals",
+        "candidateOperationResult": "completed_before_two_waiting_withdrawals",
+        "withdrawalResult": "both_completed_without_deadlock",
+        "finalCandidateStatus": "rejected_with_zero_direct_evidence_trace_ids"
+      },
+      {
+        "id": "shared_candidate_dual_withdrawal_stale_read_regression",
+        "lockObservation": "first_candidate_update_waited_on_gate_second_withdrawal_waited_on_candidate_row",
+        "withdrawalResult": "both_completed_without_lost_update",
+        "finalCandidateStatus": "rejected_with_zero_direct_evidence_trace_ids"
+      },
+      {
+        "id": "validation_dispatch_lease_then_withdrawal",
+        "dispatchResult": "completed_once_before_waiting_withdrawal",
+        "withdrawalResult": "completed_after_validation_transaction",
+        "validationStatus": "passed"
+      },
+      {
+        "id": "validation_provider_failure_no_retry",
+        "dispatchCallbackCount": 1,
+        "validationStatus": "error",
+        "errorCode": "VALIDATION_PROVIDER_UNAVAILABLE"
+      },
+      {
+        "id": "active_few_shot_dispatch_lease_then_withdrawal",
+        "dispatchResult": "completed_once_before_waiting_withdrawal",
+        "withdrawalResult": "completed_after_dispatch_transaction",
+        "postWithdrawalActiveExampleCount": 0
+      },
+      {
+        "id": "impact_evidence_read_then_withdrawal",
+        "readResult": "content_and_audit_completed_before_waiting_withdrawal",
+        "withdrawalResult": "completed_after_read_transaction",
+        "postWithdrawalReadCount": 0,
+        "postWithdrawalAuditIncrement": 0
+      },
+      {
+        "id": "save_shared_lock_then_withdrawal",
+        "saveResult": "completed",
+        "withdrawalResult": "completed_after_wait"
+      },
+      {
+        "id": "withdrawal_exclusive_lock_then_save",
+        "withdrawalResult": "completed",
+        "saveResult": "rejected_consent_required_after_wait"
+      }
+    ]
+  },
+  "finalPrivacyAssertions": {
+    "activeFeedbackCount": 0,
+    "caseUserSignalCount": 0,
+    "downvotedRegenerationCount": 0,
+    "activeOrCandidateFewShotCount": 0,
+    "pendingOptimizationCandidateCount": 0,
+    "automaticBadCaseWithoutFeedbackCovered": true,
+    "pendingCandidateDirectEvidenceTraceIdsRemoved": true,
+    "publishedAndRolledBackCandidateHistoryPreserved": true,
+    "validationCompletionAfterWithdrawalRejected": true,
+    "activeFewShotBodyPreservedAgainstDraftReuse": true,
+    "singleRunningValidationPerCandidate": true,
+    "multiUserStableLockOrderCovered": true,
+    "sharedCandidateLostUpdatePrevented": true,
+    "validationDispatchWithdrawalLeaseCovered": true,
+    "validationProviderFailureNotRetried": true,
+    "activeFewShotDispatchWithdrawalLeaseCovered": true,
+    "impactEvidenceWithdrawalLeaseCovered": true,
+    "consentRevoked": true
+  },
+  "cleanup": {
+    "schemaDropped": true,
+    "residualSchemaCount": 0,
+    "testTraceCountAfterScenarioCleanup": 0
+  },
+  "safetyReceipt": {
+    "productionContentReadCount": 0,
+    "modelCallCount": 0,
+    "aiRequestLogCount": 0,
+    "prismaSchemaChanged": false,
+    "repositoryMigrationChanged": false,
+    "publicEvidenceContainsUserContent": false,
+    "publicEvidenceContainsUserIdentity": false,
+    "credentialRecorded": false
+  },
+  "rebaseVerification": {
+    "executedAt": "2026-08-20",
+    "baseSha": "aef37577aecb6b79c87ae9808c57905674dff4cb",
+    "codeHead": "5f5d6cc3dacdb6908353d99a44dbf655c5ff8c29",
+    "schema": "daily_light_stage3_consent_97e68623ca324b9e",
+    "testFileCount": 1,
+    "testCaseCount": 12,
+    "scenarioCount": 18,
+    "passedScenarioCount": 18,
+    "failedScenarioCount": 0,
+    "aiRequestLogCount": 0,
+    "traceCount": 0,
+    "modelCallCount": 0,
+    "schemaDropped": true,
+    "residualSchemaCount": 0
+  }
+}

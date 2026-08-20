@@ -1,14 +1,9 @@
-const { findOptimizationCandidateEvidencePage, recordAdminAuditLog } = vi.hoisted(() => ({
-  findOptimizationCandidateEvidencePage: vi.fn(),
-  recordAdminAuditLog: vi.fn()
+const { findOptimizationCandidateEvidencePage } = vi.hoisted(() => ({
+  findOptimizationCandidateEvidencePage: vi.fn()
 }));
 
 vi.mock("@/server/repositories/ai-optimization.repository", () => ({
   findOptimizationCandidateEvidencePage
-}));
-
-vi.mock("@/server/repositories/admin-analytics.repository", () => ({
-  recordAdminAuditLog
 }));
 
 import { getAIOptimizationCandidateEvidence } from "@/server/services/ai-quality/ai-quality-evidence.service";
@@ -16,7 +11,6 @@ import { getAIOptimizationCandidateEvidence } from "@/server/services/ai-quality
 describe("AI quality evidence service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    recordAdminAuditLog.mockResolvedValue({ id: "audit-1" });
   });
 
   it("reconstructs snapshot conversation, feedback and evaluation while recording an audit log", async () => {
@@ -78,12 +72,11 @@ describe("AI quality evidence service", () => {
       expect.objectContaining({ role: "user", text: "我不想继续追问了", isTarget: false }),
       expect.objectContaining({ role: "assistant", text: "我理解你想停下来。\n能再具体讲讲吗？", isTarget: true })
     ]));
-    expect(recordAdminAuditLog).toHaveBeenCalledWith({
+    expect(findOptimizationCandidateEvidencePage).toHaveBeenCalledWith({
+      candidateId: "candidate-1",
       adminUsername: "admin_user",
-      targetUserId: "user-sensitive-id",
-      resourceType: "ai_quality_evidence",
-      resourceId: "trace-1",
-      action: "view_content"
+      page: 1,
+      pageSize: 5
     });
   });
 

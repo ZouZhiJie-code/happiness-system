@@ -9,6 +9,10 @@ import { logger } from "@/server/lib/logger";
 
 export const runtime = "nodejs";
 
+const PRIVATE_NO_STORE_HEADERS = {
+  "Cache-Control": "private, no-store"
+} as const;
+
 export async function GET(request: Request, context: { params: Promise<{ candidateId: string }> }) {
   const requestId = randomUUID();
   try {
@@ -17,16 +21,22 @@ export async function GET(request: Request, context: { params: Promise<{ candida
     const url = new URL(request.url);
     const kind = url.searchParams.get("kind");
     if (kind !== "attention" && kind !== "positive") {
-      return NextResponse.json({ error: "INVALID_IMPACT_EVIDENCE_KIND", requestId }, { status: 400 });
+      return NextResponse.json(
+        { error: "INVALID_IMPACT_EVIDENCE_KIND", requestId },
+        { status: 400, headers: PRIVATE_NO_STORE_HEADERS }
+      );
     }
     const rawPage = Number(url.searchParams.get("page") ?? "1");
     const page = Number.isFinite(rawPage) ? rawPage : 1;
-    return NextResponse.json(await getAIQualityCandidateImpactEvidence({
-      candidateId,
-      adminUsername: admin.username,
-      kind,
-      page
-    }));
+    return NextResponse.json(
+      await getAIQualityCandidateImpactEvidence({
+        candidateId,
+        adminUsername: admin.username,
+        kind,
+        page
+      }),
+      { headers: PRIVATE_NO_STORE_HEADERS }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "AI_QUALITY_IMPACT_EVIDENCE_FAILED";
     const status = message === "AUTHENTICATION_REQUIRED"
@@ -37,7 +47,9 @@ export async function GET(request: Request, context: { params: Promise<{ candida
           ? 404
           : message === "OPTIMIZATION_IMPACT_UNAVAILABLE"
             ? 409
-            : 500;
+            : message === "OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED"
+              ? 409
+              : 500;
     if (status === 500) logger.error({ err: error, requestId }, "Loading AI quality impact evidence failed.");
     return NextResponse.json(
       {
@@ -45,7 +57,7 @@ export async function GET(request: Request, context: { params: Promise<{ candida
         code: getTransientAdminReadErrorCode(error) ?? (status === 500 ? "AI_QUALITY_IMPACT_EVIDENCE_FAILED" : message),
         requestId
       },
-      { status }
+      { status, headers: PRIVATE_NO_STORE_HEADERS }
     );
   }
 }

@@ -68,7 +68,7 @@ import { formatAIProviderUnavailableCode, getAIProvider, getAIProviderStatus } f
 import type { AIProvider } from "@/server/services/ai/ai-provider";
 import { getAIProviderFailureCode } from "@/server/services/ai/ai-provider";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
-import { resolveOptimizedPromptEnvelope } from "@/server/services/ai-quality/prompt-optimization.service";
+import { runWithOptimizedPromptEnvelope } from "@/server/services/ai-quality/prompt-optimization.service";
 import type {
   AssistantDepth,
   AssistantQuestionSpec,
@@ -1231,58 +1231,60 @@ async function requestAssistantReplySegments(
     return null;
   }
 
-  const envelope = await resolveOptimizedPromptEnvelope(
+  return runWithOptimizedPromptEnvelope(
     createPromptEnvelope({
       promptKey: getInterviewPromptKey("question", input.dimension),
       messages: getQuestionMessages(input)
-    })
-  );
-  const attempts: boolean[] = onDelta && provider.stream ? [true] : [false];
+    }),
+    async (envelope) => {
+      const attempts: boolean[] = onDelta && provider.stream ? [true] : [false];
 
-  for (const [attemptIndex, useStream] of attempts.entries()) {
-    try {
-      const result = await runAssistantQuestionAttempt({
-        provider,
-        sessionId: input.sessionId,
-        envelope,
-        traceId: input.traceId,
-        requestId: input.requestId,
-        attempt: attemptIndex + 1,
-        stream: useStream,
-        onDelta,
-        signal
-      });
+      for (const [attemptIndex, useStream] of attempts.entries()) {
+        try {
+          const result = await runAssistantQuestionAttempt({
+            provider,
+            sessionId: input.sessionId,
+            envelope,
+            traceId: input.traceId,
+            requestId: input.requestId,
+            attempt: attemptIndex + 1,
+            stream: useStream,
+            onDelta,
+            signal
+          });
 
-      if (result) {
-        return result;
-      }
-    } catch (error) {
-      if (signal?.aborted) {
-        throw error;
-      }
+          if (result) {
+            return result;
+          }
+        } catch (error) {
+          if (signal?.aborted) {
+            throw error;
+          }
 
-      await logAttempt(input.sessionId, {
-        stage: "question",
-        attempt: attemptIndex + 1,
-        provider: provider.name,
-        success: false,
-        latencyMs: null,
-        errorCode: `QUESTION_${getAIProviderFailureCode(error)}`
-      }, {
-        traceId: input.traceId,
-        requestId: input.requestId,
-        envelope,
-        params: {
-          temperature: 0.45,
-          maxTokens: 500,
-          timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
-          stream: useStream
+          await logAttempt(input.sessionId, {
+            stage: "question",
+            attempt: attemptIndex + 1,
+            provider: provider.name,
+            success: false,
+            latencyMs: null,
+            errorCode: `QUESTION_${getAIProviderFailureCode(error)}`
+          }, {
+            traceId: input.traceId,
+            requestId: input.requestId,
+            envelope,
+            params: {
+              temperature: 0.45,
+              maxTokens: 500,
+              timeoutMs: INTERVIEW_QUESTION_TIMEOUT_MS,
+              stream: useStream
+            }
+          });
         }
-      });
-    }
-  }
+      }
 
-  return null;
+      return null;
+    }
+  );
 }
 
 export async function generateJoyAssistantTurn(input: AssistantTurnGenerationInput) {
@@ -1605,7 +1607,7 @@ export async function generateJoyDraftWithAI(
     },
     "Starting joy draft generation."
   );
-  const envelope = await resolveOptimizedPromptEnvelope(
+  const aiResult = await runWithOptimizedPromptEnvelope(
     createPromptEnvelope({
       promptKey: getInterviewPromptKey("journal", session.dimension),
       messages: buildJoyDraftMessages({
@@ -1622,39 +1624,39 @@ export async function generateJoyDraftWithAI(
             }
           : null
       })
+    }),
+    (envelope) => completeStructuredOutput({
+      provider,
+      providerUnavailableCode: provider ? undefined : formatAIProviderUnavailableCode("DRAFT_PROVIDER", providerStatus),
+      stage: "generate",
+      schema: joyDraftResultSchema,
+      messages: envelope.messages,
+      temperature: 0.35,
+      maxTokens: generationOptions.maxTokens,
+      maxAttempts: generationOptions.maxAttempts,
+      timeoutMs: generationOptions.timeoutMs,
+      onAttempt: (attempt) =>
+        logAttempt(
+          session.id,
+          {
+            ...attempt,
+            errorCode: attempt.errorCode ? `DRAFT_${attempt.errorCode}` : null
+          },
+          {
+            traceId: trace?.traceId,
+            requestId: trace?.requestId,
+            envelope,
+            params: {
+              temperature: 0.35,
+              maxTokens: generationOptions.maxTokens,
+              maxAttempts: generationOptions.maxAttempts,
+              timeoutMs: generationOptions.timeoutMs,
+              generationMode
+            }
+          }
+        )
     })
   );
-  const aiResult = await completeStructuredOutput({
-    provider,
-    providerUnavailableCode: provider ? undefined : formatAIProviderUnavailableCode("DRAFT_PROVIDER", providerStatus),
-    stage: "generate",
-    schema: joyDraftResultSchema,
-    messages: envelope.messages,
-    temperature: 0.35,
-    maxTokens: generationOptions.maxTokens,
-    maxAttempts: generationOptions.maxAttempts,
-    timeoutMs: generationOptions.timeoutMs,
-    onAttempt: (attempt) =>
-      logAttempt(
-        session.id,
-        {
-          ...attempt,
-          errorCode: attempt.errorCode ? `DRAFT_${attempt.errorCode}` : null
-        },
-        {
-          traceId: trace?.traceId,
-          requestId: trace?.requestId,
-          envelope,
-          params: {
-            temperature: 0.35,
-            maxTokens: generationOptions.maxTokens,
-            maxAttempts: generationOptions.maxAttempts,
-            timeoutMs: generationOptions.timeoutMs,
-            generationMode
-          }
-        }
-      )
-  });
 
   if (!aiResult) {
     if (trace?.traceId) {

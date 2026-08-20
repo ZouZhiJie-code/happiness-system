@@ -3,6 +3,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import {
   AI_QUALITY_EVIDENCE_INCLUDE,
+  CURRENT_CONSENT_TRACE_FILTER,
+  lockCurrentConsentForTraceIds,
   type AIQualityEvidenceTrace
 } from "@/server/repositories/ai-optimization.repository";
 
@@ -106,7 +108,10 @@ function impactEvidenceWhere(input: {
   versionMarker: string;
   kind: "attention" | "positive";
 }): Prisma.AIGenerationTraceWhereInput {
-  const base = traceWindowWhere(input);
+  const base = {
+    ...traceWindowWhere(input),
+    ...CURRENT_CONSENT_TRACE_FILTER
+  };
   if (input.kind === "attention") {
     return {
       ...base,
@@ -126,8 +131,9 @@ function impactEvidenceWhere(input: {
   };
 }
 
-export async function findAIQualityImpactEvidencePage(input: {
+export type AIQualityImpactEvidencePageInput = {
   candidateId: string;
+  adminUsername: string;
   promptKey: string;
   start: Date;
   end: Date;
@@ -135,15 +141,71 @@ export async function findAIQualityImpactEvidencePage(input: {
   kind: "attention" | "positive";
   page: number;
   pageSize: number;
-}) {
+};
+
+export async function findAIQualityImpactEvidencePageWithinTransaction(
+  tx: Prisma.TransactionClient,
+  input: AIQualityImpactEvidencePageInput
+) {
   const where = impactEvidenceWhere(input);
-  const total = await prisma.aIGenerationTrace.count({ where });
-  const traces = await prisma.aIGenerationTrace.findMany({
+  const total = await tx.aIGenerationTrace.count({ where });
+  const metadata = await tx.aIGenerationTrace.findMany({
     where,
-    include: AI_QUALITY_EVIDENCE_INCLUDE,
+    select: { id: true, userId: true },
     orderBy: { createdAt: "desc" },
     skip: (input.page - 1) * input.pageSize,
     take: input.pageSize
   });
-  return { candidateId: input.candidateId, total, traces: traces as AIQualityEvidenceTrace[] };
+  if (metadata.length === 0) {
+    return { candidateId: input.candidateId, total, traces: [] as AIQualityEvidenceTrace[] };
+  }
+
+  const traceIds = metadata.map((trace) => trace.id);
+  await lockCurrentConsentForTraceIds(tx, traceIds);
+
+  const currentMetadata = await tx.aIGenerationTrace.findMany({
+    where: { ...where, id: { in: traceIds } },
+    select: { id: true, userId: true }
+  });
+  if (
+    currentMetadata.length !== traceIds.length
+    || traceIds.some((traceId) => !currentMetadata.some((trace) => trace.id === traceId))
+  ) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  const traces = await tx.aIGenerationTrace.findMany({
+    where: { ...where, id: { in: traceIds } },
+    include: AI_QUALITY_EVIDENCE_INCLUDE
+  });
+  if (traces.length !== traceIds.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+  const traceById = new Map(traces.map((trace) => [trace.id, trace]));
+  const orderedTraces = traceIds.flatMap((traceId) => {
+    const trace = traceById.get(traceId);
+    return trace ? [trace] : [];
+  });
+
+  await tx.adminAuditLog.createMany({
+    data: orderedTraces.map((trace) => ({
+      adminUsername: input.adminUsername,
+      targetUserId: trace.userId,
+      resourceType: "ai_quality_impact_evidence",
+      resourceId: trace.id,
+      action: "view_content"
+    }))
+  });
+
+  return {
+    candidateId: input.candidateId,
+    total,
+    traces: orderedTraces as AIQualityEvidenceTrace[]
+  };
+}
+
+export function findAIQualityImpactEvidencePage(input: AIQualityImpactEvidencePageInput) {
+  return prisma.$transaction((tx) => (
+    findAIQualityImpactEvidencePageWithinTransaction(tx, input)
+  ));
 }
