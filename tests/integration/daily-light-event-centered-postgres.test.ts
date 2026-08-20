@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { getTodayEntryDate } from "@/features/interview/entry-date";
@@ -11,6 +11,44 @@ const INTEGRATION_ENABLED =
   process.env.DAILY_LIGHT_EVENT_CENTERED_POSTGRES_INTEGRATION === "I_UNDERSTAND";
 const describeIntegration = INTEGRATION_ENABLED ? describe : describe.skip;
 const TEST_TIMEOUT_MS = 60_000;
+
+async function waitForConcurrentTurnUpdateWaiters(
+  database: PrismaClient,
+  expected: number
+) {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    const rows = await database.$queryRaw<Array<{ count: number }>>(Prisma.sql`
+      SELECT COUNT(*)::int AS "count"
+      FROM pg_stat_activity
+      WHERE datname = current_database()
+        AND pid <> pg_backend_pid()
+        AND wait_event_type = 'Lock'
+        AND query ILIKE '%UPDATE%'
+        AND query ILIKE '%InterviewUserTurn%'
+    `);
+    if ((rows[0]?.count ?? 0) >= expected) return;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error("CONCURRENT_RESUME_UPDATE_WAITERS_NOT_OBSERVED");
+}
+
+async function waitForTurnAttemptCount(
+  database: PrismaClient,
+  turnId: string,
+  expected: number
+) {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    const turn = await database.interviewUserTurn.findUnique({
+      where: { id: turnId },
+      select: { attemptCount: true }
+    });
+    if (turn?.attemptCount === expected) return;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error("CONCURRENT_RESUME_ATTEMPT_COUNT_NOT_OBSERVED");
+}
 
 function resolveIsolatedDatabaseUrl() {
   if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {
@@ -32,11 +70,15 @@ function resolveIsolatedDatabaseUrl() {
 describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
   const userId = `daily-light-it-${randomUUID()}`;
   const username = `daily_light_it_${randomUUID().replaceAll("-", "")}`;
+  const recoveryUserId = `daily-light-recovery-it-${randomUUID()}`;
+  const recoveryUsername = `daily_light_recovery_it_${randomUUID().replaceAll("-", "")}`;
   const entryDate = getTodayEntryDate();
   let database: PrismaClient;
   let serviceDatabase: PrismaClient;
   let startEventCenteredInterview: typeof import("@/server/services/interview/event-centered-interview.service").startEventCenteredInterview;
+  let acceptEventCenteredUserTurn: typeof import("@/server/services/interview/event-centered-interview.service").acceptEventCenteredUserTurn;
   let respondEventCenteredInterview: typeof import("@/server/services/interview/event-centered-interview.service").respondEventCenteredInterview;
+  let markEventCenteredTurnUnderstandingFailed: typeof import("@/server/services/interview/event-centered-interview.service").markEventCenteredTurnUnderstandingFailed;
   let getJournalDailyJournalView: typeof import("@/server/repositories/journal-daily-entry.repository").getJournalDailyJournalView;
   let saveJournalDailyEntry: typeof import("@/server/repositories/journal-daily-entry.repository").saveJournalDailyEntry;
   let updateJournalDailyEntry: typeof import("@/server/repositories/journal-daily-entry.repository").updateJournalDailyEntry;
@@ -60,14 +102,23 @@ describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
     if (rows[0]?.schema !== schema) {
       throw new Error("DAILY_LIGHT_INTEGRATION_SCHEMA_RUNTIME_MISMATCH");
     }
-    await database.user.create({
-      data: {
-        id: userId,
-        username,
-        passwordHash: "integration-only",
-        agreedToTermsAt: new Date(),
-        agreedToPrivacyAt: new Date()
-      }
+    await database.user.createMany({
+      data: [
+        {
+          id: userId,
+          username,
+          passwordHash: "integration-only",
+          agreedToTermsAt: new Date(),
+          agreedToPrivacyAt: new Date()
+        },
+        {
+          id: recoveryUserId,
+          username: recoveryUsername,
+          passwordHash: "integration-only",
+          agreedToTermsAt: new Date(),
+          agreedToPrivacyAt: new Date()
+        }
+      ]
     });
     const interviewService = await import("@/server/services/interview/event-centered-interview.service");
     const dailyRepository = await import("@/server/repositories/journal-daily-entry.repository");
@@ -77,7 +128,10 @@ describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
     const periodService = await import("@/server/services/journal-period-report");
     const prismaModule = await import("@/server/db/prisma");
     startEventCenteredInterview = interviewService.startEventCenteredInterview;
+    acceptEventCenteredUserTurn = interviewService.acceptEventCenteredUserTurn;
     respondEventCenteredInterview = interviewService.respondEventCenteredInterview;
+    markEventCenteredTurnUnderstandingFailed =
+      interviewService.markEventCenteredTurnUnderstandingFailed;
     getJournalDailyJournalView = dailyRepository.getJournalDailyJournalView;
     saveJournalDailyEntry = dailyRepository.saveJournalDailyEntry;
     updateJournalDailyEntry = dailyRepository.updateJournalDailyEntry;
@@ -94,8 +148,12 @@ describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
 
   afterAll(async () => {
     if (!database) return;
-    await database.analyticsEvent.deleteMany({ where: { userId } });
-    await database.user.deleteMany({ where: { id: userId } });
+    await database.analyticsEvent.deleteMany({
+      where: { userId: { in: [userId, recoveryUserId] } }
+    });
+    await database.user.deleteMany({
+      where: { id: { in: [userId, recoveryUserId] } }
+    });
     await database.$disconnect();
     if (serviceDatabase) await serviceDatabase.$disconnect();
   }, TEST_TIMEOUT_MS);
@@ -391,5 +449,153 @@ describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
         role: "user"
       }
     })).toBe(1);
+  }, TEST_TIMEOUT_MS);
+
+  it("serializes two concurrent resumes of the same failed reliable turn", async () => {
+    const session = await startEventCenteredInterview(
+      recoveryUserId,
+      entryDate,
+      "capture",
+      "start-concurrent-resume"
+    );
+    const accepted = await acceptEventCenteredUserTurn({
+      userId: recoveryUserId,
+      rootSessionId: session.rootSessionId,
+      clientTurnId: "failed-resume-turn",
+      rawText: "今天确认了延期风险，并同步了新的交付日期。",
+      inputMode: "text",
+      baseMessageSequence: session.latestMessageSequence,
+      baseBranchSessionId: session.activeBranchSessionId
+    });
+    await markEventCenteredTurnUnderstandingFailed(
+      accepted.turn.id,
+      "AI_TEMPORARY_FAILURE"
+    );
+    await expect(database.interviewUserTurn.findUnique({
+      where: { id: accepted.turn.id },
+      select: { status: true, attemptCount: true, errorCode: true }
+    })).resolves.toEqual({
+      status: "failed",
+      attemptCount: 1,
+      errorCode: "AI_TEMPORARY_FAILURE"
+    });
+
+    const downstreamEntries: string[] = [];
+    type RecoveryResult = Awaited<
+      ReturnType<typeof respondEventCenteredInterview>
+    >;
+    let recoveryPromises: Array<Promise<RecoveryResult>> = [];
+    const request: EventCenteredRespondRequest = {
+      action: "resume_turn",
+      rootSessionId: session.rootSessionId,
+      clientTurnId: "failed-resume-turn"
+    };
+
+    await database.$transaction(async (lockedDatabase) => {
+      await lockedDatabase.$queryRaw(Prisma.sql`
+        SELECT "id"
+        FROM "InterviewUserTurn"
+        WHERE "id" = ${accepted.turn.id}
+        FOR UPDATE
+      `);
+      recoveryPromises = ["resume-a", "resume-b"].map((label) =>
+        respondEventCenteredInterview(recoveryUserId, request, {
+          requestId: label,
+          onTurn: async () => {
+            // Inherited debt: the rejected contender still increments the
+            // reliable turn. Keep the current two-resume observation explicit
+            // without changing production behavior in this refactor batch.
+            await waitForTurnAttemptCount(database, accepted.turn.id, 3);
+          },
+          onPhase: (phase) => {
+            if (phase === "understanding") downstreamEntries.push(label);
+          }
+        })
+      );
+      await waitForConcurrentTurnUpdateWaiters(database, 2);
+    }, {
+      maxWait: 5_000,
+      timeout: 10_000
+    });
+
+    const recoveries = await Promise.allSettled(recoveryPromises);
+    const fulfilled = recoveries.filter(
+      (result): result is PromiseFulfilledResult<RecoveryResult> =>
+        result.status === "fulfilled"
+    );
+    const rejected = recoveries.filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected"
+    );
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0]?.reason).toEqual(expect.objectContaining({
+      message: "EVENT_STATE_CHANGED"
+    }));
+    expect(fulfilled[0]?.value.assistantPayload).toMatchObject({
+      naturalResponse: "好，这段已经记下了。",
+      questionSpec: null
+    });
+    expect(downstreamEntries).toHaveLength(1);
+
+    const [turn, userMessages, assistantMessages, turns, events, traces, requests] =
+      await Promise.all([
+        database.interviewUserTurn.findUnique({
+          where: { id: accepted.turn.id },
+          select: {
+            status: true,
+            attemptCount: true,
+            errorCode: true,
+            completedAt: true
+          }
+        }),
+        database.interviewMessage.count({
+          where: { userTurnId: accepted.turn.id, role: "user" }
+        }),
+        database.interviewMessage.count({
+          where: { userTurnId: accepted.turn.id, role: "assistant" }
+        }),
+        database.interviewUserTurn.count({
+          where: {
+            sessionId: session.activeBranchSessionId,
+            clientTurnId: "failed-resume-turn"
+          }
+        }),
+        database.journalEvent.count({
+          where: { rootSessionId: session.rootSessionId }
+        }),
+        database.aIGenerationTrace.count({
+          where: {
+            journalEventId: accepted.eventId,
+            artifactType: "interview_turn"
+          }
+        }),
+        database.aIRequestLog.count({
+          where: { sessionId: session.activeBranchSessionId }
+        })
+      ]);
+
+    expect(turn).toMatchObject({
+      status: "completed",
+      attemptCount: 3,
+      errorCode: null,
+      completedAt: expect.any(Date)
+    });
+    const resumeAttemptCount = (turn?.attemptCount ?? 1) - 1;
+    expect(resumeAttemptCount).toBe(2);
+    expect({
+      userMessages,
+      assistantMessages,
+      turns,
+      events,
+      traces,
+      requests
+    }).toEqual({
+      userMessages: 1,
+      assistantMessages: 1,
+      turns: 1,
+      events: 1,
+      traces: 1,
+      requests: 0
+    });
   }, TEST_TIMEOUT_MS);
 });
