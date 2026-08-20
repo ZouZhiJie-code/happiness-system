@@ -52,6 +52,15 @@ function acceptedTurnIsVisible(input: {
   );
 }
 
+function clearEventCenteredWorkspaceOutboxForTurn(input: {
+  scope: { rootSessionId: string; branchSessionId: string };
+  clientTurnId: string;
+}) {
+  const current = readEventCenteredWorkspaceOutbox(input.scope);
+  if (current?.request.clientTurnId !== input.clientTurnId) return;
+  clearEventCenteredWorkspaceOutbox(input.scope);
+}
+
 /**
  * Keeps the composer projection aligned with the active server branch.
  * Ordinary message refreshes leave an in-progress draft untouched; only a branch switch restores storage.
@@ -84,10 +93,11 @@ export function useEventCenteredWorkspaceState(workspace: EventCenteredWorkspace
       !acceptedTurnIsVisible({ workspace, outbox })
     ) return;
 
-    clearEventCenteredWorkspaceOutbox(scope);
-    writeEventCenteredComposerDraft(scope, "");
+    clearEventCenteredWorkspaceOutboxForTurn({
+      scope,
+      clientTurnId: outbox.request.clientTurnId
+    });
     setOutbox((current) => current?.request.clientTurnId === outbox.request.clientTurnId ? null : current);
-    setDraft("");
   }, [outbox, scope, workspace]);
 
   const handleComposerDraftChange = useCallback((nextDraft: string) => {
