@@ -13,8 +13,8 @@
 | Production 发布血缘 | 已封存 | `a86a4ba` → tree `70ca8f4` = main merge `305f209` → `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` → `https://dailylight.chat`；回退目标 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2` READY |
 | [数据口径 v2 证据](./analytics-contract-v2/README.md) | Production 已发布·核心回验通过·管理员成功读取 pending | 已封存最终 CI、Preview、只读数据库对账、正式域名核心 smoke 和线上日志；公开回执保持零正文 |
 | [零模型 E2E 证据](./e2e-zero-model/README.md) | 已合入 main·热修复远程门与 main CI 全绿·Preview 通过至需更新·Production blocked | PR #41 合入 `77de8d1`；PR #43 final head 两套 CI 全绿并合入 `795417d`，main CI 全绿；产品源码 `0`，Production 继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` |
-| [Golden Set v2](./golden-set-v2/README.md) | 独立复审与干净重基线本地门通过·收集 pending | `P0=0 / P1=0 / P2=3`；完整轨迹 `0/30`；隔离 PostgreSQL `12` 个测试用例／`18/18` 个并发场景通过且临时 Schema 残留 `0`；正文开关保持关闭，Production 正文读取 `0`、模型调用 `0` |
-| 主链重构证据 | 待验证 | 三批兼容回归、部署和观察回执后续进入本目录 |
+| [Golden Set v2](./golden-set-v2/README.md) | 已合入 main·收集 pending | PR #44 已合入 main `ef7bf94`；`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，正文开关保持关闭，Production 正文读取 `0`、模型调用 `0` |
+| 主链重构证据 | 第一批工程门通过·Preview smoke transport_blocked·最终回执头待验证·Production blocked | PR #45 初始 head 两套 CI 全绿；`b004f38` Preview `dpl_7uHdBKXy9RvZhbWVWrEXWq3jYZAG` Ready，唯一匿名请求在 TLS 握手终止，应用响应 `0`、业务写入／模型端点／Production 访问均 `0`，`AIRequestLog` 增量 `unconfirmed` |
 | [月度洞察 Go/No-Go](./monthly-insight-v1/README.md) | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；真实用户月 `0`、模型调用 `0`，Production 继续使用确定性 `AnalysisNarrative` |
 
 ## 隐私边界
