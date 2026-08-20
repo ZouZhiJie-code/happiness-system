@@ -1,4 +1,4 @@
-# Daily Light 管理分析合同 v2 Preview／数据库／CI 证据
+# Daily Light 管理分析合同 v2 发布证据
 
 - 文档职责：证据索引
 - 文档状态：已完成
@@ -8,34 +8,39 @@
 
 ## 1. 结论
 
-阶段 1 已完成发布前的三层验证：远程 CI 全绿、Preview 行为验收通过、受控日期范围的独立只读数据库统计完成。当前结论为 `Preview Ready / Production 待发布`；正式产品继续运行 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`，本证据不改变 Production 状态。
+阶段 1 已完成发布前的三层验证并发布 Production：远程 CI 全绿、Preview 行为验收通过、受控日期范围的独立只读数据库统计完成，正式域名已指向新 deployment，发布后核心回验通过。当前结论为 `Production 已发布·核心回验通过·管理员成功读取 pending`；管理员白名单存在 `1` 个身份，本轮缺少合法凭证且两种受控浏览器环境均无既有登录态，因此不扩大为 Production 管理员成功读取结论。
 
-本轮保留两条清晰边界：
+本轮保留三条清晰边界：
 
 - 漏斗六步已经完成 Preview API 与独立 SQL 逐项对账，六项差异均为 `0`。
 - 留存与质量区保存本轮独立 SQL 统计；后续 Preview API 再读受到 deployment protection／TLS 路径阻断，因此不声明本轮重新完成了留存与质量的 API 逐字段回读。既有 Preview API smoke 及页面验收结论继续有效。
+- Production 正式域名已完成匿名 `401`、普通用户 `403`、固定验收账号注册登录、会话建立、空记录会话和非法日期错误合同回验；本轮未访问任何模型端点。
 
-机器可读回执见 [`receipt.json`](./receipt.json)。
+发布前 Preview／数据库／CI 原始回执见 [`receipt.json`](./receipt.json)，Production 发布与核心回验回执见 [`production-release-receipt.json`](./production-release-receipt.json)。
 
 ## 2. 版本与发布身份
 
 | 项目 | 身份 |
 |---|---|
 | 数据合同实现 | `7bbe285d10403130f7b596f1109f1313fab006a6` |
-| 发布验证头 | `51925b61406f9feddad31008be46bb6b35f4a10d` |
+| 最终发布头 | `a86a4bab28b24afc06aa5b10db6aba8cfe3f710f` |
+| 最终发布源码树 | `70ca8f4366be6a8cb968385050b0aa3d10bbdbc7` |
 | Pull Request | [#40](https://github.com/ZouZhiJie-code/happiness-system/pull/40) |
+| main 合并提交 | `305f2092a1c4664bff608c6ffa53448e07108d5c` |
 | Preview deployment | `dpl_DExPivo5Qqfk97kH9jVahU8yWQ8A` |
-| Production 状态 | 待发布 |
-| 发布后回退目标 | `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2` |
+| Production deployment | `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY／PROMOTED） |
+| 正式域名 | `https://dailylight.chat` |
+| 当前状态 | Production 已发布·核心回验通过·管理员成功读取 pending |
+| 回退目标 | `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY） |
 
 ## 3. 远程 CI
 
-GitHub Actions run [`32331657275`](https://github.com/ZouZhiJie-code/happiness-system/actions/runs/32331657275) 在发布验证头上完成并返回 `success`：
+GitHub Actions run [`32333975329`](https://github.com/ZouZhiJie-code/happiness-system/actions/runs/32333975329) 在最终发布头 `a86a4ba` 上完成并返回 `success`：
 
 - 类型检查、全量测试、构建和 Lint 全部通过；
-- 测试文件 `359 passed / 16 skipped / 0 failed`；
-- 测试用例 `3205 passed / 82 skipped / 0 failed`；
-- Lint 为 `0 errors / 44 warnings`，这些 warning 保留在阶段 1 的历史源码范围，后续主链重构批次单独收口。
+- 测试文件 `360 passed / 16 skipped / 0 failed`；
+- 测试用例 `3207 passed / 82 skipped / 0 failed`；
+- Lint 为 `0 errors / 43 warnings`，这些 warning 保留在阶段 1 的历史源码范围，后续主链重构批次单独收口。
 
 ## 4. Preview 行为验收
 
@@ -77,5 +82,15 @@ Preview 已覆盖以下用户与页面状态：
 - 数据库事务确认 `transaction_read_only=on`；
 - 用户正文读取 `0`，用户业务写入 `0`；
 - 临时秘密文件残留 `0`；
-- Production 发布、正式域名回验和线上观察继续保持待执行；
-- 若 Production 发布后出现漏斗、权限或页面加载回归，回退到 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`。
+- 发布后 smoke 使用固定验收账号形成账号、`AuthSession` 和空 `InterviewSession`；这些写入已封存，清理等待产品负责人单独确认，后续 Production smoke 的治理改进见问题台账 `PEH-021`；
+- Production 管理员成功读取继续保持 pending，完成条件为使用白名单内既有内部管理员合法登录态只读回验；
+- 若后续观察出现漏斗、权限或页面加载回归，回退到 READY deployment `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`。
+
+## 8. Production 发布后回验
+
+- 正式 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 为 `READY／PROMOTED`，`https://dailylight.chat` 已指向该版本；deployment source 为 `a86a4ba`。其源码树与 main 合并提交 `305f209` 的源码树均为 `70ca8f4366be6a8cb968385050b0aa3d10bbdbc7`。
+- 匿名管理接口返回 `401`，普通用户管理接口返回 `403`；注册登录、session、空 joy session 和非法日期均符合既有合同。
+- smoke 调用模型端点 `0`；写入范围限于固定验收账号、`AuthSession` 和空 `InterviewSession`。
+- 发布后抽查 `19` 条运行日志，`5xx / error / fatal / warning` 均为 `0`。
+- 管理员白名单存在 `1` 个身份；本轮缺少该身份的合法凭证，两种受控浏览器环境也均无既有登录态，因此 Production 管理员成功读取保持 pending。
+- `npm audit --omit=dev --registry https://registry.npmjs.org` 为 `0`；全依赖审计为 `3 moderate / 1 high / 1 critical`，均位于 Vite／Vitest 开发测试工具链。本阶段保留当前依赖，major 升级进入问题台账 `PEH-019`。

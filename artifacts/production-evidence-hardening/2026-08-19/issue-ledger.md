@@ -27,7 +27,7 @@
 - 产品判断：管理后台默认展示当前事件中心主链，旧五维保留独立历史区；Golden Set 必须读取当前事件卡和今日日记。
 - Codex 评估：只修改三个指标接口会造成顶部总览、漏斗和样本筛选互相矛盾。
 - 待验证假设：当前 30 天数据量可以在不增加索引和迁移的情况下满足页面性能门。
-- 当前处理状态：阶段 1 已在实现 `7bbe285` 增加合同 v2、当前产品六步漏斗和独立旧链区；远程 CI、Preview 行为验收和只读数据库对账均已通过，Production 发布继续待执行。证据见[数据口径 v2 回执](./analytics-contract-v2/README.md)。
+- 当前处理状态：阶段 1 已在实现 `7bbe285` 增加合同 v2、当前产品六步漏斗和独立旧链区；远程 CI、Preview 行为验收和只读数据库对账均已通过，Production 已发布且核心回验通过。管理员成功读取保持 pending。证据见[数据口径 v2 回执](./analytics-contract-v2/README.md)。
 
 ## PEH-004｜AI 质量同意撤回链路不一致
 
@@ -89,6 +89,30 @@
 
 - 已确认事实：既有 Preview smoke 已通过管理员、匿名、普通用户、空态、错误态和旧链展开区；本轮独立数据库统计在 `transaction_read_only=on` 下完成。后续再次读取 Preview API 时受到 deployment protection／TLS 路径阻断。
 - 产品判断：漏斗六步以已通过的 Preview API 结果和独立 SQL 做逐项对账；留存与质量保留本轮独立 SQL 统计，并明确不声明一次新的 API 逐字段回读。
-- Codex 评估：该边界不推翻既有 Preview 行为验收；Production 发布仍需正式域名的权限、页面和关键指标回验，发布前状态保持 pending。
-- 待验证假设：阶段 1 合入并部署正式环境后，正式域名可稳定回读合同 v2，六步漏斗与同一只读 SQL 口径继续一致。
-- 当前处理状态：证据边界已封存；阶段 1 为 `Preview Ready / Production 待发布`，回退目标为 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`。
+- Codex 评估：该边界与既有 Preview 行为验收同时成立；Production 正式域名核心权限和产品合同回验已通过，管理员成功读取仍需要白名单内既有内部管理员的合法登录态。
+- 待验证假设：白名单内内部管理员取得合法登录态后，可以稳定读取合同 v2；六步漏斗与只读 SQL 的逐项一致性继续沿用发布前已封存证据。
+- 当前处理状态：Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已 READY／PROMOTED，匿名 `401`、普通用户 `403` 和最小产品 smoke 通过；管理员成功读取保持 pending。回退目标 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2` 为 READY。
+
+## PEH-019｜开发测试工具链依赖存在审计告警
+
+- 已确认事实：`npm audit --omit=dev --registry https://registry.npmjs.org` 返回 `0`；全依赖审计返回 `3 moderate / 1 high / 1 critical`，告警均位于 Vite／Vitest 开发测试工具链，建议修复路径包含 major 升级。
+- 产品判断：阶段 1 维持当前 Production 运行依赖和已验证发布身份，开发测试工具链升级进入独立兼容性批次。
+- Codex 评估：Production 运行依赖当前审计为零；立即执行 major 升级会扩大本批发布范围并重开完整回归，应在独立分支完成升级、CI 与 Preview 验证。
+- 待验证假设：升级后的 Vite／Vitest 可以保持现有 3207 条测试、构建和 E2E 合同稳定。
+- 当前处理状态：已登记，阶段 1 不执行自动修复或 major 升级；后续排入独立安全债治理。
+
+## PEH-020｜Production 管理员成功读取缺少合法登录态
+
+- 已确认事实：Production 管理员白名单存在 `1` 个身份；当前执行环境缺少该身份合法凭证，两种受控浏览器环境均无既有登录态。匿名管理接口 `401`、普通用户管理接口 `403` 已通过。
+- 产品判断：管理员成功读取只使用白名单内既有内部管理员的合法登录态，不通过变更白名单、重置密码或绕过认证完成。
+- Codex 评估：当前证据已覆盖线上权限保护，管理员成功路径继续保持 pending，能够避免把 Preview 管理员验收替代为 Production 管理员读取事实。
+- 待验证假设：产品负责人或既有内部管理员提供合法登录态后，合同 v2 页面和三组接口可只读回验且正文访问继续写入 `AdminAuditLog`。
+- 当前处理状态：等待合法内部管理员登录态；阶段 1 状态固定为 `Production 已发布·核心回验通过·管理员成功读取 pending`。
+
+## PEH-021｜Production smoke 形成固定验收数据
+
+- 已确认事实：发布后核心 smoke 创建了固定验收账号、`AuthSession` 和空 `InterviewSession`；本轮调用模型端点 `0`，其余产品合同回验通过。
+- 产品判断：Production 只承载真实用户链路；本轮验收写入完整封存，清理属于破坏性操作，等待产品负责人单独确认。
+- Codex 评估：当前保留数据可以维持发布证据的可追溯性。后续 Production smoke 应使用既有内部账号，或在获得独立授权后采用可审计、可自动回收的验收身份。
+- 待验证假设：后续 smoke 可在保持匿名保护、最小写入和零模型调用的同时，完成自动回收与审计闭环。
+- 当前处理状态：固定验收账号、`AuthSession` 和空 `InterviewSession` 保留；本轮不执行清理，等待产品负责人单独确认。

@@ -15,11 +15,11 @@
 当前 Production 事实：
 
 - 正式域名：`https://dailylight.chat`
-- deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`
-- 发布时间：`2026-08-13`
+- deployment：`dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY／PROMOTED）
+- 发布时间：`2026-08-20`
 - 运行模式：`event_centered + baseline`
-- 源码血缘：已封存 commit `ed8c36d`；新分支以最新 `origin/main` 为父节点，并通过基线提交 `5c36b49` 恢复该 Production 源码树
-- 上一正式版本：`dpl_ATtwPhXLvmHURAutRzKyimNSWyir`，承担 `legacy + baseline` 回退
+- 源码血缘：最终发布头 `a86a4ba`，tree `70ca8f4` 与 main 合并提交 `305f209` 的 tree 完全一致
+- 回退目标：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY），承担上一版 `event_centered + baseline` 回退
 
 ## 2. 实施范围
 
@@ -99,14 +99,14 @@
 - 计划外模型预算；
 - 删除分支、worktree、私有现场或其他破坏性清理。
 
-阶段 1 的工程验证、Preview 行为和只读数据库对账已通过，Production 发布保持 `待验证`；其余阶段继续使用各自当前状态。任何核心回归、内容丢失、恢复失败、权限回归或线上指标恶化都会暂停对应批次并回退到上一正式 deployment。
+阶段 1 已发布 Production，工程验证、Preview 行为、只读数据库对账和正式域名核心 smoke 已通过；管理员成功读取保持 pending。其余阶段继续使用各自当前状态。任何核心回归、内容丢失、恢复失败、权限回归或线上指标恶化都会暂停对应批次并回退到上一正式 deployment。
 
 ## 6. 当前进度
 
 | 阶段 | 状态 | 当前证据 |
 |---|---|---|
 | 0. 保护现场与工作线 | 已完成 | GI-088 `175` 项成果完成指纹与隐私检查；最终 No-Go 状态已由检查点 `199aa94` 封存并推送，原工作区干净，分支与私有现场继续保留 |
-| 1. 数据口径 v2 | Preview 已通过·Production 待发布 | 实现 `7bbe285`；验证头 `51925b6`；PR #40 远程 CI、Preview 行为和六步漏斗只读对账通过 |
+| 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
 | 2. 零模型 E2E | 待验证 | 只读审计完成，等待实现 |
 | 3. Golden Set v2 | 待验证 | 数据治理审计进行中，真实样本数量待只读核验 |
 | 4. 主链重构 | 待验证 | 等待阶段 2 回归保护 |
@@ -120,4 +120,14 @@
 - Preview deployment `dpl_DExPivo5Qqfk97kH9jVahU8yWQ8A`：管理员、匿名、普通用户、空态、错误态和旧链展开区通过。
 - `2026-07-22..2026-08-20`、`Asia/Shanghai`：Preview API 与独立 SQL 的六步漏斗均为 `6 / 5 / 5 / 1 / 1 / 1`，逐项差异为 `0`。
 - 数据库事务为只读，用户正文读取 `0`、业务写入 `0`、临时秘密残留 `0`。留存与质量保存独立 SQL 统计；后续 Preview API 再读受到 deployment protection／TLS 路径阻断，本轮不声明新的留存与质量 API 逐字段回读。
-- Production 继续使用 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`。完整公开零正文证据见[数据口径 v2 回执](../../../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)。
+- 该发布前检查点的 Production 仍使用 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`；当前正式版本见下方发布后证据。完整公开零正文证据见[数据口径 v2 回执](../../../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)。
+
+### 阶段 1 Production 发布后证据封存｜2026-08-20
+
+- 最终发布头 `a86a4ba` 经 PR #40 合入 main merge `305f209`；两者源码 tree 均为 `70ca8f4366be6a8cb968385050b0aa3d10bbdbc7`。
+- 最终 CI run `32333975329` 成功：`360` 个测试文件通过、`16` 个跳过，`3207` 条用例通过、`82` 条跳过、`0` 失败，Lint 为 `0 errors / 43 warnings`。
+- Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 为 READY／PROMOTED，`https://dailylight.chat` 已指向该版本；回退目标 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2` 为 READY。
+- 正式域名匿名管理接口 `401`、普通用户管理接口 `403`，注册登录、session、空 joy session 和非法日期合同均通过；模型端点调用 `0`。发布后 `19` 条日志中 `5xx / error / fatal / warning` 均为 `0`。
+- smoke 创建固定验收账号、`AuthSession` 和空 `InterviewSession`；当前保留并等待产品负责人单独确认清理。后续治理见 `PEH-021`。
+- 管理员白名单存在 `1` 个身份；当前执行环境缺少合法凭证且两种受控浏览器环境均无既有登录态，Production 管理员成功读取保持 pending。
+- Production 运行依赖审计为 `0`；全依赖审计的 `3 moderate / 1 high / 1 critical` 位于 Vite／Vitest 开发测试工具链，已进入 `PEH-019` 独立治理。

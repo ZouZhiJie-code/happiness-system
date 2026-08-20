@@ -1,0 +1,91 @@
+{
+  "receiptVersion": "2026-08-20.analytics-contract-v2-production-release.v1",
+  "sealedOn": "2026-08-20",
+  "privacyClass": "public_zero_body",
+  "status": "released_core_smoke_passed_admin_success_read_pending",
+  "identity": {
+    "releaseHead": "a86a4bab28b24afc06aa5b10db6aba8cfe3f710f",
+    "releaseTree": "70ca8f4366be6a8cb968385050b0aa3d10bbdbc7",
+    "pullRequest": 40,
+    "mainMergeCommit": "305f2092a1c4664bff608c6ffa53448e07108d5c",
+    "mainMergeTreeMatchesReleaseTree": true
+  },
+  "ci": {
+    "runId": 32333975329,
+    "url": "https://github.com/ZouZhiJie-code/happiness-system/actions/runs/32333975329",
+    "conclusion": "success",
+    "headSha": "a86a4bab28b24afc06aa5b10db6aba8cfe3f710f",
+    "checks": {
+      "typecheck": "passed",
+      "tests": "passed",
+      "build": "passed",
+      "lint": "passed"
+    },
+    "testFiles": {
+      "passed": 360,
+      "skipped": 16,
+      "failed": 0
+    },
+    "testCases": {
+      "passed": 3207,
+      "skipped": 82,
+      "failed": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 43
+    }
+  },
+  "production": {
+    "deploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "deploymentState": "READY_PROMOTED",
+    "formalDomain": "https://dailylight.chat",
+    "sourceGitSha": "a86a4bab28b24afc06aa5b10db6aba8cfe3f710f",
+    "sourceTree": "70ca8f4366be6a8cb968385050b0aa3d10bbdbc7",
+    "rollbackDeploymentId": "dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2",
+    "rollbackDeploymentState": "READY",
+    "smoke": {
+      "anonymousAdminApi": "401_passed",
+      "ordinaryUserAdminApi": "403_passed",
+      "registrationLoginSession": "passed",
+      "emptyJoySession": "passed",
+      "invalidDateContract": "passed",
+      "modelEndpointCalls": 0,
+      "writes": {
+        "fixedAcceptanceAccount": 1,
+        "authSession": 1,
+        "emptyInterviewSession": 1,
+        "cleanup": "pending_separate_product_owner_confirmation"
+      }
+    },
+    "runtimeLogSample": {
+      "windowStartUtc": "2026-08-20T05:15:44Z",
+      "windowEndUtc": "2026-08-20T05:17:00Z",
+      "lines": 19,
+      "http5xx": 0,
+      "error": 0,
+      "fatal": 0,
+      "warning": 0
+    },
+    "administratorReadback": {
+      "allowlistedIdentities": 1,
+      "legalCredentialAvailable": false,
+      "existingBrowserSessionsChecked": 2,
+      "existingBrowserSessionFound": false,
+      "status": "pending"
+    }
+  },
+  "dependencyAudit": {
+    "productionDependencies": {
+      "commandScope": "omit_dev_npmjs_registry",
+      "vulnerabilities": 0
+    },
+    "allDependencies": {
+      "moderate": 3,
+      "high": 1,
+      "critical": 1,
+      "scope": "vite_vitest_development_test_toolchain",
+      "action": "tracked_as_PEH_019_for_separate_major_upgrade"
+    }
+  }
+}
