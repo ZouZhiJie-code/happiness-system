@@ -14,10 +14,11 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 当前工作线事实：
 
 - 分支：`codex/production-evidence-hardening-20260819`
-- 最新 main 节点：`77de8d1`
+- 最新 main 节点：`795417d`
 - Production 发布头：`a86a4ba`
 - 阶段 1 main 合并提交：`305f209`
 - 阶段 2 main 合并提交：`77de8d1`
+- 阶段 2 热修复 main 合并提交：`795417d`
 - 正式 deployment：`dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY／PROMOTED）
 - 回退 deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY）
 - Production 模式：`event_centered + baseline`
@@ -38,8 +39,9 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - rebase 后类型检查、目标 Lint、文档和差异检查通过；guard `9/9`，浏览器 `11/11`，`AIRequestLog=0`、12 条 Trace 四类违规 `0`、临时 Schema 残留 `0`。
 - 历史完整三连跑继续保留原始运行身份；PR #41 最终 head 两套远程 CI／E2E 已通过并合入 main `77de8d1`。最终 Preview 已通过编辑、保存和事件卡变化后的“需更新”；日记更新前受到 TLS 阻断，更新与人工片段保护保持 `not_run`。
 - main run `32337995170` 出现一个 GI-088 工作台异步单例失败；Stage 5 同一提交的 push run `32338658277` 全绿，PR run attempt 1 又在同一文件等待结构化错误时单例波动，failed-only attempt 2 已主动取消。首次本地修复后的全量运行在 `361/377` 文件进度处又暴露跨日期会话标题与地址 effect 的单次时序差；旧版与修复后的精确用例均完成 `50/50 P4`，修复仍依据实际失败等待地址栏两个字段同时更新。
-- GI payload 已恢复真实首次选择路径，fake digest 只作为测试替身；该 payload `50/50 P4`、完整 GI 文件 `20/20 P4`、混合压力 `270/270 P4` 通过。`PEH-023` 首轮本地工程门与初始 head 两套远程 CI 已通过。文档 head `c897d7a` 的 push run 全绿，PR run 再次暴露按调用序号配置的响应会被后台 `/operation-events` 抢占；第二轮已改为按接口地址分流，随机顺序 `750/750`、精确场景 `200/200`、连续三轮全量和零模型 E2E `11/11` 均通过。只修改两个测试文件，产品源码 `0`；新 head 远程门待验证。
-- Stage 2 Production 等待 `PEH-020`、剩余 `PEH-022` 和 `PEH-023` 同时完成。正式域名继续使用阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
+- GI payload 已恢复真实首次选择路径，fake digest 只作为测试替身；该 payload `50/50 P4`、完整 GI 文件 `20/20 P4`、混合压力 `270/270 P4` 通过。第二轮已改为按接口地址分流，随机顺序 `750/750`、精确场景 `200/200`、连续三轮全量和零模型 E2E `11/11` 均通过。只修改两个测试文件，产品源码 `0`。
+- PR #43 final head `a4173d7` 的 push run `32346020465` 与 pull request run `32346025037` 均在 attempt 1 全绿、重试 `0`，两套 E2E 均为 `11/11`；PR #43 已合入 main merge `795417d`，main push run `32346808393` 的常规测试与零模型 E2E 全绿。
+- Stage 2 Production 等待 `PEH-020` 与剩余 `PEH-022` 同时完成。正式域名继续使用阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
 
 阶段 5 隔离候选证据：
 
