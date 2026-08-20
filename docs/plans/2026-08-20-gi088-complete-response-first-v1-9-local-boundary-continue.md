@@ -1,7 +1,7 @@
 # GI-088｜完整回应优先 v1.9 局部边界与继续优先级
 
 - 文档职责：当前专项
-- 文档状态：已确认·实施中
+- 文档状态：待验证
 - 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈总 Map](../generative-interview-refactor-map.md)
 
@@ -54,3 +54,5 @@ v1.8 已在真实 Preview 中修复“跳过上一题后继续深挖”：AI 放
 任何核心控制场景 `fail` 时停止剩余调用并保持 Production baseline。隔离 Preview 语义验收通过后，执行 Production 快照、备份和回退准备；产品负责人确认真实输出通过后，才切换 Production 并运行线上回归。
 
 当前工程结果：专项 `101/101`、类型检查、Lint、两套 Prisma、Production build 通过。全量并行测试中旧 GI-088 评测工作台有一条按钮渲染用例失败，同文件隔离复跑 `15/15` 通过，记录为测试隔离问题；与 v1.9 直接相关的正式链路专项保持全通过。build 保留 `16` 条既有动态文件系统 warning。
+
+最终隔离 Preview 已完成四轮真实连续链，Codex 初评 `4 pass / 0 minor / 0 fail`；最终状态保持 `event_recording`，没有进入检查点。可见预算累计 `15/15`。单例 `≤15s` 通过，中位 `10633.5ms` 未达到 `≤6s` 理想目标。当前等待产品负责人依据完整原文与输出裁决，Production 保持 baseline。

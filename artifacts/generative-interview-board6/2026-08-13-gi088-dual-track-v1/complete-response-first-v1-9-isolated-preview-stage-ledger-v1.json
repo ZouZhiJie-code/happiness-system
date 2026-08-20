@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-9-isolated-preview-v1",
+  "status": "awaiting_product_owner_review",
+  "deployment": {
+    "id": "dpl_J4oYShrzC9rtTMyUDFbew485Gvm4",
+    "url": "https://xingfuxitong-efb6n28l5-zouzhijies-projects.vercel.app",
+    "inspectorUrl": "https://vercel.com/zouzhijies-projects/xingfuxitong/J4oYShrzC9rtTMyUDFbew485Gvm4",
+    "target": "preview",
+    "status": "ready",
+    "branch": "codex/gi088-response-first-v2-20260816",
+    "gitCommitSha": "82214e5"
+  },
+  "runtime": {
+    "mode": "event_centered",
+    "strategy": "complete_response_v1_9",
+    "visibleModel": "deepseek-v4-pro",
+    "productionStrategy": "event_centered_baseline"
+  },
+  "budget": {
+    "authorizedVisibleCalls": 15,
+    "previouslyConsumedVisibleCalls": 11,
+    "consumedThisRun": 4,
+    "familyConsumedVisibleCalls": 15,
+    "remainingVisibleCalls": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "backgroundCallsExpected": 4,
+    "backgroundCallsReadBack": 0,
+    "backgroundReadback": "not_run"
+  },
+  "quality": {
+    "evaluatedVisibleTurns": 4,
+    "codexPass": 4,
+    "codexMinor": 0,
+    "codexFail": 0,
+    "productOwnerDecision": "pending",
+    "semanticGate": "ready_for_product_owner_review",
+    "productionGatePassed": false
+  },
+  "timing": {
+    "medianElapsedMs": 10633.5,
+    "maxElapsedMs": 11505,
+    "singleCase15sGatePassed": true,
+    "idealMedian6sGatePassed": false
+  },
+  "regressionHashes": {
+    "contextOutputSha256": "6affbf3deb23088792651abb37afc6bea80aab3c6ec0e06164c4b43ff8fa2e10",
+    "correctionOutputSha256": "476b68d78348a0e6e34f8a4ee6f6ce1f6e82e0a5d4e14acfbde9ff65ce93a06f",
+    "explicitDeepenOutputSha256": "db0eefd0a1f338fa5b1710e66f8c6f340261cfde4349cfb12d652959631692f6",
+    "localBoundaryRedirectInputSha256": "ae69eab588b3387bba8a658117222aeb6af730eee576929985d2a73482ac27aa",
+    "localBoundaryRedirectOutputSha256": "bb88ff504636ced163f7f6a29b275ba1bed640fd0fe246f47b9c22b4d978b31d"
+  },
+  "finalState": {
+    "phase": "event_recording",
+    "checkpoint": null,
+    "latestResponseKind": "question",
+    "continueInputAllowed": true
+  },
+  "evidence": {
+    "privateReviewSha256": "feacbc123e798e8de482fd12c2e4e0679ab9fca88520d2b7898e1459e9c0f46b",
+    "publicBodyStored": false,
+    "privateMode": "0600"
+  },
+  "release": {
+    "commit": "82214e5",
+    "push": "completed",
+    "previewDeploy": "ready_awaiting_product_review",
+    "production": "event_centered_baseline"
+  },
+  "next": {
+    "required": "product_owner_review_of_four_exact_visible_turns",
+    "passPath": "production_snapshot_backup_backout_then_release_and_online_regression",
+    "stopPoint": "awaiting_product_owner_review_production_unchanged"
+  }
+}

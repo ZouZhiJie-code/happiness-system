@@ -11,14 +11,14 @@ Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、�
 
 - 正式域名：`https://dailylight.chat`。
 - 当前 Production 主链：`event_centered + baseline`；`legacy + baseline` 保留为应急回退与历史运行身份。
-- GI-088 v1.8 已修复明确深挖时重复上一问题，随后因局部拒答＋换方向继续被误收束而形成质量 No-Go；v1.9 局部边界与继续优先级正在实施。独立准入与 Production 生成式能力发布继续关闭。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
+- GI-088 v1.9 隔离 Preview 四轮连续链 Codex 初评 `4/4 pass`，等待产品负责人依据原文验收；Production 生成式能力发布继续关闭。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
 - `2026-08-13` 阶段 C2 已修复 Judge 运行器并完成全新校准：Plus 普通与思考均 `20/20` 且 No-Go；Max 思考 `15/20` 后因连接与 DNS 故障形成 `technical_blocked`。累计 `64` 次、4 次补跑、0.584052 元，历史身份保持不变。
 - `2026-08-19` GI-088 回应优先 v2.9 纠正首题产品 `pass` 后，真实 CONTINUE 已完成 Low＋High `2/2`：Low `3967ms`、Codex 初评 `minor`；High `1885ms`、HTTP 200／stop／完整 JSON，但缺少覆盖判断与开放目标，状态合同失败；纯时间 `5852ms` 通过，整体技术门因合同失败为 `false`。Codex 与产品负责人均裁决完整回合 `fail`，本轮 `No-Go / stop`；后续 `4 not_run`，页面、Preview 和发布均为 `not_run`；Production 保持 `event_centered + baseline`。
 - `2026-08-20` GI-088 完整回应优先 v1.6 已完成 `8/8 technical_valid`：中位 `2915ms`、最长 `5152ms`、最高 completion `91/1280`；Codex 原文初评为 `7 pass / 1 minor / 0 fail`。v1.5 两处同层回问已修复，唯一待裁决项是关系题新增一处未经用户明确确认的感受；产品负责人裁决 pending。
 - `2026-08-20` 后台事实与纠正整理已完成 `8/8 technical_valid`：中位 `4388ms`、最长 `11318ms`、最高 completion `983/1600`；来源合同全部有效。Codex 原文初评 `7 pass / 1 minor / 0 fail`，唯一 minor 是长上下文漏存一条跨关系主线；产品负责人裁决 pending。
 - `2026-08-20` v1.6 持久后台任务已完成工程接入：可见回应与任务原子提交、调用前记账、结果先保存后顺序写入、恢复零重复调用、迟到失权和失败后续行均有自动验证；最新全量 `3666` 条通过，类型、Lint、两套 Prisma 与 Production build 通过。正式链路已与离线 Pro 模型和 v1.7 来源对齐规则保持一致。
 - `2026-08-20` v1.7 新案例稳定性续跑已完成新增调用 `10/10`：八条可见回应和八条后台事实均技术有效，未截断；可见中位 `3273.5ms`、最长 `4916ms`，后台中位 `6429ms`、最长 `13363ms`。Codex 初评可见 `6 pass / 2 minor / 0 fail`、后台 `8 pass / 0 minor / 0 fail`。
-- `2026-08-20` v1.8 隔离 Preview 新增 `4` 次，家族累计 `11/15`：普通表达、纠正和明确继续深挖初评通过；局部拒答并要求换方向继续被投影为第一检查点，实际回应只保存原话，初评 `fail`。v1.8 Preview 质量 No-Go，剩余 `4` 次保留给 v1.9，Production 保持 `event_centered + baseline`。
+- `2026-08-20` v1.9 隔离 Preview 消费剩余 `4` 次，家族累计 `15/15`：普通表达、纠正、明确深挖和局部拒答＋换方向继续均由 Codex 初评 `pass`；最终保持可继续输入，未进入检查点。中位 `10633.5ms`、最大 `11505ms`，单例 15 秒门通过，6 秒理想目标未达到。产品裁决 `pending`，Production 保持 `event_centered + baseline`。
 - 网页端产品主线：`访谈记录 → 当天时间线事件卡片 → 今日日记`。访谈页负责表达、回应、保存和返回当天；日记页负责生成、查看和更新当天日记。
 - 五个维度为 `joy / fulfillment / reflection / improvement / gratitude`。理论与完成规则由 [`docs/theory/`](./docs/theory/) 承担。
 - 历史候选、测试数字和部署记录只承担各自时期的证据职责，不能自动转化为当前产品结论或发布授权。

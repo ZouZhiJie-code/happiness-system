@@ -5,9 +5,9 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-版本：`完整回应优先 v1.9 局部边界与继续优先级实施中`
+版本：`完整回应优先 v1.9 隔离 Preview 待产品验收`
 
-状态：`v1.8 明确深挖通过、局部拒答＋换方向继续 fail；质量 No-Go；v1.9 实施中；Production baseline`
+状态：`v1.9 四轮连续链 Codex 4/4 pass；产品裁决 pending；Production baseline`
 
 现行职责、单一回答焦点规则和旧身份边界统一读取[板块 7 当前运行合同](../../../docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。本目录中的原始回执继续保存当时请求、失败码和调用事实。
 
@@ -22,8 +22,8 @@
 ### 完整回应优先当前任务
 
 - 当前专项：[v1.9 局部边界与继续优先级](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md)
-- 当前状态：v1.8 明确继续深挖 `pass`，局部拒答＋换方向继续 `fail`，Preview 质量 No-Go；v1.9 已确认·实施中
-- 验收预算：最多 `15` 次可见回应；已消费 `11`、剩余 `4`；优先回归局部边界继续、停止与关系主题
+- 当前状态：v1.9 普通表达、纠正、明确深挖、局部拒答＋换方向继续均由 Codex 初评 `pass`；等待产品验收
+- 验收预算：最多 `15` 次可见回应，已消费 `15`、剩余 `0`；重试、恢复、回退均为 `0`
 - 发布边界：Production 继续使用 `event_centered + baseline`
 - [隔离 Preview 验收交接](./complete-response-first-v1-6-isolated-preview-v1-handoff.md)
 - [隔离 Preview 阶段账](./complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)
@@ -76,7 +76,7 @@
 - [v1 公开回执](./complete-response-first-quality-v1-receipt.json)
 - [v1 结果交接](./complete-response-first-quality-v1-handoff.md)
 - [v1 阶段账](./complete-response-first-stage-ledger-v1.json)
-- 发布边界：v1.8 Preview 质量 No-Go；v1.9 重新部署并通过真人验收前，Production 继续保持 `event_centered + baseline`
+- 发布边界：v1.9 Preview 等待产品负责人验收；通过前 Production 继续保持 `event_centered + baseline`
 
 ### 回应优先 v2.9 当前任务
 

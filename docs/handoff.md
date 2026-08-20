@@ -7,13 +7,13 @@
 
 ## 1. 当前交接结论
 
-GI-088 当前执行[v1.9 局部边界与继续优先级](./plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md)。v1.8 已在隔离 Preview 修复明确深挖重复，随后在“局部拒答＋换方向继续”场景只保存并收束，质量门 No-Go。当前将实现并部署 `complete_response_v1_9`，Production 保持 `event_centered + baseline`。
+GI-088 当前执行[v1.9 局部边界与继续优先级](./plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md)。隔离 Preview 四轮连续链已完成，Codex 初评 `4/4 pass`；局部拒答＋换方向继续保持对话并进入新焦点。当前等待产品负责人验收，Production 保持 `event_centered + baseline`。
 
 技术冒烟、后台冻结与重复提交均已通过。随后又完成五个真实 Preview 回合：纠正和停止通过；明确继续深挖时，AI 几乎逐字重复上一条“当时回应还是压下去”的问题；关系表达中，用户已经说“想聊这种差别”，AI 又询问是否先聊这种差别。真人可见预算累计 `7/15`、剩余 `8`。公开结果见[Preview 验收交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)与[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)。
 
-当前状态为 `v1.8 Preview quality No-Go / v1.9 implementing`。v1.9 只调整用户控制范围：局部拒答同时带有继续或换方向时继续对话；明确整轮停止时收住。完成实现与隔离回归后，按原文和实际输出交产品负责人验收。
+当前状态为 `v1.9 Preview awaiting product owner review`。v1.9 只调整用户控制范围：局部拒答同时带有继续或换方向时继续对话；明确整轮停止时收住。四轮原文与输出已逐例交付，等待产品裁决。
 
-v1.9 当前专项 `101/101`、类型检查、Lint、两套 Prisma 与 Production build 通过。全量并行测试中旧评测工作台出现一条渲染失败，同文件隔离复跑 `15/15` 通过；隔离 Preview 仍待执行。家族可见预算 `11/15`，剩余 `4`。
+v1.9 当前专项 `101/101`、类型检查、Lint、两套 Prisma 与 Production build 通过。全量并行测试中旧评测工作台出现一条渲染失败，同文件隔离复跑 `15/15` 通过。Preview 四轮中位 `10633.5ms`、最大 `11505ms`，家族可见预算 `15/15`。
 
 v1.7 已完成新增调用 `10/10`：复用前六条可见回应，补完 `RPR-CF-02`、`RPR-CF-05` 两条可见回应，并重跑八条后台事实。八条可见与八条后台均技术有效，HTTP 200、stop、Thinking 关闭且未截断。
 

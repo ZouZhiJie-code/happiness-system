@@ -22,7 +22,7 @@
 - Production 正式域名为 `https://dailylight.chat`；`2026-08-16` 已验证公开首页返回 `200`。
 - 仓库当前批准的 Production 主链为 `event_centered + baseline`；生成式访谈能力继续关闭。
 - 网页端用户路径为 `访谈记录 → 当天时间线事件卡片 → 今日日记`。
-- GI-088 v1.8 已修复明确深挖时重复上一问题，随后因局部拒答＋换方向继续被误收束而质量 No-Go；可见预算已用 `11/15`，剩余 `4`。当前实施 v1.9 局部边界与继续优先级，Production 保持 `event_centered + baseline`。
+- GI-088 v1.9 隔离 Preview 四轮连续链 Codex 初评 `4/4 pass`；可见预算 `15/15`，等待产品负责人验收。单例 15 秒门通过，中位约 `10.6s` 未达到 6 秒理想目标；Production 保持 `event_centered + baseline`。
 - 文档治理两阶段及授权清理已经完成；[最终治理记录](./maintenance/2026-08-16-document-governance-cleanup-preview.md)保留全量台账、清理结果和仍受保护的独立成果。
 
 当前任务、工作区血缘、验证门和停止点统一从 [Handoff](./handoff.md) 读取；专项数字与裁决从对应 Map 和证据包读取。

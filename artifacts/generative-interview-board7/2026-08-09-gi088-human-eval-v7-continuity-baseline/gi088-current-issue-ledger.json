@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v105",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v106",
   "status": "complete_response_first_v1_8_explicit_progress_obligation_implementing",
   "currentQueueStage": "complete_response_first_v1_8_implementation_before_preview_regression",
   "semanticQualityDecisionPresentation": {
@@ -2376,18 +2376,20 @@
       "issueId": "RF-LOCAL-BOUNDARY-CONTINUE-01",
       "title": "局部拒答并要求换方向继续被误判为整轮停止",
       "productOwnerJudgment": "局部拒答限定当前问题；同句明确要求继续或换方向时，系统尊重边界并继续。明确结束本轮时才收束。",
-      "codexInitialAssessment": "v1.8 Preview 的核心深挖链已通过；相邻表达‘这个方向不想回答，换个方向继续聊’被投影为 checkpoint，只复述并保存，构成 fail。",
+      "codexInitialAssessment": "v1.8 Preview 的相邻控制表达被投影为 checkpoint 并 fail；v1.9 完整四轮重放中，同一句已经换到新的未答焦点并保持 event_recording，Codex 初评 pass。",
       "confirmedRootCause": "旧显式停止规则只命中‘不想回答’，没有处理指代范围和同句正向继续动作；模型输出随后被第一检查点接受。",
       "hypotheses": [
         "先移除否定的继续短语，再识别独立正向继续动作，可以区分整轮停止与局部边界。",
         "把确定性控制范围交给模型后，可以放下当前问题并选择新的有依据方向。"
       ],
       "priority": "P0",
-      "status": "v1_9_confirmed_implementing",
+      "status": "v1_9_preview_codex_pass_waiting_product_owner",
       "trace": [
         "docs/plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md",
         "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-8-isolated-preview-v1-handoff.md",
-        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-8-isolated-preview-stage-ledger-v1.json"
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-8-isolated-preview-stage-ledger-v1.json",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-isolated-preview-v1-handoff.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-isolated-preview-stage-ledger-v1.json"
       ],
       "targetVersion": "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority"
     },
