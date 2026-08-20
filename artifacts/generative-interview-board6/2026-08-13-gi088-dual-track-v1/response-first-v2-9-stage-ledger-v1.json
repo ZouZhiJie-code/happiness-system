@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-response-first-v2-9-correction-gate-v1",
+  "candidate": "2026-08-19.gi088-response-first-v2-9-separated-open-gap-high",
+  "planFingerprint": "9b67366e39256533a0733ca43193ed78d43b3d9dd88b08fbecbc99700c5b96e0",
+  "candidateFingerprint": "6fe7b20a72a4921f6cfae4fbad4ac8b595e17422a6cc5891c47e455619e287e7",
+  "datasetFingerprint": "25ab2ec7665d185f7dacf4eceb184e1a6be9ff2909ad93252f7ec97b035c3c32",
+  "status": "first_gate_product_pass_continuation_gate_authorized",
+  "changedFactor": "separate_known_understanding_from_open_gap_single_turn_decision_only",
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "disabled",
+    "reasoningEffort": "omitted_when_thinking_disabled",
+    "maxTokens": 4000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "budget": {
+    "currentIdentityAuthorized": 1,
+    "consumed": 1,
+    "completed": 1,
+    "notRun": 0,
+    "remainingFamilyNotRun": 6,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "firstGate": {
+    "caseId": "RPR-REAL-19-CORRECTION",
+    "technicalAndContractStatus": "valid",
+    "httpStatus": 200,
+    "finishReason": "stop",
+    "responseModel": "deepseek-v4-pro",
+    "validationIssueCount": 0,
+    "requestFingerprint": "f21d5531413bc44e8cd79da3c79cc8f3c26e1d09174b6c023bb886493670e26e",
+    "frozenLowHash": "df15169aca894d310e3e686dc1d105827e81983b823ab15d25e1b8761e2059c8",
+    "responseHash": "8d1f65ba834ebb92b4face240411abb30e3a65451588d5079a4bdc8cfa9750ba",
+    "responseLength": 493,
+    "postStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667",
+    "frozenLowLatencyMs": 3341,
+    "highLatencyMs": 3325,
+    "observedFullRoundLatencyMs": 6666,
+    "observed45sTargetPassed": true,
+    "observed60sHardPassed": true,
+    "thinkingObservation": {
+      "reasoningPresent": false,
+      "reasoningTokens": null
+    },
+    "tokenUsage": {
+      "promptTokens": 1981,
+      "completionTokens": 151,
+      "totalTokens": 2132,
+      "headroomBelowMaxTokens": 3849
+    },
+    "canonicalDecision": {
+      "coverageGatePresent": false,
+      "understandingChangeKind": "add",
+      "understandingSourceMode": "correction",
+      "understandingEvidenceRefs": [
+        "U3"
+      ],
+      "supersededAssistantMessageRefs": [
+        "A2"
+      ],
+      "openTaskChangeKind": "none",
+      "questionCount": 0,
+      "correctableUnderstandingPresent": false
+    },
+    "postStateObservation": {
+      "workingTaskPresent": false,
+      "understandingCount": 1,
+      "understandingEvidenceRefs": [
+        "U3"
+      ],
+      "nextInquiryPresent": false
+    },
+    "visibleDelivery": {
+      "frozenLowOnly": true,
+      "highUnderstandingPresent": false,
+      "questionCount": 0
+    },
+    "codexProvisionalDecision": {
+      "verdict": "pass",
+      "reasons": [
+        "technical_speed_and_contract_valid",
+        "correction_persisted_as_known_understanding",
+        "working_task_remained_null",
+        "frozen_low_only_visible_experience_preserved"
+      ]
+    },
+    "productOwnerDecision": {
+      "verdict": "pass",
+      "gatePassed": true
+    }
+  },
+  "remainingValidation": {
+    "status": "continuation_gate_authorized_not_run",
+    "calls": 6,
+    "nextIdentity": "2026-08-19.gi088-response-first-v2-9-causal-continuation-gate-v1",
+    "continuationCalls": 2,
+    "continuationCallsStatus": "not_run",
+    "laterFamilyCalls": 4,
+    "laterFamilyCallsStatus": "not_run",
+    "entryRule": "product_owner_first_gate_pass_satisfied"
+  },
+  "semanticEvidenceBoundary": {
+    "publicEvidenceContainsUserLowOrHighBody": false,
+    "publicEvidence": "summary_metrics_state_refs_and_hashes_only",
+    "privateRawEvidence": "git_ignored_mode_0600"
+  },
+  "evidence": {
+    "startCard": "response-first-v2-9-correction-gate-v1-start-card.json",
+    "receipt": "response-first-v2-9-correction-gate-v1-receipt.json",
+    "handoff": "response-first-v2-9-correction-gate-v1-handoff.md",
+    "privateRawEvidence": "git_ignored_controlled_directory"
+  },
+  "releaseBoundary": {
+    "pageIntegration": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deployment": "not_run",
+    "preview": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "nextDirection": "run_real_continue_low_then_high_under_new_frozen_identity",
+  "stopPoint": "continuation_gate_complete_then_wait_product_owner_before_later_four_calls"
+}

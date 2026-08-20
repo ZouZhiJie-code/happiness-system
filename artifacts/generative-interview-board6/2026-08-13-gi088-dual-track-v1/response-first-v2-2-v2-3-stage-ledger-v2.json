@@ -1,0 +1,130 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-2-v2-3-stage-ledger-v2",
+  "parentLedger": "2026-08-17.gi088-response-first-v2-2-v2-3-stage-ledger-v1",
+  "status": "v23_high_checkpoint_no_go",
+  "historicalCheckpoint": {
+    "runIdentity": "2026-08-17.gi088-response-first-v2-2-low-quality-v1",
+    "callsConsumed": 3,
+    "technicalAndContractValid": 3,
+    "latestProductOwnerQuality": {
+      "pass": 3,
+      "minor": 0,
+      "fail": 0
+    },
+    "supersedingReview": "2026-08-17.gi088-response-first-v2-2-product-owner-checkpoint-review-v2"
+  },
+  "historicalPlanBudget": {
+    "authorized": 18,
+    "consumed": 3,
+    "closedNotRun": 15
+  },
+  "continuationEvaluationBudget": {
+    "authorized": 15,
+    "consumed": 7,
+    "notRun": 8,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "stages": [
+    {
+      "stage": "v22_low_full_quality_v2",
+      "authorized": 6,
+      "consumed": 6,
+      "notRun": 0,
+      "status": "product_owner_quality_gate_passed"
+    },
+    {
+      "stage": "v23_grounded_high_checkpoint",
+      "authorized": 3,
+      "consumed": 1,
+      "notRun": 2,
+      "status": "stopped_by_technical_or_contract_gate"
+    },
+    {
+      "stage": "v23_grounded_high_full_quality",
+      "authorized": 6,
+      "consumed": 0,
+      "notRun": 6,
+      "status": "not_run"
+    }
+  ],
+  "previewBudget": {
+    "authorized": 15,
+    "consumed": 0,
+    "notRun": 15
+  },
+  "lowFullQualityResult": {
+    "runIdentity": "2026-08-17.gi088-response-first-v2-2-low-full-quality-v2",
+    "planFingerprint": "0417cc3bbe704e8043b2065d2cf3fe902da51ad5a93a773ffc52b0a47780b8cf",
+    "candidateFingerprint": "c0e99522ac8b0b2e252d3f7c8abf32e0fd364301609c5d79cc874712f27cb01f",
+    "datasetFingerprint": "25ab2ec7665d185f7dacf4eceb184e1a6be9ff2909ad93252f7ec97b035c3c32",
+    "technicalAndContractValid": 6,
+    "latenciesMs": [2882, 3341, 6178, 3580, 4014, 4188],
+    "medianLatencyMs": 3797,
+    "codexProvisionalQuality": {
+      "pass": 5,
+      "minor": 1,
+      "fail": 0
+    },
+    "tokenUsage": {
+      "promptTokens": 6391,
+      "promptCacheHitTokens": 3840,
+      "promptCacheMissTokens": 2551,
+      "completionTokens": 736,
+      "reasoningTokens": 537,
+      "totalTokens": 7127
+    },
+    "costEstimate": {
+      "currency": "CNY",
+      "estimated": 0.012165,
+      "pricingSnapshotDate": "2026-08-13",
+      "cacheHitInputPerMillion": 0.025,
+      "cacheMissInputPerMillion": 3,
+      "outputPerMillion": 6,
+      "actualProviderBilledCost": null
+    },
+    "publicStartCard": "response-first-v2-2-low-full-quality-v2-start-card.json",
+    "publicReceipt": "response-first-v2-2-low-full-quality-v2-receipt.json",
+    "publicHandoff": "response-first-v2-2-low-full-quality-v2-handoff.md",
+    "privateReview": "git_ignored_controlled_review"
+  },
+  "productOwnerSixCardReview": {
+    "status": "complete",
+    "pass": 6,
+    "minor": 0,
+    "fail": 0,
+    "gatePassed": true
+  },
+  "highCheckpointResult": {
+    "runIdentity": "2026-08-17.gi088-response-first-v2-3-high-quality-v1",
+    "planFingerprint": "a2076f0a27c5a10f5a3a2827027d23a7db4ff83d35282cad59cf62e473cf96bc",
+    "callsConsumed": 1,
+    "technicalHttpValid": 1,
+    "contractValid": 0,
+    "firstCase": "RPR-REAL-19-CORRECTION",
+    "errorCode": "GI088_RESPONSE_FIRST_V23_PARSE_FAILED",
+    "finishReason": "length",
+    "maxTokens": 2000,
+    "completionTokens": 2000,
+    "reasoningTokens": 1985,
+    "visibleResponseLength": 42,
+    "highLatencyMs": 38384,
+    "fullRoundLatencyMs": 41725,
+    "semanticQuality": "not_evaluated",
+    "estimatedCostCny": 0.017619,
+    "actualProviderBilledCost": null,
+    "publicStartCard": "response-first-v2-3-high-quality-v1-start-card.json",
+    "publicReceipt": "response-first-v2-3-high-quality-v1-receipt.json",
+    "publicRunnerFix": "response-first-v2-3-high-quality-v1-runner-fix.json",
+    "publicHandoff": "response-first-v2-3-high-quality-v1-handoff.md",
+    "privateEvidence": "git_ignored_controlled_directory"
+  },
+  "productIntegration": "not_run",
+  "commit": "not_run",
+  "push": "not_run",
+  "previewDeployment": "not_run",
+  "productionStrategy": "event_centered_baseline",
+  "stopPoint": "v23_high_checkpoint_contract_failure_stop_remaining_calls_and_integration"
+}

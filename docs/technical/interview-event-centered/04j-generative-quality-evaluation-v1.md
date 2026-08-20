@@ -2,14 +2,14 @@
 
 - 文档职责：当前专项
 - 文档状态：现役
-- 最后核验：`2026-08-16`
+- 最后核验：`2026-08-19`
 - 权威入口：[生成式访谈重构总 Map](../../generative-interview-refactor-map.md)
 
 产品决策状态：`GI-074 完整评测体系已冻结·高置信度；GI-075～080 保持关闭；GI-081～083 保留诊断血缘；GI-084～086 保留失败与校准证据；GI-087 原六题完成上下文资格审计；GI-088 已确认`
 
 置信度：`高`
 
-落地验证状态：`响应等待父合同 A/B 已封存为 inconclusive_mixed_direction；先回应后整理本地候选已完成；可见合同负担 A/B 已封存为 visible_contract_directional_support；首段六题技术与速度门 6/6 通过，等待产品负责人内容裁决；relationship_claim_status_v1 语义状态未知，独立准入继续关闭`
+落地验证状态：`回应优先 v2.2 Low 产品裁决 6/6 通过；v2.9 真实 CONTINUE 2/2，Low Codex minor、High 合同 fail，Codex 与产品均裁决完整回合 fail，No-Go，后续 4 not_run`
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 
@@ -23,7 +23,212 @@ Production 状态：`项目主链使用 event_centered + baseline；生成式访
 
 板块 7 当前入口：[模型主导语义判断的候选实现与验证](./07-board7-model-led-semantic-implementation.md)
 
-## 先回应后整理与职责重划启动卡｜2026-08-16
+当前 Prompt、Interview Skill、模型、程序和产品负责人的职责，以及单一回答焦点与重复追问规则，只在板块 7 当前入口维护。本页保留 QR-04 判尺、运行身份、指标、质量结果和历史证据。
+
+## 回应优先 v2.9 已知认识／开放目标分离实施卡｜2026-08-19
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 产品决策 | 分开已经知道的认识与尚待弄清的开放目标，并在问题生成前检查当前分支全部用户消息是否已覆盖目标 |
+| 候选与运行身份 | 候选 `2026-08-19.gi088-response-first-v2-9-separated-open-gap-high` 保持冻结；当前运行 `2026-08-19.gi088-response-first-v2-9-causal-continuation-gate-v1` |
+| 父结果 | v2.8.1 产品裁决 `fail`；Low pass，High 重复 U1 已回答案例且合同失败，整体 No-Go |
+| 预算 | 总上限 `7`；纠正题 High 已完成 `1/1`；真实 CONTINUE Low＋High 已完成 `2/2`，后续 `4 not_run` |
+| 固定因素 | v2.2 Low、`deepseek-v4-pro`、High Thinking 关闭、`maxTokens=4000`、数据、并发 1、零重试／恢复／回退和 45／60 秒门 |
+| 首题技术与速度 | HTTP 200、目标模型正确、`finishReason=stop`、合同有效；High `3325ms`、冻结 Low `3341ms`、观察两段 `6666ms`，45／60 秒门均通过 |
+| Thinking 与 Token | Thinking 关闭，reasoning 正文缺失、Token 为 `null`；prompt `1981`、completion `151`、总计 `2132`，`4000` 上限未触发 |
+| 状态与可见结果 | 开放任务保持为空；新增一条以 `U3` 为依据的纠正认识并标记 `A2` 被替代；High 可见理解为空、问题 `0`，只显示冻结 Low |
+| 首题质量与停止门 | Codex 初评与产品负责人裁决均为 `pass`；纠正首题产品门通过 |
+| 真实 CONTINUE 结果 | Low 有效、`3967ms`、Codex `minor`；High HTTP 200／stop／完整 JSON、`1885ms`，没有覆盖判断或开放任务，三项状态合同失败；两段 `5852ms` |
+| 当前状态 | 纯时间 `5852ms` 通过，整体技术门因 High 合同失败为 `false`；Codex 与产品负责人均裁决完整回合 `fail`，`No-Go / stop`；后续 `4 not_run` |
+| 发布边界 | 页面、Preview、提交、推送和部署均为 `not_run`；Production 保持 `event_centered + baseline` |
+
+当前结果：[v2.9 真实纠正后继续结果交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-handoff.md)。冻结计划继续保存运行前输入与状态。
+
+公开证据：[启动卡](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-correction-gate-v1-start-card.json)、[结果回执](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-correction-gate-v1-receipt.json)、[首题交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-correction-gate-v1-handoff.md)与[阶段账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-stage-ledger-v1.json)。公开材料不包含用户、Low 或 High 正文。
+
+真实 CONTINUE 公开证据：[启动卡](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-start-card.json)、[运行回执](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-receipt.json)、[结果交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-handoff.md)与[阶段账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-stage-ledger-v1.json)。
+
+## 回应优先 v2.8.1 真实连续回合因果探针实施卡｜2026-08-19
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 产品决策 | v2.8 已保存的纠正能否通过真实 Low → High 连续回合自然推进，同时避免重复纠正、过早结束和旧状态复活 |
+| 候选与运行身份 | 继续使用候选 `2026-08-19.gi088-response-first-v2-8-correction-persistence-high`；新运行 `2026-08-19.gi088-response-first-v2-8-1-causal-continuation-probe-v1`；候选语义方法不变 |
+| 父结果 | v2.8 首题技术、速度、合同、可见体验与纠正持久化 pass；`workingTask` 与 `understanding` 同摘要形成 Codex `state-role minor`；产品负责人原文裁决 `minor` |
+| 唯一验证变化 | CONTINUE 独立为 Low 后 High 的两调用因果探针；首题 High 重新解析并重放 post-state，当前 High 输入绑定本次实际 Low |
+| 进入条件 | 已满足：产品负责人将 v2.8 首题判为 `minor`，双哈希 review 已以 `0600` 权限保存 |
+| 预算 | Low `1`＋High `1`，已消费 `2/2`；并发 1，重试／恢复／回退 0 |
+| 固定因素 | v2.8 模型、Thinking disabled、`4000` Token、Prompt、Skill、两个 audit、JSON、数据原文、可见规则和 45／60 秒门 |
+| 因果与完整性门 | 绑定首题 response／post-state 哈希；冻结候选重解析、状态重放必须一致；Low 完成后才可调用 High；High 只读取本次实际 Low |
+| 第二停止门 | 已达到：Low＋High 完成后停止，产品负责人基于完整原文裁决 `fail`；不继续其他题 |
+| Prepare 证据 | 计划指纹 `26604324a6ec4e52e83d89f048bfd196d5f33a079b07beefea79978ad0791600`；父计划指纹重算、raw High 重解析校验、post-state 重投影与哈希一致性均通过；公开启动卡／回执和 `0600` 私有账本已生成 |
+| 真实结果 | Low 有效、`5798ms`、Codex 可见质量 pass；High HTTP 200／stop、`5864ms`、completion `358` Token，合同失败且无 post-state；可见问题重复询问 U1 已回答案例，Codex fail |
+| 时间与 Token | 客观完整两段 `11662ms`，低于 45／60 秒门；High `4000` Token 上限未触发 |
+| 当前状态 | 产品负责人裁决 `fail`，整体 `No-Go / stop`；停止后续模型调用 |
+| 发布边界 | 页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 保持 `event_centered + baseline` |
+
+当前专项：[v2.8.1 真实连续回合因果探针](../../plans/2026-08-19-gi088-response-first-v2-8-1-causal-continuation-probe.md)。
+
+## 回应优先 v2.8 Correction-persistence High 结果卡｜2026-08-19
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 产品决策 | 能否在保持 v2.7 速度和 Low-only 可见体验的同时，把用户纠正保存为真实可继承状态 |
+| 候选与运行身份 | `2026-08-19.gi088-response-first-v2-8-correction-persistence-high`；`2026-08-19.gi088-response-first-v2-8-correction-persistence-high-quality-v1` |
+| 父结果 | v2.7 首题 High `1.847s`、两段 `5.188s`；技术、速度和合同通过，可见体验 Codex pass；完整 High 因纠正未保存而 Codex fail |
+| 唯一主要因素 | High 在可见追加与问题审计前增加 `correctionPersistenceAudit`，显式决定纠正的主线、认识和旧状态失效变化 |
+| 固定因素 | `deepseek-v4-pro`、Thinking disabled、省略 `reasoningEffort`、`4000` Token、冻结 Low、六题用户原文与判尺、问题审计、JSON 主体、首题可见理解 `null`、问题 `0`、45／60 秒门 |
+| 因果链 | CONTINUE 用户原文保持冻结，内部状态真实继承首题 post-state，禁止人工预置目标状态 |
+| 预算 | 新离线账最多 `6` 次，实际 `1/6`、其余 `5 not_run`；并发 1，重试／恢复／回退 0 |
+| 首题技术与速度 | HTTP 200、`finishReason=stop`、合同有效；High `4.445s`、两段 `7.786s`，45／60 秒门均通过；prompt `3007`、completion `369`、reasoning `null` |
+| 状态结果 | 审计 `persist`，引用 `U3`、标记 `A2` 被替代；主线 `set_new`、认识 `add`，真实 post-state 的主线和一条认识均引用 `U3` |
+| 可见与初评 | 冻结 Low 保持，High 可见理解 `null`、问题 `0`；可见体验与纠正持久化 pass；主线与认识同摘要形成 `state-role minor`；产品负责人裁决 pending |
+| 当前状态 | `首题分层完成，原 runner 退役`；原账 `1/6`，其余 `5 retired_not_run` |
+| 下游 | 页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 保持 `event_centered + baseline` |
+
+历史专项：[回应优先 v2.8 Correction-persistence High](../../plans/2026-08-19-gi088-response-first-v2-8-correction-persistence-high.md)。
+
+公开证据：[首题结果交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-correction-persistence-high-quality-v1-handoff.md)与[阶段账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-stage-ledger-v1.json)。公开材料只保存摘要、指标、状态引用与哈希。
+
+## 回应优先 v2.7 Thinking-disabled Audited High 实施卡｜2026-08-19
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 产品决策 | 关闭 High Thinking 后，同一审计合同能否在完整两段 45 秒内交付，并保持可供产品负责人裁决的语义质量 |
+| 候选与运行身份 | `2026-08-19.gi088-response-first-v2-7-thinking-disabled-audited-high`；`2026-08-19.gi088-response-first-v2-7-thinking-disabled-audited-high-quality-v1` |
+| 父结果 | v2.6 首题 HTTP 200、`finishReason=stop`、来源／状态／审计合同有效；High `56.668s`、两段 `60.009s`，速度 No-Go；产品语义裁决待确认 |
+| 唯一主要因素 | High `thinking=enabled → disabled`；Thinking 关闭时按 Provider 合同省略 `reasoningEffort` |
+| 固定因素 | v2.2 冻结 Low、六题输入与判尺、`deepseek-v4-pro`、v2.6 Prompt／Interview Skill、`informationGainAudit`、JSON、High `maxTokens=4000`、状态合同、可见投影、两段式、60 秒硬门、重试／恢复／回退 0 |
+| 分账职责 | 程序验证 Thinking 请求、字段、用户来源、角色、状态、结构、预算、超时和模型自身声明；语义覆盖、问题价值与自然表达由模型方法、Codex 初评和产品负责人原文裁决承担 |
+| 预算 | 新离线账最多 `6` 次，实际 `1/6`、其余 `5 not_run`；并发 1，重试／恢复／回退 0 |
+| 首题技术与速度 | `RPR-REAL-19-CORRECTION` HTTP 200、`finishReason=stop`、合同有效；High `1.847s`、两段 `5.188s`，45／60 秒门均通过 |
+| Thinking 与 Token | Thinking 关闭，reasoning 正文缺失、Token 为 `null`；prompt `2299`、completion `161`、总计 `2460`，缓存命中／未命中 `2176/123` |
+| 可见体验初评 | 可见理解 `null`、问题 `0`、审计候选 `0`；冻结 Low 自然承接且无重复追加，Codex pass |
+| 完整 High 初评 | Codex fail；空主线与空认识保持 `unchanged/none`，本次纠正未保存；CONTINUE 夹具预置状态，无法证明真实连续性 |
+| 风险与质量门 | 产品负责人裁决 pending；完整 High 的 Codex 质量门失败，其余五题停止 |
+| 当前状态 | `首题技术速度合同通过、可见体验 Codex 通过、完整 High Codex 失败，等待产品原文裁决`；调用 `1/6` |
+| 下游 | 页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 保持 `event_centered + baseline` |
+
+当前专项：[回应优先 v2.7 Thinking-disabled Audited High](../../plans/2026-08-19-gi088-response-first-v2-7-thinking-disabled-audited-high.md)。
+
+公开证据：[首题结果交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-7-thinking-disabled-audited-high-quality-v1-handoff.md)与[阶段账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-7-stage-ledger-v1.json)。公开材料只保存摘要、指标与哈希。
+
+## 回应优先 v2.6 Low-effort Audited High 首题结果卡｜2026-08-19
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 产品决策 | 降低 High 思考强度后，候选问题自答审计能否在 60 秒内完整交付，并继续排除已经回答的信息 |
+| 候选与运行身份 | `2026-08-19.gi088-response-first-v2-6-low-effort-audited-high`；`2026-08-19.gi088-response-first-v2-6-low-effort-audited-high-quality-v1` |
+| 父失败证据 | v2.5 预检 HTTP 200、目标模型可用；正式调用 HTTP 200，High `60.013s`、两段 `63.354s`，正文 `0` 字符，`TIMEOUT`，语义未评价 |
+| 唯一主要因素 | High `reasoningEffort=high → low` |
+| 固定因素 | v2.2 冻结 Low、六题输入与判尺、`deepseek-v4-pro`、Thinking 开启、High `maxTokens=4000`、v2.5 `informationGainAudit`、状态合同、可见投影、两段式、60 秒硬门、重试／恢复／回退 0 |
+| 分账职责 | 程序验证字段、用户来源、结构和模型自身声明的一致性；Codex 逐问映射完整原文与实际输出；产品负责人作最终语义裁决 |
+| 预算 | 新离线账最多 `6` 次，实际 `1/6`，其余 `5 not_run`；并发 1，重试／恢复／回退 0 |
+| 技术与合同 | HTTP 200、目标模型正确、`finishReason=stop`、来源／状态／审计合同有效，校验问题 `0` |
+| 速度 | High `56.668s`、冻结 Low `3.341s`、完整两段 `60.009s`；超过 60 秒硬门 `9ms`，速度门 No-Go |
+| Token | prompt `2299`、completion `3462`、reasoning `3132`、总计 `5761` |
+| 可见与审计 | 一处可见理解、问题 `0`；审计候选 `1`，`existingAnswer=null`、`worthAsking=false`，最终未显示问题 |
+| Codex 初评 | `fail`；可见理解重复冻结 Low 已表达的含义；内部感受候选已有用户依据，审计仍记录为无现成答案 |
+| 产品裁决 | `pending`；等待产品负责人查看完整相关原文、冻结 Low 与实际 High |
+| 当前状态 | `首题速度门 No-Go，产品语义裁决待确认` |
+| 下游 | 页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 保持 `event_centered + baseline` |
+
+当前专项：[回应优先 v2.6 Low-effort Audited High](../../plans/2026-08-19-gi088-response-first-v2-6-low-effort-audited-high.md)。
+
+公开证据：[v2.6 首题交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-6-low-effort-audited-high-quality-v1-handoff.md)与[阶段账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-6-stage-ledger-v1.json)。公开材料只保存摘要、指标与哈希，用户和模型正文继续留在受控私有边界。
+
+## 回应优先 v2.5 候选问题自答审计结果卡｜2026-08-19
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 产品决策 | High 能否在提问前用完整有效用户原文淘汰已经回答的候选，并保留真正能够增加认识的问题 |
+| 候选与运行身份 | `2026-08-19.gi088-response-first-v2-5-question-self-answer-high`；`2026-08-19.gi088-response-first-v2-5-question-self-answer-high-quality-v1` |
+| 唯一主要因素 | High 增加结构化 `informationGainAudit`；每个候选问题记录已有答案、用户来源与是否值得询问，可见问题只来自审计通过的候选 |
+| 固定因素 | v2.2 冻结 Low、六题输入与判尺、`deepseek-v4-pro`、Thinking high、High `maxTokens=4000`、状态合同、可见投影、两段式、60 秒硬门、重试／恢复／回退 0 |
+| 分账职责 | 程序验证字段、用户来源、结构和模型自身声明的一致性；Codex 逐问映射完整原文与实际输出；产品负责人作最终语义裁决 |
+| 预算 | 新离线账最多 `6` 次，实际 `1/6`，其余 `5 not_run`；并发 1 |
+| 首题技术结果 | 预检 HTTP 200、目标模型可用；正式调用 HTTP 200，High `60.013s`、冻结 Low＋High `63.354s`，正文 `0` 字符，错误码 `TIMEOUT` |
+| Token 与内容边界 | 供应商未返回可用 Token 统计和结束原因；问题自答审计、可见理解、问题与语义质量均为 `not_evaluated` |
+| 当前状态 | `No-Go · first_gate_technical_timeout`；首题硬门触发后停止 |
+| 下游 | 页面接入、提交、推送、部署和 Preview 均为 `not_run`；Production 保持 `event_centered + baseline` |
+
+公开证据：[v2.5 首题交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-5-question-self-answer-high-quality-v1-handoff.md)与[阶段账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-5-stage-ledger-v1.json)。
+
+## 回应优先 v2.2 Low／v2.3 High 当前结果卡｜2026-08-17
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 当前决策 | 先确认事实型 Low 的完整六题质量，再验证 High 能否依据用户原文追加可纠正理解与同一回答焦点的问题 |
+| Low 身份 | 候选 `2026-08-17.gi088-response-first-v2-2-factual-low`；完整六题运行 `2026-08-17.gi088-response-first-v2-2-low-full-quality-v2`；候选指纹 `c0e99522…cb01f` |
+| Low 结果 | HTTP 200、合同有效和完整正文 `6/6`；耗时 `2.882 / 3.341 / 6.178 / 3.580 / 4.014 / 4.188s`，中位数 `3.797s`；产品负责人查看完整相关上下文与实际输出后裁决 `6 pass / 0 minor / 0 fail`，Low 已冻结 |
+| High 身份 | 候选 `2026-08-17.gi088-response-first-v2-3-grounded-high`；运行 `2026-08-17.gi088-response-first-v2-3-high-quality-v1`；计划指纹 `a2076f0a…96bc` |
+| High 实际运行 | 检查点 `1/3`；HTTP 200；High 耗时 `38.384s`，冻结 Low＋High 共 `41.725s`；重试、恢复和回退 `0` |
+| High 完整性 | prompt `1873`、completion `2000`、reasoning `1985`、`finishReason=length`；正文只有 42 个字符，JSON 在第 42 个字符处截断，合同有效 `0/1` |
+| High 内容评价 | `not_evaluated`；当前没有完整的 High 理解和问题可供 Codex 与产品负责人判断，不能归因为语义质量失败 |
+| 当前裁决 | `No-Go · stopped_by_checkpoint_technical_or_contract_gate`；只确认 High 当前配置无法完整交付，grounded-high 产品方法仍待验证 |
+| 预算与下游 | 新离线账消费 `7/15`、其余 `8 not_run`；页面接入、提交、推送、部署和 Preview 均为 `not_run`，Preview `0/15` |
+| `4000` Token 探针 | 独立同题 `1/1`；High `37.066s`、两段 `40.407s`；completion `2072`、reasoning `1898`、`finishReason=stop`，完整 JSON `596` 字符，本题 Token 方向通过 |
+| 探针合同与内容 | `NULL_WORKING_TASK_UNDERSTANDING_DELTA_MUST_BE_NULL`，合同有效 `0/1`；可见追加理解为空、问题 `0`；产品负责人已裁决内部认识通过、可见空追加 minor、完整链路状态 No-Go |
+| v2.4 身份 | 候选 `2026-08-17.gi088-response-first-v2-4-null-task-aligned-high`；运行 `2026-08-17.gi088-response-first-v2-4-null-task-aligned-high-quality-v1`；计划指纹 `864d9da7…1be4d` |
+| v2.4 首题技术 | HTTP 200、`finishReason=stop`、来源与状态合同有效；High `51.656s`、两段 `54.997s`；completion `3747`、reasoning `3311`，60 秒硬门通过、45 秒目标未达到 |
+| v2.4 首题内容 | 一处可纠正理解、两个同焦点问题；Codex 与产品负责人均裁决 fail，原因是 U1 已给出比较触发情境、U2 已给出愤慨感受，两个问题都缺少信息增量 |
+| v2.4 账本 | `1/6`，其余 `5 not_run`；重试／恢复／回退 `0`；费用估算 `¥0.028542` |
+| 证据 | [原 High 公开回执](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-3-high-quality-v1-receipt.json)、[4000 Token 探针回执](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-3-high-token-4000-probe-v1-receipt.json)、[阶段总账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-v2-3-stage-ledger-v3.json)与[探针交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-3-high-token-4000-probe-v1-handoff.md) |
+
+v2.4 首题确认空主线提交方法能够通过现有程序合同，同时暴露两项新证据：当前调用完成于 `3747/4000` completion Token，完整性余量较小；High 两问重复索取已有信息并由产品负责人裁决 fail。状态修复通过、内容质量 No-Go，继续分开记账。
+
+## 回应优先 v2.2 Low 三题检查点历史过程卡｜2026-08-17
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 决策 | 删除 Low 的高层感受或张力推测权限后，事实型承接是否具备进入完整六题与 v2.3 的资格 |
+| 身份 | `2026-08-17.gi088-response-first-v2-2-low-quality-v1`；候选 `2026-08-17.gi088-response-first-v2-2-factual-low`；计划指纹 `da8fbf66…811f` |
+| 数据 | 与 v2.1 相同的纠正刚出现、纠正已承接后继续、关系表达三题；数据指纹 `59d524f8…48cc` |
+| 运行 | `deepseek-v4-pro`、Thinking Low、纯文本、`maxTokens=1280`、串行 `3/3`；重试／恢复／降级 `0` |
+| 技术与速度 | HTTP 200、合同有效、`finishReason=stop` 均为 `3/3`；耗时 `4.016 / 2.812 / 3.854s`，中位数 `3.854s` |
+| Token 与费用 | prompt `3261`、completion `326`、reasoning `225`、总计 `3587`；按项目 `2026-08-10` 冻结价估算 `¥0.011739`，Provider 回执未返回实际账单金额 |
+| Codex 初评 | `1 pass / 0 minor / 2 fail` |
+| 产品负责人裁决 | 查看对应用户输入与 AI 输出后，`2 pass / 0 minor / 1 fail`；新纠正与关系题通过，唯一失败为纠正后继续仍重复复述 |
+| 裁决 | `No-Go · stopped_by_checkpoint_quality_gate`；v2.2 完整六题 `0/6 not_run`，v2.3 `0/9 not_run` |
+| 下游 | 六张产品评审卡、页面接入、提交、推送、部署和 Preview 均为 `not_run`；新离线账 `3/18`、Preview `0/15` |
+| 证据 | [公开回执](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-low-quality-v1-receipt.json)、[运行器零调用修正](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-low-quality-v1-runner-fix.json)、[产品负责人三题裁决](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-product-owner-checkpoint-review-v1.json)、[阶段总账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-v2-3-stage-ledger.json)与[结果交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-low-quality-v1-handoff.md) |
+
+该检查点证明事实型 Low 在新纠正与关系表达两题达到产品负责人要求；当前唯一剩余质量问题是纠正已经承接后仍重复复述。用户正文、模型正文和逐题评价继续保存在 Git 排除的私有边界。
+
+关系题裁决同时更新后续评价边界：能够表达用户原意的自然语义转化可以通过，无需逐字复刻。回归集 v1.2 与本次运行保持原身份和指纹；后续运行先建立承接最新产品判尺的新数据集身份。
+
+## 回应优先 v2.1 Low 三题检查点结果卡｜2026-08-17
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 决策 | v2.1 对截断、纠正后重复承接和关系场景无依据推测的修复，是否具备进入完整六题的资格 |
+| 身份 | `2026-08-17.gi088-response-first-v2-1-low-quality-v1`；计划指纹 `82f83783…fe68` |
+| 数据 | 纠正刚出现、纠正已承接后继续、关系场景可纠正推测三道历史失败题 |
+| 运行 | `deepseek-v4-pro`、Thinking Low、纯文本、`maxTokens=1280`、串行 `3/3`；重试／恢复／降级 `0` |
+| 技术与速度 | HTTP 200、合同有效、`finishReason=stop` 均为 `3/3`；耗时 `4.848 / 4.664 / 4.960s`，中位数 `4.848s` |
+| Token 结果 | completion `159 / 114 / 106`；`1280` 上限未触发，旧截断问题在本次三题中消失 |
+| 内容初评 | `0 pass / 0 minor / 3 fail`；新纠正增加未经确认的动机与心理结论，纠正后继续仍重复复述并新增动机，关系题继续出现缺少依据的具体体验 |
+| 裁决 | `No-Go · stopped_by_checkpoint_quality_gate`；完整六题 `0/6 not_run`，全计划剩余评测 `32 not_run` |
+| 下游 | 产品负责人六卡、后续 A/B、完整链路、产品接入、提交、推送和 Preview 均为 `not_run`；Preview `0/15 not_run` |
+| 证据 | [公开回执](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-1-low-quality-v1-receipt.json)、[运行器零调用修正](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-1-low-quality-v1-runner-fix.json)、[阶段总账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-1-stage-ledger.json)与[结果交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-1-low-quality-v1-handoff.md) |
+
+该检查点只证明当前三题中的速度和输出完整性；语义质量硬门失败决定后续停止。用户正文、模型正文和逐题初评继续保存在 Git 排除的私有边界。
+
+## 回应优先 v2 Low 六题历史结果卡｜2026-08-17
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 决策 | Low 首段是否具备进入追问 A/B 和产品接入的质量资格 |
+| 身份 | `2026-08-16.gi088-response-first-v2-low-quality-v1`；计划指纹 `ddd49630…9623` |
+| 数据 | 五个真实问题检查点＋真实 16 条消息 `RPR-LC-21`；原合成长上下文退出当前门 |
+| 运行 | Pro Low、纯文本、串行 `6/6`；重试／恢复／降级 `0`；六次耗时均低于 6 秒 |
+| 客观结果 | 合同有效 `5/6`；RPR-REAL-19 纠正刚出现的输出因 completion Token 上限而截断 |
+| 内容初评 | `3 pass / 0 minor / 3 fail`；另两项失败为纠正已承接后重复承接、关系场景无依据扩写 |
+| 裁决 | `No-Go`；追问 A/B、后台职责 A/B、完整六题与条件性思考强度合计 `26 not_run` |
+| 下游 | 页面接入、提交、推送、Preview 部署和 Preview 六轮均为 `not_run`；Production 保持 `event_centered + baseline` |
+| 证据 | [公开回执](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-low-quality-v1-receipt.json)与[阶段总账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-stage-ledger.json) |
+
+## 先回应后整理与职责重划历史启动卡｜2026-08-16
 
 产品负责人确认用户可感知等待和模型完整处理速度同时优化。历史 Pro Low 已证明速度方向，历史精简合同对照也证明单纯减少字数不足以稳定通过速度门，因此本轮先建立职责清楚的两段式候选。
 
@@ -36,12 +241,12 @@ Production 状态：`项目主链使用 event_centered + baseline；生成式访
 | 模型职责 | 用户含义、用户已明确事实与待确认假设、当前焦点、认识增量、下一问和自然措辞 |
 | 历史依据 | Low 完整开发 P50 `19.886s`、P90 `30.955s`、最长 `38.554s`；精简合同对照 P50 `32.085s`，仍未达到稳定速度目标，并暴露来源职责重复 |
 | 实施身份 | `2026-08-16.gi088-response-first-two-stage-v1` |
-| 当前状态 | `本地候选已完成；首段速度形成方向性支持，语义质量待验证`；候选指纹 `e806843d…bac96` |
+| 当前状态 | `本地候选已完成；首段速度门 6/6，产品质量 5/6，纠正场景语义重复形成 No-Go`；候选指纹 `e806843d…bac96` |
 | 零调用结果 | 系统提示字符：单段／第一段／第二段 `9128 / 478 / 7262`；RPR-CF-02 请求：单段／第一段／两段合计 `9728 / 996 / 9278` |
 | 自动验证 | 两段式专项 `9/9`、现有 SSE 客户端 `12/12`、类型检查与定向 ESLint 通过 |
-| 下一单因素 | 首段六题 Provider 调用已完成 `6/6`，技术有效与 45／60 秒门均通过；当前等待产品负责人私有六卡内容裁决 |
+| 下一单因素 | 旧 A/B 的 A1、B1 按当前规则均可显示，产品负责人判断两者都存在语义重复；下一候选方向为“已探索层排除＋比较意味着什么” |
 | 本阶段边界 | 产品运行入口、数据库、Judge、隐藏集、Preview、Production、推送与部署均为 `0`；候选与公开证据已进入本地阶段检查点 `30cfc03` |
-| 停止点 | 第一门调用已完成并停止；后台职责 A/B、后续质量账和页面接入等待产品负责人裁决 |
+| 停止点 | 旧信息增益 A/B 实际调用 `2/4`；原请求受废弃规则污染，正式归因无效。新的干净 A-B-B-A、后续质量账、后台职责 A/B 和页面接入为 `not_run` |
 
 详细范围见[先回应后整理与职责重划实施计划](../../plans/2026-08-16-gi088-response-first-two-stage-and-responsibility-split.md)。
 
@@ -547,7 +752,7 @@ Provider v4 及更早两段式产物只承担历史技术、失败复现和判�
 | 技术完整率与产品质量分开报告，失败可定位到具体对象和行为约定 | `统一合同已建立；4 张历史校准卡需按新分账口径复核` |
 | 板块 7 可直接使用评测资产、Trace 要求和准入门 | `诊断子步可执行；正式实现门尚未满足` |
 
-板块 7B 的 GI-085 与 GI-086 均已判定固定门 No-Go，GI-086 的通用能力结论保持开放。GI-087 原六题已完成上下文资格审计，原质量门和剩余逐题裁决停止。GI-088 v0～v7r4 继续按各自身份保存 Token、恢复、阶段、过度修复、平台和真人连续性证据。v8 以 `1/4 early_stopped` 完成产品验收；v8r1 在 A1 暴露控制误停单例阻断并进入历史只读。v8r2 主体底座继续承担工程历史证据；阶段 B2 资产已封存，阶段 C2 最终为技术阻断，当前无可推荐 Judge。新的 Judge 路线与全新隐藏独立准入均需新授权；候选质量与发布尚未裁决。项目主链当前使用 `event_centered + baseline`，生成式能力继续关闭。
+板块 7B 的 GI-085 与 GI-086 均已判定固定门 No-Go，GI-086 的通用能力结论保持开放。GI-087 原六题已完成上下文资格审计，原质量门和剩余逐题裁决停止。GI-088 v0～v7r4 继续按各自身份保存 Token、恢复、阶段、过度修复、平台和真人连续性证据。v8 以 `1/4 early_stopped` 完成产品验收；v8r1 在 A1 暴露控制误停单例阻断并进入历史只读。v8r2 主体底座继续承担工程历史证据；回应优先 v2.2 Low 已冻结 `6/6 pass`，v2.4 High 保留重复追问 No-Go 历史，v2.5 首题以 `1/6` 技术超时停止且语义未评价，v2.6 首题以 `1/6` 完整返回并通过合同，同时因两段 `60.009s` 触发速度门 No-Go；Codex 语义初评 fail，产品裁决 pending，其余 `5 not_run`。阶段 B2 资产已封存，阶段 C2 最终为技术阻断，当前无可推荐 Judge。新的 Judge 路线与全新隐藏独立准入均需新授权；后续候选与发布尚未裁决。项目主链当前使用 `event_centered + baseline`，生成式能力继续关闭。
 
 ## 当前评测口径｜`2026-08-05` GI-074
 

@@ -2,18 +2,230 @@
 
 - 文档职责：证据索引
 - 文档状态：现役
-- 最后核验：`2026-08-16`
+- 最后核验：`2026-08-19`
 - 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-版本：`2026-08-16.gi088-response-first-visible-quality-v1`
+版本：`v2.9 真实纠正后继续 No-Go＋v2.8.1 No-Go 父证据`
 
-状态：`首段六题技术有效、45 秒门和 60 秒门均为 6/6；等待产品负责人私有六卡内容裁决，页面体验与后续结构化阶段保持待验证`
+状态：`v2.9 真实 CONTINUE Low＋High 2/2 完成；纯时间 5852ms 通过，High 合同失败使整体技术门为 false；Low Codex minor，Codex 与产品均裁决完整回合 fail，本轮 No-Go；后续 4 not_run。页面、Preview 与发布 not_run；Production baseline`
+
+现行职责、单一回答焦点规则和旧身份边界统一读取[板块 7 当前运行合同](../../../docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。本目录中的原始回执继续保存当时请求、失败码和调用事实。
 
 适用总规范：[Daily Light AI 评测总规范 v1.0](../../../docs/ai-evaluation-standard.md)
 
 当前专项：[生成式访谈质量评测 v1](../../../docs/technical/interview-event-centered/04j-generative-quality-evaluation-v1.md)
 
 ## 0. 当前任务
+
+当前结果入口为[回应优先 v2.9 真实纠正后继续结果交接](./response-first-v2-9-causal-continuation-gate-v1-handoff.md)。冻结计划继续保存运行前输入字节；执行结果确认 High 没有形成覆盖判断或开放目标。公开区只保存身份、指纹、状态和数量，私有正文继续隔离。
+
+### 回应优先 v2.9 当前任务
+
+- 候选：`2026-08-19.gi088-response-first-v2-9-separated-open-gap-high`
+- 运行族：`2026-08-19.gi088-response-first-v2-9-two-turn-causal-quality-v1`
+- 已完成父运行：`2026-08-19.gi088-response-first-v2-9-correction-gate-v1`
+- 当前运行：`2026-08-19.gi088-response-first-v2-9-causal-continuation-gate-v1`
+- 预算：总上限 `7`；纠正题 High 已完成 `1/1`，真实 CONTINUE Low＋High 已完成 `2/2`，后续 `4 not_run`；并发 1，重试、恢复、回退 `0`
+- 首题结果：HTTP 200／stop、合同有效；High `3325ms`、观察两段 `6666ms`；completion `151/4000`；开放任务为空、保存一条 `U3` 纠正认识，High 可见理解为空、问题 `0`
+- 首题停止门：Codex 初评与产品负责人裁决均为 `pass`
+- 冻结项：v2.2 Low、`deepseek-v4-pro`、High Thinking 关闭、`maxTokens=4000`、数据与时间门
+- 当前结果：Low 有效、`3967ms`、Codex `minor`；High HTTP 200／stop／完整 JSON、`1885ms`，三项状态合同失败；纯时间 `5852ms` 通过，整体技术门 `false`；Codex 与产品均裁决完整回合 `fail`
+- 当前状态：`No-Go / stop`；`RPR-LC-21` 等后续四题继续 `not_run`
+- 发布边界：页面、Preview、提交、推送和部署均为 `not_run`；Production 保持 `event_centered + baseline`
+- [v2.9 公开启动卡](./response-first-v2-9-correction-gate-v1-start-card.json)
+- [v2.9 当前回执](./response-first-v2-9-correction-gate-v1-receipt.json)
+- [v2.9 首题结果交接](./response-first-v2-9-correction-gate-v1-handoff.md)
+- [v2.9 阶段账](./response-first-v2-9-stage-ledger-v1.json)
+- [v2.9 真实 CONTINUE 启动卡](./response-first-v2-9-causal-continuation-gate-v1-start-card.json)
+- [v2.9 真实 CONTINUE 回执](./response-first-v2-9-causal-continuation-gate-v1-receipt.json)
+- [v2.9 真实 CONTINUE 结果交接](./response-first-v2-9-causal-continuation-gate-v1-handoff.md)
+- [v2.9 真实 CONTINUE 阶段账](./response-first-v2-9-causal-continuation-stage-ledger-v1.json)
+
+### 回应优先 v2.8.1 父结果
+
+产品负责人已将 v2.8 首题裁决为 `minor`；v2.8.1 随后使用实际 A3、重放 post-state 与 U4 完成真实 Low → High，调用 `2/2`。Low 有效且 Codex 可见质量初评通过；High 合同失败且重复询问已有答案，Codex 与产品负责人均裁决 fail，整体 `No-Go / stop`。
+
+### 回应优先 v2.8.1 当前任务
+
+- 候选／运行身份：`2026-08-19.gi088-response-first-v2-8-correction-persistence-high`／`2026-08-19.gi088-response-first-v2-8-1-causal-continuation-probe-v1`
+- 计划指纹：`26604324a6ec4e52e83d89f048bfd196d5f33a079b07beefea79978ad0791600`
+- 验证范围：仅 `RPR-REAL-19-CONTINUE`；先生成实际 Low，再把实际 Low、首题实际气泡和重放 post-state 交给 High
+- 父门：产品负责人将 v2.8 首题判为 `minor`
+- 新账：Low `1`＋High `1`，已消费 `2/2`；重试、恢复、回退 `0`
+- Prepare 结果：父 start card 计划指纹重算通过；父 raw High 重解析和校验通过；post-state 重新投影且哈希一致；公开启动卡、回执和 `0600` 私有账本已生成
+- Low 结果：有效、`5798ms`，Codex 可见质量初评 pass
+- High 结果：HTTP 200／stop、`5864ms`、completion `358` Token；状态动作合同失败，无 post-state；可见问题重复索取 U1 已回答案例，Codex fail
+- 时间与 Token：客观两段 `11662ms`；`4000` Token 上限未触发
+- 当前结论：产品负责人裁决 `fail`，整体 `No-Go / stop`
+- 血缘保护：绑定首题 response／post-state 哈希；High 输入将在放行后绑定本次 Low
+- 第二停止门：两次调用后立即交付完整原文，不连跑其他案例
+- [v2.8.1 公开启动卡](./response-first-v2-8-1-causal-continuation-probe-v1-start-card.json)
+- [v2.8.1 当前回执](./response-first-v2-8-1-causal-continuation-probe-v1-receipt.json)
+- [v2.8.1 结果交接](./response-first-v2-8-1-causal-continuation-probe-v1-handoff.md)
+- [v2.8.1 阶段账](./response-first-v2-8-1-stage-ledger-v1.json)
+- [v2.8.1 当前专项](../../../docs/plans/2026-08-19-gi088-response-first-v2-8-1-causal-continuation-probe.md)
+
+### 回应优先 v2.8 High 首题父证据
+
+- 候选／运行身份：`2026-08-19.gi088-response-first-v2-8-correction-persistence-high`／`2026-08-19.gi088-response-first-v2-8-correction-persistence-high-quality-v1`
+- 首题结果：HTTP 200、`finishReason=stop`、合同有效；High `4.445s`、两段 `7.786s`，45／60 秒门均通过
+- 状态结果：审计 `persist`，引用 `U3`、标记 `A2` 被替代；主线 `set_new`、认识 `add`，真实 post-state 已生成
+- 可见与初评：冻结 Low 保持，High 可见理解 `null`、问题 `0`；可见体验和纠正持久化 pass，状态职责 minor，产品负责人最终裁决 `minor`
+- 原账：最多 `6` 次，当前 `1/6`，其余 `5 retired_not_run`
+- 当前停止点：产品负责人已裁决 `fail`，停止后续模型调用
+- 发布边界：页面接入、Preview 与 Production 变更等待离线质量门
+- [v2.8 公开启动卡](./response-first-v2-8-correction-persistence-high-quality-v1-start-card.json)
+- [v2.8 公开结果回执](./response-first-v2-8-correction-persistence-high-quality-v1-receipt.json)
+- [v2.8 首题结果交接](./response-first-v2-8-correction-persistence-high-quality-v1-handoff.md)
+- [v2.8 阶段账](./response-first-v2-8-stage-ledger-v1.json)
+- [v2.8 历史专项](../../../docs/plans/2026-08-19-gi088-response-first-v2-8-correction-persistence-high.md)
+
+### 回应优先 v2.7 High 父证据
+
+- 候选／运行身份：`2026-08-19.gi088-response-first-v2-7-thinking-disabled-audited-high`／`2026-08-19.gi088-response-first-v2-7-thinking-disabled-audited-high-quality-v1`
+- 唯一主要因素：High `thinking enabled→disabled`；Thinking 关闭时省略 `reasoningEffort`
+- 固定因素：v2.2 冻结 Low、六题输入、`deepseek-v4-pro`、`maxTokens=4000`、v2.6 Prompt／Interview Skill、候选问题自答审计、JSON、状态合同、可见投影、两段式和 60 秒硬门
+- 首题结果：HTTP 200、`finishReason=stop`、合同有效；High `1.847s`、两段 `5.188s`，45／60 秒门均通过；reasoning 正文缺失、Token 为 `null`
+- 分层初评：理解 `null`、问题 `0`、审计候选 `0`；可见 Low-only 体验 Codex pass，完整 High 因纠正未保存而 Codex fail，产品负责人裁决 pending
+- 新账：最多 `6` 次，当前 `1/6`，其余 `5 not_run`
+- 当前停止点：完整 High 的 Codex 质量门失败，其余五题停止；等待产品负责人完成 `RPR-REAL-19-CORRECTION` 原文裁决
+- 失败依据：本题 `taskChange=unchanged`、`understandingChange=none`，纠正未保存；CONTINUE 夹具预置主线与认识，存在因果断点
+- 发布边界：页面接入、Preview 与 Production 变更等待离线质量门
+- [v2.7 公开启动卡](./response-first-v2-7-thinking-disabled-audited-high-quality-v1-start-card.json)
+- [v2.7 公开结果回执](./response-first-v2-7-thinking-disabled-audited-high-quality-v1-receipt.json)
+- [v2.7 首题结果交接](./response-first-v2-7-thinking-disabled-audited-high-quality-v1-handoff.md)
+- [v2.7 阶段账](./response-first-v2-7-stage-ledger-v1.json)
+- [v2.7 历史执行专项](../../../docs/plans/2026-08-19-gi088-response-first-v2-7-thinking-disabled-audited-high.md)
+
+### 回应优先 v2.6 High 结果证据
+
+- 候选／运行身份：`2026-08-19.gi088-response-first-v2-6-low-effort-audited-high`／`2026-08-19.gi088-response-first-v2-6-low-effort-audited-high-quality-v1`
+- 唯一主要因素：High `reasoningEffort high→low`
+- 固定因素：v2.2 冻结 Low、六题输入、模型、Thinking 开启、`maxTokens=4000`、v2.5 候选问题自答审计、状态合同、可见投影、两段式和 60 秒硬门
+- 新账：最多 `6` 次，当前 `1/6`；其余 `5 not_run`
+- 当前停止点：首题速度 No-Go，按完整原文、Low、High、技术事实和 Codex 初评交付产品负责人，等待语义裁决
+- 发布边界：页面接入、Preview 与 Production 变更等待离线质量门
+- [v2.6 公开启动卡](./response-first-v2-6-low-effort-audited-high-quality-v1-start-card.json)
+- [v2.6 公开结果回执](./response-first-v2-6-low-effort-audited-high-quality-v1-receipt.json)
+- [v2.6 首题结果交接](./response-first-v2-6-low-effort-audited-high-quality-v1-handoff.md)
+- [v2.6 阶段账](./response-first-v2-6-stage-ledger-v1.json)
+- [v2.5 公开启动卡](./response-first-v2-5-question-self-answer-high-quality-v1-start-card.json)
+- [v2.5 技术结果回执](./response-first-v2-5-question-self-answer-high-quality-v1-receipt.json)
+- [v2.5 结果交接](./response-first-v2-5-question-self-answer-high-quality-v1-handoff.md)
+- [v2.5 阶段账](./response-first-v2-5-stage-ledger-v1.json)
+- [v2.6 历史执行专项](../../../docs/plans/2026-08-19-gi088-response-first-v2-6-low-effort-audited-high.md)
+
+### 回应优先 v2.2 复核通过后继续执行
+
+- Low 候选保持 `2026-08-17.gi088-response-first-v2-2-factual-low`
+- 新数据集：`2026-08-17.gi088-response-first-six-real-checkpoints-v1-3-product-owner-rubric`
+- Low 六题运行：`2026-08-17.gi088-response-first-v2-2-low-full-quality-v2`，调用 `6/6`，产品负责人裁决 `6/6 pass`
+- High：`2026-08-17.gi088-response-first-v2-3-high-quality-v1`，消费 `1/9`，第 1 题合同失败后停止，其余 `8 not_run`
+- High Token 探针：`2026-08-17.gi088-response-first-v2-3-high-token-4000-probe-v1`，消费 `1/1`；完整 JSON、状态合同失败；产品负责人裁决内部认识 pass、可见空追加 minor、完整链路 No-Go
+- v2.4 High：`2026-08-17.gi088-response-first-v2-4-null-task-aligned-high-quality-v1`，首题 `1/6`；状态合同通过，Codex 与产品负责人内容裁决均为 fail，No-Go
+- [产品负责人三题覆盖裁决](./response-first-v2-2-product-owner-checkpoint-review-v2.json)
+- [继续执行阶段账](./response-first-v2-2-v2-3-stage-ledger-v3.json)
+- [Low 六题公开启动卡](./response-first-v2-2-low-full-quality-v2-start-card.json)
+- [Low 六题公开结果回执](./response-first-v2-2-low-full-quality-v2-receipt.json)
+- [Low 六题结果交接](./response-first-v2-2-low-full-quality-v2-handoff.md)
+- [High 启动卡](./response-first-v2-3-high-quality-v1-start-card.json)
+- [High 结果回执](./response-first-v2-3-high-quality-v1-receipt.json)
+- [High 状态修正回执](./response-first-v2-3-high-quality-v1-runner-fix.json)
+- [High 结果交接](./response-first-v2-3-high-quality-v1-handoff.md)
+- [High 4000 Token 探针启动卡](./response-first-v2-3-high-token-4000-probe-v1-start-card.json)
+- [High 4000 Token 探针结果回执](./response-first-v2-3-high-token-4000-probe-v1-receipt.json)
+- [High 4000 Token 探针结果交接](./response-first-v2-3-high-token-4000-probe-v1-handoff.md)
+- [v2.4 启动卡](./response-first-v2-4-null-task-aligned-high-quality-v1-start-card.json)
+- [v2.4 结果回执](./response-first-v2-4-null-task-aligned-high-quality-v1-receipt.json)
+- [v2.4 阶段账](./response-first-v2-4-stage-ledger-v1.json)
+- [v2.4 首题交接](./response-first-v2-4-null-task-aligned-high-quality-v1-handoff.md)
+- [当前执行专项](../../../docs/plans/2026-08-17-gi088-response-first-v2-2-review-go-continuation.md)
+
+### 回应优先 v2.3 High `4000` Token 探针当前结果
+
+- 候选／运行身份：`2026-08-17.gi088-response-first-v2-3-grounded-high-max4000`／`2026-08-17.gi088-response-first-v2-3-high-token-4000-probe-v1`
+- 计划指纹：`bf1876287e5973268db7465ba63a8a536c68eaf33b4bb3994054e3498cee3e89`
+- 唯一变化：High `maxTokens 2000→4000`；调用 `1/1`，重试／恢复／回退 `0`
+- 完整性：HTTP 200、模型正确、`finishReason=stop`；completion `2072`、reasoning `1898`，完整 JSON `596` 字符
+- 耗时：High `37.066s`，两段合计 `40.407s`；45 秒目标与 60 秒硬门均达到
+- Token 结论：本题截断解决；`4000` 不承担其余案例必然完整的结论
+- 合同结果：`NULL_WORKING_TASK_UNDERSTANDING_DELTA_MUST_BE_NULL`，合同有效 `0/1`
+- 用户可见追加：理解为空、问题 `0`；当前按 Low-only 完成
+- 内容：产品负责人裁决内部认识 pass、可见空追加 minor；完整链路因状态合同失败 No-Go
+- 费用：估算 `¥0.0127198`，实际供应商账单待回执
+
+### 回应优先 v2.3 High 当前结果
+
+- 候选／运行身份：`2026-08-17.gi088-response-first-v2-3-grounded-high`／`2026-08-17.gi088-response-first-v2-3-high-quality-v1`
+- 计划指纹：`a2076f0a27c5a10f5a3a2827027d23a7db4ff83d35282cad59cf62e473cf96bc`
+- 固定 Low：`2026-08-17.gi088-response-first-v2-2-low-full-quality-v2`，计划指纹 `0417cc3bbe704e8043b2065d2cf3fe902da51ad5a93a773ffc52b0a47780b8cf`
+- 调用：检查点 `1/3`、完整六题 `0/6`；累计 `1/9`，其余 `8 not_run`；重试／恢复／回退 `0`
+- 第 1 题：HTTP 200、模型正确；High `38.384s`，两段合计 `41.725s`
+- 完整性：completion `2000`、reasoning `1985`、`finishReason=length`、可见 JSON `42` 字符；解析失败，合同有效 `0/1`
+- 内容：High 语义质量 `not_evaluated`
+- 费用：本次 High 估算 `¥0.017619`；继续执行 Low＋High 累计估算 `¥0.029784`，实际供应商账单待回执
+- 停止：检查点 No-Go；其余 High、页面接入、提交、推送、部署和 Preview 均为 `not_run`
+
+### 回应优先 v2.2 Low 完整六题当前结果
+
+- 运行身份：`2026-08-17.gi088-response-first-v2-2-low-full-quality-v2`
+- 计划／候选／数据集指纹：`0417cc3bbe704e8043b2065d2cf3fe902da51ad5a93a773ffc52b0a47780b8cf`／`c0e99522ac8b0b2e252d3f7c8abf32e0fd364301609c5d79cc874712f27cb01f`／`25ab2ec7665d185f7dacf4eceb184e1a6be9ff2909ad93252f7ec97b035c3c32`
+- 技术结果：调用 `6/6`，HTTP 200、合同有效、完整返回和 15 秒目标均为 `6/6`；重试／恢复／降级 `0`
+- 耗时：`2.882 / 3.341 / 6.178 / 3.580 / 4.014 / 4.188s`，中位数 `3.797s`
+- Token 与费用：prompt `6391`、completion `736`、总计 `7127`；按冻结价估算 `¥0.012165`，Provider 实际账单金额待回执
+- 内容：Codex 原文后初评 `5 pass / 1 minor / 0 fail`；产品负责人裁决 `6 pass / 0 minor / 0 fail`，Low 质量门 Go
+- 零调用验证：相关回归 `37/37`、类型检查、定向 Lint、JSON、公开正文隔离、私有文件权限、文档检查与差异格式通过
+- 阶段结果：六条 Low 输出保持冻结；后续 High 的合同失败不改写 Low `6/6 pass` 结论
+
+### 回应优先 v2.2 Low 三题历史过程结果
+
+- 候选／运行身份：`2026-08-17.gi088-response-first-v2-2-factual-low`／`2026-08-17.gi088-response-first-v2-2-low-quality-v1`
+- 计划／候选／数据集指纹：`da8fbf667f42f49053c18bc822bc9a777cc9f9671e07c1824342fd0a7ecd811f`／`c0e99522ac8b0b2e252d3f7c8abf32e0fd364301609c5d79cc874712f27cb01f`／`59d524f8e932712d7f0c761847c94ce7abe7e552ad44f144f8a25d96230248cc`
+- 实际调用：三题检查点 `3/3`；v2.2 完整六题 `0/6 not_run`；v2.3 `0/9 not_run`；重试／恢复／降级 `0`
+- 技术与速度：`3/3` 有效；耗时 `4.016 / 2.812 / 3.854s`，中位数 `3.854s`
+- Token 与费用：prompt `3261`、completion `326`、总计 `3587`；按项目 `2026-08-10` 冻结价估算 `¥0.011739`，Provider 回执未返回实际账单金额
+- 内容：Codex 私有初评 `1 pass / 0 minor / 2 fail`；产品负责人查看用户输入与 AI 输出后裁决 `2 pass / 0 minor / 1 fail`。新纠正与关系题通过，唯一失败为纠正后继续重复复述
+- 停止：新离线账 `3/18`，其余 `15 not_run`；产品六卡、产品接入、提交、推送、部署和 Preview `not_run`
+- [公开启动卡](./response-first-v2-2-low-quality-v1-start-card.json)
+- [公开结果回执](./response-first-v2-2-low-quality-v1-receipt.json)
+- [运行器修正回执](./response-first-v2-2-low-quality-v1-runner-fix.json)
+- [产品负责人三题裁决](./response-first-v2-2-product-owner-checkpoint-review-v1.json)
+- [阶段总账](./response-first-v2-2-v2-3-stage-ledger.json)
+- [结果交接](./response-first-v2-2-low-quality-v1-handoff.md)
+
+### 回应优先 v2.1 Low 结果
+
+- 运行身份：`2026-08-17.gi088-response-first-v2-1-low-quality-v1`
+- 计划指纹：`82f837837f600127dd18b1ce55d145b69dc4928f6b039967e1b778c893d5fe68`
+- 候选指纹：`a4f295005dd130b3d3eb4b213a0756e790064971c4056b5bb5592234e59fe94d`
+- 数据集指纹：`59d524f8e932712d7f0c761847c94ce7abe7e552ad44f144f8a25d96230248cc`
+- 运行设置：`deepseek-v4-pro`、Thinking Low、plain text、`maxTokens=1280`、并发 1、重试／恢复／降级 0
+- 实际调用：三题检查点 `3/3`；完整六题 `0/6 not_run`；重试／恢复／降级 `0`
+- 技术与速度：`3/3` 有效，耗时 `4.848 / 4.664 / 4.960s`，中位数 `4.848s`；均为 `finishReason=stop`
+- 内容：Codex 私有初评 `0 pass / 0 minor / 3 fail`；重复承接和无依据推测仍未通过
+- 停止：全计划 `3/35`，其余 `32 not_run`；产品接入、提交、推送和 Preview `not_run`
+- [公开启动卡](./response-first-v2-1-low-quality-v1-start-card.json)
+- [公开结果回执](./response-first-v2-1-low-quality-v1-receipt.json)
+- [运行器修正回执](./response-first-v2-1-low-quality-v1-runner-fix.json)
+- [阶段总账](./response-first-v2-1-stage-ledger.json)
+- [结果交接](./response-first-v2-1-low-quality-v1-handoff.md)
+
+### 回应优先 v2 Low 六题结果
+
+- 运行身份：`2026-08-16.gi088-response-first-v2-low-quality-v1`
+- 计划指纹：`ddd49630bd7f3a447f0f8331fa4a0122b26edf865503dc6f611facb664539623`
+- 调用：`6/6`；总耗时 `2.829 / 5.523 / 4.174 / 2.693 / 3.572 / 3.483s`
+- 合同：`5/6`；纠正刚出现案例因 Token 上限截断
+- 内容：Codex 私有初评 `3 pass / 0 minor / 3 fail`
+- 停止：追问 A/B、职责 A/B、完整质量门、条件性思考强度、产品接入和 Preview 均为 `not_run`
+- 工程：全量测试 `3385` 通过、`10` 跳过；类型检查、Prisma、文档检查与生产构建通过；Lint `0` 错误、`45` 警告
+- [公开启动卡](./response-first-v2-low-quality-v1-start-card.json)
+- [公开结果回执](./response-first-v2-low-quality-v1-receipt.json)
+- [运行器修正回执](./response-first-v2-low-quality-v1-runner-fix.json)
+- [阶段总账](./response-first-v2-stage-ledger.json)
+- [结果交接](./response-first-v2-low-quality-v1-handoff.md)
+
+以下内容继续承担 v2 的上游候选和历史运行依据。
 
 产品负责人确认用户先得到回应与模型完整处理变快同时推进。本地候选已经把顺序改为第一段 Pro Low 生成自然回应，第二段 Pro High 完成结构化语义；程序合成两段并负责关系编号、历史来源、状态、幂等、保存和恢复。
 
@@ -22,14 +234,19 @@
 - 系统提示与字段：当前单段 `9128 / 14`；第一段 `478 / 2`；第二段 `7262 / 12`
 - RPR-CF-02 请求投影：当前单段 `9728` 字符；第一段 `996` 字符，减少约 `89.8%`；两段合计 `9278` 字符，减少约 `4.6%`
 - 验证：两段式专项 `9/9`、现有 SSE 客户端 `12/12`、类型检查与定向 ESLint 通过
-- 第一门结果：身份 `2026-08-16.gi088-response-first-visible-quality-v1`；Provider 调用与技术有效 `6/6`，45 秒门和 60 秒门 `6/6`，等待产品负责人内容裁决
+- 第一门结果：身份 `2026-08-16.gi088-response-first-visible-quality-v1`；Provider 调用与技术有效 `6/6`，45 秒门和 60 秒门 `6/6`；产品裁决 `5 pass / 1 fail`，纠正硬门因同义重复追问失败
+- 资产边界：`RFT-CX-01` 的模型回应通过；产品负责人判定该合成上下文表达生硬、信息过少，真实长上下文能力继续待验证
+- 停止结果：后台职责 A/B `0/4 not_run`、后台质量 `0/6 not_run`、页面接入 `not_run`
 - 执行边界：Judge、隐藏集、数据库、Preview、Production、推送和部署均为 `0`；候选与公开证据已进入本地阶段检查点 `30cfc03`
 - [两段式公开启动卡](./response-first-two-stage-v1-start-card.json)
 - [Prompt／Skill／模型／程序职责审计](./response-first-two-stage-v1-responsibility-audit.json)
 - [两段式零调用交接](./response-first-two-stage-v1-handoff.md)
 - [首段六题公开启动卡](./response-first-visible-quality-v1-start-card.json)
 - [首段六题技术回执](./response-first-visible-quality-v1-technical-receipt.json)
-- [首段六题产品评审交接](./response-first-visible-quality-v1-handoff.md)
+- [首段六题最终回执](./response-first-visible-quality-v1-receipt.json)
+- [首段六题结果交接](./response-first-visible-quality-v1-handoff.md)
+- [信息增益 A/B 最终回执](./visible-information-gain-ab-v1-receipt.json)
+- [信息增益 A/B 结果交接](./visible-information-gain-ab-v1-handoff.md)
 
 可见合同负担 A/B 已固定 RPR-CF-02、Pro Low 和同一完整用户输入，按 `A-B-B-A` 比较当前完整合同 A 与第一段可见合同 B。授权与消耗 `4/4`，裁决 `visible_contract_directional_support`。
 

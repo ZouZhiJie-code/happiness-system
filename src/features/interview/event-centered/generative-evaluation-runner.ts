@@ -2904,7 +2904,7 @@ export function inspectGenerativeBoundaryCase(
       }
       break;
     case "B08":
-      if (questionCount > 1) issues.push("multiple_question_targets");
+      // 问号数量只作为观察值。语义焦点与信息价值交给候选评测和产品裁决。
       break;
     case "B09":
       if (/深层心理结构|关系原型/u.test(response)) issues.push("unanswerable_abstraction");

@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-response-first-v2-7-thinking-disabled-audited-high-quality-v1",
+  "planFingerprint": "6d4c66c5c572b253efdffd7b8606c1bf7a27450c4d7f7df858bebe15993ed405",
+  "candidateFingerprint": "9f35b9fe9a43ec51ae58f3551496e98a1277810754b235ad7d6311ec185cd281",
+  "datasetFingerprint": "25ab2ec7665d185f7dacf4eceb184e1a6be9ff2909ad93252f7ec97b035c3c32",
+  "status": "waiting_product_owner_first_review",
+  "preflight": {
+    "checkedAt": "2026-08-19T10:44:18.466Z",
+    "httpStatus": 200,
+    "targetModelAvailable": true,
+    "modelListHash": "487df5b8f4a096e095dd4095596accd286d62a30f0eb2e8f2cc847b005b50121"
+  },
+  "budget": {
+    "authorized": 6,
+    "consumed": 1,
+    "completed": 1,
+    "notRun": 5,
+    "firstGateConsumed": 1,
+    "remainingConsumed": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "codexDecision": {
+    "first_gate": {
+      "phase": "first_gate",
+      "status": "v27_first_gate_quality_gate_failed",
+      "gatePassed": false,
+      "continuationAllowed": false,
+      "allCallsValid": true,
+      "firstGateSpeedPassed": true,
+      "completeReview": true,
+      "hardCasesPass": false,
+      "overallHardCasesPass": false,
+      "softMinorCount": 0,
+      "medianFullRoundLatencyMs": 5188,
+      "medianTargetPassed": true,
+      "counts": {
+        "pass": 0,
+        "minor": 0,
+        "fail": 1
+      }
+    },
+    "remaining": null
+  },
+  "productDecision": {
+    "first_gate": null,
+    "remaining": null
+  },
+  "results": [
+    {
+      "phase": "first_gate",
+      "order": 1,
+      "caseId": "RPR-REAL-19-CORRECTION",
+      "status": "valid",
+      "startedAt": "2026-08-19T10:44:18.478Z",
+      "completedAt": "2026-08-19T10:44:20.329Z",
+      "requestFingerprint": "274a22280669998e7a63688d11b712d07e5365c9b441943028d5d9f61229f4a8",
+      "frozenLowHash": "df15169aca894d310e3e686dc1d105827e81983b823ab15d25e1b8761e2059c8",
+      "frozenLowLatencyMs": 3341,
+      "responseHash": "5df9081ed163a42027c99dc1b659dcfd16c55f1c50041fef71eb896533dfd537",
+      "responseLength": 589,
+      "validationIssues": [],
+      "errorCode": null,
+      "highLatencyMs": 1847,
+      "fullRoundLatencyMs": 5188,
+      "fullRound45sTargetPassed": true,
+      "fullRound60sHardPassed": true,
+      "understandingPresent": false,
+      "understandingEvidenceRefCount": 0,
+      "understandingTextHash": null,
+      "questionCount": 0,
+      "questionTextHashes": [],
+      "questionObservation": {
+        "structuredQuestionCount": 0,
+        "punctuationQuestionCount": 0,
+        "answerFocusHash": null,
+        "candidateCount": 0,
+        "answeredCandidateCount": 0,
+        "openCandidateCount": 0,
+        "worthAskingCandidateCount": 0,
+        "selectedQuestionCount": 0
+      },
+      "finishReason": "stop",
+      "reasoningPresent": false,
+      "reasoningTokens": null,
+      "tokenUsage": {
+        "promptTokens": 2299,
+        "completionTokens": 161,
+        "totalTokens": 2460,
+        "promptCacheHitTokens": 2176,
+        "promptCacheMissTokens": 123
+      },
+      "responseModel": "deepseek-v4-pro",
+      "httpStatus": 200
+    }
+  ],
+  "releaseBoundary": {
+    "pageIntegration": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deployment": "not_run",
+    "preview": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "privateBoundary": {
+    "publicReceiptContainsUserLowOrHighBody": false,
+    "rawInputsLowHighAndReviews": "git_ignored_private_directory",
+    "parentV26ResultEvidence": "private_ledger_frozen_input_hash_with_public_status_counts_and_hashes_only",
+    "reviewPresentationOrder": [
+      "complete_relevant_user_and_assistant_context",
+      "frozen_low_actual_output",
+      "actual_high_raw_output_and_visible_projection",
+      "technical_status_latency_tokens_and_source_validation",
+      "codex_question_existing_answer_mapping",
+      "codex_provisional_judgment",
+      "product_owner_final_judgment"
+    ]
+  }
+}

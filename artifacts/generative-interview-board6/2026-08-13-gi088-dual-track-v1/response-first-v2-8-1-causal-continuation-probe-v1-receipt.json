@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-response-first-v2-8-1-causal-continuation-probe-v1",
+  "planFingerprint": "26604324a6ec4e52e83d89f048bfd196d5f33a079b07beefea79978ad0791600",
+  "status": "v281_high_or_full_round_no_go",
+  "budget": {
+    "authorized": 2,
+    "consumed": 2,
+    "completed": 2,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "parentGate": {
+    "verdict": "minor",
+    "reviewHash": "d9ebba85b4955a61806fe20f908889224ebdd12385a83fa02871fa7738a65c4c",
+    "responseHash": "ccd38aaac808d7b76510c6bfa46b350072481cdaebad049c60d432157881ef62",
+    "postStateHash": "85a9cfebb928dba00a94b8a5c0f365e9ddb5ab683af9683116da75bba59b6ca4"
+  },
+  "causalInput": {
+    "effectiveTurnInputHash": "bd909f063461fdbb1d1ab631b98d18b54b85e840f259a4c770b53336e3472b6c",
+    "replacedFixtureAssistantHash": "b9f9147127b115b7c09e5bd981e0cd4a32e00adddbe7c1bc5146f897bd322030",
+    "actualAssistantHash": "1fa42423b8412c09427aa297d3d607e860ff82f487700fd132f0c07da6426406",
+    "parentResponseHash": "ccd38aaac808d7b76510c6bfa46b350072481cdaebad049c60d432157881ef62",
+    "parentPostStateHash": "85a9cfebb928dba00a94b8a5c0f365e9ddb5ab683af9683116da75bba59b6ca4",
+    "actualAssistantAndReplayedPostStateUsed": true,
+    "u4Preserved": true,
+    "historicalContinuationLowUsedByHigh": false
+  },
+  "low": {
+    "stage": "low",
+    "status": "valid",
+    "startedAt": "2026-08-19T12:00:54.460Z",
+    "completedAt": "2026-08-19T12:01:00.261Z",
+    "requestFingerprint": "4997fd664a82fbe6bae33f3c4e3b56f187a9c3a858baffd858f6e90c374a72da",
+    "responseHash": "9f1219b2f8ce94dfc01965af79109eb653a07b5557950fdd5c0849499df14177",
+    "responseLength": 52,
+    "validationIssues": [],
+    "errorCode": null,
+    "latencyMs": 5798,
+    "finishReason": "stop",
+    "httpStatus": 200,
+    "responseModel": "deepseek-v4-pro",
+    "tokenUsage": {
+      "promptTokens": 1434,
+      "completionTokens": 103,
+      "totalTokens": 1537,
+      "promptCacheHitTokens": 256,
+      "promptCacheMissTokens": 1178
+    },
+    "target15sPassed": true,
+    "hard45sPassed": true
+  },
+  "high": {
+    "stage": "high",
+    "status": "contract_failure",
+    "startedAt": "2026-08-19T12:01:00.266Z",
+    "completedAt": "2026-08-19T12:01:06.133Z",
+    "requestFingerprint": "c34cfbf718b944cc4f1e3b65562d1d70becd15d252180c5d09e70585eb3f3c75",
+    "responseHash": "b973db6a30d7ce9b4628717444c986df6c037bf66e43b635af51288f22eb813a",
+    "responseLength": 1110,
+    "validationIssues": [
+      "[\n  {\n    \"code\": \"invalid_union_discriminator\",\n    \"options\": [\n      \"unchanged\",\n      \"set\",\n      \"clear\"\n    ],\n    \"path\": [\n      \"semantic\",\n      \"taskChange\",\n      \"kind\"\n    ],\n    \"message\": \"Invalid discriminator value. Expected 'unchanged' | 'set' | 'clear'\"\n  }\n]"
+    ],
+    "errorCode": "GI088_RESPONSE_FIRST_V281_HIGH_PARSE_FAILED",
+    "latencyMs": 5864,
+    "finishReason": "stop",
+    "httpStatus": 200,
+    "responseModel": "deepseek-v4-pro",
+    "tokenUsage": {
+      "promptTokens": 3322,
+      "completionTokens": 358,
+      "totalTokens": 3680,
+      "promptCacheHitTokens": 640,
+      "promptCacheMissTokens": 2682
+    },
+    "frozenLowHash": "9f1219b2f8ce94dfc01965af79109eb653a07b5557950fdd5c0849499df14177",
+    "continuationPostStateHash": null,
+    "fullRoundLatencyMs": 11662,
+    "fullRound45sTargetPassed": false,
+    "fullRound60sHardPassed": false,
+    "reasoningPresent": false,
+    "reasoningTokens": null
+  },
+  "productDecision": null,
+  "retiredScope": {
+    "originalV28RemainingFive": "retired_not_run",
+    "otherFourCasesAfterProbe": "not_run"
+  },
+  "releaseBoundary": {
+    "pageIntegration": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deployment": "not_run",
+    "preview": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "privacy": {
+    "publicReceiptContainsBodies": false,
+    "privateLedgerAndReview": "git_ignored_mode_0600"
+  }
+}

@@ -1,53 +1,29 @@
-import {
-  access,
-  copyFile,
-  mkdir,
-  mkdtemp,
-  readFile,
-  writeFile
-} from "node:fs/promises";
-import os from "node:os";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import {
   createGi088ResponseLatencyContractAbPlan,
-  writeGi088ResponseLatencyContractAbStartCard
+  type Gi088ResponseLatencyContractAbPlan
 } from "../../scripts/prepare-gi088-response-latency-contract-ab";
 
 const ROOT =
   "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1";
-const REQUIRED_FILES = [
-  "docs/ai-evaluation-standard.md",
-  `${ROOT}/real-problem-regression-v1.2-receipt.json`,
-  `${ROOT}/.private/real-problem-regression-v1.2/regression-cases.json`,
-  "evals/event-centered-generative/gi088-event-relationship-explanation-v1/candidate.ts",
-  "evals/event-centered-generative/gi088-relationship-claim-status-v1/candidate.ts",
-  "src/server/services/ai/openai.provider.ts",
-  "src/server/services/evaluation/gi088/semantic-delta.ts",
-  "src/server/services/evaluation/gi088/stage-transition.ts",
-  "scripts/run-gi088-response-latency-contract-ab.ts",
-  "scripts/finalize-gi088-response-latency-contract-ab.ts",
-  "artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/gi088-human-eval-v8r2-foundation-hardening-manifest.json",
-  "src/server/services/evaluation/gi088/gi088-behavior-manifest-v1.json"
-];
-
-async function prepareWorkspace() {
-  const workspace = await mkdtemp(
-    path.join(os.tmpdir(), "gi088-response-latency-contract-ab-plan-")
+async function readSealedStartCard() {
+  const raw = await readFile(
+    path.join(process.cwd(), ROOT, "response-latency-contract-ab-v1-start-card.json"),
+    "utf8"
   );
-  for (const relativePath of REQUIRED_FILES) {
-    const target = path.join(workspace, relativePath);
-    await mkdir(path.dirname(target), { recursive: true });
-    await copyFile(path.join(process.cwd(), relativePath), target);
-  }
-  return workspace;
+  return {
+    raw,
+    card: JSON.parse(raw) as Gi088ResponseLatencyContractAbPlan
+  };
 }
 
 describe("GI-088 response latency contract A/B start card", () => {
   it("binds one case, A-B-B-A and the zero-call authorization boundary", async () => {
-    const plan = await createGi088ResponseLatencyContractAbPlan();
+    const { card: plan } = await readSealedStartCard();
 
     expect(plan.identity).toBe(
       "2026-08-16.gi088-response-latency-contract-ab-v1"
@@ -116,40 +92,14 @@ describe("GI-088 response latency contract A/B start card", () => {
     expect(plan.planFingerprint).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it("stops on source drift before writing a partial start card", async () => {
-    const workspace = await prepareWorkspace();
-    const candidatePath = path.join(
-      workspace,
-      "evals/event-centered-generative/gi088-relationship-claim-status-v1/candidate.ts"
+  it("keeps the historical identity read-only after provider observability changes", async () => {
+    await expect(createGi088ResponseLatencyContractAbPlan()).rejects.toThrow(
+      "GI088_RESPONSE_LATENCY_CONTRACT_AB_INPUT_DRIFT:providerFileSha256"
     );
-    await writeFile(
-      candidatePath,
-      `${await readFile(candidatePath, "utf8")}\n// drift\n`
-    );
-
-    await expect(
-      writeGi088ResponseLatencyContractAbStartCard(workspace)
-    ).rejects.toThrow(
-      "GI088_RESPONSE_LATENCY_CONTRACT_AB_INPUT_DRIFT:armBCandidateFileSha256"
-    );
-    await expect(
-      access(
-        path.join(
-          workspace,
-          ROOT,
-          "response-latency-contract-ab-v1-start-card.json"
-        )
-      )
-    ).rejects.toThrow();
   });
 
   it("writes only public identities, hashes, timing rules and counts", async () => {
-    const workspace = await prepareWorkspace();
-    const result = await writeGi088ResponseLatencyContractAbStartCard(
-      workspace
-    );
-    const raw = await readFile(result.publicCard, "utf8");
-    const card = JSON.parse(raw) as Record<string, unknown>;
+    const { raw, card } = await readSealedStartCard();
 
     expect(card.identity).toBe(
       "2026-08-16.gi088-response-latency-contract-ab-v1"

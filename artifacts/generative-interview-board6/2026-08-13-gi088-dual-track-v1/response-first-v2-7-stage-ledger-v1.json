@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-response-first-v2-7-thinking-disabled-audited-high-quality-v1",
+  "candidate": "2026-08-19.gi088-response-first-v2-7-thinking-disabled-audited-high",
+  "planFingerprint": "6d4c66c5c572b253efdffd7b8606c1bf7a27450c4d7f7df858bebe15993ed405",
+  "candidateFingerprint": "9f35b9fe9a43ec51ae58f3551496e98a1277810754b235ad7d6311ec185cd281",
+  "datasetFingerprint": "25ab2ec7665d185f7dacf4eceb184e1a6be9ff2909ad93252f7ec97b035c3c32",
+  "status": "first_gate_technical_speed_contract_pass_visible_experience_pass_complete_high_fail_product_pending",
+  "changedFactor": "high_thinking_enabled_to_disabled_only",
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "disabled",
+    "reasoningEffort": "omitted_when_thinking_disabled",
+    "maxTokens": 4000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "budget": {
+    "authorized": 6,
+    "consumed": 1,
+    "completed": 1,
+    "notRun": 5,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "firstGate": {
+    "caseId": "RPR-REAL-19-CORRECTION",
+    "technicalAndContractStatus": "valid",
+    "httpStatus": 200,
+    "finishReason": "stop",
+    "responseModel": "deepseek-v4-pro",
+    "validationIssues": [],
+    "requestFingerprint": "274a22280669998e7a63688d11b712d07e5365c9b441943028d5d9f61229f4a8",
+    "frozenLowHash": "df15169aca894d310e3e686dc1d105827e81983b823ab15d25e1b8761e2059c8",
+    "responseHash": "5df9081ed163a42027c99dc1b659dcfd16c55f1c50041fef71eb896533dfd537",
+    "responseLength": 589,
+    "frozenLowLatencyMs": 3341,
+    "highLatencyMs": 1847,
+    "fullRoundLatencyMs": 5188,
+    "fullRound45sTargetPassed": true,
+    "fullRound60sHardPassed": true,
+    "thinkingObservation": {
+      "reasoningPresent": false,
+      "reasoningTokens": null
+    },
+    "tokenUsage": {
+      "promptTokens": 2299,
+      "completionTokens": 161,
+      "totalTokens": 2460,
+      "promptCacheHitTokens": 2176,
+      "promptCacheMissTokens": 123,
+      "headroomBelowMaxTokens": 3839
+    },
+    "visibleAppend": {
+      "understandingPresent": false,
+      "understandingEvidenceRefCount": 0,
+      "understandingTextHash": null,
+      "questionCount": 0
+    },
+    "informationGainAudit": {
+      "candidateCount": 0,
+      "answeredCandidateCount": 0,
+      "openCandidateCount": 0,
+      "worthAskingCandidateCount": 0,
+      "selectedQuestionCount": 0
+    },
+    "stateObservation": {
+      "taskChange": "unchanged",
+      "understandingChange": "none",
+      "correctionPersistence": "not_saved_by_this_high_result",
+      "continuationFixtureCausalStatus": "preseeded_state_cannot_prove_this_turn_continuity"
+    },
+    "visibleExperienceCodexDecision": {
+      "verdict": "pass",
+      "reasons": [
+        "frozen_low_fully_carries_the_user_correction",
+        "no_repeated_visible_understanding_or_question",
+        "no_added_motive_or_unsupported_experience"
+      ]
+    },
+    "completeHighCodexDecision": {
+      "verdict": "fail",
+      "gatePassed": false,
+      "continuationAllowed": false,
+      "reasons": [
+        "empty_input_task_and_understandings_remained_unchanged_and_none",
+        "current_correction_not_saved_for_later_turns",
+        "continue_fixture_preseeded_state_creates_causal_gap"
+      ]
+    },
+    "productOwnerDecision": {
+      "verdict": "pending",
+      "gatePassed": null,
+      "continuationAllowed": false
+    }
+  },
+  "semanticEvidenceBoundary": {
+    "publicEvidenceContainsUserLowOrHighBody": false,
+    "publicEvidence": "summary_metrics_and_hashes_only",
+    "privateRawEvidence": "git_ignored_controlled_directory"
+  },
+  "evidence": {
+    "startCard": "response-first-v2-7-thinking-disabled-audited-high-quality-v1-start-card.json",
+    "receipt": "response-first-v2-7-thinking-disabled-audited-high-quality-v1-receipt.json",
+    "handoff": "response-first-v2-7-thinking-disabled-audited-high-quality-v1-handoff.md",
+    "privateRawEvidence": "git_ignored_controlled_directory"
+  },
+  "releaseBoundary": {
+    "pageIntegration": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deployment": "not_run",
+    "preview": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "nextDirection": "wait_for_product_owner_original_evidence_decision_after_complete_high_codex_fail",
+  "stopPoint": "complete_high_codex_quality_gate_failed_remaining_five_not_run"
+}

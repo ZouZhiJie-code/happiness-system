@@ -1,0 +1,175 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-2-low-quality-v1",
+  "status": "ready_authorized_waiting_checkpoint",
+  "productDecision": "whether_low_v2_2_repairs_completeness_correction_timing_and_grounding_without_losing_speed",
+  "candidateIdentity": {
+    "version": "2026-08-17.gi088-response-first-v2-2-factual-low",
+    "parentVersion": "2026-08-17.gi088-response-first-v2-1",
+    "parentCandidateFingerprint": "a4f295005dd130b3d3eb4b213a0756e790064971c4056b5bb5592234e59fe94d",
+    "candidateFingerprint": "c0e99522ac8b0b2e252d3f7c8abf32e0fd364301609c5d79cc874712f27cb01f",
+    "promptFingerprint": "df299161e549b5a92e13b331b8e18b5c51a0b3ae47b1e63264af957ce6760db9",
+    "skillFingerprint": "5e670c8a6829b891abbf864ae635b1e8265a7440eeca451d80c312112c1a1dc8",
+    "contextFingerprint": "ed8ba13746054f9511034f264a2b82b2ee71d364ed2e0772dfa7e6566de1e693",
+    "lowSystemPromptFingerprint": "36f81c6fe02b6a2b0f2e84f29deccec1bf22c8fcb9376a7964268179883050f0",
+    "highSystemPromptFingerprints": {
+      "A": "1bb342a0e1413ca64563e3ca72b9c0cfc466fd2d4036661cd48f37222049546b",
+      "B": "59fbfa34e965619fd190330cd0ac3bb000fccbb2e2ac50dcbde60eeefcbb9efd"
+    }
+  },
+  "dataset": {
+    "version": "2026-08-17.gi088-response-first-v2-1-six-real-checkpoints-v1",
+    "fingerprint": "59d524f8e932712d7f0c761847c94ce7abe7e552ad44f144f8a25d96230248cc",
+    "parentVersion": "2026-08-16.gi088-response-first-v2-six-real-checkpoints-v1",
+    "parentFingerprint": "76c285e65377714aafe3a91bfec8cc8c3f81c104c656976ffb5d036fa2bcb736",
+    "privacyLevel": "private_sensitive",
+    "caseCount": 6
+  },
+  "phases": {
+    "checkpoint": [
+      {
+        "order": 1,
+        "caseId": "RPR-REAL-19-CORRECTION",
+        "sourceCaseId": "RPR-REAL-19",
+        "sourceFingerprint": "2ceb3b132695d4c519e32dde5a8a446ef3f2e99c23b4c455288d348c3cf02b8a",
+        "hardGate": true,
+        "requestFingerprint": "b15e3a2cbe403f390b55d01e445b073cdc19a7ec966a5cf4ffcbd885f6b95ca7"
+      },
+      {
+        "order": 2,
+        "caseId": "RPR-REAL-19-CONTINUE",
+        "sourceCaseId": "RPR-REAL-19",
+        "sourceFingerprint": "3da65cb358c5693e40ae217ee9dd600a4b8a7b663f671c3ac466c2953dd1314f",
+        "hardGate": true,
+        "requestFingerprint": "129d3ec53ffe03d045f7e96c1816a4d709f222d0ec1c81ddb885a13c76a0382e"
+      },
+      {
+        "order": 3,
+        "caseId": "RPR-REAL-13",
+        "sourceCaseId": "RPR-REAL-13",
+        "sourceFingerprint": "aa6d91e160f110fb00ad93ceb1b7cf5b89476d73a2c02d0ec088d470b13429f2",
+        "hardGate": true,
+        "requestFingerprint": "aa709c8198d76157e90d7dc47d2ed8fe7d47b79c409e62ffa169b8250b74b8ac"
+      }
+    ],
+    "full": [
+      {
+        "order": 1,
+        "caseId": "RPR-REAL-06",
+        "sourceCaseId": "RPR-REAL-06",
+        "sourceFingerprint": "304dda7130959684e3a34e4c7dab11e5dae6ae6cf469f1c128f642c5088eb41b",
+        "hardGate": false,
+        "requestFingerprint": "5a19718b64859be100937d3182970563a9089b9f8450f5c45213a6ef4ffe900d"
+      },
+      {
+        "order": 2,
+        "caseId": "RPR-REAL-19-CORRECTION",
+        "sourceCaseId": "RPR-REAL-19",
+        "sourceFingerprint": "2ceb3b132695d4c519e32dde5a8a446ef3f2e99c23b4c455288d348c3cf02b8a",
+        "hardGate": true,
+        "requestFingerprint": "b15e3a2cbe403f390b55d01e445b073cdc19a7ec966a5cf4ffcbd885f6b95ca7"
+      },
+      {
+        "order": 3,
+        "caseId": "RPR-REAL-19-CONTINUE",
+        "sourceCaseId": "RPR-REAL-19",
+        "sourceFingerprint": "3da65cb358c5693e40ae217ee9dd600a4b8a7b663f671c3ac466c2953dd1314f",
+        "hardGate": true,
+        "requestFingerprint": "129d3ec53ffe03d045f7e96c1816a4d709f222d0ec1c81ddb885a13c76a0382e"
+      },
+      {
+        "order": 4,
+        "caseId": "RPR-REAL-22",
+        "sourceCaseId": "RPR-REAL-22",
+        "sourceFingerprint": "f9e3f08f99516df9cba966f350b7c2d95a6c1a20c59ef24a458471f48343b943",
+        "hardGate": true,
+        "requestFingerprint": "71473f4be21861d7f3633f02b093e45e629eee604febaa062d34d72d026809c3"
+      },
+      {
+        "order": 5,
+        "caseId": "RPR-REAL-13",
+        "sourceCaseId": "RPR-REAL-13",
+        "sourceFingerprint": "aa6d91e160f110fb00ad93ceb1b7cf5b89476d73a2c02d0ec088d470b13429f2",
+        "hardGate": true,
+        "requestFingerprint": "aa709c8198d76157e90d7dc47d2ed8fe7d47b79c409e62ffa169b8250b74b8ac"
+      },
+      {
+        "order": 6,
+        "caseId": "RPR-LC-21",
+        "sourceCaseId": "RPR-REAL-21",
+        "sourceFingerprint": "a063c88475b0a2dd74036f34bb6614dc770d82e9f84b8481b1770f28fafda5c2",
+        "hardGate": true,
+        "requestFingerprint": "c7f868f6b62f501df9e2dbdbf5940fad5126dae9b2cb57ba3fd902b96b645eeb"
+      }
+    ]
+  },
+  "runtime": {
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "low",
+    "responseFormat": "text",
+    "maxTokens": 1280,
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000,
+    "hardTimeoutMs": 45000,
+    "targetMs": 15000,
+    "hardGateMs": 45000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "inputHashes": {
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "planSha256": "89926774f15f2896b80438996bcf5ff93d315d3cff9d6f889be847ebece97a00",
+    "candidateSha256": "450139361b325d19089fab1ee0ce740e9b83945abd46049760035f526abd5ffd",
+    "parentCandidateSha256": "0bdf18065adf5a2af70f4d320cd267220fe57bd13b9a0d5d2aa35f9aefd1eaa9",
+    "fixturesSha256": "d6ee0e62c023cee35c7193281927fb07b6686c90e37e6ac995ce93071df0269b",
+    "parentFixturesSha256": "9cf88114765839f3879bd8f3c520f9248110d3e763b9459f3fd52bdd4d3eac93",
+    "providerSha256": "932baf57ada773942695c9ec6cef5f7ae53eb93a8a296672f8cf566f465a3dc0",
+    "providerContractSha256": "8ee44101394828e1e34438fff50ee96cb9b4493f60d97b6e8a2310756843a523",
+    "runnerSha256": "2e1b6c064aaa9833a248ed6784aeea0fc398ac6f5e4c5dd5981d3b2cee6a7c35"
+  },
+  "budget": {
+    "checkpointAuthorized": 3,
+    "fullAuthorized": 6,
+    "totalAuthorized": 9,
+    "technicalReplacementCalls": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "authorizationSource": "confirmed_response_first_v2_2_v2_3_factual_low_grounded_high_plan"
+  },
+  "gate": {
+    "checkpoint": {
+      "technicalAndContractValid": "3/3",
+      "hard45s": "3/3",
+      "singleTargetMs": 15000,
+      "medianTargetMs": 6000,
+      "contentVerdict": "3_pass_0_minor_0_fail"
+    },
+    "full": {
+      "technicalAndContractValid": "6/6",
+      "hard45s": "6/6",
+      "singleTargetMs": 15000,
+      "medianTargetMs": 6000,
+      "hardCases": [
+        "RPR-REAL-19-CORRECTION",
+        "RPR-REAL-19-CONTINUE",
+        "RPR-REAL-22",
+        "RPR-REAL-13",
+        "RPR-LC-21"
+      ],
+      "softCases": [
+        "RPR-REAL-06"
+      ],
+      "allowedSoftMinorCount": 1,
+      "lowQuestionCount": 0,
+      "internalLeakCount": 0
+    }
+  },
+  "stopPoint": "v22_checkpoint_must_pass_contract_content_median6s_and_single15s_before_full_or_v23",
+  "planFingerprint": "da8fbf667f42f49053c18bc822bc9a777cc9f9671e07c1824342fd0a7ecd811f"
+}

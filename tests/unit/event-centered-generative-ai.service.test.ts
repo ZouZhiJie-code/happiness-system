@@ -825,12 +825,12 @@ describe("event-centered generative architecture", () => {
     expect(result.validationIssues).toContain("understanding_contains_question");
   });
 
-  it("正式问题包含多个问句时继续阻断，摘要恢复不会掩盖多问", async () => {
+  it("正式问题包含多个相关问句时由同一语义目标放行", async () => {
     const generated = askTurn();
-    generated.visibleTurn.thinkingSummary =
-      "客户接受了方案？一个标点错误仍把整份成果压了下去。";
     generated.visibleTurn.question =
       "那个标点错误为什么足以否定整份方案？它代表哪个标准？";
+    generated.semanticPlan.realizationContract.responseCore =
+      "那个标点错误为什么足以否定整份方案，它代表哪个标准";
     mocks.completeStructuredOutput.mockResolvedValue(generated);
 
     const result = await generateEventCenteredTurnOnceAI(baseInput({
@@ -844,8 +844,9 @@ describe("event-centered generative architecture", () => {
       }
     }));
 
-    expect(result.turn).toBeNull();
-    expect(result.validationIssues).toContain("ask_requires_single_question");
+    expect(result.validationIssues).toEqual([]);
+    expect(result.turn?.visibleTurn.question)
+      .toBe("那个标点错误为什么足以否定整份方案？它代表哪个标准？");
   });
 
   it("思路提前回答正式问题时作废首轮，并使用第二次完整尝试", async () => {
@@ -912,8 +913,11 @@ describe("event-centered generative architecture", () => {
   });
 
   it("普通硬错误作废首轮并使用通用约束完成第二次尝试", async () => {
-    const invalid = askTurn();
-    invalid.visibleTurn.question = "那个标点为什么影响整体？它代表哪个标准？";
+    const invalidBase = askTurn();
+    const invalid = {
+      ...invalidBase,
+      visibleTurn: { ...invalidBase.visibleTurn, question: null }
+    };
     const valid = askTurn();
     const attempt = (attemptNumber: number) => ({
       stage: "question" as const,
@@ -944,11 +948,11 @@ describe("event-centered generative architecture", () => {
     expect(result.attempts[0]).toMatchObject({
       success: false,
       errorCode: "OUTPUT_VALIDATION_FAILED",
-      errorMessage: expect.stringContaining("ask_requires_single_question")
+      errorMessage: expect.stringContaining("ask_requires_question")
     });
     const retryPrompt = mocks.completeStructuredOutput.mock.calls[1]?.[0].messages[0].content;
     expect(retryPrompt).toContain("违反客观输出约束");
-    expect(retryPrompt).toContain("ask_requires_single_question");
+    expect(retryPrompt).toContain("ask_requires_question");
   });
 
   it("保存的 thought 冒烟输出由冻结证据建立来源锚点，思路层不复述事实", async () => {

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-response-first-v2-8-1-causal-continuation-probe-v1",
+  "planFingerprint": "26604324a6ec4e52e83d89f048bfd196d5f33a079b07beefea79978ad0791600",
+  "status": "no_go_product_owner_fail",
+  "parentGate": {
+    "productOwnerVerdict": "minor",
+    "reviewHash": "d9ebba85b4955a61806fe20f908889224ebdd12385a83fa02871fa7738a65c4c",
+    "responseHash": "ccd38aaac808d7b76510c6bfa46b350072481cdaebad049c60d432157881ef62",
+    "postStateHash": "85a9cfebb928dba00a94b8a5c0f365e9ddb5ab683af9683116da75bba59b6ca4"
+  },
+  "causalInput": {
+    "caseId": "RPR-REAL-19-CONTINUE",
+    "effectiveTurnInputHash": "bd909f063461fdbb1d1ab631b98d18b54b85e840f259a4c770b53336e3472b6c",
+    "actualAssistantHash": "1fa42423b8412c09427aa297d3d607e860ff82f487700fd132f0c07da6426406",
+    "actualAssistantAndReplayedPostStateUsed": true,
+    "latestUserMessageId": "U4",
+    "historicalContinuationLowUsedByHigh": false
+  },
+  "budget": {
+    "authorized": 2,
+    "consumed": 2,
+    "completed": 2,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "low": {
+    "status": "valid",
+    "httpStatus": 200,
+    "finishReason": "stop",
+    "latencyMs": 5798,
+    "responseHash": "9f1219b2f8ce94dfc01965af79109eb653a07b5557950fdd5c0849499df14177",
+    "codexVisibleVerdict": "pass"
+  },
+  "high": {
+    "status": "contract_failure",
+    "httpStatus": 200,
+    "finishReason": "stop",
+    "latencyMs": 5864,
+    "fullRoundObservedLatencyMs": 11662,
+    "completionTokens": 358,
+    "maxTokens": 4000,
+    "tokenLimitTriggered": false,
+    "responseHash": "b973db6a30d7ce9b4628717444c986df6c037bf66e43b635af51288f22eb813a",
+    "errorCode": "GI088_RESPONSE_FIRST_V281_HIGH_PARSE_FAILED",
+    "contractIssue": "semantic.taskChange.kind_continue_not_in_unchanged_set_clear",
+    "continuationPostStatePresent": false,
+    "codexVisibleQuestionVerdict": "fail",
+    "visibleQuestionIssue": "reasks_u1_answered_latest_comparison_case"
+  },
+  "result": {
+    "technicalTransport": "pass",
+    "observedLatency45sTarget": "pass",
+    "observedLatency60sHardGate": "pass",
+    "lowVisibleQuality": "pass",
+    "highContract": "fail",
+    "highVisibleQuestionQuality": "fail",
+    "codexOverallVerdict": "fail",
+    "productOwnerVerdict": "fail",
+    "gate": "no_go_stop"
+  },
+  "privacy": {
+    "publicEvidenceContainsBodies": false,
+    "privateEvidence": "git_ignored_mode_0600"
+  },
+  "releaseBoundary": {
+    "pageIntegration": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deployment": "not_run",
+    "preview": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "evidence": {
+    "startCard": "response-first-v2-8-1-causal-continuation-probe-v1-start-card.json",
+    "receipt": "response-first-v2-8-1-causal-continuation-probe-v1-receipt.json",
+    "handoff": "response-first-v2-8-1-causal-continuation-probe-v1-handoff.md",
+    "privateRawEvidence": "git_ignored_controlled_directory"
+  },
+  "stopPoint": "product_owner_fail_no_more_model_calls"
+}

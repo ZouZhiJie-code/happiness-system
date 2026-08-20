@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-visible-information-gain-ab-v1",
+  "planFingerprint": "7f107b43518a39f2c156a69e12c42ee071361aa817a398c392e2c8b6a63025d0",
+  "startCardSha256": "1634cd092ef553b24b0bdfd8c7a9335ed943f2148ced5acf33c23830df974900",
+  "status": "authorized",
+  "authorizedBy": "product_owner",
+  "authorizationSource": "confirmed_plan_standing_authorization",
+  "providerCallsAuthorized": 4,
+  "retriesAuthorized": 0,
+  "stopPoint": "after_four_calls_wait_product_owner_blind_and_asset_review"
+}

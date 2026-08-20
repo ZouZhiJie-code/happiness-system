@@ -1,10 +1,4 @@
-import {
-  copyFile,
-  mkdir,
-  mkdtemp,
-  readFile
-} from "node:fs/promises";
-import os from "node:os";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -15,9 +9,8 @@ import {
   type AIProvider
 } from "../../src/server/services/ai/ai-provider";
 import {
-  createGi088ResponseLatencyContractAbPlan,
-  writeGi088ResponseLatencyContractAbStartCard,
-  type Gi088ResponseLatencyContractAbArm
+  type Gi088ResponseLatencyContractAbArm,
+  type Gi088ResponseLatencyContractAbPlan
 } from "../../scripts/prepare-gi088-response-latency-contract-ab";
 import {
   assertGi088ResponseLatencyContractAbModelAvailable,
@@ -31,36 +24,17 @@ import type { Gi088RealProblemRegressionCase } from "../../scripts/prepare-gi088
 
 const ROOT =
   "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1";
-const REQUIRED_FILES = [
-  "docs/ai-evaluation-standard.md",
-  `${ROOT}/real-problem-regression-v1.2-receipt.json`,
-  `${ROOT}/.private/real-problem-regression-v1.2/regression-cases.json`,
-  "evals/event-centered-generative/gi088-event-relationship-explanation-v1/candidate.ts",
-  "evals/event-centered-generative/gi088-relationship-claim-status-v1/candidate.ts",
-  "src/server/services/ai/openai.provider.ts",
-  "src/server/services/evaluation/gi088/semantic-delta.ts",
-  "src/server/services/evaluation/gi088/stage-transition.ts",
-  "scripts/run-gi088-response-latency-contract-ab.ts",
-  "scripts/finalize-gi088-response-latency-contract-ab.ts",
-  "artifacts/generative-interview-board7/2026-08-10-gi088-human-eval-v8r2-foundation-hardening/gi088-human-eval-v8r2-foundation-hardening-manifest.json",
-  "src/server/services/evaluation/gi088/gi088-behavior-manifest-v1.json"
-];
-
-async function workspaceWithoutAuthorization() {
-  const workspace = await mkdtemp(
-    path.join(os.tmpdir(), "gi088-response-latency-contract-ab-runner-")
-  );
-  for (const relativePath of REQUIRED_FILES) {
-    const target = path.join(workspace, relativePath);
-    await mkdir(path.dirname(target), { recursive: true });
-    await copyFile(path.join(process.cwd(), relativePath), target);
-  }
-  await writeGi088ResponseLatencyContractAbStartCard(workspace);
-  return workspace;
-}
-
 async function executionPlan(): Promise<Gi088ResponseLatencyContractAbExecutionPlan> {
-  const publicPlan = await createGi088ResponseLatencyContractAbPlan();
+  const publicPlan = JSON.parse(
+    await readFile(
+      path.join(
+        process.cwd(),
+        ROOT,
+        "response-latency-contract-ab-v1-start-card.json"
+      ),
+      "utf8"
+    )
+  ) as Gi088ResponseLatencyContractAbPlan;
   const allCases = JSON.parse(
     await readFile(
       path.join(
@@ -219,12 +193,11 @@ function provider(
 }
 
 describe("GI-088 response latency contract A/B runner", () => {
-  it("keeps execution closed while the new authorization file is absent", async () => {
-    const workspace = await workspaceWithoutAuthorization();
+  it("keeps the sealed historical execution closed after provider drift", async () => {
     await expect(
-      createGi088ResponseLatencyContractAbExecutionPlan(workspace)
+      createGi088ResponseLatencyContractAbExecutionPlan()
     ).rejects.toThrow(
-      "GI088_RESPONSE_LATENCY_CONTRACT_AB_PROVIDER_CALL_AUTHORIZATION_MISSING"
+      "GI088_RESPONSE_LATENCY_CONTRACT_AB_INPUT_DRIFT:providerFileSha256"
     );
   });
 

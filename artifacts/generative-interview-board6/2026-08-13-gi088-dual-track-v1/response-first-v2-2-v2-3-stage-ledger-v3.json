@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-2-v2-3-stage-ledger-v3",
+  "parentLedger": "2026-08-17.gi088-response-first-v2-2-v2-3-stage-ledger-v2",
+  "status": "token_4000_probe_contract_no_go_waiting_product_semantic_review",
+  "historicalPlanBudget": {
+    "authorized": 18,
+    "consumed": 3,
+    "closedNotRun": 15
+  },
+  "continuationEvaluationBudget": {
+    "authorized": 15,
+    "consumed": 7,
+    "notRun": 8,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "tokenCeilingProbeBudget": {
+    "identity": "2026-08-17.gi088-response-first-v2-3-high-token-4000-probe-v1",
+    "authorized": 1,
+    "consumed": 1,
+    "notRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "totalContinuationActualCalls": 8,
+  "stages": [
+    {
+      "stage": "v22_low_full_quality_v2",
+      "authorized": 6,
+      "consumed": 6,
+      "notRun": 0,
+      "status": "product_owner_quality_gate_passed"
+    },
+    {
+      "stage": "v23_grounded_high_checkpoint_2000",
+      "authorized": 3,
+      "consumed": 1,
+      "notRun": 2,
+      "status": "stopped_by_token_truncation"
+    },
+    {
+      "stage": "v23_grounded_high_full_quality",
+      "authorized": 6,
+      "consumed": 0,
+      "notRun": 6,
+      "status": "not_run"
+    },
+    {
+      "stage": "v23_high_token_4000_same_case_probe",
+      "authorized": 1,
+      "consumed": 1,
+      "notRun": 0,
+      "status": "complete_json_contract_invalid"
+    }
+  ],
+  "previewBudget": {
+    "authorized": 15,
+    "consumed": 0,
+    "notRun": 15
+  },
+  "lowFullQualityResult": {
+    "runIdentity": "2026-08-17.gi088-response-first-v2-2-low-full-quality-v2",
+    "technicalAndContractValid": 6,
+    "productOwnerQuality": {
+      "pass": 6,
+      "minor": 0,
+      "fail": 0
+    },
+    "medianLatencyMs": 3797,
+    "status": "product_owner_quality_gate_passed"
+  },
+  "parentHigh2000Result": {
+    "runIdentity": "2026-08-17.gi088-response-first-v2-3-high-quality-v1",
+    "planFingerprint": "a2076f0a27c5a10f5a3a2827027d23a7db4ff83d35282cad59cf62e473cf96bc",
+    "caseId": "RPR-REAL-19-CORRECTION",
+    "maxTokens": 2000,
+    "completionTokens": 2000,
+    "reasoningTokens": 1985,
+    "finishReason": "length",
+    "responseLength": 42,
+    "contractValid": false,
+    "semanticQuality": "not_evaluated"
+  },
+  "token4000ProbeResult": {
+    "runIdentity": "2026-08-17.gi088-response-first-v2-3-high-token-4000-probe-v1",
+    "planFingerprint": "bf1876287e5973268db7465ba63a8a536c68eaf33b4bb3994054e3498cee3e89",
+    "candidateFingerprint": "b8b3858a38655069d9dba2d32c2817cdf25925bcfdf4e772069e3b3dcbb7fe95",
+    "caseId": "RPR-REAL-19-CORRECTION",
+    "maxTokens": 4000,
+    "httpStatus": 200,
+    "responseModel": "deepseek-v4-pro",
+    "completionTokens": 2072,
+    "reasoningTokens": 1898,
+    "finishReason": "stop",
+    "responseLength": 596,
+    "highLatencyMs": 37066,
+    "fullRoundLatencyMs": 40407,
+    "fullRound45sTargetObserved": true,
+    "fullRound60sHardObserved": true,
+    "jsonComplete": true,
+    "contractValid": false,
+    "validationIssues": [
+      "NULL_WORKING_TASK_UNDERSTANDING_DELTA_MUST_BE_NULL"
+    ],
+    "visibleUnderstandingPresent": false,
+    "questionCount": 0,
+    "semanticQuality": "waiting_codex_and_product_owner_raw_output_review",
+    "tokenCeilingDecision": "direction_passed_for_this_case",
+    "costEstimate": {
+      "currency": "CNY",
+      "estimated": 0.0127198,
+      "pricingSnapshotDate": "2026-08-13",
+      "cacheHitInputPerMillion": 0.025,
+      "cacheMissInputPerMillion": 3,
+      "outputPerMillion": 6,
+      "actualProviderBilledCost": null
+    },
+    "publicStartCard": "response-first-v2-3-high-token-4000-probe-v1-start-card.json",
+    "publicReceipt": "response-first-v2-3-high-token-4000-probe-v1-receipt.json",
+    "publicHandoff": "response-first-v2-3-high-token-4000-probe-v1-handoff.md",
+    "privateEvidence": "git_ignored_controlled_directory"
+  },
+  "productIntegration": "not_run",
+  "commit": "not_run",
+  "push": "not_run",
+  "previewDeployment": "not_run",
+  "productionStrategy": "event_centered_baseline",
+  "stopPoint": "token_probe_complete_stop_for_product_owner_raw_output_review"
+}

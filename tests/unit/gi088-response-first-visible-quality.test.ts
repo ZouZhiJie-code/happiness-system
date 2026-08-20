@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import startCard from "../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-visible-quality-v1-start-card.json";
 
 import {
   GI088_RESPONSE_FIRST_VISIBLE_QUALITY_CASE_IDS,
@@ -50,7 +51,7 @@ function decisions(
 
 describe("GI-088 response-first visible quality gate", () => {
   it("binds five sealed real cases and one 12-message public synthetic case", async () => {
-    const plan = await createGi088ResponseFirstVisibleQualityPlan();
+    const plan = startCard;
     expect(plan.identity).toBe(
       "2026-08-16.gi088-response-first-visible-quality-v1"
     );
@@ -66,6 +67,9 @@ describe("GI-088 response-first visible quality gate", () => {
     expect(longContext.recentWindowCount).toBe(8);
     expect(longContext.omittedEarlierMessageCount).toBe(4);
     expect(plan.planFingerprint).toMatch(/^[a-f0-9]{64}$/);
+    await expect(createGi088ResponseFirstVisibleQualityPlan()).rejects.toThrow(
+      "GI088_RESPONSE_FIRST_VISIBLE_QUALITY_INPUT_DRIFT:providerFileSha256"
+    );
   });
 
   it("passes only when all technical gates and four hard product gates pass", () => {

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-2-product-owner-checkpoint-review-v1",
+  "parentRunIdentity": "2026-08-17.gi088-response-first-v2-2-low-quality-v1",
+  "candidateIdentity": "2026-08-17.gi088-response-first-v2-2-factual-low",
+  "planFingerprint": "da8fbf667f42f49053c18bc822bc9a777cc9f9671e07c1824342fd0a7ecd811f",
+  "candidateFingerprint": "c0e99522ac8b0b2e252d3f7c8abf32e0fd364301609c5d79cc874712f27cb01f",
+  "datasetFingerprint": "59d524f8e932712d7f0c761847c94ce7abe7e552ad44f144f8a25d96230248cc",
+  "reviewedAt": "2026-08-17",
+  "status": "no_go_2_of_3_pass",
+  "reviewMethod": "product_owner_reviewed_relevant_user_input_and_actual_ai_output",
+  "counts": {
+    "pass": 2,
+    "minor": 0,
+    "fail": 1
+  },
+  "decisions": [
+    {
+      "caseId": "RPR-REAL-19-CORRECTION",
+      "verdict": "pass",
+      "reason": "product_owner_accepted_the_response_as_faithful"
+    },
+    {
+      "caseId": "RPR-REAL-19-CONTINUE",
+      "verdict": "fail",
+      "reason": "repeated_an_already_acknowledged_correction_instead_of_progressing"
+    },
+    {
+      "caseId": "RPR-REAL-13",
+      "verdict": "pass",
+      "reason": "product_owner_accepted_the_semantic_transformations_as_expressing_the_user_meaning"
+    }
+  ],
+  "gate": {
+    "requiredPass": 3,
+    "actualPass": 2,
+    "passed": false,
+    "decision": "no_go_checkpoint_quality_gate"
+  },
+  "futureRubricEffect": {
+    "caseId": "RPR-REAL-13",
+    "acceptedBoundary": "natural_semantic_transformations_that_express_the_user_meaning_are_allowed_and_do_not_require_intervention",
+    "remainingProhibitedBoundary": "content_that_changes_or_adds_meaning_beyond_the_user_expression_still_requires_separate_product_review",
+    "frozenDatasetHandling": "real_problem_regression_v1_2_remains_historical_with_original_fingerprint_future_runs_require_a_new_dataset_identity"
+  },
+  "executionImpact": {
+    "additionalModelCalls": 0,
+    "evaluationBudgetConsumed": 3,
+    "evaluationBudgetNotRun": 15,
+    "previewBudgetConsumed": 0,
+    "previewBudgetNotRun": 15,
+    "downstreamStatus": "not_run",
+    "productionStrategy": "event_centered_baseline"
+  },
+  "privacyBoundary": {
+    "publicReceiptContainsUserOrModelBody": false,
+    "rawEvidenceLocation": "controlled_conversation_and_git_ignored_private_review"
+  }
+}

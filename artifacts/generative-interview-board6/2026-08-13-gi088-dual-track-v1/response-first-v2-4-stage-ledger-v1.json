@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-4-null-task-aligned-high-quality-v1",
+  "candidate": "2026-08-17.gi088-response-first-v2-4-null-task-aligned-high",
+  "planFingerprint": "864d9da7872fbe831aefa4270e158a43c53b0155e688dc5fc6fc44691c01be4d",
+  "status": "no_go_first_gate_failed_by_product_owner",
+  "changedFactor": "null_working_task_submission_alignment_only",
+  "sourceCorrection": {
+    "confirmed": true,
+    "originalPlanCount": "five_null_one_existing",
+    "actualCount": "four_null_two_existing",
+    "existingCaseIds": [
+      "RPR-REAL-19-CONTINUE",
+      "RPR-LC-21"
+    ],
+    "datasetInputChanged": false,
+    "correctedBeforeModelCall": true
+  },
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "maxTokens": 4000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "budget": {
+    "authorized": 6,
+    "consumed": 1,
+    "completed": 1,
+    "notRun": 5
+  },
+  "firstGate": {
+    "caseId": "RPR-REAL-19-CORRECTION",
+    "technicalAndContractStatus": "valid",
+    "httpStatus": 200,
+    "finishReason": "stop",
+    "responseModel": "deepseek-v4-pro",
+    "validationIssues": [],
+    "frozenLowLatencyMs": 3341,
+    "highLatencyMs": 51656,
+    "fullRoundLatencyMs": 54997,
+    "fullRound45sTargetPassed": false,
+    "fullRound60sHardPassed": true,
+    "responseLength": 1126,
+    "tokenUsage": {
+      "promptTokens": 2020,
+      "completionTokens": 3747,
+      "reasoningTokens": 3311,
+      "totalTokens": 5767,
+      "promptCacheHitTokens": 0,
+      "promptCacheMissTokens": 2020,
+      "headroomBelowMaxTokens": 253
+    },
+    "stateSubmission": {
+      "taskChange": "set_new_null_target",
+      "understandingChange": "add",
+      "existingProgramContractPassed": true
+    },
+    "visibleAppend": {
+      "understandingPresent": true,
+      "understandingEvidenceRefCount": 1,
+      "questionCount": 2,
+      "answerFocusCount": 1
+    },
+    "codexProvisionalDecision": {
+      "verdict": "fail",
+      "reason": "两项问题分别索取 U1 已给出的触发情境和 U2 已给出的愤慨感受，缺少信息增量；可见理解可纠正但与冻结 Low 部分重复。"
+    },
+    "productOwnerDecision": {
+      "verdict": "fail",
+      "gatePassed": false,
+      "continuationAllowed": false
+    }
+  },
+  "costEstimate": {
+    "currency": "CNY",
+    "estimated": 0.028542,
+    "pricingSnapshotDate": "2026-08-13",
+    "cacheHitInputPerMillion": 0.025,
+    "cacheMissInputPerMillion": 3,
+    "outputPerMillion": 6,
+    "actualProviderBilledCost": null
+  },
+  "verification": {
+    "targetedTests": "12_of_12_passed",
+    "typecheck": "passed",
+    "targetedLint": "passed_with_zero_warnings",
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "json": "passed",
+    "privatePermissions": "mode_600",
+    "docsCheck": "passed_24_core_878_links_1_current_entry",
+    "diffCheck": "passed_before_run"
+  },
+  "evidence": {
+    "startCard": "response-first-v2-4-null-task-aligned-high-quality-v1-start-card.json",
+    "receipt": "response-first-v2-4-null-task-aligned-high-quality-v1-receipt.json",
+    "handoff": "response-first-v2-4-null-task-aligned-high-quality-v1-handoff.md",
+    "privateRawEvidence": "git_ignored_controlled_directory"
+  },
+  "releaseBoundary": {
+    "pageIntegration": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deployment": "not_run",
+    "preview": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "stopPoint": "stopped_after_first_case_product_owner_fail_remaining_five_not_run"
+}

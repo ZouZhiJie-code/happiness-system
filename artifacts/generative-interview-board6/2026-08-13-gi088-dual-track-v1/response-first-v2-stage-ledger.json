@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-response-first-v2",
+  "status": "no_go_stopped_after_low_quality_gate",
+  "branch": "codex/gi088-response-first-v2-20260816",
+  "head": "7d392694b0d2900da32ab71b3098b9bd8d5a9e31",
+  "evaluationBudget": {
+    "maximum": 32,
+    "consumed": 6,
+    "notRun": 26,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "stages": [
+    {
+      "stage": "low_six_case_quality_gate",
+      "budget": 6,
+      "consumed": 6,
+      "notRun": 0,
+      "status": "failed",
+      "technicalAndContractValid": 5,
+      "qualityPass": 3,
+      "qualityMinor": 0,
+      "qualityFail": 3,
+      "receipt": "response-first-v2-low-quality-v1-receipt.json"
+    },
+    {
+      "stage": "question_information_gain_ab",
+      "budget": 5,
+      "consumed": 0,
+      "notRun": 5,
+      "status": "not_run"
+    },
+    {
+      "stage": "background_responsibility_ab",
+      "budget": 5,
+      "consumed": 0,
+      "notRun": 5,
+      "status": "not_run"
+    },
+    {
+      "stage": "selected_full_chain_six_case_gate",
+      "budget": 6,
+      "consumed": 0,
+      "notRun": 6,
+      "status": "not_run"
+    },
+    {
+      "stage": "conditional_reasoning_effort_ab",
+      "budget": 4,
+      "consumed": 0,
+      "notRun": 4,
+      "status": "not_run"
+    },
+    {
+      "stage": "conditional_pro_low_quality_gate",
+      "budget": 6,
+      "consumed": 0,
+      "notRun": 6,
+      "status": "not_run"
+    }
+  ],
+  "downstream": {
+    "responseFirstProductIntegration": "not_run",
+    "localProductAcceptance": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "previewDeployment": "not_run",
+    "previewSixTurns": "not_run",
+    "production": "unchanged_event_centered_baseline"
+  },
+  "independentRuleCorrection": {
+    "status": "implemented_locally",
+    "activeQuestionRequirement": "ask_requires_nonempty_question",
+    "multipleQuestionMarks": "observation_only",
+    "semanticFocusAndQuestionValue": "model_skill_and_quality_evaluation",
+    "historicalEvidence": "preserved_with_original_identity"
+  },
+  "engineeringVerification": {
+    "fullTestsPassed": 3385,
+    "fullTestsSkipped": 10,
+    "typecheck": "passed",
+    "lintErrors": 0,
+    "lintWarnings": 45,
+    "prismaValidate": "passed",
+    "docsCheck": "passed_24_core_documents_829_local_links_1_current_entry",
+    "productionBuild": "passed_77_routes_with_16_existing_dynamic_filesystem_warnings",
+    "historicalIdentityProtection": "sealed_start_cards_used_for_behavior_tests_and_current_provider_drift_remains_rejected"
+  },
+  "stopReason": "low_gate_required_6_of_6_contract_valid_and_direct_passes_for_correction_relationship_and_long_context;_observed_5_of_6_contract_valid_and_3_of_6_quality_pass",
+  "privateBoundary": "user_text_model_text_and_review_notes_remain_in_git_ignored_private_directory"
+}

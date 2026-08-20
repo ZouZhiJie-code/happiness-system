@@ -1,7 +1,6 @@
 import {
   AIProviderError,
   attachAIReasoningOnlyContinuation,
-  createTimedAbortScope,
   isAbortError,
   sanitizeAIProviderDiagnostics,
   type AICompletionParams,
@@ -108,6 +107,7 @@ function readCompletionDiagnostics(input: {
   contentLength: number | null;
   reasoningContent: unknown;
   headersLatencyMs: number | null;
+  firstTokenLatencyMs?: number | null;
   bodyLatencyMs: number | null;
   totalLatencyMs: number;
   usage: unknown;
@@ -158,6 +158,7 @@ function readCompletionDiagnostics(input: {
     contentLength: input.payloadObserved ? input.contentLength : null,
     reasoningType,
     headersLatencyMs: input.headersLatencyMs,
+    firstTokenLatencyMs: input.firstTokenLatencyMs ?? null,
     bodyLatencyMs: input.bodyLatencyMs,
     totalLatencyMs: input.totalLatencyMs,
     timeoutStage: input.timeoutStage ?? null,
@@ -931,14 +932,114 @@ export class OpenAIProvider implements AIProvider {
     useProviderDefaultTemperature,
     maxTokens = 180,
     timeoutMs,
+    headersTimeoutMs,
+    bodyIdleTimeoutMs,
+    hardTimeoutMs,
     thinking,
     reasoningEffort,
+    onStreamDiagnostics,
     signal
   }: AICompletionParams): AsyncIterable<string> {
-    const abortScope = createTimedAbortScope(signal, timeoutMs ?? this.timeoutMs);
+    const startedAt = Date.now();
+    const legacyTimeoutMs = positiveTimeout(timeoutMs, this.timeoutMs);
+    const effectiveHardTimeoutMs = positiveTimeout(hardTimeoutMs, legacyTimeoutMs);
+    const abortScope = createCompletionAbortScope({
+      externalSignal: signal,
+      headersTimeoutMs: positiveTimeout(headersTimeoutMs, effectiveHardTimeoutMs),
+      bodyIdleTimeoutMs: positiveTimeout(bodyIdleTimeoutMs, effectiveHardTimeoutMs),
+      hardTimeoutMs: effectiveHardTimeoutMs
+    });
+    let response: Response | null = null;
+    let headersReceivedAt: number | null = null;
+    let firstTokenAt: number | null = null;
+    let bodyCompletedAt: number | null = null;
+    let responseModel: unknown;
+    let finishReason: unknown = null;
+    let usage: unknown;
+    let contentLength = 0;
+    let reasoningLength = 0;
+    let payloadObserved = false;
+    let diagnosticsReported = false;
+
+    const currentDiagnostics = () => {
+      const completedAt = Date.now();
+      const base = readCompletionDiagnostics({
+        response,
+        payloadObserved,
+        responseModel,
+        choiceCount: payloadObserved ? 1 : null,
+        finishReason,
+        contentValue: payloadObserved ? "" : undefined,
+        contentLength: payloadObserved ? contentLength : null,
+        reasoningContent: reasoningLength > 0 ? "present" : undefined,
+        headersLatencyMs:
+          headersReceivedAt === null ? null : Math.max(0, headersReceivedAt - startedAt),
+        firstTokenLatencyMs:
+          firstTokenAt === null ? null : Math.max(0, firstTokenAt - startedAt),
+        bodyLatencyMs:
+          headersReceivedAt === null
+            ? null
+            : Math.max(0, (bodyCompletedAt ?? completedAt) - headersReceivedAt),
+        totalLatencyMs: Math.max(0, completedAt - startedAt),
+        usage,
+        timeoutStage: abortScope.timeoutStage(),
+        abortSource: abortScope.abortSource()
+      });
+      return sanitizeAIProviderDiagnostics({
+        ...base,
+        reasoningPresent: payloadObserved ? reasoningLength > 0 : null,
+        reasoningLength: payloadObserved ? reasoningLength : null
+      })!;
+    };
+    const reportDiagnostics = () => {
+      if (diagnosticsReported) return currentDiagnostics();
+      diagnosticsReported = true;
+      const diagnostics = currentDiagnostics();
+      try {
+        onStreamDiagnostics?.(diagnostics);
+      } catch {
+        // Observability must never change the user-visible generation result.
+      }
+      return diagnostics;
+    };
+
+    const parsePayload = (data: string) => {
+      const payload = JSON.parse(data) as {
+        model?: unknown;
+        choices?: Array<{
+          finish_reason?: unknown;
+          delta?: {
+            content?: unknown;
+            reasoning_content?: unknown;
+          };
+          message?: {
+            content?: unknown;
+            reasoning_content?: unknown;
+          };
+        }>;
+        usage?: unknown;
+      };
+      payloadObserved = true;
+      if (payload.model !== undefined) responseModel = payload.model;
+      if (payload.usage !== undefined) usage = payload.usage;
+      const choice = payload.choices?.[0];
+      if (choice?.finish_reason !== undefined) finishReason = choice.finish_reason;
+      const reasoning = extractMessageContent(
+        choice?.delta?.reasoning_content ?? choice?.message?.reasoning_content
+      );
+      reasoningLength += reasoning.length;
+      const content =
+        extractMessageContent(choice?.delta?.content) ||
+        extractMessageContent(choice?.message?.content);
+      if (content) {
+        if (firstTokenAt === null) firstTokenAt = Date.now();
+        contentLength += content.length;
+      }
+      return content;
+    };
 
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -954,16 +1055,26 @@ export class OpenAIProvider implements AIProvider {
           ),
           max_tokens: maxTokens,
           stream: true,
+          ...(onStreamDiagnostics
+            ? { stream_options: { include_usage: true } }
+            : {}),
           ...this.buildThinkingPayload(thinking, reasoningEffort)
         }),
         cache: "no-store",
         signal: abortScope.signal
       });
+      headersReceivedAt = Date.now();
+      abortScope.markHeadersReceived();
 
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorText = await readResponseBody(response, abortScope);
 
-        throw new AIProviderError(errorText || "AI request failed.", "UPSTREAM_HTTP_ERROR", response.status);
+        throw new AIProviderError(
+          errorText || "AI request failed.",
+          "UPSTREAM_HTTP_ERROR",
+          response.status,
+          reportDiagnostics()
+        );
       }
 
       if (!response.body) {
@@ -973,100 +1084,99 @@ export class OpenAIProvider implements AIProvider {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let streamDone = false;
+
+      const processEvent = (event: string) => {
+        const data = event
+          .split(/\r?\n/)
+          .filter((line) => line.startsWith("data:"))
+          .map((line) => line.slice(5).trim())
+          .join("");
+        if (!data) return { done: false, content: "" };
+        if (data === "[DONE]") return { done: true, content: "" };
+        return { done: false, content: parsePayload(data) };
+      };
 
       while (true) {
-        const { done, value } = await reader.read();
+        const { done, value } = await readWithAbort(
+          () => reader.read(),
+          abortScope.signal
+        );
 
         if (done) {
           buffer += decoder.decode();
           break;
         }
 
+        if (value && value.byteLength > 0) abortScope.markBodyProgress();
         buffer += decoder.decode(value, { stream: true });
         const events = buffer.split("\n\n");
         buffer = events.pop() ?? "";
 
         for (const event of events) {
-          const data = event
-            .split(/\r?\n/)
-            .filter((line) => line.startsWith("data:"))
-            .map((line) => line.slice(5).trim())
-            .join("");
-
-          if (!data) {
-            continue;
-          }
-
-          if (data === "[DONE]") {
-            return;
-          }
-
-          const payload = JSON.parse(data) as {
-            choices?: Array<{
-              delta?: {
-                content?: unknown;
-              };
-              message?: {
-                content?: unknown;
-              };
-            }>;
-          };
-          const content =
-            extractMessageContent(payload.choices?.[0]?.delta?.content) ||
-            extractMessageContent(payload.choices?.[0]?.message?.content);
-
-          if (content) {
-            yield content;
+          const parsed = processEvent(event);
+          if (parsed.content) yield parsed.content;
+          if (parsed.done) {
+            streamDone = true;
+            break;
           }
         }
+        if (streamDone) break;
       }
 
-      if (!buffer.trim()) {
-        return;
+      if (!streamDone && buffer.trim()) {
+        const parsed = processEvent(buffer);
+        if (parsed.content) yield parsed.content;
       }
-
-      for (const line of buffer.split(/\r?\n/)) {
-        if (!line.startsWith("data:")) {
-          continue;
-        }
-
-        const data = line.slice(5).trim();
-
-        if (!data || data === "[DONE]") {
-          continue;
-        }
-
-        const payload = JSON.parse(data) as {
-          choices?: Array<{
-            delta?: {
-              content?: unknown;
-            };
-            message?: {
-              content?: unknown;
-            };
-          }>;
-        };
-        const content =
-          extractMessageContent(payload.choices?.[0]?.delta?.content) ||
-          extractMessageContent(payload.choices?.[0]?.message?.content);
-
-        if (content) {
-          yield content;
-        }
+      bodyCompletedAt = Date.now();
+      abortScope.markBodyComplete();
+      if (contentLength === 0) {
+        throw new AIProviderError(
+          "Model returned an empty stream.",
+          "EMPTY_STREAM",
+          undefined,
+          reportDiagnostics()
+        );
       }
+      reportDiagnostics();
     } catch (error) {
       if (error instanceof AIProviderError) {
+        reportDiagnostics();
         throw error;
       }
 
+      const source = abortScope.abortSource();
+      if (source === "caller") {
+        throw new AIProviderError(
+          "AI request canceled.",
+          "CANCELED",
+          undefined,
+          reportDiagnostics()
+        );
+      }
+      if (source === "deadline") {
+        throw new AIProviderError(
+          "AI request timed out.",
+          "TIMEOUT",
+          undefined,
+          reportDiagnostics()
+        );
+      }
       if (isAbortError(error)) {
-        if (abortScope.wasCanceled()) {
-          throw new AIProviderError("AI request canceled.", "CANCELED");
-        }
-        throw new AIProviderError("AI request timed out.", "TIMEOUT");
+        throw new AIProviderError(
+          "AI request was aborted upstream.",
+          "REQUEST_FAILED",
+          undefined,
+          reportDiagnostics()
+        );
       }
 
-      throw new AIProviderError(error instanceof Error ? error.message : "Unknown AI provider error.", "REQUEST_FAILED");
+      throw new AIProviderError(
+        error instanceof Error ? error.message : "Unknown AI provider error.",
+        "REQUEST_FAILED",
+        undefined,
+        reportDiagnostics()
+      );
     } finally {
       abortScope.cleanup();
     }

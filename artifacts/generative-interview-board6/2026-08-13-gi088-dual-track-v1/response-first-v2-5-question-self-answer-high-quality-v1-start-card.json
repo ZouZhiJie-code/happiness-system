@@ -1,0 +1,215 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-response-first-v2-5-question-self-answer-high-quality-v1",
+  "status": "ready_authorized_waiting_first_gate",
+  "productDecision": "whether_question_self_answer_excludes_already_answered_layers_and_produces_grounded_information_gain",
+  "changedFactor": "structured_question_self_answer_audit_only",
+  "fixedFactors": {
+    "frozenLowRunIdentity": "2026-08-17.gi088-response-first-v2-2-low-full-quality-v2",
+    "frozenLowPlanFingerprint": "0417cc3bbe704e8043b2065d2cf3fe902da51ad5a93a773ffc52b0a47780b8cf",
+    "frozenLowCandidateFingerprint": "c0e99522ac8b0b2e252d3f7c8abf32e0fd364301609c5d79cc874712f27cb01f",
+    "parentV24Identity": "2026-08-17.gi088-response-first-v2-4-null-task-aligned-high-quality-v1",
+    "parentV24PlanFingerprint": "864d9da7872fbe831aefa4270e158a43c53b0155e688dc5fc6fc44691c01be4d",
+    "parentV24CandidateFingerprint": "c4c7a9db4a91b49da74f84a87efa72e823dd5eca610c64ad164540c4c6c2920e",
+    "parentV24ProductDecision": {
+      "stateAlignment": "pass",
+      "visibleQuestionInformationGain": "fail",
+      "completeChain": "no_go_quality"
+    },
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "high",
+    "maxTokens": 4000,
+    "datasetInput": "byte_identical_to_v22_rubric_v1_3",
+    "outputStructure": "v24_semantic_and_visible_plus_structured_information_gain_audit",
+    "programValidation": "v24_state_and_source_contract_plus_deterministic_audit_mapping",
+    "inheritedStateAlignment": "v24_null_task_submission_alignment",
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "candidateIdentity": {
+    "version": "2026-08-19.gi088-response-first-v2-5-question-self-answer-high",
+    "parentVersion": "2026-08-17.gi088-response-first-v2-4-null-task-aligned-high",
+    "parentCandidateFingerprint": "c4c7a9db4a91b49da74f84a87efa72e823dd5eca610c64ad164540c4c6c2920e",
+    "frozenLowVersion": "2026-08-17.gi088-response-first-v2-2-factual-low",
+    "frozenLowCandidateFingerprint": "c0e99522ac8b0b2e252d3f7c8abf32e0fd364301609c5d79cc874712f27cb01f",
+    "runtime": {
+      "provider": "openai",
+      "baseUrlHost": "api.deepseek.com",
+      "model": "deepseek-v4-pro",
+      "concurrency": 1,
+      "retries": 0,
+      "recovery": 0,
+      "fallback": 0,
+      "low": {
+        "thinking": "enabled",
+        "reasoningEffort": "low",
+        "responseFormat": "text",
+        "maxTokens": 1280,
+        "headersTimeoutMs": 15000,
+        "bodyIdleTimeoutMs": 45000,
+        "hardTimeoutMs": 45000,
+        "targetMs": 15000,
+        "hardGateMs": 45000
+      },
+      "high": {
+        "thinking": "enabled",
+        "reasoningEffort": "high",
+        "responseFormat": "json_object",
+        "maxTokens": 4000,
+        "headersTimeoutMs": 15000,
+        "bodyIdleTimeoutMs": 60000,
+        "hardTimeoutMs": 60000,
+        "roundTargetMs": 45000,
+        "roundHardGateMs": 60000
+      }
+    },
+    "highSystemPromptFingerprint": "295ddb472d0bba36c1eea03a73789275a55496a4126ae982bff3cfed571561a2",
+    "parentHighSystemPromptFingerprint": "39977e911e91dd0b4ab01605fff589b1b615883e54112ed58a36bc31067a9241",
+    "visibleDeliveryContractFingerprint": "d9ea4f04880d99fefedf5f1b9ba794af30c27dd86cdbcb28206e7f0824d95825",
+    "informationGainAuditContractFingerprint": "991bfa241664509a9882aef409d2988d96804f5a3b0cfb0872250f5ae421c18c",
+    "changedFactor": "structured_question_self_answer_audit_only",
+    "candidateFingerprint": "c1f02eb839a7e97ab1fc3d6bf509e8461eb51378a00b35087ab565333d96cee6"
+  },
+  "dataset": {
+    "version": "2026-08-17.gi088-response-first-six-real-checkpoints-v1-3-product-owner-rubric",
+    "fingerprint": "25ab2ec7665d185f7dacf4eceb184e1a6be9ff2909ad93252f7ec97b035c3c32",
+    "privacyLevel": "private_sensitive",
+    "caseCount": 6,
+    "initialWorkingTask": {
+      "null": [
+        "RPR-REAL-19-CORRECTION",
+        "RPR-REAL-06",
+        "RPR-REAL-22",
+        "RPR-REAL-13"
+      ],
+      "existing": [
+        "RPR-REAL-19-CONTINUE",
+        "RPR-LC-21"
+      ]
+    }
+  },
+  "phases": {
+    "first_gate": [
+      {
+        "phase": "first_gate",
+        "order": 1,
+        "caseId": "RPR-REAL-19-CORRECTION",
+        "sourceCaseId": "RPR-REAL-19",
+        "sourceFingerprint": "2ceb3b132695d4c519e32dde5a8a446ef3f2e99c23b4c455288d348c3cf02b8a",
+        "hardGate": true,
+        "initialWorkingTask": "null",
+        "frozenLowHash": "df15169aca894d310e3e686dc1d105827e81983b823ab15d25e1b8761e2059c8",
+        "frozenLowLatencyMs": 3341,
+        "requestFingerprint": "7169eefe7ad6261b6364c99826ec008ed86ba084c8548e1ab4e049058f3931f7"
+      }
+    ],
+    "remaining": [
+      {
+        "phase": "remaining",
+        "order": 1,
+        "caseId": "RPR-REAL-06",
+        "sourceCaseId": "RPR-REAL-06",
+        "sourceFingerprint": "304dda7130959684e3a34e4c7dab11e5dae6ae6cf469f1c128f642c5088eb41b",
+        "hardGate": false,
+        "initialWorkingTask": "null",
+        "frozenLowHash": "9bb21939dead2c356db279286d1bfe54a339ba77293849e743e9f23518a9cea0",
+        "frozenLowLatencyMs": 2882,
+        "requestFingerprint": "1669fd909e7fd6fcb4bd91705b20f5ee888556a691c21fd4a2f9d2541989e57b"
+      },
+      {
+        "phase": "remaining",
+        "order": 2,
+        "caseId": "RPR-REAL-19-CONTINUE",
+        "sourceCaseId": "RPR-REAL-19",
+        "sourceFingerprint": "3da65cb358c5693e40ae217ee9dd600a4b8a7b663f671c3ac466c2953dd1314f",
+        "hardGate": true,
+        "initialWorkingTask": "existing",
+        "frozenLowHash": "0554d9c07e9c2be5e02c8f3d6dd7cd9be8545d9df4494916fc2d74774a4fdd9a",
+        "frozenLowLatencyMs": 6178,
+        "requestFingerprint": "bd2f37a75b92b89043a8abb82d9b856ae5f086dfe1917ade93455a52d6203965"
+      },
+      {
+        "phase": "remaining",
+        "order": 3,
+        "caseId": "RPR-REAL-22",
+        "sourceCaseId": "RPR-REAL-22",
+        "sourceFingerprint": "f9e3f08f99516df9cba966f350b7c2d95a6c1a20c59ef24a458471f48343b943",
+        "hardGate": true,
+        "initialWorkingTask": "null",
+        "frozenLowHash": "088775f9f3951d174504734f88aac2bac4963a78ce783447cb5a0e123c65fa00",
+        "frozenLowLatencyMs": 3580,
+        "requestFingerprint": "5af8abac0de77afa96df49cedafdad5fa3d8cbd375f3690f3c0e9daeedc8734e"
+      },
+      {
+        "phase": "remaining",
+        "order": 4,
+        "caseId": "RPR-REAL-13",
+        "sourceCaseId": "RPR-REAL-13",
+        "sourceFingerprint": "aa6d91e160f110fb00ad93ceb1b7cf5b89476d73a2c02d0ec088d470b13429f2",
+        "hardGate": true,
+        "initialWorkingTask": "null",
+        "frozenLowHash": "a5c5c39df5a8859136eff3deab3290de30d9bc51076825540ea07e9aa84f02f5",
+        "frozenLowLatencyMs": 4014,
+        "requestFingerprint": "40bfe2ab4e001e15f736f9bee4bf0004b1d0959bf11b2c8fac8eface032c88c0"
+      },
+      {
+        "phase": "remaining",
+        "order": 5,
+        "caseId": "RPR-LC-21",
+        "sourceCaseId": "RPR-REAL-21",
+        "sourceFingerprint": "a063c88475b0a2dd74036f34bb6614dc770d82e9f84b8481b1770f28fafda5c2",
+        "hardGate": true,
+        "initialWorkingTask": "existing",
+        "frozenLowHash": "caa4c86be299cb3279f77fa55217a3da8a161582db1ade877bdd65f70ba017f9",
+        "frozenLowLatencyMs": 4188,
+        "requestFingerprint": "ea0d6e8215333abb5365250f3bccffdde4392469298286bee2455340549ff185"
+      }
+    ]
+  },
+  "inputHashes": {
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "planSha256": "6aed614f130461e948007c81f9c008b543ec0f97342d6864bef289c3ab7d3ab4",
+    "candidateSha256": "6e20893f1f179f55dd1c0d24aeac3ecdae0f75fd5234e8444664f7b4dd89a161",
+    "parentCandidateSha256": "ffc81515875b80ce3ca6e8288b1a0ae1d0c6555268acccb51915e45371da9acf",
+    "fixturesSha256": "d2b687f99be1f18710f1025ab7ac9576f9c04fcd9ebdb2def773f209abe712aa",
+    "frozenLowReceiptSha256": "bf75331e2030e3243eda3696fccfd7564c3505d07e74f37978e449c68c3b7231",
+    "parentV24StartCardSha256": "d657d8ef5f0f8c0fa470cdde91242c08567b27cde9164ed49ebdb3a131a7b672",
+    "parentV24ReceiptSha256": "1f1e3a7693d20b1ac890274c146a57cfbecc522e0e64f0b631c8924e334196fd",
+    "providerSha256": "932baf57ada773942695c9ec6cef5f7ae53eb93a8a296672f8cf566f465a3dc0",
+    "providerContractSha256": "8ee44101394828e1e34438fff50ee96cb9b4493f60d97b6e8a2310756843a523",
+    "runnerSha256": "e0054468a7b7a827b9f92e8b0f11ac11e29d1c0e0d6651b5d9cf776ec8612398"
+  },
+  "budget": {
+    "authorized": 6,
+    "firstGate": 1,
+    "remaining": 5,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "gate": {
+    "sourceReferences": "current_branch_valid_user_messages_only",
+    "frozenLowMustRemainByteIdentical": true,
+    "questions": "zero_or_one_to_three_with_one_answer_focus",
+    "firstGateProductContinuation": "pass_only",
+    "hardCasesMustPass": 5,
+    "softCasesMaximumMinor": 1,
+    "fullRoundMedianTargetMs": 45000,
+    "fullRoundSingleHardMs": 60000,
+    "semanticAuthority": "product_owner"
+  },
+  "reviewOrder": [
+    "complete_relevant_user_and_assistant_context",
+    "frozen_low_actual_output",
+    "actual_high_raw_output_and_visible_projection",
+    "technical_status_latency_tokens_and_source_validation",
+    "codex_question_existing_answer_mapping",
+    "codex_provisional_judgment",
+    "product_owner_final_judgment"
+  ],
+  "stopPoint": "one_first_case_then_require_product_owner_pass_before_remaining_five",
+  "planFingerprint": "2d82da338d4034069e800fbad102fc7b74c82b29262ac1759ebfcdb254c322d7"
+}

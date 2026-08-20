@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-visible-information-gain-ab-v1",
+  "status": "ready_authorized_waiting_execution",
+  "productDecision": "whether_information_gain_skill_repairs_repeat_question",
+  "changedFactor": "visible_interview_skill_information_gain_only",
+  "fixedFactors": {
+    "sameCaseAndUserPayload": true,
+    "sameBasePrompt": true,
+    "sameOutputContract": true,
+    "sameRecentWindow": 8,
+    "sharedExactRepeatProgramCheck": true,
+    "runtime": {
+      "model": "deepseek-v4-pro",
+      "thinking": "enabled",
+      "reasoningEffort": "low",
+      "responseFormat": "json_object",
+      "headersTimeoutMs": 15000,
+      "bodyIdleTimeoutMs": 60000,
+      "hardTimeoutMs": 60000,
+      "firstUsefulGateMs": 45000,
+      "fullVisibleGateMs": 60000,
+      "concurrency": 1,
+      "retries": 0,
+      "recovery": 0,
+      "fallback": 0,
+      "callBudget": 4
+    }
+  },
+  "case": {
+    "caseId": "RPR-REAL-19",
+    "caseFingerprint": "6385f5687671aabb0decfe3bcd3e9b81b2d58b8f5713e505f068b46d93137048",
+    "candidateInputFingerprint": "25b75bd9adaedc02104345f52b4f9b59b8c624b6c298c7001b9f4d4feb01bdb4",
+    "messageCount": 8
+  },
+  "longContextAsset": {
+    "assetVersion": "2026-08-16.gi088-real-long-context-rpr-real-21-v1",
+    "derivedCaseId": "RPR-LC-21",
+    "sourceCaseId": "RPR-REAL-21",
+    "sourceConversationFingerprint": "f3918c7b0ea5b8366eb70be177ce8b545441b43736650c128633874ad044c81c",
+    "fullMessageCount": 16,
+    "recentWindowCount": 8,
+    "omittedEarlierMessageCount": 8,
+    "semanticStateFingerprint": "ce0f589b10fe4300d67be1018464b8efda77b88b611cf0826bdb975f983e088e"
+  },
+  "arms": {
+    "A": {
+      "label": "current_visible_contract",
+      "candidateVersion": "2026-08-16.gi088-response-first-two-stage-v1",
+      "candidateFingerprint": "e806843dbcf0514d133f77818255f46f8e1a7f5a2bb6b0e8a962809f755bac96",
+      "systemPromptSha256": "912df133e35982c39a3e21c0399922b48e15c77c3c4b6db4c3f5835e6ddcc7f5",
+      "systemPromptLength": 478
+    },
+    "B": {
+      "label": "information_gain_visible_contract",
+      "candidateVersion": "2026-08-16.gi088-response-first-information-gain-v1",
+      "candidateFingerprint": "154a16f4bbe51773b73d409e2dc78bc2ed439aca2aa07568c26a156b55e73acf",
+      "systemPromptSha256": "44c611ca65da9d82c93ea6b75bc82ad31f5ba0f7c0d04c68ad972e8db3ff9895",
+      "systemPromptLength": 647
+    }
+  },
+  "sequence": [
+    {
+      "order": 1,
+      "runLabel": "A1",
+      "arm": "A",
+      "requestFingerprint": "dde0812503a2a2e41caeb2621415e26d841dbcb2ce6c1a309db32d9eaf195173"
+    },
+    {
+      "order": 2,
+      "runLabel": "B1",
+      "arm": "B",
+      "requestFingerprint": "af1cf2d8b7f6e63c5055dc34ad8d8233e8a446013549924ddaecc46edce25b46"
+    },
+    {
+      "order": 3,
+      "runLabel": "B2",
+      "arm": "B",
+      "requestFingerprint": "af1cf2d8b7f6e63c5055dc34ad8d8233e8a446013549924ddaecc46edce25b46"
+    },
+    {
+      "order": 4,
+      "runLabel": "A2",
+      "arm": "A",
+      "requestFingerprint": "dde0812503a2a2e41caeb2621415e26d841dbcb2ce6c1a309db32d9eaf195173"
+    }
+  ],
+  "inputHashes": {
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "datasetReceiptSha256": "b650328e02886730c93f0093fcd357e3b964f1007698ff62022439a8e51f8a6f",
+    "privateCasesSha256": "391e735110d274ded276827895a4027927dcbd16aef327042753b075a0fa8190",
+    "parentCandidateFileSha256": "3dfc2324a2cb67403408aa7b8eb27ff4fbf8dd8a428046149d1585ad540e6498",
+    "repairedCandidateFileSha256": "a13489b693ef22885b6fe90478918fb51d7dfdd7c3f745fd39560df968a40c10",
+    "providerFileSha256": "75650cd9a1d8c2079a24afa2cd35a40e9c61e8951b97cf12d656732655cd7133",
+    "runnerFileSha256": "334d7343838fcfacbe380173d7d83f4cffc129575921b67eb9a95cb4d2768437"
+  },
+  "budget": {
+    "authorized": 4,
+    "consumedBeforeRun": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "authorizationSource": "confirmed_plan_standing_authorization"
+  },
+  "reviewGate": {
+    "responseReview": "product_owner_blind_four_cards",
+    "longContextAssetReview": "product_owner_accept_revise_or_reject",
+    "proceed": "both_B_pass_speed_gates_and_long_context_asset_is_accepted"
+  },
+  "stopPoint": "after_four_calls_wait_product_owner_blind_and_asset_review",
+  "planFingerprint": "7f107b43518a39f2c156a69e12c42ee071361aa817a398c392e2c8b6a63025d0"
+}

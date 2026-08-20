@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-response-first-v2-9-causal-continuation-gate-v1",
+  "status": "ready_to_run_causal_low_then_high",
+  "productDecision": "whether_v29_uses_the_saved_correction_to_advance_without_reasking_an_answered_example",
+  "changedFactor": "run_the_same_v29_high_after_a_real_v22_low_on_the_actual_parent_visible_bubble_and_reprojected_parent_state",
+  "candidates": {
+    "lowVersion": "2026-08-17.gi088-response-first-v2-2-factual-low",
+    "lowCandidateFingerprint": "c0e99522ac8b0b2e252d3f7c8abf32e0fd364301609c5d79cc874712f27cb01f",
+    "highVersion": "2026-08-19.gi088-response-first-v2-9-separated-open-gap-high",
+    "highCandidateFingerprint": "6fe7b20a72a4921f6cfae4fbad4ac8b595e17422a6cc5891c47e455619e287e7"
+  },
+  "dataset": {
+    "version": "2026-08-17.gi088-response-first-six-real-checkpoints-v1-3-product-owner-rubric",
+    "fingerprint": "25ab2ec7665d185f7dacf4eceb184e1a6be9ff2909ad93252f7ec97b035c3c32",
+    "caseId": "RPR-REAL-19-CONTINUE",
+    "sourceFingerprint": "3da65cb358c5693e40ae217ee9dd600a4b8a7b663f671c3ac466c2953dd1314f",
+    "fixtureTurnInputHash": "d7f9d80c9aba078fce246aecb1a60d7d2ab1717997f3b7d544084779040b361f"
+  },
+  "parentCorrectionGate": {
+    "identity": "2026-08-19.gi088-response-first-v2-9-correction-gate-v1",
+    "planFingerprint": "9b67366e39256533a0733ca43193ed78d43b3d9dd88b08fbecbc99700c5b96e0",
+    "candidateFingerprint": "6fe7b20a72a4921f6cfae4fbad4ac8b595e17422a6cc5891c47e455619e287e7",
+    "startCardSha256": "64a4d591bbb2e875ac3380f7d43513f2453de1988f9b26ccd5acfbc0ca4f8f44",
+    "receiptSha256": "ab34872a504d8f80eb6fbb032ad73df69f930ed576a1b6db5c93c2fbd7560169",
+    "privateLedgerSha256": "cc7ad23aef67cec96d724d116fe4c3635d05ff2ae82a7a5dec0a876b1840d37e",
+    "productReviewSha256": "e5218ee7c179ed29124f9ff4d71b0f4fd97e8528bc56a081bc40fb3c4d1cb344",
+    "productReviewHash": "5bdc933301df498051fa058155aaf4c49506df79d4fa69f86c666cf3c861119d",
+    "productVerdict": "pass",
+    "responseHash": "8d1f65ba834ebb92b4face240411abb30e3a65451588d5079a4bdc8cfa9750ba",
+    "postStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667",
+    "visibleDeliveryHash": "ffa62e30cd3d8245c562eda44a02c42cf51df5c018867fc836d4e2a026cb0831",
+    "rawResultFingerprint": "dc0422f0cbbdb4114db837335434b9e465f45ae5fb41ee46f4b8ef87300ff56d",
+    "rawOutputReparsedAndValidated": true,
+    "postStateReprojected": true,
+    "visibleDeliveryReprojected": true
+  },
+  "causalInput": {
+    "effectiveTurnInputHash": "ca29ed9e29aab147b54a07c11fecf7abcc36187bb0764f01e1727d143e403cb2",
+    "actualAssistantHash": "1fa42423b8412c09427aa297d3d607e860ff82f487700fd132f0c07da6426406",
+    "replacedFixtureAssistantHash": "b9f9147127b115b7c09e5bd981e0cd4a32e00adddbe7c1bc5146f897bd322030",
+    "parentPostStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667",
+    "actualSemanticStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667",
+    "historicalFixtureSemanticStateHash": "121ba4b094428bb5934abfbe44dad8eb18ece0e855553500ec521457d0d6df5d",
+    "actualStateDiffersFromHistoricalFixture": true,
+    "latestUserMessageId": "U4",
+    "fixtureAssistantBodyExcluded": true,
+    "fixtureSemanticStateExcluded": true,
+    "lowSource": "new_v22_model_call_from_effective_causal_input"
+  },
+  "runtime": {
+    "provider": "openai",
+    "model": "deepseek-v4-pro",
+    "low": {
+      "thinking": "enabled",
+      "reasoningEffort": "low",
+      "responseFormat": "text",
+      "maxTokens": 1280,
+      "headersTimeoutMs": 15000,
+      "bodyIdleTimeoutMs": 45000,
+      "hardTimeoutMs": 45000,
+      "targetMs": 15000,
+      "hardGateMs": 45000
+    },
+    "high": {
+      "thinking": "disabled",
+      "responseFormat": "json_object",
+      "maxTokens": 4000,
+      "headersTimeoutMs": 15000,
+      "bodyIdleTimeoutMs": 60000,
+      "hardTimeoutMs": 60000,
+      "roundTargetMs": 45000,
+      "roundHardGateMs": 60000
+    },
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "budget": {
+    "authorized": 2,
+    "low": 1,
+    "high": 1,
+    "remainingFamilyBudgetNotRun": 4,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "gate": {
+    "parentProductVerdict": "pass_or_minor",
+    "lowTargetMs": 15000,
+    "lowHardMs": 45000,
+    "lowMustPassBeforeHigh": true,
+    "fullRoundTargetMs": 45000,
+    "fullRoundHardMs": 60000,
+    "providerHttp200": true,
+    "finishReasonStop": true,
+    "lowThinking": "enabled",
+    "highThinking": "disabled",
+    "lowTokenLimit": 1280,
+    "highTokenLimit": 4000,
+    "productReviewRequiredAfterRun": true
+  },
+  "privacy": {
+    "level": "private_sensitive",
+    "publicBodies": false,
+    "privateMode": "0600"
+  },
+  "releaseBoundary": {
+    "pageIntegration": "not_run",
+    "preview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deployment": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "inputHashes": {
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "executionPlanSha256": "195f6ff3b16ec40f356d74319538989a0d102d9fce207831f11175e0ecd293d9",
+    "methodPlanSha256": "464bbd475e3ad6eb18ea0b109a9cf49894d4221503dc7d43f0f59f81dddf0f11",
+    "lowCandidateSha256": "450139361b325d19089fab1ee0ce740e9b83945abd46049760035f526abd5ffd",
+    "highCandidateSha256": "2111b1143785f88ae336bde08bacf13e0a8df940d63d380029236bca4a0d2c99",
+    "baseProjectionSha256": "8f924fcd0e750ffa6e2a7e0cae3ecdd4571f4e1da977bd7a997480f5a0d1e983",
+    "semanticStateMergeSha256": "b7ffb90bbe3b426c87d2f1c78a25d62d42a9369b09b9654f46ee7a69e65d41a7",
+    "fixturesSha256": "d2b687f99be1f18710f1025ab7ac9576f9c04fcd9ebdb2def773f209abe712aa",
+    "correctionRunnerSha256": "fb7d7ef9724140cae4c943523cbdffefb42a3b265b7a0d108f3c4f3c94f0d2ae",
+    "providerSha256": "932baf57ada773942695c9ec6cef5f7ae53eb93a8a296672f8cf566f465a3dc0",
+    "providerContractSha256": "8ee44101394828e1e34438fff50ee96cb9b4493f60d97b6e8a2310756843a523",
+    "runnerSha256": "b7e20986558621a0d4a982ddcf9c9895be8d1b719751abeaec64690afdd32989"
+  },
+  "stopPoint": "after_two_calls_wait_hash_bound_product_review",
+  "planFingerprint": "7cc38ff3536f8d8735881da95b1cbca9fe5cf79c8196927b3affa317f7024d14"
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-3-high-quality-v1-status-correction",
+  "runIdentity": "2026-08-17.gi088-response-first-v2-3-high-quality-v1",
+  "planFingerprint": "a2076f0a27c5a10f5a3a2827027d23a7db4ff83d35282cad59cf62e473cf96bc",
+  "status": "corrected_without_model_call",
+  "confirmedFact": {
+    "callsConsumed": 1,
+    "firstResultStatus": "contract_failure",
+    "errorCode": "GI088_RESPONSE_FIRST_V23_PARSE_FAILED",
+    "finishReason": "length",
+    "maxTokens": 2000,
+    "completionTokens": 2000,
+    "reasoningTokens": 1985,
+    "visibleResponseLength": 42,
+    "highLatencyMs": 38384,
+    "fullRoundLatencyMs": 41725
+  },
+  "correction": {
+    "before": "checkpoint_running",
+    "after": "stopped_by_checkpoint_technical_or_contract_gate",
+    "semanticQuality": "not_evaluated",
+    "remainingCalls": "not_run_8_of_9"
+  },
+  "modelCallsAdded": 0,
+  "historicalBodiesChanged": false,
+  "runnerFileChanged": false,
+  "privateBoundary": {
+    "rawUserLowAndHighBodies": "git_ignored_private_directory",
+    "publicBodyLeakCount": 0
+  }
+}

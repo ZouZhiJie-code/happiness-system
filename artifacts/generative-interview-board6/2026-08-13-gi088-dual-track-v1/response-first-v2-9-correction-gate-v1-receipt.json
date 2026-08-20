@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-response-first-v2-9-correction-gate-v1",
+  "planFingerprint": "9b67366e39256533a0733ca43193ed78d43b3d9dd88b08fbecbc99700c5b96e0",
+  "candidateVersion": "2026-08-19.gi088-response-first-v2-9-separated-open-gap-high",
+  "candidateFingerprint": "6fe7b20a72a4921f6cfae4fbad4ac8b595e17422a6cc5891c47e455619e287e7",
+  "status": "v29_correction_gate_product_pass_or_minor",
+  "budget": {
+    "authorized": 1,
+    "consumed": 1,
+    "completed": 1,
+    "notRun": 0,
+    "remainingFamilyNotRun": 6,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "parentV281": {
+    "identity": "2026-08-19.gi088-response-first-v2-8-1-causal-continuation-probe-v1",
+    "planFingerprint": "26604324a6ec4e52e83d89f048bfd196d5f33a079b07beefea79978ad0791600",
+    "highResponseHash": "b973db6a30d7ce9b4628717444c986df6c037bf66e43b635af51288f22eb813a",
+    "receiptSha256": "8db930eb58dbf7e14b44a2164833745eab1beaaca8a6e8979b4f39923d2a9ce1",
+    "stageLedgerSha256": "f46e8e95d1fc993054ca634f4a66c4c759f1fc95cf6f629b5343de0594f3eacb",
+    "productReviewSha256": "65be75a3089b3025eb4ff30d294796b4371c5d5686223b68a979616a5f4e5947",
+    "productVerdict": "fail"
+  },
+  "result": {
+    "caseId": "RPR-REAL-19-CORRECTION",
+    "status": "valid",
+    "startedAt": "2026-08-19T12:54:45.842Z",
+    "completedAt": "2026-08-19T12:54:49.172Z",
+    "requestFingerprint": "f21d5531413bc44e8cd79da3c79cc8f3c26e1d09174b6c023bb886493670e26e",
+    "frozenLowHash": "df15169aca894d310e3e686dc1d105827e81983b823ab15d25e1b8761e2059c8",
+    "frozenLowLatencyMs": 3341,
+    "responseHash": "8d1f65ba834ebb92b4face240411abb30e3a65451588d5079a4bdc8cfa9750ba",
+    "responseLength": 493,
+    "postStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667",
+    "validationIssueCount": 0,
+    "validationIssueCodes": [],
+    "validationIssuesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "errorCode": null,
+    "highLatencyMs": 3325,
+    "observedFullRoundLatencyMs": 6666,
+    "observed45sTargetPassed": true,
+    "observed60sHardPassed": true,
+    "observation": {
+      "coverageGatePresent": false,
+      "coverage": null,
+      "checkedUserMessageCount": 0,
+      "existingAnswerPresent": false,
+      "remainingGapPresent": false,
+      "expectedGainPresent": false,
+      "understandingKind": "add",
+      "understandingSourceMode": "correction",
+      "openTaskChangeKind": "none",
+      "questionCount": 0,
+      "punctuationQuestionCount": 0,
+      "correctableUnderstandingPresent": false,
+      "taskUnderstandingExactSummaryCollision": false
+    },
+    "httpStatus": 200,
+    "finishReason": "stop",
+    "responseModel": "deepseek-v4-pro",
+    "reasoningPresent": false,
+    "reasoningTokens": null,
+    "tokenUsage": {
+      "promptTokens": 1981,
+      "completionTokens": 151,
+      "totalTokens": 2132,
+      "promptCacheHitTokens": 0,
+      "promptCacheMissTokens": 1981
+    }
+  },
+  "productDecision": {
+    "verdict": "pass",
+    "noteHash": "a14c44d186f0f6f0ea7234b32d1f3aef1d3507658564ed935fa4929ee3e32e2b",
+    "reviewHash": "5bdc933301df498051fa058155aaf4c49506df79d4fa69f86c666cf3c861119d"
+  },
+  "releaseBoundary": {
+    "pageIntegration": "not_run",
+    "preview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deployment": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "privacy": {
+    "publicReceiptContainsBodies": false,
+    "privateLedgerAndReview": "git_ignored_mode_0600"
+  }
+}

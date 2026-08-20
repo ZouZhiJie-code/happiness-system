@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-response-first-v2-low-quality-v1",
+  "status": "historical_result_reconciled_no_new_calls",
+  "issue": "initial_runner_did_not_fail_finish_reason_length",
+  "initialRunnerSha256": "93d4e45faa9a2d530a627945ae5b7b68772cb473b4ddccf2ca7a72b7398fe57a",
+  "correctedRunnerSha256": "8864134253f72fe2d8f99459047552f25aa3e92b8858364a87d4252ca8f4d468",
+  "affectedCaseId": "RPR-REAL-19-CORRECTION",
+  "reconciledStatus": "contract_failure",
+  "reconciledIssue": "LOW_OUTPUT_TRUNCATED_BY_TOKEN_LIMIT",
+  "additionalCalls": 0,
+  "publicReceiptSha256": "dd051f62b2ca653a2cd290a5196dc94d0716cd2e15dc76404ed1611894bfaa27",
+  "privateBoundary": "response_body_and_review_remain_in_git_ignored_private_directory"
+}

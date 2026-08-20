@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-2-v2-3-stage-ledger-v1",
+  "status": "no_go_stopped_after_v22_low_checkpoint",
+  "evaluationBudget": {
+    "authorized": 18,
+    "consumed": 3,
+    "notRun": 15
+  },
+  "previewBudget": {
+    "authorized": 15,
+    "consumed": 0,
+    "notRun": 15
+  },
+  "tokenUsage": {
+    "promptTokens": 3261,
+    "completionTokens": 326,
+    "reasoningTokens": 225,
+    "totalTokens": 3587,
+    "promptCacheHitTokens": 0,
+    "promptCacheMissTokens": 3261
+  },
+  "costEstimate": {
+    "currency": "CNY",
+    "estimated": 0.011739,
+    "pricingSnapshotDate": "2026-08-10",
+    "cacheMissInputPerMillion": 3,
+    "outputPerMillion": 6,
+    "actualProviderBilledCost": null,
+    "boundary": "local_frozen_pricing_estimate_provider_response_did_not_return_billed_cost"
+  },
+  "stages": [
+    {
+      "stage": "v22_low_checkpoint",
+      "authorized": 3,
+      "consumed": 3,
+      "notRun": 0,
+      "status": "product_owner_quality_failed_2_of_3_pass",
+      "codexProvisionalQuality": {
+        "pass": 1,
+        "minor": 0,
+        "fail": 2
+      },
+      "productOwnerQuality": {
+        "pass": 2,
+        "minor": 0,
+        "fail": 1
+      }
+    },
+    {
+      "stage": "v22_low_full_quality",
+      "authorized": 6,
+      "consumed": 0,
+      "notRun": 6,
+      "status": "not_run"
+    },
+    {
+      "stage": "v23_grounded_high_checkpoint",
+      "authorized": 3,
+      "consumed": 0,
+      "notRun": 3,
+      "status": "not_run"
+    },
+    {
+      "stage": "v23_grounded_high_full_quality",
+      "authorized": 6,
+      "consumed": 0,
+      "notRun": 6,
+      "status": "not_run"
+    }
+  ],
+  "productOwnerCheckpointReview": "completed_2_pass_0_minor_1_fail",
+  "productOwnerSixCardReview": "not_run_0_of_6",
+  "productIntegration": "not_run",
+  "commit": "not_run",
+  "push": "not_run",
+  "previewDeployment": "not_run",
+  "productionStrategy": "event_centered_baseline",
+  "stopReason": "v22_low_checkpoint_product_owner_content_gate_failed_2_of_3_pass"
+}

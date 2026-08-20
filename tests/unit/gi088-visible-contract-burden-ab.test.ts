@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import startCard from "../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/visible-contract-burden-ab-v1-start-card.json";
 
 import {
   createGi088VisibleContractBurdenAbPlan,
@@ -58,7 +59,7 @@ function complete(latencies: [number, number, number, number]) {
 
 describe("GI-088 visible contract burden A/B", () => {
   it("binds a fresh four-call Pro Low A-B-B-A plan with one fixed user payload", async () => {
-    const plan = await createGi088VisibleContractBurdenAbPlan();
+    const plan = startCard;
     expect(plan.identity).toBe(
       "2026-08-16.gi088-visible-contract-burden-ab-v1"
     );
@@ -77,6 +78,9 @@ describe("GI-088 visible contract burden A/B", () => {
     );
     expect(plan.case.userPayloadSha256).toMatch(/^[a-f0-9]{64}$/);
     expect(plan.planFingerprint).toMatch(/^[a-f0-9]{64}$/);
+    await expect(createGi088VisibleContractBurdenAbPlan()).rejects.toThrow(
+      "GI088_VISIBLE_CONTRACT_BURDEN_AB_INPUT_DRIFT:providerFileSha256"
+    );
   });
 
   it("recognizes strong and paired visible-contract speed directions", () => {

@@ -1,0 +1,172 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-1-low-quality-v1",
+  "status": "ready_authorized_waiting_checkpoint",
+  "productDecision": "whether_low_v2_1_repairs_completeness_correction_timing_and_grounding_without_losing_speed",
+  "candidateIdentity": {
+    "version": "2026-08-17.gi088-response-first-v2-1",
+    "parentVersion": "2026-08-16.gi088-response-first-v2",
+    "parentCandidateFingerprint": "a902e373f3ffcb6c01a55f0d843304088920c3e095016ee6b0a7605256f88175",
+    "candidateFingerprint": "a4f295005dd130b3d3eb4b213a0756e790064971c4056b5bb5592234e59fe94d",
+    "promptFingerprint": "df299161e549b5a92e13b331b8e18b5c51a0b3ae47b1e63264af957ce6760db9",
+    "skillFingerprint": "1b2f7c7a692aed3a13702a72c5c91051fa03882e66b69df70b2b6689ad1215cd",
+    "contextFingerprint": "ed8ba13746054f9511034f264a2b82b2ee71d364ed2e0772dfa7e6566de1e693",
+    "lowSystemPromptFingerprint": "694a16c27ed37df48b960a58b236593e4b0e085b78a642dcea45e664b002b34d",
+    "highSystemPromptFingerprints": {
+      "A": "1bb342a0e1413ca64563e3ca72b9c0cfc466fd2d4036661cd48f37222049546b",
+      "B": "59fbfa34e965619fd190330cd0ac3bb000fccbb2e2ac50dcbde60eeefcbb9efd"
+    }
+  },
+  "dataset": {
+    "version": "2026-08-17.gi088-response-first-v2-1-six-real-checkpoints-v1",
+    "fingerprint": "59d524f8e932712d7f0c761847c94ce7abe7e552ad44f144f8a25d96230248cc",
+    "parentVersion": "2026-08-16.gi088-response-first-v2-six-real-checkpoints-v1",
+    "parentFingerprint": "76c285e65377714aafe3a91bfec8cc8c3f81c104c656976ffb5d036fa2bcb736",
+    "privacyLevel": "private_sensitive",
+    "caseCount": 6
+  },
+  "phases": {
+    "checkpoint": [
+      {
+        "order": 1,
+        "caseId": "RPR-REAL-19-CORRECTION",
+        "sourceCaseId": "RPR-REAL-19",
+        "sourceFingerprint": "2ceb3b132695d4c519e32dde5a8a446ef3f2e99c23b4c455288d348c3cf02b8a",
+        "hardGate": true,
+        "requestFingerprint": "65a33d9b0c935b842ef17975239a6b12c2f0117d210454a99d69448ea5eb6827"
+      },
+      {
+        "order": 2,
+        "caseId": "RPR-REAL-19-CONTINUE",
+        "sourceCaseId": "RPR-REAL-19",
+        "sourceFingerprint": "3da65cb358c5693e40ae217ee9dd600a4b8a7b663f671c3ac466c2953dd1314f",
+        "hardGate": true,
+        "requestFingerprint": "f441c65b5b7965142b1b76cd5586a19059a5f215aa8391369c1ebc040e723df5"
+      },
+      {
+        "order": 3,
+        "caseId": "RPR-REAL-13",
+        "sourceCaseId": "RPR-REAL-13",
+        "sourceFingerprint": "aa6d91e160f110fb00ad93ceb1b7cf5b89476d73a2c02d0ec088d470b13429f2",
+        "hardGate": true,
+        "requestFingerprint": "d1ce242e8265da72097f97c9a55b7428a8c4f644477896591bc4174a90ed58ce"
+      }
+    ],
+    "full": [
+      {
+        "order": 1,
+        "caseId": "RPR-REAL-06",
+        "sourceCaseId": "RPR-REAL-06",
+        "sourceFingerprint": "304dda7130959684e3a34e4c7dab11e5dae6ae6cf469f1c128f642c5088eb41b",
+        "hardGate": false,
+        "requestFingerprint": "d36bf3891d80272e077584a82868730456239f1f66f1d744c66c6f64c55664e6"
+      },
+      {
+        "order": 2,
+        "caseId": "RPR-REAL-19-CORRECTION",
+        "sourceCaseId": "RPR-REAL-19",
+        "sourceFingerprint": "2ceb3b132695d4c519e32dde5a8a446ef3f2e99c23b4c455288d348c3cf02b8a",
+        "hardGate": true,
+        "requestFingerprint": "65a33d9b0c935b842ef17975239a6b12c2f0117d210454a99d69448ea5eb6827"
+      },
+      {
+        "order": 3,
+        "caseId": "RPR-REAL-19-CONTINUE",
+        "sourceCaseId": "RPR-REAL-19",
+        "sourceFingerprint": "3da65cb358c5693e40ae217ee9dd600a4b8a7b663f671c3ac466c2953dd1314f",
+        "hardGate": true,
+        "requestFingerprint": "f441c65b5b7965142b1b76cd5586a19059a5f215aa8391369c1ebc040e723df5"
+      },
+      {
+        "order": 4,
+        "caseId": "RPR-REAL-22",
+        "sourceCaseId": "RPR-REAL-22",
+        "sourceFingerprint": "f9e3f08f99516df9cba966f350b7c2d95a6c1a20c59ef24a458471f48343b943",
+        "hardGate": true,
+        "requestFingerprint": "b5e8506597c590323f722e9db2a294ea1de22c09b3ac934aa68bd1141d8ad697"
+      },
+      {
+        "order": 5,
+        "caseId": "RPR-REAL-13",
+        "sourceCaseId": "RPR-REAL-13",
+        "sourceFingerprint": "aa6d91e160f110fb00ad93ceb1b7cf5b89476d73a2c02d0ec088d470b13429f2",
+        "hardGate": true,
+        "requestFingerprint": "d1ce242e8265da72097f97c9a55b7428a8c4f644477896591bc4174a90ed58ce"
+      },
+      {
+        "order": 6,
+        "caseId": "RPR-LC-21",
+        "sourceCaseId": "RPR-REAL-21",
+        "sourceFingerprint": "a063c88475b0a2dd74036f34bb6614dc770d82e9f84b8481b1770f28fafda5c2",
+        "hardGate": true,
+        "requestFingerprint": "a65f70ae1084d4b33caa3df5558749d74f8ade8be86c497ed21b6fea1bc2168f"
+      }
+    ]
+  },
+  "runtime": {
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "low",
+    "responseFormat": "text",
+    "maxTokens": 1280,
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000,
+    "hardTimeoutMs": 45000,
+    "targetMs": 15000,
+    "hardGateMs": 45000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "inputHashes": {
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "planSha256": "5650583b481e0e35fe6a0a8d3a21953c2daaf876868e46a234ffb1b65a4b4e2e",
+    "candidateSha256": "0bdf18065adf5a2af70f4d320cd267220fe57bd13b9a0d5d2aa35f9aefd1eaa9",
+    "parentCandidateSha256": "8f924fcd0e750ffa6e2a7e0cae3ecdd4571f4e1da977bd7a997480f5a0d1e983",
+    "fixturesSha256": "9cf88114765839f3879bd8f3c520f9248110d3e763b9459f3fd52bdd4d3eac93",
+    "parentFixturesSha256": "424d7d9a73349153b410c0820a10b5612e9fbd3c6da531aa3901fea2ed897d67",
+    "providerSha256": "932baf57ada773942695c9ec6cef5f7ae53eb93a8a296672f8cf566f465a3dc0",
+    "providerContractSha256": "8ee44101394828e1e34438fff50ee96cb9b4493f60d97b6e8a2310756843a523",
+    "runnerSha256": "02d560106fc931983f51db157fc02430e8a2f73e36b2c36114917c294275a5b8"
+  },
+  "budget": {
+    "checkpointAuthorized": 3,
+    "fullAuthorized": 6,
+    "totalAuthorized": 9,
+    "technicalReplacementCalls": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "authorizationSource": "confirmed_response_first_v2_1_quality_repair_and_preview_plan"
+  },
+  "gate": {
+    "checkpoint": {
+      "technicalAndContractValid": "3/3",
+      "hard45s": "3/3",
+      "contentVerdict": "3_pass_0_minor_0_fail"
+    },
+    "full": {
+      "technicalAndContractValid": "6/6",
+      "hard45s": "6/6",
+      "medianTargetMs": 15000,
+      "hardCases": [
+        "RPR-REAL-19-CORRECTION",
+        "RPR-REAL-19-CONTINUE",
+        "RPR-REAL-22",
+        "RPR-REAL-13",
+        "RPR-LC-21"
+      ],
+      "softCases": [
+        "RPR-REAL-06"
+      ],
+      "allowedSoftMinorCount": 1,
+      "lowQuestionCount": 0,
+      "internalLeakCount": 0
+    }
+  },
+  "stopPoint": "checkpoint_or_full_hard_failure_stops_downstream_full_pass_waits_product_owner_six_card_decision",
+  "planFingerprint": "82f837837f600127dd18b1ce55d145b69dc4928f6b039967e1b778c893d5fe68"
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-1-low-quality-v1",
+  "planFingerprint": "82f837837f600127dd18b1ce55d145b69dc4928f6b039967e1b778c893d5fe68",
+  "issue": "checkpoint_false_decision_was_not_mapped_to_a_terminal_public_status",
+  "confirmedFact": "私有账和公开 checkpoint.decision 均已记录 gatePassed=false、contentPassed=false 与 0 pass / 0 minor / 3 fail；运行器顶层状态选择遗漏了 checkpointDecision=false 分支。",
+  "originalPublicReceiptSha256": "eb7771849f9a591a44aef88672add8890452f3a1a7612da7aec520bcba3a71fa",
+  "correctedPublicReceiptSha256": "0c0343afee8438b883d9d26ff7926f0fd0d63a62af29a8216dc1604895c9ba89",
+  "runnerSha256": "02d560106fc931983f51db157fc02430e8a2f73e36b2c36114917c294275a5b8",
+  "originalStatus": "checkpoint_calls_complete_waiting_codex_review",
+  "correctedStatus": "stopped_by_checkpoint_quality_gate",
+  "modelCallsAdded": 0,
+  "candidateChanged": false,
+  "decisionChanged": false,
+  "historicalRunnerChanged": false,
+  "correctedAt": "2026-08-17T06:31:22.000Z"
+}

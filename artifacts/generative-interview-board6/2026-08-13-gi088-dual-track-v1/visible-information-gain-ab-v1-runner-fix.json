@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-visible-information-gain-ab-v1",
+  "planFingerprint": "7f107b43518a39f2c156a69e12c42ee071361aa817a398c392e2c8b6a63025d0",
+  "previousRunnerSha256": "334d7343838fcfacbe380173d7d83f4cffc129575921b67eb9a95cb4d2768437",
+  "fixedRunnerSha256": "6732cee2422393bfe8f402cdddd3fa764275b75ff826f5232c6c1df2dc9448f7",
+  "status": "superseded_incorrect_diagnosis",
+  "confirmedFact": "Readback showed that A1 triggered VISIBLE_RESPONSE_MULTIPLE_QUESTIONS. The initial diagnosis incorrectly treated it as the exact repeated-question quality check. Resume then executed B1, which triggered the same contract failure.",
+  "repair": "Preserve A1 and B1 as actual contract-failure evidence, stop the identity at 2 consumed calls, and mark B2 and A2 not_run.",
+  "budgetImpact": {
+    "originalAuthorizedCalls": 4,
+    "callsAlreadyConsumed": 2,
+    "remainingExecutableCalls": 0,
+    "notRunCalls": 2,
+    "extraCalls": 0,
+    "retries": 0
+  },
+  "publicContentBoundary": {
+    "userText": 0,
+    "modelText": 0,
+    "reviewNotes": 0
+  }
+}

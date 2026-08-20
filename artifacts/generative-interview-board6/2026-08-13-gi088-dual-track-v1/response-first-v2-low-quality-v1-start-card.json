@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-response-first-v2-low-quality-v1",
+  "status": "ready_authorized_waiting_execution",
+  "productDecision": "whether_low_acknowledgement_meets_the_six_real_case_gate",
+  "candidateIdentity": {
+    "version": "2026-08-16.gi088-response-first-v2",
+    "skillFingerprint": "5464475ba77bcb3fd23ee6b7cdb243f0333fc2bf47a861b8fcc032e7cbf77495",
+    "promptFingerprint": "fcfb8259eeeeeac4dd52079f67f46ac23bf2ed5ae4515290ecb04072ad819ae9",
+    "contractFingerprint": "a1601a500d156e955988757ee81e233011621066c0cfb2aab588739a421d0241",
+    "lowSystemPromptFingerprint": "2fc530d764d0d456c01b5d6c4e203e853d827929b8a92ee628c2da5cb858ebb6",
+    "highSystemPromptFingerprints": {
+      "A": "1bb342a0e1413ca64563e3ca72b9c0cfc466fd2d4036661cd48f37222049546b",
+      "B": "59fbfa34e965619fd190330cd0ac3bb000fccbb2e2ac50dcbde60eeefcbb9efd"
+    },
+    "candidateFingerprint": "a902e373f3ffcb6c01a55f0d843304088920c3e095016ee6b0a7605256f88175"
+  },
+  "dataset": {
+    "version": "2026-08-16.gi088-response-first-v2-six-real-checkpoints-v1",
+    "fingerprint": "76c285e65377714aafe3a91bfec8cc8c3f81c104c656976ffb5d036fa2bcb736",
+    "privacyLevel": "private_sensitive",
+    "caseCount": 6
+  },
+  "cases": [
+    {
+      "order": 1,
+      "caseId": "RPR-REAL-06",
+      "sourceCaseId": "RPR-REAL-06",
+      "sourceFingerprint": "304dda7130959684e3a34e4c7dab11e5dae6ae6cf469f1c128f642c5088eb41b",
+      "hardGate": false,
+      "requestFingerprint": "d234181af8b5ae4c705ced4c46ee4fa2fa7e21d3c7ba35bf71a32e91b5d58c13"
+    },
+    {
+      "order": 2,
+      "caseId": "RPR-REAL-19-CORRECTION",
+      "sourceCaseId": "RPR-REAL-19",
+      "sourceFingerprint": "2ceb3b132695d4c519e32dde5a8a446ef3f2e99c23b4c455288d348c3cf02b8a",
+      "hardGate": true,
+      "requestFingerprint": "5e7f3b330c64f8b5c627cf7a0f45033c9c24ca3d3f9e4822658762ec37c19248"
+    },
+    {
+      "order": 3,
+      "caseId": "RPR-REAL-19-CONTINUE",
+      "sourceCaseId": "RPR-REAL-19",
+      "sourceFingerprint": "f2b99bc5f9d3965b0a273b4f6b84fb8e07e4be3415925ebcccc33ac662c7f836",
+      "hardGate": true,
+      "requestFingerprint": "856877d613029538939e326a81c0104b34a2f0ab4711df0f49c3fe42a761218e"
+    },
+    {
+      "order": 4,
+      "caseId": "RPR-REAL-22",
+      "sourceCaseId": "RPR-REAL-22",
+      "sourceFingerprint": "f9e3f08f99516df9cba966f350b7c2d95a6c1a20c59ef24a458471f48343b943",
+      "hardGate": true,
+      "requestFingerprint": "488bd334a6c75329548bc1f92d22c0538fe051360f4958cf2c9f1f9e1325aea0"
+    },
+    {
+      "order": 5,
+      "caseId": "RPR-REAL-13",
+      "sourceCaseId": "RPR-REAL-13",
+      "sourceFingerprint": "aa6d91e160f110fb00ad93ceb1b7cf5b89476d73a2c02d0ec088d470b13429f2",
+      "hardGate": true,
+      "requestFingerprint": "48b1ba041cb678e6b64428a9af7244a38955332428bd40d2bfe07c1cd3bf7552"
+    },
+    {
+      "order": 6,
+      "caseId": "RPR-LC-21",
+      "sourceCaseId": "RPR-REAL-21",
+      "sourceFingerprint": "a063c88475b0a2dd74036f34bb6614dc770d82e9f84b8481b1770f28fafda5c2",
+      "hardGate": true,
+      "requestFingerprint": "ca5aed8d8a5cd3bcc9786641f1a5aaa8e0d4051e3d60a9b1502788821d0cc3a0"
+    }
+  ],
+  "runtime": {
+    "provider": "openai",
+    "baseUrlHost": "api.deepseek.com",
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "low",
+    "responseFormat": "text",
+    "maxTokens": 240,
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 45000,
+    "hardTimeoutMs": 45000,
+    "targetMs": 15000,
+    "hardGateMs": 45000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "inputHashes": {
+    "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+    "candidateSha256": "8f924fcd0e750ffa6e2a7e0cae3ecdd4571f4e1da977bd7a997480f5a0d1e983",
+    "fixturesSha256": "424d7d9a73349153b410c0820a10b5612e9fbd3c6da531aa3901fea2ed897d67",
+    "providerSha256": "932baf57ada773942695c9ec6cef5f7ae53eb93a8a296672f8cf566f465a3dc0",
+    "providerContractSha256": "8ee44101394828e1e34438fff50ee96cb9b4493f60d97b6e8a2310756843a523",
+    "runnerSha256": "93d4e45faa9a2d530a627945ae5b7b68772cb473b4ddccf2ca7a72b7398fe57a"
+  },
+  "budget": {
+    "authorized": 6,
+    "consumedBeforeRun": 0,
+    "technicalReplacementCalls": 0,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "authorizationSource": "confirmed_response_first_v2_plan_standing_authorization"
+  },
+  "gate": {
+    "technicalValid": "6/6",
+    "hard45s": "6/6",
+    "hardCases": [
+      "RPR-REAL-19-CORRECTION",
+      "RPR-REAL-19-CONTINUE",
+      "RPR-REAL-22",
+      "RPR-REAL-13",
+      "RPR-LC-21"
+    ],
+    "softCases": [
+      "RPR-REAL-06"
+    ],
+    "allowedSoftMinorCount": 1,
+    "lowQuestionCount": 0,
+    "internalLeakCount": 0
+  },
+  "stopPoint": "any_technical_contract_speed_or_hard_case_failure_stops_question_ab_and_product_integration",
+  "planFingerprint": "ddd49630bd7f3a447f0f8331fa4a0122b26edf865503dc6f611facb664539623"
+}

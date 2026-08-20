@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-response-first-visible-quality-v1",
+  "status": "visible_quality_gate_failed",
+  "completedAt": "2026-08-17T00:35:27.369Z",
+  "planFingerprint": "729ed2da26f692b4ea553a3be4689c7de017875b141031f9e85906277f4f8a0c",
+  "candidate": {
+    "version": "2026-08-16.gi088-response-first-two-stage-v1",
+    "fingerprint": "e806843dbcf0514d133f77818255f46f8e1a7f5a2bb6b0e8a962809f755bac96"
+  },
+  "dataset": {
+    "sourceVersion": "2026-08-16.gi088-real-problem-regression-v1.2",
+    "sourceFingerprint": "cf04a7584d74bb7cabb235fc0cc001ac6953fb01a90364d5690284c927c85eb1",
+    "reviewPacketFingerprint": "14e978dd3590d58ce837b6fffe51fddfbca1b81da0e68390f19babe2579b1982",
+    "targetedSetVersion": "2026-08-16.gi088-response-first-visible-quality-six-v1",
+    "realCases": 5,
+    "publicSyntheticCases": 1
+  },
+  "runtime": {
+    "model": "deepseek-v4-pro",
+    "thinking": "enabled",
+    "reasoningEffort": "low",
+    "responseFormat": "json_object",
+    "headersTimeoutMs": 15000,
+    "bodyIdleTimeoutMs": 60000,
+    "hardTimeoutMs": 60000,
+    "firstUsefulGateMs": 45000,
+    "fullVisibleGateMs": 60000,
+    "concurrency": 1,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "callBudget": 6
+  },
+  "budget": {
+    "requested": 6,
+    "authorized": 6,
+    "consumed": 6,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technicalSummary": {
+    "valid": 6,
+    "firstUsefulGatePassed": 6,
+    "fullVisibleGatePassed": 6
+  },
+  "productReview": {
+    "reviewed": 6,
+    "pass": 5,
+    "minor": 0,
+    "fail": 1,
+    "hardPassed": false,
+    "decision": "visible_quality_gate_failed"
+  },
+  "publicContentBoundary": {
+    "userText": 0,
+    "modelText": 0,
+    "reviewNotes": 0,
+    "exposed": "identity_fingerprints_timing_status_and_counts_only"
+  },
+  "nextStep": "stop_and_revise_visible_contract_with_new_identity",
+  "stopPoint": "visible_gate_failed_remaining_books_not_run"
+}

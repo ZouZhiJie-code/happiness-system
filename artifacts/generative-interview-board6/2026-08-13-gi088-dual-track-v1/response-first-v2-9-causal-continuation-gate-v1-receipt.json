@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-response-first-v2-9-causal-continuation-gate-v1",
+  "planFingerprint": "7cc38ff3536f8d8735881da95b1cbca9fe5cf79c8196927b3affa317f7024d14",
+  "candidateVersion": "2026-08-19.gi088-response-first-v2-9-separated-open-gap-high",
+  "candidateFingerprint": "6fe7b20a72a4921f6cfae4fbad4ac8b595e17422a6cc5891c47e455619e287e7",
+  "status": "v29_continuation_failed_by_product_owner",
+  "budget": {
+    "authorized": 2,
+    "consumed": 2,
+    "completed": 2,
+    "notRun": 0,
+    "remainingFamilyNotRun": 4,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "parentGate": {
+    "verdict": "pass",
+    "reviewHash": "5bdc933301df498051fa058155aaf4c49506df79d4fa69f86c666cf3c861119d",
+    "responseHash": "8d1f65ba834ebb92b4face240411abb30e3a65451588d5079a4bdc8cfa9750ba",
+    "postStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667"
+  },
+  "causalInput": {
+    "effectiveTurnInputHash": "ca29ed9e29aab147b54a07c11fecf7abcc36187bb0764f01e1727d143e403cb2",
+    "replacedFixtureAssistantHash": "b9f9147127b115b7c09e5bd981e0cd4a32e00adddbe7c1bc5146f897bd322030",
+    "actualAssistantHash": "1fa42423b8412c09427aa297d3d607e860ff82f487700fd132f0c07da6426406",
+    "parentResponseHash": "8d1f65ba834ebb92b4face240411abb30e3a65451588d5079a4bdc8cfa9750ba",
+    "parentPostStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667",
+    "actualSemanticStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667",
+    "historicalFixtureSemanticStateHash": "121ba4b094428bb5934abfbe44dad8eb18ece0e855553500ec521457d0d6df5d",
+    "actualStateDiffersFromHistoricalFixture": true,
+    "actualVisibleAndReprojectedStateUsed": true,
+    "latestUserMessageId": "U4"
+  },
+  "low": {
+    "stage": "low",
+    "status": "valid",
+    "startedAt": "2026-08-20T01:57:16.715Z",
+    "completedAt": "2026-08-20T01:57:20.684Z",
+    "requestFingerprint": "d03d8c6785487cae9c02f4cb50aadcb266fb11d30eba3bcc2db9c15fc0790c65",
+    "responseHash": "c1eada7261ec4b5e37685c499e3892ba2dc344fed808b6058e592ba586a0e136",
+    "responseLength": 46,
+    "validationIssueCount": 0,
+    "validationIssueCodes": [],
+    "validationIssuesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "errorCode": null,
+    "latencyMs": 3967,
+    "finishReason": "stop",
+    "httpStatus": 200,
+    "responseModel": "deepseek-v4-pro",
+    "reasoningPresent": true,
+    "reasoningTokens": 95,
+    "tokenUsage": {
+      "promptTokens": 1309,
+      "completionTokens": 124,
+      "totalTokens": 1433,
+      "promptCacheHitTokens": 256,
+      "promptCacheMissTokens": 1053
+    },
+    "target15sPassed": true,
+    "hard45sPassed": true
+  },
+  "high": {
+    "stage": "high",
+    "status": "contract_failure",
+    "startedAt": "2026-08-20T01:57:20.689Z",
+    "completedAt": "2026-08-20T01:57:22.576Z",
+    "requestFingerprint": "6044231ee61377f41a27c5e1e264db6c956153fbb28caaa863dd482a589b98e9",
+    "responseHash": "0fe34bad80b2a6e9d57d4ab47c44a3ed4fa5e666d3ca69e614dff3468f92ab15",
+    "responseLength": 321,
+    "validationIssueCount": 3,
+    "validationIssueCodes": [
+      "CONTINUATION_COVERAGE_MUST_BE_PARTIAL_OR_OPEN",
+      "CONTINUATION_OPEN_TASK_CHANGE_MUST_SET_NEW",
+      "CONTINUATION_POST_STATE_WORKING_TASK_REQUIRED"
+    ],
+    "validationIssuesHash": "b560e777e3c20220c04cf1bc93b627ebdb74d9a04fa4d0410bf752c5821aff84",
+    "errorCode": "GI088_RESPONSE_FIRST_V29_CONTINUATION_HIGH_CONTRACT_INVALID",
+    "latencyMs": 1885,
+    "finishReason": "stop",
+    "httpStatus": 200,
+    "responseModel": "deepseek-v4-pro",
+    "reasoningPresent": false,
+    "reasoningTokens": null,
+    "tokenUsage": {
+      "promptTokens": 2166,
+      "completionTokens": 89,
+      "totalTokens": 2255,
+      "promptCacheHitTokens": 0,
+      "promptCacheMissTokens": 2166
+    },
+    "frozenLowHash": "c1eada7261ec4b5e37685c499e3892ba2dc344fed808b6058e592ba586a0e136",
+    "visibleDeliveryHash": "9d7dc606db6186fef9674bc83aef000916eba600155e9b4b9cc2133846f1b1b2",
+    "continuationPostStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667",
+    "observation": {
+      "coverageGatePresent": false,
+      "coverage": null,
+      "checkedUserMessageCount": 0,
+      "existingAnswerPresent": false,
+      "remainingGapPresent": false,
+      "expectedGainPresent": false,
+      "understandingKind": "none",
+      "understandingSourceMode": null,
+      "openTaskChangeKind": "none",
+      "questionCount": 0,
+      "punctuationQuestionCount": 0,
+      "correctableUnderstandingPresent": false,
+      "taskUnderstandingExactSummaryCollision": false
+    },
+    "fullRoundLatencyMs": 5852,
+    "fullRound45sTargetPassed": false,
+    "fullRound60sHardPassed": false
+  },
+  "productDecision": {
+    "verdict": "fail",
+    "noteHash": "60e635b9889be111d2d2916aac9c1242f0e1fe2a835d03b92038c7e5e0cf194f",
+    "technicalGatePassed": false,
+    "gatePassed": false,
+    "reviewHash": "e4810b3edde40d6aebd5bf50cac6eba7ca736bcc3ac3eb84ba434662b2501794"
+  },
+  "releaseBoundary": {
+    "pageIntegration": "not_run",
+    "preview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deployment": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "privacy": {
+    "publicReceiptContainsBodies": false,
+    "privateLedgerAndReview": "git_ignored_mode_0600"
+  }
+}

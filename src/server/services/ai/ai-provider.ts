@@ -23,6 +23,11 @@ export interface AICompletionParams {
     visiblePrefix: "{";
     sharedHardTimeoutMs: number;
   };
+  /**
+   * 流式请求结束或失败时返回安全诊断摘要。正文、隐藏推理和响应头原文
+   * 不进入回调；调用方只用它记录响应头、首字、正文和总耗时。
+   */
+  onStreamDiagnostics?: (diagnostics: AIProviderDiagnostics) => void;
   signal?: AbortSignal;
 }
 
@@ -84,6 +89,7 @@ export interface AIProviderDiagnostics {
   contentLength?: number | null;
   reasoningType?: AIProviderValueType | null;
   headersLatencyMs?: number | null;
+  firstTokenLatencyMs?: number | null;
   bodyLatencyMs?: number | null;
   totalLatencyMs?: number | null;
   timeoutStage?: AIProviderTimeoutStage;
@@ -183,6 +189,7 @@ export function sanitizeAIProviderDiagnostics(
     contentLength: readNonNegativeInteger(source.contentLength),
     reasoningType: readProviderValueType(source.reasoningType),
     headersLatencyMs: readNonNegativeInteger(source.headersLatencyMs),
+    firstTokenLatencyMs: readNonNegativeInteger(source.firstTokenLatencyMs),
     bodyLatencyMs: readNonNegativeInteger(source.bodyLatencyMs),
     totalLatencyMs: totalLatencyMs ?? legacyLatencyMs,
     timeoutStage:

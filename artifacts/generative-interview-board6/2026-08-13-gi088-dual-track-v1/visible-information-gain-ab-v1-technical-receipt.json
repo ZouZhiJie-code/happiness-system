@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-16.gi088-visible-information-gain-ab-v1",
+  "planFingerprint": "7f107b43518a39f2c156a69e12c42ee071361aa817a398c392e2c8b6a63025d0",
+  "status": "contract_blocked_multiple_questions",
+  "modelCheck": {
+    "httpStatus": 200,
+    "targetModelAvailable": true,
+    "modelListHash": "487df5b8f4a096e095dd4095596accd286d62a30f0eb2e8f2cc847b005b50121"
+  },
+  "budget": {
+    "authorized": 4,
+    "consumed": 2,
+    "notRun": 2,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "technicalSummary": {
+    "valid": 0,
+    "http200AndParseable": 2,
+    "contractValid": 0,
+    "contractFailures": 2,
+    "failureCode": "VISIBLE_RESPONSE_MULTIPLE_QUESTIONS",
+    "firstUsefulGatePassed": 0,
+    "fullVisibleGatePassed": 0,
+    "timingsMs": [
+      {
+        "order": 1,
+        "totalLatencyMs": 9400
+      },
+      {
+        "order": 2,
+        "totalLatencyMs": 14756
+      }
+    ]
+  },
+  "longContextAsset": {
+    "assetVersion": "2026-08-16.gi088-real-long-context-rpr-real-21-v1",
+    "derivedCaseId": "RPR-LC-21",
+    "sourceCaseId": "RPR-REAL-21",
+    "sourceConversationFingerprint": "f3918c7b0ea5b8366eb70be177ce8b545441b43736650c128633874ad044c81c",
+    "fullMessageCount": 16,
+    "recentWindowCount": 8,
+    "omittedEarlierMessageCount": 8,
+    "semanticStateFingerprint": "ce0f589b10fe4300d67be1018464b8efda77b88b611cf0826bdb975f983e088e"
+  },
+  "publicContentBoundary": {
+    "userText": 0,
+    "modelText": 0,
+    "reviewNotes": 0
+  },
+  "stopPoint": "after_two_contract_failures_remaining_two_calls_not_run"
+}

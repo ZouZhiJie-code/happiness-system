@@ -1,11 +1,13 @@
 # GI-088｜两段式质量、后台提速与本地接入
 
 - 文档职责：当前专项
-- 文档状态：已确认·实施中
-- 最后核验：`2026-08-16`
+- 文档状态：No-Go
+- 最后核验：`2026-08-17`
 - 权威入口：[生成式访谈重构总 Map](../generative-interview-refactor-map.md)
 
 ## 1. 为什么继续推进
+
+后续状态：本专项的 v1 首段质量门 No-Go 已由[回应优先 v2](./2026-08-16-gi088-response-first-v2-quality-responsibility-preview.md)接续。v2 Low 六题调用 `6/6`、速度均低于 6 秒，合同有效 `5/6`、内容初评 `3/6`，再次在页面接入前停止。
 
 首段可见合同已经在同题同期 A/B 中从 `21.830 / 31.385` 秒降到 `3.834 / 7.174` 秒，说明收窄首段 Prompt、Skill 与输出合同工作负担能够改善用户空白等待。当前仍需证明首段语义忠实、近期上下文充足，并继续压缩后台结构化处理时间。
 
@@ -69,11 +71,12 @@ Judge、隐藏集、真人提交、Preview、Production、数据库迁移、提�
 
 ## 7. 当前状态与停止点
 
-- 方案与最大 `16` 次条件预算：`已确认·实施中`。
+- 方案与最大 `16` 次条件预算：第一门已完成并触发停止规则。
 - 工作区重叠文件指纹：`已记录`。
 - 第一门身份、数据与运行器：`已绑定`；计划指纹 `729ed2da…a0c`，启动卡 SHA-256 `bc06dd7a…4ec1`。
 - 第一门真实运行：调用 `6/6`，HTTP 200、合同有效、45 秒有用回应门和 60 秒完整正文门均为 `6/6`；总耗时依次为 `7.080 / 24.517 / 21.739 / 16.446 / 13.255 / 15.355` 秒。
-- 第一门产品内容裁决：`待产品负责人六卡评审`；技术通过只代表已获得可评价正文。
-- 第二门 A/B、第三门质量与本地产品接入：`not_started`。
-- 当前停止点：等待产品负责人提交六卡裁决；通过后再开启第二本 `4` 次调用账。
-- 公开证据：[技术回执](../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-visible-quality-v1-technical-receipt.json)与[执行交接](../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-visible-quality-v1-handoff.md)。
+- 第一门产品内容裁决：`5 pass / 0 minor / 1 fail`。硬门 `RPR-REAL-19` 因重复追问失败，首段质量门裁决 `visible_quality_gate_failed`。
+- 长上下文证据边界：`RFT-CX-01` 的模型回应由产品负责人判为通过；题目上下文被判定为表达生硬、信息过少、与真实上下文差距大，因此该题不能承担真实长对话代表性结论。
+- 第二门后台 A/B：调用 `0/4`，全部 `not_run`；第三门后台质量：调用 `0/6`，全部 `not_run`；本地产品接入：`not_run`。
+- 当前停止点：本计划结束于第一门 No-Go。下一轮先讨论重复追问的单因素修订，并替换长上下文评测资产；使用新身份、新指纹和新授权。
+- 公开证据：[技术回执](../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-visible-quality-v1-technical-receipt.json)、[最终回执](../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-visible-quality-v1-receipt.json)与[结果交接](../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-visible-quality-v1-handoff.md)。

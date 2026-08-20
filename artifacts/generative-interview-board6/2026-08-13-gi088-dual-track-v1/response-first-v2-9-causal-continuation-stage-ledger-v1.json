@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-19.gi088-response-first-v2-9-causal-continuation-gate-v1",
+  "candidate": "2026-08-19.gi088-response-first-v2-9-separated-open-gap-high",
+  "planFingerprint": "7cc38ff3536f8d8735881da95b1cbca9fe5cf79c8196927b3affa317f7024d14",
+  "status": "product_fail_no_go_stopped",
+  "parentGate": {
+    "identity": "2026-08-19.gi088-response-first-v2-9-correction-gate-v1",
+    "productVerdict": "pass",
+    "responseHash": "8d1f65ba834ebb92b4face240411abb30e3a65451588d5079a4bdc8cfa9750ba",
+    "postStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667"
+  },
+  "budget": {
+    "authorized": 2,
+    "consumed": 2,
+    "completed": 2,
+    "notRun": 0,
+    "remainingFamilyNotRun": 4,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "causalInput": {
+    "caseId": "RPR-REAL-19-CONTINUE",
+    "effectiveTurnInputHash": "ca29ed9e29aab147b54a07c11fecf7abcc36187bb0764f01e1727d143e403cb2",
+    "actualParentBubbleAndStateUsed": true,
+    "latestUserMessageId": "U4",
+    "frozenUserMessagePreserved": true,
+    "historicalFixtureBubbleAndStateExcluded": true
+  },
+  "low": {
+    "status": "valid",
+    "httpStatus": 200,
+    "finishReason": "stop",
+    "responseModel": "deepseek-v4-pro",
+    "latencyMs": 3967,
+    "responseHash": "c1eada7261ec4b5e37685c499e3892ba2dc344fed808b6058e592ba586a0e136",
+    "validationIssueCount": 0,
+    "tokenUsage": {
+      "promptTokens": 1309,
+      "completionTokens": 124,
+      "totalTokens": 1433
+    },
+    "codexVerdict": "minor",
+    "codexReasonCode": "faithful_but_repeats_already_acknowledged_correction"
+  },
+  "high": {
+    "transportAndCompletionStatus": "valid",
+    "contractStatus": "failure",
+    "httpStatus": 200,
+    "finishReason": "stop",
+    "responseModel": "deepseek-v4-pro",
+    "latencyMs": 1885,
+    "responseHash": "0fe34bad80b2a6e9d57d4ab47c44a3ed4fa5e666d3ca69e614dff3468f92ab15",
+    "responseCompleteJson": true,
+    "validationIssueCount": 3,
+    "validationIssueCodes": [
+      "CONTINUATION_COVERAGE_MUST_BE_PARTIAL_OR_OPEN",
+      "CONTINUATION_OPEN_TASK_CHANGE_MUST_SET_NEW",
+      "CONTINUATION_POST_STATE_WORKING_TASK_REQUIRED"
+    ],
+    "tokenUsage": {
+      "promptTokens": 2166,
+      "completionTokens": 89,
+      "totalTokens": 2255
+    },
+    "observation": {
+      "coverageGatePresent": false,
+      "openTaskChangeKind": "none",
+      "questionCount": 0,
+      "visibleAppendPresent": false,
+      "postStateChanged": false
+    },
+    "projectedHighHash": "c9e7e9e2f9d0e3f86c55bb4610894cd168bc236f00e449eb0686675ee8cfe370",
+    "visibleDeliveryHash": "9d7dc606db6186fef9674bc83aef000916eba600155e9b4b9cc2133846f1b1b2",
+    "continuationPostStateHash": "80a1492ca3e6d4bd5fa836ac894b0c9eb32d3a9546c738dc12e60f15bd3f3667"
+  },
+  "latency": {
+    "observedFullRoundMs": 5852,
+    "observedWithin45s": true,
+    "observedWithin60s": true,
+    "combinedQualityGatePassed": false,
+    "combinedQualityGateFailureReason": "high_contract_failure"
+  },
+  "codexAssessment": {
+    "low": "minor",
+    "highContract": "fail",
+    "fullRound": "fail",
+    "productOwnerVerdict": "fail",
+    "productOwnerReviewHash": "e4810b3edde40d6aebd5bf50cac6eba7ca736bcc3ac3eb84ba434662b2501794",
+    "productOwnerNoteHash": "60e635b9889be111d2d2916aac9c1242f0e1fe2a835d03b92038c7e5e0cf194f",
+    "technicalGatePassed": false,
+    "gatePassed": false,
+    "privateReviewSha256": "dc1f2cf085248e1d11bd3bbda95b1270eebdb4a93f97d94a71dc76ec9e32e3c1"
+  },
+  "semanticEvidenceBoundary": {
+    "publicEvidenceContainsUserLowOrHighBody": false,
+    "publicEvidence": "summary_metrics_issue_codes_and_hashes_only",
+    "privateRawEvidence": "git_ignored_mode_0600"
+  },
+  "evidence": {
+    "startCard": "response-first-v2-9-causal-continuation-gate-v1-start-card.json",
+    "receipt": "response-first-v2-9-causal-continuation-gate-v1-receipt.json",
+    "handoff": "response-first-v2-9-causal-continuation-gate-v1-handoff.md",
+    "privateReview": "git_ignored_controlled_directory"
+  },
+  "releaseBoundary": {
+    "pageIntegration": "not_run",
+    "preview": "not_run",
+    "commit": "not_run",
+    "push": "not_run",
+    "deployment": "not_run",
+    "production": "event_centered_baseline"
+  },
+  "planStatusBoundary": "frozen_plan_keeps_pre_run_status_result_evidence_is_authoritative_after_execution",
+  "stopPoint": "product_fail_no_go_remaining_four_not_run_no_new_candidate_presynced"
+}

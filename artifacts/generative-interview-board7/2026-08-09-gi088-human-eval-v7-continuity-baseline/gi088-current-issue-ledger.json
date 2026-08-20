@@ -1,15 +1,994 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-16.gi088-current-issue-ledger-v46",
-  "status": "two_stage_quality_waiting_product_owner_review",
-  "currentQueueStage": "visible_stage_six_card_product_review",
-  "twoStageQualityOptimizationAndLocalIntegrationV1": {
-    "status": "visible_quality_technical_gate_passed_waiting_product_owner_review",
-    "confirmedFact": "第一门六题调用已完成：HTTP 200、合同有效、45 秒有用回应门和 60 秒完整正文门均为 6/6，总耗时依次为 7080、24517、21739、16446、13255、15355ms。首段语义质量仍等待产品负责人六卡裁决；后台结构耗时和页面真实体验继续待验证。",
-    "productJudgment": "按首段质量 6 次、后台职责 A/B 4 次、选定后台合同质量 6 次顺序推进。后台整理期间输入框保持锁定；发送后显示动态思考气泡，首段正文原位替换；发送到输入框重新可用目标为 60 秒。",
-    "codexAssessment": "先用五条已确认真实问题和一条 12 消息公开合成长上下文验证首段；通过产品负责人六卡裁决后，再比较当前 12 类结构合同与精简语义合同加程序投影，最终只把通过速度与语义门的后台合同接入本地产品链路。",
+  "ledgerVersion": "2026-08-19.gi088-current-issue-ledger-v83",
+  "status": "response_first_v2_9_causal_continuation_product_fail_no_go",
+  "currentQueueStage": "response_first_v2_9_causal_continuation_stopped",
+  "semanticQualityDecisionPresentation": {
+    "status": "product_owner_confirmed",
+    "productJudgment": "每个语义质量判断先逐例展示与判断直接相关的用户输入和 AI 实际输出；Codex 只作初评，产品负责人基于原文作最终裁决。",
+    "privacyBoundary": "私有正文只在受控对话或私有评审界面展示；公开证据继续保存脱敏状态、指标与数量。",
+    "effectiveFrom": "2026-08-17"
+  },
+  "responseFirstV29": {
+    "status": "correction_gate_product_pass_continuation_product_fail_no_go",
+    "confirmedFact": "v2.9 纠正首题产品 pass。真实 CONTINUE Low 与 High 已完成 2/2：Low 合同有效、3967ms；High HTTP 200、finishReason=stop、完整 JSON、1885ms，但缺少覆盖判断、set_new 开放任务和最终 workingTask，三项合同失败；完整两段 5852ms。High 没有问题、可见追加或状态推进。",
+    "productJudgment": "产品负责人基于完整相关原文、实际 Low、实际 High、最终可见结果与状态，将真实 CONTINUE 完整回合裁决为 fail；本轮 No-Go，后续四题保持 not_run。",
+    "codexAssessment": "Low 初评 minor：内容忠实，但紧接上一气泡重复同一纠正；完整回合初评 fail：High 没有补上任何覆盖判断或开放推进，post-state 保持不变。",
     "openHypotheses": [
-      "首段可见合同能否在抓重点、纠正、控制、关系边界、自然表达和长上下文六类风险上保持语义忠实。",
+      "后续若重开，下一单因素应优先修复模型把明确继续深挖误判为零推进的条件，还是先调整 Low 在已承接纠正后的表达。"
+    ],
+    "execution": {
+      "candidate": "2026-08-19.gi088-response-first-v2-9-separated-open-gap-high",
+      "runFamily": "2026-08-19.gi088-response-first-v2-9-two-turn-causal-quality-v1",
+      "currentRunIdentity": "2026-08-19.gi088-response-first-v2-9-causal-continuation-gate-v1",
+      "currentCase": "RPR-REAL-19-CONTINUE",
+      "parentRunIdentity": "2026-08-19.gi088-response-first-v2-9-correction-gate-v1",
+      "currentCallsAuthorized": 2,
+      "currentCallsConsumed": 2,
+      "familyCallsConsumed": 3,
+      "remainingFamilyCallsNotRun": 4,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "pageIntegration": "not_run",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "gate": {
+      "firstCaseHighOnly": true,
+      "firstCaseProductVerdict": "pass",
+      "continuationRunIdentityFrozenAfterProductGate": true,
+      "continuationInputSource": "actual_parent_bubble_and_post_state_with_frozen_u4",
+      "currentCallsStatus": "completed_contract_failure",
+      "laterFamilyCallsStatus": "not_run",
+      "lowMaxTokens": 1280,
+      "highMaxTokens": 4000,
+      "highHardTimeoutMs": 60000
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-19-gi088-response-first-v2-9-causal-continuation-gate.md",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-correction-gate-v1-handoff.md",
+      "parentStageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-stage-ledger-v1.json",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-receipt.json",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-stage-ledger-v1.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-handoff.md",
+      "privateReview": "git_ignored_mode_0600"
+    },
+    "result": {
+      "technicalCompletion": "pass",
+      "observedLatency": "within_45s_and_60s",
+      "lowContract": "pass",
+      "lowCodexVerdict": "minor",
+      "highContract": "fail",
+      "highValidationIssueCount": 3,
+      "fullRoundCodexVerdict": "fail",
+      "productOwnerVerdict": "fail",
+      "productOwnerReviewHash": "e4810b3edde40d6aebd5bf50cac6eba7ca736bcc3ac3eb84ba434662b2501794",
+      "productOwnerNoteHash": "60e635b9889be111d2d2916aac9c1242f0e1fe2a835d03b92038c7e5e0cf194f",
+      "technicalGatePassed": false,
+      "gatePassed": false,
+      "overall": "no_go"
+    },
+    "stopPoint": "product_fail_no_go_remaining_four_not_run_no_new_candidate_presynced"
+  },
+  "responseFirstV28": {
+    "status": "first_gate_technical_speed_contract_visible_and_persistence_pass_state_role_minor_product_minor_original_runner_retired",
+    "confirmedFact": "v2.8 首题 HTTP 200、finishReason=stop、来源、状态、纠正持久化审计与问题审计合同均有效；High 4.445 秒、冻结 Low 与 High 合计 7.786 秒，45 秒方向门和 60 秒硬门均通过。审计引用 U3、标记 A2 被替代，真实 post-state 已形成引用 U3 的主线与认识；High 可见理解为空、问题为 0。post-state 的 workingTask 与 understanding 使用同一摘要。",
+    "productJudgment": "产品负责人已按完整相关原文、冻结 Low 与实际 High 输出将首题裁决为 minor；绑定 response 与 post-state 哈希的 review 已保存。v2.8.1 进入真实连续回合探针，每个语义判断继续先展示完整相关原文和实际 AI 输出。",
+    "codexAssessment": "分层初评：技术、速度和结构合同 pass；Low-only 可见体验 pass；correctionPersistenceAudit 已把 U3 纠正保存并标记 A2 被替代，纠正持久化 pass；workingTask 与 understanding 同摘要，未区分尚待共同弄清的方向与已经知道的认识，状态职责 minor。首题尚未观察到可见伤害。",
+  "openHypotheses": [
+    "CONTINUE 真实继承首题 post-state 后，能否沿修正事实推进且不重复纠正。",
+      "真实 CONTINUE 是否会把同摘要状态表现为重复纠正、过早结束或旧主线复活。",
+      "产品负责人在完整真实连续回合后是否确认状态能够自然推进。"
+    ],
+    "preExecutionRecord": {
+      "status": "confirmed_implementation_pre_execution_zero_of_six",
+      "changedFactor": "audit_first_explicit_correction_persistence_only",
+      "budget": "zero_of_six",
+      "stopPoint": "static_verification_then_one_correction_case_before_remaining_five"
+    },
+    "execution": {
+      "candidate": "2026-08-19.gi088-response-first-v2-8-correction-persistence-high",
+      "runIdentity": "2026-08-19.gi088-response-first-v2-8-correction-persistence-high-quality-v1",
+      "parentCandidate": "2026-08-19.gi088-response-first-v2-7-thinking-disabled-audited-high",
+      "planFingerprint": "1a77552220ed2a46c8b20e7e8db5a04ffe4c6856d1aef53f9075fbf0af414e7a",
+      "candidateFingerprint": "340fb8bd52f1d3f67d08c1628b84ac8308cc1dad28a54cf4b2f2560a00179b4c",
+      "candidateSha256": "c17089c03282c45e15bfcf3e7dc5ef7c74297d40290aeef6d22e2ef534b9aaf0",
+      "changedFactor": "audit_first_explicit_correction_persistence_only",
+      "firstCase": "RPR-REAL-19-CORRECTION",
+      "dependentContinuationCase": "RPR-REAL-19-CONTINUE",
+      "continuationStateSource": "actual_first_case_post_state",
+      "maxCalls": 6,
+      "callsConsumed": 1,
+      "callsNotRun": 5,
+      "remainingRunnerStatus": "retired_not_run",
+      "model": "deepseek-v4-pro",
+      "thinking": "disabled",
+      "reasoningEffort": "omitted_when_thinking_disabled",
+      "maxTokens": 4000,
+      "frozenLow": "2026-08-17.gi088-response-first-v2-2-factual-low",
+      "userInputsAndRubric": "frozen_from_v27",
+      "visibleBehavior": "first_case_frozen_low_high_understanding_null_questions_zero",
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "pageIntegration": "not_run",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "gate": {
+      "firstCaseCalls": 1,
+      "remainingCalls": 5,
+      "firstCaseProductContinuation": "product_minor_gate_passed_v2_8_1_in_progress",
+      "requiredCorrectionEvidenceRef": "U3",
+      "requiredCorrectionPostState": true,
+    "requiredSupersededAssistantMessageDeclaration": true,
+    "activeOldAcceptanceMustBeAbsent": true,
+      "requiredVisibleBehaviorMatch": "v27_low_only",
+      "continuationMustInheritActualPostState": true,
+      "fullRoundDirectionTargetMs": 45000,
+      "fullRoundTechnicalHardMs": 60000,
+      "hardCasesMustPass": 5,
+      "softCasesMaximumMinor": 1
+    },
+    "verification": {
+      "status": "first_call_observed_valid",
+      "contractIssues": 0,
+      "u3CorrectionPersisted": true,
+      "supersededAssistantMessageA2Declared": true,
+      "v27VisibleBehaviorPreserved": true,
+      "privateBodyIsolation": "public_receipt_contains_no_user_low_or_high_body"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-19-gi088-response-first-v2-8-correction-persistence-high.md",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-7-thinking-disabled-audited-high-quality-v1-handoff.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-correction-persistence-high-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-correction-persistence-high-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-correction-persistence-high-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-stage-ledger-v1.json",
+      "privateRawEvidence": "git_ignored_controlled_directory"
+    },
+    "result": {
+      "status": "first_gate_visible_and_persistence_pass_state_role_minor_product_minor",
+      "httpStatus": 200,
+      "finishReason": "stop",
+      "responseLength": 1173,
+      "highLatencyMs": 4445,
+      "frozenLowLatencyMs": 3341,
+      "fullRoundLatencyMs": 7786,
+      "fullRound45sTargetPassed": true,
+      "fullRound60sHardPassed": true,
+      "reasoningPresent": false,
+      "reasoningTokens": null,
+      "promptTokens": 3007,
+      "completionTokens": 369,
+      "totalTokens": 3376,
+      "correctionDecision": "persist",
+      "correctionEvidenceRef": "U3",
+      "supersededAssistantMessageRef": "A2",
+      "taskPlanKind": "set_new",
+      "understandingPlanKind": "add",
+      "postStateWorkingTaskPresent": true,
+      "postStateUnderstandingCount": 1,
+      "visibleUnderstandingPresent": false,
+      "questionCount": 0,
+      "codexVerdict": "minor",
+      "productOwnerVerdict": "minor",
+      "callsConsumed": 1,
+      "callsNotRun": 5
+    },
+    "stopPoint": "original_runner_retired_v2_8_1_runs_then_second_product_review"
+  },
+  "responseFirstV281": {
+    "status": "completed_product_fail_no_go_two_of_two",
+    "confirmedFact": "父 v2.8 产品裁决为 minor。v2.8.1 使用实际 A3、重放 post-state 与 U4 完成真实 Low 后 High，调用 2/2。Low 有效、5798ms；High HTTP 200/stop、5864ms、completion 358 Token，客观两段 11662ms，4000 Token 上限未触发。High 因 taskChange.kind=continue 不符合合同而无 post-state。",
+    "productJudgment": "产品负责人依据完整相关原文、实际 Low 与实际 High 裁决 v2.8.1 为 fail；整体 No-Go / stop。",
+    "codexAssessment": "Low 可见质量 pass。High 可见问题重复询问 U1 已回答的最近案例，信息增量审计把已有答案记为 null，质量 fail；High 同时合同 fail。状态职责同摘要的下游重复风险已出现，但信息增量审计漏读 U1 也是直接原因。整体 No-Go / stop。",
+    "openHypotheses": [
+      "下一轮若重开，如何同时恢复状态合同并确保问题相对完整用户原文具备信息增量。"
+    ],
+    "execution": {
+      "candidate": "2026-08-19.gi088-response-first-v2-8-correction-persistence-high",
+      "runIdentity": "2026-08-19.gi088-response-first-v2-8-1-causal-continuation-probe-v1",
+      "planFingerprint": "26604324a6ec4e52e83d89f048bfd196d5f33a079b07beefea79978ad0791600",
+      "changedFactor": "evaluation_lineage_only_real_continuation_low_then_high",
+      "caseId": "RPR-REAL-19-CONTINUE",
+      "maxCalls": 2,
+      "callsConsumed": 2,
+      "callsNotRun": 0,
+      "callOrder": ["low", "high"],
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "pageIntegration": "not_run",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "verification": {
+      "prepareCompleted": true,
+      "parentStartCardPlanFingerprintRecomputed": true,
+      "parentRawHighReparsedAndValidated": true,
+      "parentPostStateReprojectedAndHashMatched": true,
+      "publicStartCardCreated": true,
+      "publicReceiptCreated": true,
+      "privateLedgerMode": "0600",
+      "executeStoppedBeforeProviderWithoutProductReview": true,
+      "parentProductVerdict": "minor",
+      "parentProductReviewHashBound": true,
+      "parentProductReviewMode": "0600",
+      "callsStarted": 2
+    },
+    "gate": {
+      "parentProductVerdictAllowed": ["pass", "minor"],
+      "parentResponseHashRequired": true,
+      "parentPostStateHashRequired": true,
+      "parentHighReparseRequired": true,
+      "parentStateReplayRequired": true,
+      "actualContinuationLowRequired": true,
+      "highMustBindActualLow": true,
+      "secondProductStopAfterTwoCalls": true,
+      "fullRoundDirectionTargetMs": 45000,
+      "fullRoundTechnicalHardMs": 60000
+    },
+    "result": {
+      "lowStatus": "valid",
+      "lowLatencyMs": 5798,
+      "lowCodexVisibleVerdict": "pass",
+      "highStatus": "contract_failure",
+      "highLatencyMs": 5864,
+      "fullRoundObservedLatencyMs": 11662,
+      "observedLatencyGate": "pass",
+      "highCompletionTokens": 358,
+      "highMaxTokens": 4000,
+      "tokenLimitTriggered": false,
+      "continuationPostStatePresent": false,
+      "highCodexVisibleQuestionVerdict": "fail",
+      "codexOverallVerdict": "fail",
+      "productOwnerVerdict": "fail",
+      "gate": "no_go_stop"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-19-gi088-response-first-v2-8-1-causal-continuation-probe.md",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-correction-persistence-high-quality-v1-handoff.md",
+      "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-correction-persistence-high-quality-v1-receipt.json",
+      "parentStageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-stage-ledger-v1.json"
+      ,"startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-1-causal-continuation-probe-v1-start-card.json"
+      ,"receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-1-causal-continuation-probe-v1-receipt.json"
+      ,"handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-1-causal-continuation-probe-v1-handoff.md"
+      ,"stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-1-stage-ledger-v1.json"
+      ,"privateLedger": "git_ignored_mode_0600"
+    },
+    "stopPoint": "product_fail_no_go_stop_no_more_model_calls"
+  },
+  "responseFirstV27": {
+    "status": "first_gate_technical_speed_contract_pass_visible_experience_pass_complete_high_fail_product_pending",
+    "confirmedFact": "v2.7 同一首题 HTTP 200、finishReason=stop、JSON、来源、状态与问题审计合同均有效；High 1.847 秒、冻结 Low 与 High 合计 5.188 秒，45 秒方向门和 60 秒硬门均通过。Thinking 关闭，reasoning 正文缺失且 Token 为 null；可见理解为空、问题与审计候选均为 0。",
+    "productJudgment": "待产品负责人按完整相关原文、冻结 Low 与实际 High 输出完成首题最终裁决；裁决前其余五题保持 not_run。每个语义判断继续先展示完整相关原文和实际 AI 输出。",
+    "codexAssessment": "可见体验初评 pass：冻结 Low 已完整承接用户指出的反转与自相矛盾，High 没有追加理解和问题。完整 High 初评 fail：输入主线与认识均为空，输出仍为 taskChange=unchanged、understandingChange=none，本次纠正未保存；后续 CONTINUE 夹具预置状态，无法证明真实连续性。",
+    "openHypotheses": [
+      "产品负责人阅读完整原文后是否确认首题语义通过。",
+      "下一候选怎样在保持可见体验和速度的同时保存纠正状态。"
+    ],
+    "preExecutionRecord": {
+      "status": "confirmed_implementation_pre_execution_zero_of_six",
+      "changedFactor": "high_thinking_enabled_to_disabled_only",
+      "budget": "zero_of_six",
+      "stopPoint": "static_verification_then_one_first_case_before_remaining_five"
+    },
+    "execution": {
+      "candidate": "2026-08-19.gi088-response-first-v2-7-thinking-disabled-audited-high",
+      "runIdentity": "2026-08-19.gi088-response-first-v2-7-thinking-disabled-audited-high-quality-v1",
+      "planFingerprint": "6d4c66c5c572b253efdffd7b8606c1bf7a27450c4d7f7df858bebe15993ed405",
+      "candidateFingerprint": "9f35b9fe9a43ec51ae58f3551496e98a1277810754b235ad7d6311ec185cd281",
+      "parentCandidate": "2026-08-19.gi088-response-first-v2-6-low-effort-audited-high",
+      "changedFactor": "high_thinking_enabled_to_disabled_only",
+      "firstCase": "RPR-REAL-19-CORRECTION",
+      "maxCalls": 6,
+      "callsConsumed": 1,
+      "callsNotRun": 5,
+      "model": "deepseek-v4-pro",
+      "thinking": "disabled",
+      "reasoningEffort": "omitted_when_thinking_disabled",
+      "maxTokens": 4000,
+      "frozenLow": "2026-08-17.gi088-response-first-v2-2-factual-low",
+      "promptSkillAuditJson": "byte_identical_to_v26",
+      "datasetInput": "byte_identical_to_v22_rubric_v1_3",
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "pageIntegration": "not_run",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "gate": {
+      "firstCaseCalls": 1,
+      "remainingCalls": 5,
+      "firstCaseProductContinuation": "pass_only",
+      "fullRoundDirectionTargetMs": 45000,
+      "fullRoundTechnicalHardMs": 60000,
+      "reasoningExpected": "absent_or_zero",
+      "hardCasesMustPass": 5,
+      "softCasesMaximumMinor": 1
+    },
+    "verification": {
+      "status": "first_call_observed_valid",
+      "thinkingDisabledAndReasoningEffortOmitted": true,
+      "contractIssues": 0,
+      "privateBodyIsolation": "public_receipt_contains_no_user_low_or_high_body"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-19-gi088-response-first-v2-7-thinking-disabled-audited-high.md",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-6-low-effort-audited-high-quality-v1-handoff.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-7-thinking-disabled-audited-high-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-7-thinking-disabled-audited-high-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-7-thinking-disabled-audited-high-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-7-stage-ledger-v1.json",
+      "privateRawEvidence": "git_ignored_controlled_directory"
+    },
+    "result": {
+      "status": "first_gate_technical_speed_contract_pass_visible_experience_pass_complete_high_fail_product_pending",
+      "httpStatus": 200,
+      "finishReason": "stop",
+      "responseLength": 589,
+      "highLatencyMs": 1847,
+      "frozenLowLatencyMs": 3341,
+      "fullRoundLatencyMs": 5188,
+      "fullRound45sTargetPassed": true,
+      "fullRound60sHardPassed": true,
+      "reasoningPresent": false,
+      "reasoningTokens": null,
+      "promptTokens": 2299,
+      "completionTokens": 161,
+      "totalTokens": 2460,
+      "promptCacheHitTokens": 2176,
+      "promptCacheMissTokens": 123,
+      "understandingPresent": false,
+      "questionCount": 0,
+      "auditCandidateCount": 0,
+      "taskChange": "unchanged",
+      "understandingChange": "none",
+      "visibleExperienceCodexVerdict": "pass",
+      "completeHighCodexVerdict": "fail",
+      "continuationFixtureCausalStatus": "preseeded_state_cannot_prove_this_turn_continuity",
+      "productOwnerVerdict": "pending",
+      "callsConsumed": 1,
+      "callsNotRun": 5
+    },
+    "stopPoint": "complete_high_codex_quality_gate_failed_wait_product_owner_original_evidence_verdict_remaining_five_not_run"
+  },
+  "responseFirstV26": {
+    "status": "first_case_contract_valid_speed_no_go_product_semantic_review_pending",
+    "confirmedFact": "v2.4 同题两段耗时 54.997 秒，v2.5 增加候选问题自答审计后在 High 60.013 秒硬超时；供应商预检与 HTTP 均为 200，正文长度为 0，完整两段为 63.354 秒。两次连续证据显示 Thinking high 已接近或超过 60 秒体验边界。",
+    "productJudgment": "待产品负责人阅读完整相关原文、冻结 Low 与 v2.6 High 实际输出后裁决语义效果；60 秒速度硬门已经形成 No-Go。",
+    "codexAssessment": "低思考强度形成完整、结构有效的 High 输出，但完整两段 60.009 秒，超出硬门 9 毫秒，45 秒目标同样未达到。可见问题为 0，v2.4 的重复追问没有进入用户界面；可见理解与 Low 连续重复同一层纠正，Codex 初评 fail。内部审计把 U2 已用‘愤慨’回答的感受候选标记为 existingAnswer=null，只因 worthAsking=false 才未显示，说明自答覆盖判断仍未稳定成立。",
+    "openHypotheses": [
+      "低思考强度能否让同一审计方法在 60 秒内完整交付。",
+      "结构化自答步骤能否在较低思考强度下继续识别 U1 与 U2 已经回答的层面。",
+      "减少隐藏思考后，状态合同、来源与自然推进质量能否同时保持有效。"
+    ],
+    "execution": {
+      "candidate": "2026-08-19.gi088-response-first-v2-6-low-effort-audited-high",
+      "runIdentity": "2026-08-19.gi088-response-first-v2-6-low-effort-audited-high-quality-v1",
+      "planFingerprint": "53e98f8de3e262e7cd1670f1ceb46cfff68ddf672f7cd67b4458e9b5e6671faa",
+      "candidateFingerprint": "ce43c73b5688c8c491b5cdffbf31fdf478e7dc4f67ef50d0eb160cbf4139b366",
+      "parentCandidate": "2026-08-19.gi088-response-first-v2-5-question-self-answer-high",
+      "changedFactor": "high_reasoning_effort_high_to_low_only",
+      "firstCase": "RPR-REAL-19-CORRECTION",
+      "maxCalls": 6,
+      "callsConsumed": 1,
+      "callsNotRun": 5,
+      "model": "deepseek-v4-pro",
+      "thinking": "enabled",
+      "reasoningEffort": "low",
+      "maxTokens": 4000,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "pageIntegration": "not_run",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "verification": {
+      "v26Tests": "10_of_10_passed",
+      "parentV25Tests": "13_of_13_passed",
+      "typecheck": "passed",
+      "targetedLint": "passed_zero_warnings",
+      "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+      "jsonAndPrivateMode": "passed_private_ledger_mode_600",
+      "docsCheck": "passed_24_core_896_links_1_current_entry",
+      "diffCheck": "passed_before_first_call"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-19-gi088-response-first-v2-6-low-effort-audited-high.md",
+      "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-5-question-self-answer-high-quality-v1-receipt.json",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-6-low-effort-audited-high-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-6-low-effort-audited-high-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-6-low-effort-audited-high-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-6-stage-ledger-v1.json",
+      "privateRawEvidence": "git_ignored_controlled_directory"
+    },
+    "result": {
+      "firstCaseStatus": "contract_valid_speed_gate_failed",
+      "httpStatus": 200,
+      "finishReason": "stop",
+      "responseLength": 1037,
+      "highLatencyMs": 56668,
+      "frozenLowLatencyMs": 3341,
+      "fullRoundLatencyMs": 60009,
+      "fullRound60sHardPassed": false,
+      "promptTokens": 2299,
+      "completionTokens": 3462,
+      "reasoningTokens": 3132,
+      "understandingPresent": true,
+      "questionCount": 0,
+      "auditCandidateCount": 1,
+      "auditAnsweredCandidateCount": 0,
+      "auditWorthAskingCandidateCount": 0,
+      "codexVerdict": "fail",
+      "productOwnerVerdict": "pending",
+      "callsConsumed": 1,
+      "callsNotRun": 5
+    },
+    "stopPoint": "speed_no_go_waiting_product_owner_semantic_verdict_remaining_five_not_run"
+  },
+  "responseFirstV25": {
+    "status": "technical_no_go_first_case_hard_timeout",
+    "confirmedFact": "v2.4 首题完整上下文已经包含 U1 的比较触发情境、U2 的愤慨感受与 U3 的最新纠正；High 内部主线引用了三条用户消息，随后两个可见问题仍分别索取 U1 与 U2 已给信息。现有 Prompt 已要求检查问过、答过与信息增量，自由文本 informationGoal 和 expectedUnderstandingChange 仍允许语义重复问题通过现有合同。",
+    "productJudgment": "产品负责人授权 Codex 从第一性原理自主确定计划并持续解决问题；每次语义判断继续按完整相关原文、实际 AI 输出、Codex 初评、产品负责人裁决交付。",
+    "codexAssessment": "根因位于 High 的问题选择过程：模型能够读取旧答案，当前交付合同尚未要求它逐个证明候选问题在完整有效分支中仍然缺少答案。v2.5 用结构化候选问题自答审计把这一步变成可复核交付；已有答案候选退出，可见问题只来自尚未覆盖且值得询问的候选。",
+    "openHypotheses": [
+      "候选问题自答审计能否在同一次 High 调用内排除语义改写后的重复问题。",
+      "排除已有答案后，High 能否找到真正改变认识的新缺口，或在缺少高价值缺口时自然地零提问。",
+      "新增短审计在 maxTokens 4000 与两段 60 秒硬门内能否完整返回；v2.4 首题仅余 253 completion Token，容量风险较高。"
+    ],
+    "execution": {
+      "candidate": "2026-08-19.gi088-response-first-v2-5-question-self-answer-high",
+      "runIdentity": "2026-08-19.gi088-response-first-v2-5-question-self-answer-high-quality-v1",
+      "planFingerprint": "2d82da338d4034069e800fbad102fc7b74c82b29262ac1759ebfcdb254c322d7",
+      "candidateFingerprint": "c1f02eb839a7e97ab1fc3d6bf509e8461eb51378a00b35087ab565333d96cee6",
+      "parentCandidate": "2026-08-17.gi088-response-first-v2-4-null-task-aligned-high",
+      "changedFactor": "structured_question_self_answer_audit_only",
+      "firstCase": "RPR-REAL-19-CORRECTION",
+      "maxCalls": 6,
+      "callsConsumed": 1,
+      "callsNotRun": 5,
+      "maxTokens": 4000,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "frozenLow": "2026-08-17.gi088-response-first-v2-2-factual-low",
+      "model": "deepseek-v4-pro",
+      "reasoningEffort": "high",
+      "pageIntegration": "not_run",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "verification": {
+      "v25Tests": "13_of_13_passed",
+      "parentV24Tests": "12_of_12_passed",
+      "typecheck": "passed",
+      "targetedLint": "passed_zero_warnings",
+      "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+      "jsonAndPrivateMode": "passed_private_ledger_mode_600",
+      "docsCheck": "passed_24_core_887_links_1_current_entry",
+      "diffCheck": "passed_before_first_call"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-19-gi088-response-first-v2-5-question-self-answer-audit.md",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-4-null-task-aligned-high-quality-v1-handoff.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-5-question-self-answer-high-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-5-question-self-answer-high-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-5-question-self-answer-high-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-5-stage-ledger-v1.json",
+      "privateRawEvidence": "git_ignored_controlled_directory"
+    },
+    "result": {
+      "firstCaseStatus": "technical_failure",
+      "preflightHttpStatus": 200,
+      "targetModelAvailable": true,
+      "callHttpStatus": 200,
+      "errorCode": "TIMEOUT",
+      "timeoutStage": "hard_total",
+      "responseLength": 0,
+      "highLatencyMs": 60013,
+      "fullRoundLatencyMs": 63354,
+      "semanticQuality": "not_evaluated",
+      "callsConsumed": 1,
+      "callsNotRun": 5,
+      "retries": 0
+    },
+    "stopPoint": "technical_no_go_after_first_case_timeout_remaining_five_not_run"
+  },
+  "responseFirstV24": {
+    "status": "no_go_first_case_product_owner_fail",
+    "confirmedFact": "执行前逐题回读确认六题中四题的内部 workingTask 初始为空；RPR-REAL-19-CONTINUE 和 RPR-LC-21 两题已有主线。原计划的五空一已有属于来源计数错误，模型调用前已纠正，输入保持原样。现有合同允许 High 在同一结果中先用 taskChange=set、continuity=new、targetRef=null 建立主线，再提交 understandingChange=add。v2.3 探针选择 taskChange=unchanged 加 understandingChange=add，触发状态合同失败。",
+    "productJudgment": "v2.3 探针的内部认识内容通过；High 没有可见追加记为轻微问题；完整链路因状态合同失败 No-Go。v2.4 首题阅读完整上下文、Low、High 与 Codex 初评后裁决 fail，原因沿用 Codex 对重复追问的判断。",
+    "codexAssessment": "v2.4 首题成功建立新主线并保存认识，原状态合同错误消失。可见理解使用可纠正表达但与冻结 Low 部分重复；两个问题分别追问 U1 已给出的比较触发情境和 U2 已给出的愤慨感受，缺少信息增量，Codex 初评 fail。",
+    "openHypotheses": [
+      "v2.4 首题已在 maxTokens 4000 内完整返回并通过现有状态合同；其他三条空主线案例因首题内容 fail 保持 not_run。",
+      "相同方法能否覆盖其余四个空主线案例，同时保持已有主线案例的 continue、return 和 clear 行为。",
+      "下一轮能否只约束 High 排除已回答层，并把问题推进到能够改变认识的新信息。"
+    ],
+    "execution": {
+      "candidate": "2026-08-17.gi088-response-first-v2-4-null-task-aligned-high",
+      "maxCalls": 6,
+      "firstCase": "RPR-REAL-19-CORRECTION",
+      "emptyWorkingTaskCases": 4,
+      "existingWorkingTaskCases": 2,
+      "existingWorkingTaskCaseIds": [
+        "RPR-REAL-19-CONTINUE",
+        "RPR-LC-21"
+      ],
+      "maxTokens": 4000,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "runIdentity": "2026-08-17.gi088-response-first-v2-4-null-task-aligned-high-quality-v1",
+      "planFingerprint": "864d9da7872fbe831aefa4270e158a43c53b0155e688dc5fc6fc44691c01be4d",
+      "firstCaseResult": "technical_and_contract_valid_content_fail_no_go",
+      "callsConsumed": 1,
+      "callsNotRun": 5,
+      "firstCaseHighLatencyMs": 51656,
+      "firstCaseFullRoundLatencyMs": 54997,
+      "firstCaseCompletionTokens": 3747,
+      "firstCaseReasoningTokens": 3311,
+      "firstCaseCodexVerdict": "fail",
+      "firstCaseProductOwnerVerdict": "fail",
+      "remainingCalls": "five_not_run_after_product_owner_fail",
+      "pageIntegration": "not_run",
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "verification": {
+      "targetedTests": "12_of_12_passed",
+      "typecheck": "passed",
+      "targetedLint": "passed_zero_warnings",
+      "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+      "jsonAndPrivateMode": "passed_private_files_mode_600",
+      "docsCheck": "passed_24_core_878_links_1_current_entry_before_result_sync",
+      "diffCheck": "passed_before_run"
+    },
+    "evidence": {
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-4-null-task-aligned-high-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-4-null-task-aligned-high-quality-v1-receipt.json",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-4-stage-ledger-v1.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-4-null-task-aligned-high-quality-v1-handoff.md",
+      "privateRawEvidence": "git_ignored_controlled_directory"
+    },
+    "stopPoint": "no_go_after_first_case_product_owner_fail_remaining_five_not_run"
+  },
+  "responseFirstV22V23": {
+    "status": "v22_low_gate_passed_v23_high_contract_no_go_product_review_complete",
+    "confirmedFact": "回应优先 v2.2 Low 完整六题由产品负责人裁决 6 pass、0 minor、0 fail，Low 质量门 Go。v2.3 High 原检查点在 2000 Token 截断；独立 4000 Token 同题探针 1/1 完成，HTTP 200、目标模型正确，High 37066ms、两段 40407ms，completion 2072、reasoning 1898、finishReason=stop，完整 JSON 596 字符。本题 Token 截断解决；workingTask 为空时提交 understandingChange=add，触发 NULL_WORKING_TASK_UNDERSTANDING_DELTA_MUST_BE_NULL，合同有效 0/1。原 High 8 not_run。",
+    "productJudgment": "保留当前 v2.2 factual Low，纠正后继续场景无需新增改造。关系题允许忠实表达用户原意的自然语义转化；纠正后继续题允许简短重提当前有效焦点。v2.3 探针内部认识内容通过，可见追加为空记为轻微问题，完整链路因状态合同失败 No-Go。",
+    "codexAssessment": "4000 在本题解决了完整交付问题，实际完成点为 2072 completion Token；该证据支持本题 Token 上限归因，不扩展到其余案例。状态提交问题由 v2.4 单因素候选继续验证。",
+    "openHypotheses": [
+      "事实型 Low 已在六题中达到自然度、忠实度和速度门，后续页面真实体验仍待隔离 Preview。",
+      "新的产品判尺能否减少对自然语义转化的误判，同时继续拦截改变用户原意的新增事实、动机和具体体验。",
+      "High 在 Low 冻结后能否追加有依据的可纠正理解与同一回答焦点问题，仍待新的技术有效输出验证。",
+      "4000 Token 能否在其他五题继续稳定形成完整 JSON，当前仍待验证。",
+      "workingTask 为空时，模型应省略内部 understandingChange、先建立任务，还是由合同允许无任务认识，需要产品与语义职责讨论。"
+    ],
+    "execution": {
+      "branch": "codex/gi088-response-first-v2-20260816",
+      "standardSha256": "08dc7aa28813a079c375b7e1341a9a7c8cf74b0957eddd750916dafa3e5c6c60",
+      "v22Candidate": "2026-08-17.gi088-response-first-v2-2-factual-low",
+      "v23Candidate": "2026-08-17.gi088-response-first-v2-3-grounded-high",
+      "v23TokenProbeIdentity": "2026-08-17.gi088-response-first-v2-3-high-token-4000-probe-v1",
+      "v23TokenProbeMaxTokens": 4000,
+      "v23TokenProbeCallsMax": 1,
+      "v22CheckpointCallsMax": 3,
+      "v22FullCallsMax": 6,
+      "v23CheckpointCallsMax": 3,
+      "v23FullCallsMax": 6,
+      "evaluationMaxCalls": 15,
+      "previewMaxCalls": 15,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "productionStrategy": "event_centered_baseline",
+      "result": "v23_high_token_4000_probe_complete_contract_no_go",
+      "historicalCheckpointCallsConsumed": 3,
+      "evaluationCallsConsumed": 7,
+      "evaluationCallsNotRun": 8,
+      "previewCallsConsumed": 0,
+      "previewCallsNotRun": 15
+      ,"tokenProbeCallsConsumed": 1
+      ,"tokenProbeCallsNotRun": 0
+    },
+    "speedGates": {
+      "lowMedianTargetMs": 6000,
+      "lowSingleTargetMs": 15000,
+      "lowHardTimeoutMs": 45000,
+      "fullRoundMedianTargetMs": 45000,
+      "fullRoundHardMaxMs": 60000
+    },
+    "verification": {
+      "v22Tests": "7_of_7_passed",
+      "parentAndAdjacentTests": "30_of_30_passed",
+      "fullTests": "3404_passed_10_skipped",
+      "typecheck": "passed",
+      "targetedLint": "passed",
+      "fullLint": "0_errors_45_warnings",
+      "mainPrisma": "passed",
+      "evaluationPrisma": "passed",
+      "productionBuild": "passed_77_pages_16_existing_dynamic_filesystem_warnings",
+      "docsCheck": "passed_24_core_858_links_1_current_entry",
+      "jsonAndPrivacyBoundary": "passed",
+      "diffCheck": "passed",
+      "productIntegrationTests": "not_run_before_low_product_owner_gate",
+      "lowFullQualityV2": "37_of_37_relevant_tests_passed_typecheck_targeted_lint_json_public_privacy_private_mode600_docs_24_core_868_links_diff_check_passed",
+    "v23HighBeforeRun": "21_of_21_relevant_tests_passed_typecheck_targeted_lint_docs_json_diff_passed"
+    ,"v23Token4000Probe": "4_of_4_tests_passed_typecheck_targeted_lint_start_card_and_private_mode600_passed"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-17-gi088-response-first-v2-2-review-go-continuation.md",
+      "historicalNoGoPlan": "../../../docs/plans/2026-08-17-gi088-response-first-v2-2-v2-3-factual-low-grounded-high.md",
+      "parentNoGoPlan": "../../../docs/plans/2026-08-17-gi088-response-first-v2-1-quality-repair-and-preview.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-low-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-low-quality-v1-receipt.json",
+      "runnerFix": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-low-quality-v1-runner-fix.json",
+      "historicalProductOwnerReview": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-product-owner-checkpoint-review-v1.json",
+      "productOwnerReview": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-product-owner-checkpoint-review-v2.json",
+      "historicalStageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-v2-3-stage-ledger.json",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-v2-3-stage-ledger-v2.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-low-quality-v1-handoff.md",
+      "lowFullStartCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-low-full-quality-v2-start-card.json",
+      "lowFullReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-low-full-quality-v2-receipt.json",
+      "lowFullHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-low-full-quality-v2-handoff.md",
+      "highStartCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-3-high-quality-v1-start-card.json",
+      "highReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-3-high-quality-v1-receipt.json",
+      "highRunnerFix": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-3-high-quality-v1-runner-fix.json",
+      "highHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-3-high-quality-v1-handoff.md"
+      ,"token4000StartCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-3-high-token-4000-probe-v1-start-card.json"
+      ,"token4000Receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-3-high-token-4000-probe-v1-receipt.json"
+      ,"token4000Handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-3-high-token-4000-probe-v1-handoff.md"
+      ,"stageLedgerV3": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-2-v2-3-stage-ledger-v3.json"
+    },
+    "result": {
+      "identity": "2026-08-17.gi088-response-first-v2-2-low-quality-v1",
+      "candidate": "2026-08-17.gi088-response-first-v2-2-factual-low",
+      "planFingerprint": "da8fbf667f42f49053c18bc822bc9a777cc9f9671e07c1824342fd0a7ecd811f",
+      "candidateFingerprint": "c0e99522ac8b0b2e252d3f7c8abf32e0fd364301609c5d79cc874712f27cb01f",
+      "datasetFingerprint": "59d524f8e932712d7f0c761847c94ce7abe7e552ad44f144f8a25d96230248cc",
+      "technicalAndContractValid": 3,
+      "codexProvisionalQuality": { "pass": 1, "minor": 0, "fail": 2 },
+      "productOwnerQuality": { "pass": 3, "minor": 0, "fail": 0 },
+      "latenciesMs": [4016, 2812, 3854],
+      "medianLatencyMs": 3854,
+      "tokenUsage": {
+        "promptTokens": 3261,
+        "completionTokens": 326,
+        "reasoningTokens": 225,
+        "totalTokens": 3587
+      },
+      "costEstimate": {
+        "currency": "CNY",
+        "estimated": 0.011739,
+        "pricingSnapshotDate": "2026-08-10",
+        "actualProviderBilledCost": null
+      },
+      "v22FullQuality": {
+        "identity": "2026-08-17.gi088-response-first-v2-2-low-full-quality-v2",
+        "dataset": "2026-08-17.gi088-response-first-six-real-checkpoints-v1-3-product-owner-rubric",
+        "planFingerprint": "0417cc3bbe704e8043b2065d2cf3fe902da51ad5a93a773ffc52b0a47780b8cf",
+        "datasetFingerprint": "25ab2ec7665d185f7dacf4eceb184e1a6be9ff2909ad93252f7ec97b035c3c32",
+        "calls": "6_of_6",
+        "technicalAndContractValid": 6,
+        "latenciesMs": [2882, 3341, 6178, 3580, 4014, 4188],
+        "medianLatencyMs": 3797,
+        "codexProvisionalQuality": { "pass": 5, "minor": 1, "fail": 0 },
+        "productOwnerQuality": { "pass": 6, "minor": 0, "fail": 0 },
+        "status": "product_owner_quality_gate_passed"
+      },
+      "v23": {
+        "identity": "2026-08-17.gi088-response-first-v2-3-high-quality-v1",
+        "candidate": "2026-08-17.gi088-response-first-v2-3-grounded-high",
+        "planFingerprint": "a2076f0a27c5a10f5a3a2827027d23a7db4ff83d35282cad59cf62e473cf96bc",
+        "calls": "1_of_9",
+        "notRun": 8,
+        "technicalHttpValid": 1,
+        "contractValid": 0,
+        "finishReason": "length",
+        "maxTokens": 2000,
+        "completionTokens": 2000,
+        "reasoningTokens": 1985,
+        "visibleResponseLength": 42,
+        "highLatencyMs": 38384,
+        "fullRoundLatencyMs": 41725,
+        "semanticQuality": "not_evaluated",
+        "status": "checkpoint_no_go"
+      },
+      "v23Token4000Probe": {
+        "identity": "2026-08-17.gi088-response-first-v2-3-high-token-4000-probe-v1",
+        "planFingerprint": "bf1876287e5973268db7465ba63a8a536c68eaf33b4bb3994054e3498cee3e89",
+        "calls": "1_of_1",
+        "maxTokens": 4000,
+        "completionTokens": 2072,
+        "reasoningTokens": 1898,
+        "finishReason": "stop",
+        "responseLength": 596,
+        "highLatencyMs": 37066,
+        "fullRoundLatencyMs": 40407,
+        "jsonComplete": true,
+        "contractValid": false,
+        "validationIssue": "NULL_WORKING_TASK_UNDERSTANDING_DELTA_MUST_BE_NULL",
+        "visibleUnderstandingPresent": false,
+        "questionCount": 0,
+        "semanticQuality": "internal_understanding_pass_visible_empty_minor",
+        "tokenCeilingDecision": "direction_passed_for_this_case",
+        "status": "contract_no_go"
+      },
+      "productOwnerSixCardReview": "complete_6_pass_0_minor_0_fail",
+      "productIntegration": "not_run",
+      "commit": "not_run",
+      "push": "not_run",
+      "previewDeployment": "not_run",
+      "preview": "not_run_0_of_15"
+    },
+    "criticalIssues": {
+      "checkpointProductJudgmentSuperseded": {
+        "confirmedFact": "产品负责人在补齐完整上下文和实际输出后，将纠正后继续样例更新为通过，三题最终裁决为 3/3 pass。",
+        "productImpact": "Low 保持现状，避免基于不完整证据引入额外改造；完整六题继续承担新鲜质量验证。",
+        "codexAssessment": "旧 2/3 No-Go 继续保存为历史过程，新裁决使用独立覆盖回执和新判尺身份。",
+        "status": "resolved_by_latest_product_owner_review"
+      },
+      "checkpointStatusSelector": {
+        "confirmedFact": "v2.2 运行器继承了 checkpointDecision=false 时遗漏顶层终止状态的分支；私有裁决与阶段决定字段始终正确。",
+        "productImpact": "未经校正的公开回执顶层会显示仍在等待评审。",
+        "codexAssessment": "已用零模型调用校正公开回执并生成修正回执；运行时脚本与指纹保持冻结，后续新身份需先补状态选择器测试。",
+        "status": "corrected_without_model_call"
+      },
+      "postRunPlanFingerprintFinalizer": {
+        "confirmedFact": "Low 运行身份把执行前专项文档 SHA 纳入计划指纹；运行完成后按治理规则写回结果会改变该文档 SHA，原产品收口命令因此会生成新的计划指纹。六次请求、候选、数据集、输出哈希和原计划指纹均保持不变。",
+        "productImpact": "产品负责人的 6/6 裁决需要追加到原冻结账本，历史运行身份继续保持原计划指纹。",
+        "codexAssessment": "本次直接在原私有账本和脱敏回执追加产品裁决，未重新生成启动卡。v2.3 运行器将执行阶段读取冻结启动卡，结果文档写回不再改变后续收口身份。",
+        "status": "resolved_without_model_call_or_identity_rewrite"
+      },
+      "v23HighTokenTruncation": {
+        "confirmedFact": "v2.3 High 第 1 题 HTTP 200、目标模型正确，2000 completion Token 用尽；reasoning 1985，可见 JSON 42 字符，finishReason=length，解析错误为 GI088_RESPONSE_FIRST_V23_PARSE_FAILED。",
+        "productImpact": "当前无法展示完整 High 理解和问题，语义质量没有评价基础；其余两题、完整六题、页面和 Preview 按门停止。",
+        "codexAssessment": "该证据支持 High 完整交付失败，尚不能判断 grounded High 方法的语义效果。下一轮优先讨论只提高 High Token 上限；若仍无法完整返回，再依据新证据重开 Thinking 或合同负担。",
+        "status": "resolved_for_same_case_by_4000_token_probe"
+      },
+      "v23HighNullWorkingTaskUnderstandingDelta": {
+        "confirmedFact": "4000 Token 探针返回完整 JSON；当前输入 workingTask 为 null，模型仍提交 understandingChange.kind=add，程序触发 NULL_WORKING_TASK_UNDERSTANDING_DELTA_MUST_BE_NULL。visibleAppend.correctableUnderstanding 为 null，问题为 0。",
+        "productImpact": "当前用户只能看到冻结 Low；High 没有形成可见追加，也不能提交内部认识。页面与后续批次继续停止。",
+        "codexAssessment": "Token 因素已在本题隔离完成。产品负责人裁决内部认识通过、可见空追加 minor、完整链路因状态合同失败 No-Go；v2.4 已验证先建立任务能够通过状态合同。",
+        "status": "resolved_by_v24_state_alignment"
+      }
+    },
+    "stopPoint": "historical_v23_contract_no_go_superseded_by_v24_state_alignment_evidence"
+  },
+  "responseFirstV21": {
+    "status": "low_checkpoint_quality_no_go_downstream_not_run",
+    "confirmedFact": "回应优先 v2 的三项阻断已封存：纠正刚出现时 240 completion Token 用尽并截断；纠正已承接后仍重复承接；关系场景出现缺少依据的具体扩写。旧身份保持 No-Go，不续写结果。",
+    "productJudgment": "Low v2.1 使用 1280 Token 上限、最近窗口内已失效认识和更明确的纠正与可纠正推测方法。三题检查点触发质量停止门，完整六题、产品负责人六卡、后台 A/B、产品接入和 Preview 按计划停止。",
+    "codexAssessment": "现有 invalidatedItems 已成功进入 Low 请求，1280 上限也消除了截断；三次输出仍分别出现未经确认的动机与心理结论、重复复述旧纠正和无依据具体体验。文字 Skill 加状态输入不足以稳定约束当前模型的语义行为。",
+    "openHypotheses": [
+      "要求模型提交可核查的原话依据与推测类型，能否约束无依据扩写，同时保持自然承接、当前速度和可接受成本。",
+      "纠正已承接状态需要怎样进入生成决策，才能稳定避免重复复述并沿纠正后的内容推进。",
+      "精简 High 合同和程序投影能否在未来通过 Low 质量门后兼顾结构质量与 60 秒解锁。"
+    ],
+    "execution": {
+      "branchPolicy": "continue_current_checkout_without_branch_switch",
+      "lowCheckpointCallsMax": 3,
+      "lowFullQualityCallsMax": 6,
+      "evaluationMaxCalls": 35,
+      "previewMaxCalls": 15,
+      "concurrency": 1,
+      "lowRetries": 0,
+      "productionStrategy": "event_centered_baseline",
+      "result": "no_go_after_3_checkpoint_calls",
+      "evaluationCallsConsumed": 3,
+      "evaluationCallsNotRun": 32,
+      "previewCallsConsumed": 0,
+      "previewCallsNotRun": 15
+    },
+    "speedGates": {
+      "lowMedianTargetMs": 15000,
+      "lowHardMaxMs": 45000,
+      "fullRoundMedianTargetMs": 45000,
+      "fullRoundHardMaxMs": 60000
+    },
+    "verification": {
+      "v21Tests": "12_of_12_passed",
+      "parentAndAdjacentTests": "73_of_73_passed",
+      "typecheck": "passed",
+      "targetedLint": "passed",
+      "fullLint": "0_errors_45_warnings",
+      "mainPrisma": "passed",
+      "evaluationPrisma": "passed",
+      "productionBuild": "passed_77_pages_16_existing_dynamic_filesystem_warnings",
+      "docsCheck": "passed_24_core_841_links_1_current_entry",
+      "productIntegrationTests": "not_run_due_checkpoint_quality_gate"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-17-gi088-response-first-v2-1-quality-repair-and-preview.md",
+      "parentNoGoPlan": "../../../docs/plans/2026-08-16-gi088-response-first-v2-quality-responsibility-preview.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-1-low-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-1-low-quality-v1-receipt.json",
+      "runnerFix": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-1-low-quality-v1-runner-fix.json",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-1-stage-ledger.json"
+    },
+    "result": {
+      "identity": "2026-08-17.gi088-response-first-v2-1-low-quality-v1",
+      "planFingerprint": "82f837837f600127dd18b1ce55d145b69dc4928f6b039967e1b778c893d5fe68",
+      "candidateFingerprint": "a4f295005dd130b3d3eb4b213a0756e790064971c4056b5bb5592234e59fe94d",
+      "technicalAndContractValid": 3,
+      "quality": { "pass": 0, "minor": 0, "fail": 3 },
+      "latenciesMs": [4848, 4664, 4960],
+      "medianLatencyMs": 4848,
+      "lowFullQuality": "not_run_0_of_6",
+      "downstreamEvaluation": "not_run_0_of_26",
+      "productIntegration": "not_run",
+      "preview": "not_run"
+    },
+    "criticalIssues": {
+      "semanticBoundaryNotOperationalized": {
+        "confirmedFact": "三次输出均通过零提问、内部语言和结构检查，仍在自然正文中出现质量失败。",
+        "productImpact": "用户会把未经确认的动机、心理状态或具体体验误认为系统已经理解的事实，也会在纠正后再次看到同义复述。",
+        "codexAssessment": "下一轮需要讨论模型如何提交可验证的依据与推测边界，以及这类结构是否值得承担额外 Token、等待和实现复杂度。",
+        "status": "confirmed_quality_failure_root_cause_open"
+      },
+      "checkpointStatusSelector": {
+        "confirmedFact": "运行器在 checkpointDecision=false 时遗漏顶层终止状态分支；裁决字段与私有账正确。",
+        "productImpact": "公开顶层状态会错误显示仍在等待评审。",
+        "codexAssessment": "已用零调用修正回执校正公开状态，冻结运行器保持原指纹。",
+        "status": "corrected_without_model_call"
+      }
+    },
+    "stopPoint": "no_go_sealed_waiting_next_product_and_architecture_discussion"
+  },
+  "responseFirstV2": {
+    "status": "low_quality_gate_no_go_downstream_not_run",
+    "confirmedFact": "Low 六题按全新身份串行完成 6/6，重试、恢复和降级均为 0；六次总耗时为 2829、5523、4174、2693、3572、3483ms。RPR-REAL-19-CORRECTION 因 240 completion Token 用尽而截断，合同有效为 5/6；Codex 私有初评为 3 pass、0 minor、3 fail。",
+    "productJudgment": "已确认计划要求 Low 技术与合同有效 6/6，纠正、控制、关系与真实长上下文直接通过；当前客观合同失败已经触发 No-Go，后续模型账、页面接入和 Preview 依停止规则结束。",
+    "codexAssessment": "速度本身表现良好，六次墙钟耗时均低于 6 秒；本轮失败集中在输出预算配置、纠正时机区分和证据忠实度。RPR-REAL-19-CONTINUE 再次承接已经承接过的纠正，RPR-REAL-13 把有限原话扩写成缺少依据的具体状态，真实 16 条长上下文 RPR-LC-21 通过。",
+    "openHypotheses": [
+      "提高 Low 可用输出预算并保留短正文约束，能否消除推理 Token 挤占可见正文造成的截断。",
+      "把纠正时机写成可验证的状态输入并收紧承接 Skill，能否区分纠正刚出现与已经承接后的继续。",
+      "增加事实锚点逐项核对，能否消除关系场景中的无依据扩写并保持当前速度。",
+      "六类语义决定加程序投影的 High 负担、完整页面体验和 60 秒解锁均未运行，结论保持开放。"
+    ],
+    "execution": {
+      "branch": "codex/gi088-response-first-v2-20260816",
+      "evaluationMaxCalls": 32,
+      "evaluationCallsConsumed": 6,
+      "evaluationCallsNotRun": 26,
+      "previewTurns": 6,
+      "previewMaxCalls": 15,
+      "previewCallsConsumed": 0,
+      "concurrency": 1,
+      "productionStrategy": "event_centered_baseline"
+    },
+    "criticalIssues": {
+      "lowTokenLimit": {
+        "confirmedFact": "初始运行器未把 finishReason=length 判为失败；复核后将 RPR-REAL-19-CORRECTION 更正为 LOW_OUTPUT_TRUNCATED_BY_TOKEN_LIMIT。",
+        "productImpact": "用户会看到半句回应，无法计作有用首段。",
+        "handling": "运行器已补齐客观失败判定，原身份零追加调用完成对账。"
+      },
+      "correctionTiming": {
+        "confirmedFact": "纠正刚出现样例被截断；纠正已承接后的继续样例仍重复承接旧纠正。",
+        "productImpact": "对话停留在道歉和复述，无法沿用户纠正后的内容继续。",
+        "handling": "当前候选 No-Go，下一候选需同时修复时机状态和承接方法。"
+      },
+      "relationshipGrounding": {
+        "confirmedFact": "RPR-REAL-13 的首段加入了原话和已保存认识无法支持的具体状态。",
+        "productImpact": "系统可能替用户补写感受或行为，削弱可信度。",
+        "handling": "当前候选 No-Go，下一候选需加强事实锚定。"
+      },
+      "questionMarkGate": {
+        "confirmedFact": "当前活跃合同已移除整段最多一个问句和按问号数量判定多个语义焦点的硬门；High 可在同一回答焦点下包含一至三个问题句。",
+        "productImpact": "相关的连续追问不会再因标点数量被程序误拦截。",
+        "handling": "问号数量仅保留为观察指标，语义重复、焦点一致和问题价值由模型 Skill 与质量评测承担；历史证据保持原身份。"
+      }
+    },
+    "result": {
+      "identity": "2026-08-16.gi088-response-first-v2-low-quality-v1",
+      "planFingerprint": "ddd49630bd7f3a447f0f8331fa4a0122b26edf865503dc6f611facb664539623",
+      "contractValid": 5,
+      "quality": { "pass": 3, "minor": 0, "fail": 3 },
+      "lowElapsedUnder15Seconds": 6,
+      "questionInformationGainAb": "not_run_0_of_5",
+      "backgroundResponsibilityAb": "not_run_0_of_5",
+      "fullChainQuality": "not_run_0_of_6",
+      "conditionalReasoningAb": "not_run_0_of_4",
+      "conditionalLowQuality": "not_run_0_of_6",
+      "productIntegration": "not_run",
+      "preview": "not_run"
+    },
+    "engineeringVerification": {
+      "fullTests": "3385_passed_10_skipped",
+      "typecheck": "passed",
+      "lint": "0_errors_45_warnings",
+      "prismaValidate": "passed",
+      "docsCheck": "24_core_documents_829_local_links_1_current_entry",
+      "productionBuild": "passed_77_routes_16_existing_dynamic_filesystem_warnings",
+      "historicalIdentityHandling": "old_provider_hashes_preserved_current_drift_rejected_behavior_tests_read_sealed_start_cards"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-16-gi088-response-first-v2-quality-responsibility-preview.md",
+      "task": "../../../docs/ai-tasks/done/GI-088-response-first-v2-20260816.md",
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-low-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-low-quality-v1-receipt.json",
+      "runnerFix": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-low-quality-v1-runner-fix.json",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-stage-ledger.json"
+    },
+    "stopPoint": "no_go_sealed_waiting_next_candidate_decision"
+  },
+  "board7CurrentRuntimeContractV1": {
+    "status": "completed_verified",
+    "confirmedFact": "旧 A/B 请求重新携带了已经退出的单问号规则；A1 与 B1 在当前单一回答焦点规则下均可显示。",
+    "productJudgment": "板块 7 作为实现层唯一当前入口，统一维护 Prompt、Interview Skill、模型、程序和产品负责人的职责，以及当前与废弃规则。",
+    "codexAssessment": "当前运行合同、历史替代关系和旧身份边界已经统一到板块 7；总 Map、Handoff 与质量评测入口只保留状态和链接。",
+    "openHypothesis": "已探索层排除加比较意味着什么，能否减少语义重复并保持首段速度收益。",
+    "stopPoint": "clean_information_gain_ab_not_run"
+  },
+  "repeatQuestionRepairAndRealLongContextV1": {
+    "status": "historical_identity_invalid_for_information_gain_attribution",
+    "confirmedFact": "RPR-REAL-19 的 A1 与 B1 均 HTTP 200、正文可解析，耗时为 9400 和 14756ms；旧请求中的废弃规则触发 VISIBLE_RESPONSE_MULTIPLE_QUESTIONS。实际调用 2/4，B2 与 A2 not_run。按当前单一回答焦点规则，A1 与 B1 均可显示。",
+    "productJudgment": "A1 与 B1 都在语义上重复索取已经探索过的信息。下一候选验证已探索层排除加比较意味着什么；新的干净 A-B-B-A 尚未运行。",
+    "codexAssessment": "旧 A/B 请求错误继承 v5 单问号规则，程序据此执行了已经退出的质量拦截。语义重复继续由模型结合完整上下文判断，并由产品质量评测裁决。",
+    "processIssue": {
+      "confirmedFact": "Codex 把已经由 v6 取代的 v5 单问号规则写回新候选和程序校验，随后把 A1 的失败类型误读并启动 B1。",
+      "productImpact": "旧身份无法回答信息增益修复是否有效；A1、B1 正文仍可作为语义重复诊断材料，调用总量保持在原上限内。",
+      "codexAssessment": "板块 7 现作为唯一当前合同入口；历史规则进入候选前必须复核当前依据、责任主体和自动失败后果。B2、A2 保持 not_run。",
+      "status": "root_cause_confirmed_governance_corrected"
+    },
+    "openHypotheses": [
+      "已探索层排除加比较意味着什么，能否修复 RPR-REAL-19 且保留当前速度收益。",
+      "冻结真实 16 条轨迹加最近 8 条窗口和带来源状态，能否代表真实长上下文继承。",
+      "首段通过后，精简后台语义合同能否降低 Pro High 耗时并保持结构质量。"
+    ],
+    "execution": {
+      "visibleCandidate": "2026-08-16.gi088-response-first-information-gain-v1",
+      "repeatAbIdentity": "2026-08-16.gi088-visible-information-gain-ab-v1",
+      "longContextAsset": "2026-08-16.gi088-real-long-context-rpr-real-21-v1",
+      "callBooks": [4, 6, 4, 6],
+      "maxCalls": 20,
+      "concurrency": 1,
+      "retries": 0,
+      "recovery": 0,
+      "fallback": 0
+    },
+    "standingAuthorization": {
+      "scope": "all_actions_explicitly_listed_in_confirmed_plan",
+      "includes": ["model_calls", "candidate_changes", "preview", "production", "commits", "pushes", "deployments"],
+      "separateStops": ["product_quality_decision", "technical_failure", "out_of_plan_expansion", "unlisted_destructive_action"]
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-16-gi088-repeat-question-repair-real-context-and-two-stage-resume.md"
+    },
+    "result": {
+      "identity": "2026-08-16.gi088-visible-information-gain-ab-v1",
+      "planFingerprint": "7f107b43518a39f2c156a69e12c42ee071361aa817a398c392e2c8b6a63025d0",
+      "callsConsumed": 2,
+      "callsNotRun": 2,
+      "oldContractValid": 0,
+      "currentContractDisplayable": 2,
+      "informationGainAttribution": "not_evaluable",
+      "longContextAssetReview": "not_opened"
+    },
+    "stopPoint": "historical_identity_sealed_clean_ab_not_run"
+  },
+  "twoStageQualityOptimizationAndLocalIntegrationV1": {
+    "status": "visible_quality_gate_failed_remaining_books_not_run",
+    "confirmedFact": "第一门六题调用已完成：HTTP 200、合同有效、45 秒有用回应门和 60 秒完整正文门均为 6/6，总耗时依次为 7080、24517、21739、16446、13255、15355ms。产品裁决为 5 pass、0 minor、1 fail；RPR-REAL-19 因同义重复追问触发纠正硬门失败。RFT-CX-01 的模型回应通过，题目上下文质量被产品负责人否定。",
+    "productJudgment": "首段质量门 No-Go。重复询问与上一轮同义的问题影响对话推进；现有合成长上下文表达生硬、信息过少，与真实对话质量差距大，不能承担代表性验证。后台 A/B、后台质量调用和页面接入按停止规则结束。",
+    "codexAssessment": "首段收窄已经形成稳定速度收益，同时暴露了语义职责压缩后的重复追问风险。下一轮优先验证候选问题是否真正带来新信息，并用产品负责人认可的真实质量长上下文替换现有合成题；重复追问的具体根因仍需单因素验证。",
+    "openHypotheses": [
+      "首段 Prompt 或 Skill 增加与历史提问的语义去重要求，能否修复纠正场景的重复追问且保留当前速度收益。",
+      "重复追问主要来自首段合同压缩、上下文投影不足或 Pro Low 推理能力中的哪一个因素。",
+      "换成产品负责人认可的真实质量长上下文后，最近 8 条之外的任务与认识能否被正确继承。",
       "后台模型只提交六类语义决定并由程序补齐确定性字段，能否稳定减少 Pro High 正文耗时。",
       "复用 eventOperationData 保存冻结回应，能否在后台失败与刷新后保留同一首段并只重试结构阶段。",
       "两段式本地链路能否同时满足 45 秒有用回应、60 秒完整正文和 60 秒输入重新可用目标。"
@@ -24,10 +1003,13 @@
       "retries": 0,
       "recovery": 0,
       "fallback": 0,
-      "currentGate": "visible_quality_product_owner_six_card_review",
+      "currentGate": "stopped_after_visible_quality_no_go",
       "visibleQualityCallsConsumed": 6,
       "structuredAbCallsConsumed": 0,
-      "selectedStructuredQualityCallsConsumed": 0
+      "structuredAbCallsNotRun": 4,
+      "selectedStructuredQualityCallsConsumed": 0,
+      "selectedStructuredQualityCallsNotRun": 6,
+      "localProductIntegration": "not_run"
     },
     "authorization": {
       "source": "current_session_explicit_implement_plan_authorization",
@@ -44,9 +1026,24 @@
     "evidence": {
       "plan": "../../../docs/plans/2026-08-16-gi088-two-stage-quality-optimization-and-local-integration.md",
       "visibleQualityTechnicalReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-visible-quality-v1-technical-receipt.json",
+      "visibleQualityFinalReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-visible-quality-v1-receipt.json",
       "visibleQualityPlanFingerprint": "729ed2da26f692b4ea553a3be4689c7de017875b141031f9e85906277f4f8a0c"
     },
-    "stopPoint": "after_six_visible_calls_wait_product_owner_card_review"
+    "issues": {
+      "repeatQuestionInCorrection": {
+        "confirmedFact": "RPR-REAL-19 的可见回应再次询问与上一轮含义相同的问题。",
+        "productImpact": "用户已经提供过这一层信息，重复追问会让访谈停在原地并增加表达负担。",
+        "codexAssessment": "候选需要在生成新问题前判断它能否获得上一轮尚未提供的新信息；具体应由 Prompt、上下文投影或程序保护承担，等待下一轮单因素讨论。",
+        "status": "confirmed_quality_failure_open_root_cause"
+      },
+      "lowFidelitySyntheticLongContext": {
+        "confirmedFact": "RFT-CX-01 的模型回应通过，产品负责人否定该题输入和对话表达质量。",
+        "productImpact": "该题无法代表真实用户的长对话体验，不能支持真实长上下文通过结论。",
+        "codexAssessment": "下一轮先由产品负责人确认长上下文素材质量，再建立新评测身份并运行。",
+        "status": "evaluation_asset_rejected_replacement_required"
+      }
+    },
+    "stopPoint": "visible_gate_failed_remaining_books_and_local_integration_not_run"
   },
   "responseFirstTwoStageAndResponsibilitySplitV1": {
     "identity": "2026-08-16.gi088-response-first-two-stage-v1",
@@ -894,6 +1891,28 @@
     "V6-QD-01"
   ],
   "issues": [
+    {
+      "issueId": "RF-V281-LINEAGE-01",
+      "title": "CONTINUE 旧路径无法证明真实两段式连续因果",
+      "productOwnerJudgment": "父首题原文裁决为 minor；v2.8.1 真实连续回合阅读完整用户输入、实际 Low 与实际 High 后裁决 fail，整体 No-Go / stop。",
+      "codexInitialAssessment": "v2.8.1 血缘门成立，Low pass；High 重复询问 U1 已回答案例且合同失败，无 post-state，整体 fail。状态职责同摘要的下游风险已出现，信息增量审计漏读 U1 也是直接原因。",
+      "confirmedRootCause": "真实 Low→High 因果链证明 High 在缺少明确开放任务增量时回到已回答案例；informationGainAudit 同时把 U1 的现有答案错误记为空。High 还输出合同未接受的 taskChange.kind=continue，造成确定性解析失败。",
+      "hypotheses": [
+        "重新生成 CONTINUE Low 后，实际文本可能改变 High 的理解、提问和状态动作。",
+        "同摘要的 workingTask 与 understanding 可能在真实 High 中表现为重复确认、过早结束或旧状态复活。"
+      ],
+      "priority": "P0",
+      "status": "v2_8_1_product_fail_no_go_two_of_two",
+      "trace": [
+        "docs/plans/2026-08-19-gi088-response-first-v2-8-1-causal-continuation-probe.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-correction-persistence-high-quality-v1-receipt.json",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-stage-ledger-v1.json",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-1-causal-continuation-probe-v1-handoff.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-8-1-stage-ledger-v1.json",
+        "scripts/run-gi088-response-first-v2-8-correction-persistence-high.ts"
+      ],
+      "targetVersion": "2026-08-19.gi088-response-first-v2-8-1-causal-continuation-probe"
+    },
     {
       "issueId": "BC-01",
       "title": "部分批次无法提前结束和正式导出",

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-2-product-owner-checkpoint-review-v2",
+  "supersedes": "2026-08-17.gi088-response-first-v2-2-product-owner-checkpoint-review-v1",
+  "parentRunIdentity": "2026-08-17.gi088-response-first-v2-2-low-quality-v1",
+  "candidateIdentity": "2026-08-17.gi088-response-first-v2-2-factual-low",
+  "reviewBasis": {
+    "sequence": [
+      "complete_relevant_user_and_assistant_context",
+      "actual_low_output",
+      "product_owner_judgment"
+    ],
+    "rawBodiesStoredPublicly": false,
+    "reviewChannel": "controlled_conversation"
+  },
+  "decisions": [
+    {
+      "caseId": "RPR-REAL-19-CORRECTION",
+      "verdict": "pass",
+      "reason": "product_owner_accepted_the_response_as_faithful"
+    },
+    {
+      "caseId": "RPR-REAL-19-CONTINUE",
+      "verdict": "pass",
+      "reason": "after_complete_context_and_output_review_product_owner_found_no_intervention_needed"
+    },
+    {
+      "caseId": "RPR-REAL-13",
+      "verdict": "pass",
+      "reason": "natural_semantic_transformations_faithfully_expressed_the_user_meaning"
+    }
+  ],
+  "gate": {
+    "requiredPass": 3,
+    "actualPass": 3,
+    "passed": true,
+    "decision": "checkpoint_quality_gate_passed_by_latest_product_owner_review"
+  },
+  "futureRubricEffect": {
+    "relationship": "allow_natural_semantic_transformations_that_preserve_user_meaning",
+    "correctionContinued": "allow_brief_restatement_of_the_current_valid_focus_when_it_preserves_forward_progress"
+  },
+  "historicalBoundary": {
+    "reviewV1Preserved": true,
+    "reviewV1Decision": "2_pass_0_minor_1_fail",
+    "modelCallsAddedForThisReview": 0
+  },
+  "productionStrategy": "event_centered_baseline"
+}

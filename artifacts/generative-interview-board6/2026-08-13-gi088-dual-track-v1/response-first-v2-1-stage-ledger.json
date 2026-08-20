@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-1-stage-ledger-v1",
+  "status": "no_go_stopped_after_low_checkpoint",
+  "evaluationBudget": {
+    "authorized": 35,
+    "consumed": 3,
+    "notRun": 32
+  },
+  "previewBudget": {
+    "authorized": 15,
+    "consumed": 0,
+    "notRun": 15
+  },
+  "stages": [
+    { "stage": "low_checkpoint", "authorized": 3, "consumed": 3, "notRun": 0, "status": "quality_failed_0_of_3_pass" },
+    { "stage": "low_full_quality", "authorized": 6, "consumed": 0, "notRun": 6, "status": "not_run" },
+    { "stage": "question_information_gain_ab", "authorized": 5, "consumed": 0, "notRun": 5, "status": "not_run" },
+    { "stage": "background_responsibility_ab", "authorized": 5, "consumed": 0, "notRun": 5, "status": "not_run" },
+    { "stage": "full_chain_quality", "authorized": 6, "consumed": 0, "notRun": 6, "status": "not_run" },
+    { "stage": "conditional_reasoning_effort_ab", "authorized": 4, "consumed": 0, "notRun": 4, "status": "not_run" },
+    { "stage": "conditional_high_stage_low_quality", "authorized": 6, "consumed": 0, "notRun": 6, "status": "not_run" }
+  ],
+  "productIntegration": "not_run",
+  "commit": "not_run",
+  "push": "not_run",
+  "previewDeployment": "not_run",
+  "productionStrategy": "event_centered_baseline",
+  "stopReason": "low_checkpoint_content_gate_failed"
+}

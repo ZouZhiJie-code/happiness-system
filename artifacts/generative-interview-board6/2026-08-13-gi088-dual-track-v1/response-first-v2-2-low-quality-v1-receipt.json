@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-17.gi088-response-first-v2-2-low-quality-v1",
+  "planFingerprint": "da8fbf667f42f49053c18bc822bc9a777cc9f9671e07c1824342fd0a7ecd811f",
+  "candidateFingerprint": "c0e99522ac8b0b2e252d3f7c8abf32e0fd364301609c5d79cc874712f27cb01f",
+  "datasetFingerprint": "59d524f8e932712d7f0c761847c94ce7abe7e552ad44f144f8a25d96230248cc",
+  "status": "stopped_by_checkpoint_quality_gate",
+  "preflight": {
+    "checkedAt": "2026-08-17T07:21:13.519Z",
+    "httpStatus": 200,
+    "targetModelAvailable": true,
+    "modelListHash": "487df5b8f4a096e095dd4095596accd286d62a30f0eb2e8f2cc847b005b50121"
+  },
+  "budget": {
+    "authorized": 9,
+    "consumed": 3,
+    "notRun": 6,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0
+  },
+  "phases": {
+    "checkpoint": {
+      "consumed": 3,
+      "notRun": 0,
+      "medianLatencyMs": 3854,
+      "decision": {
+        "phase": "checkpoint",
+        "status": "checkpoint_quality_gate_failed",
+        "gatePassed": false,
+        "allCallsValid": true,
+        "completeReview": true,
+        "contentPassed": false,
+        "hardPassed": false,
+        "softMinorCount": 0,
+        "medianLatencyMs": 3854,
+        "medianTargetPassed": true,
+        "counts": {
+          "pass": 1,
+          "minor": 0,
+          "fail": 2
+        }
+      },
+      "results": [
+        {
+          "phase": "checkpoint",
+          "order": 1,
+          "caseId": "RPR-REAL-19-CORRECTION",
+          "status": "valid",
+          "startedAt": "2026-08-17T07:21:13.523Z",
+          "completedAt": "2026-08-17T07:21:17.539Z",
+          "requestFingerprint": "b15e3a2cbe403f390b55d01e445b073cdc19a7ec966a5cf4ffcbd885f6b95ca7",
+          "responseHash": "41f5a404942c47db0fce9be65e51101cd8cdd3d47b74bfa7afe8e7ba741eba53",
+          "responseLength": 42,
+          "validationIssues": [],
+          "errorCode": null,
+          "headersLatencyMs": 358,
+          "firstTokenLatencyMs": 3414,
+          "bodyLatencyMs": 3658,
+          "totalLatencyMs": 4016,
+          "target15sPassed": true,
+          "hard45sPassed": true,
+          "finishReason": "stop",
+          "reasoningTokens": 124,
+          "tokenUsage": {
+            "promptTokens": 1130,
+            "completionTokens": 148,
+            "totalTokens": 1278,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 1130
+          },
+          "responseModel": "deepseek-v4-pro",
+          "httpStatus": 200
+        },
+        {
+          "phase": "checkpoint",
+          "order": 2,
+          "caseId": "RPR-REAL-19-CONTINUE",
+          "status": "valid",
+          "startedAt": "2026-08-17T07:21:17.541Z",
+          "completedAt": "2026-08-17T07:21:20.354Z",
+          "requestFingerprint": "129d3ec53ffe03d045f7e96c1816a4d709f222d0ec1c81ddb885a13c76a0382e",
+          "responseHash": "eb91649bbe0dd82acdeab7e5e5d578c70497e95a85ce3f554dbb9594979cd8f4",
+          "responseLength": 51,
+          "validationIssues": [],
+          "errorCode": null,
+          "headersLatencyMs": 340,
+          "firstTokenLatencyMs": 2008,
+          "bodyLatencyMs": 2472,
+          "totalLatencyMs": 2812,
+          "target15sPassed": true,
+          "hard45sPassed": true,
+          "finishReason": "stop",
+          "reasoningTokens": 60,
+          "tokenUsage": {
+            "promptTokens": 1553,
+            "completionTokens": 90,
+            "totalTokens": 1643,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 1553
+          },
+          "responseModel": "deepseek-v4-pro",
+          "httpStatus": 200
+        },
+        {
+          "phase": "checkpoint",
+          "order": 3,
+          "caseId": "RPR-REAL-13",
+          "status": "valid",
+          "startedAt": "2026-08-17T07:21:20.359Z",
+          "completedAt": "2026-08-17T07:21:24.214Z",
+          "requestFingerprint": "aa709c8198d76157e90d7dc47d2ed8fe7d47b79c409e62ffa169b8250b74b8ac",
+          "responseHash": "2aa69e0bd9e169aa2a8f46687648f9975c5d3b2403e6ac293e8baa6f9a350522",
+          "responseLength": 74,
+          "validationIssues": [],
+          "errorCode": null,
+          "headersLatencyMs": 332,
+          "firstTokenLatencyMs": 2692,
+          "bodyLatencyMs": 3522,
+          "totalLatencyMs": 3854,
+          "target15sPassed": true,
+          "hard45sPassed": true,
+          "finishReason": "stop",
+          "reasoningTokens": 41,
+          "tokenUsage": {
+            "promptTokens": 578,
+            "completionTokens": 88,
+            "totalTokens": 666,
+            "promptCacheHitTokens": 0,
+            "promptCacheMissTokens": 578
+          },
+          "responseModel": "deepseek-v4-pro",
+          "httpStatus": 200
+        }
+      ]
+    },
+    "full": {
+      "consumed": 0,
+      "notRun": 6,
+      "medianLatencyMs": null,
+      "codexDecision": null,
+      "productDecision": null,
+      "results": []
+    }
+  },
+  "privateBoundary": {
+    "rawInputsOutputsAndReviews": "git_ignored_private_directory",
+    "publicReceiptContainsUserOrModelBody": false
+  }
+}

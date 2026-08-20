@@ -2,7 +2,7 @@
 
 - 文档职责：知识导航
 - 文档状态：现役
-- 最后核验：`2026-08-16`
+- 最后核验：`2026-08-19`
 - 权威入口：[当前阶段 Handoff](./handoff.md)
 
 这份导航帮助产品负责人和 Codex 在五分钟内找到当前事实、当前任务、授权边界、实施说明与证据。它只保留路由和一屏状态，详细事实由对应权威文档承担。
@@ -22,7 +22,7 @@
 - Production 正式域名为 `https://dailylight.chat`；`2026-08-16` 已验证公开首页返回 `200`。
 - 仓库当前批准的 Production 主链为 `event_centered + baseline`；生成式访谈能力继续关闭。
 - 网页端用户路径为 `访谈记录 → 当天时间线事件卡片 → 今日日记`。
-- GI-088 回归集 v1.2 已封存；`relationship_claim_status_v1` 两题探针保持 `technical_blocked` 与语义未知。响应等待父合同 A/B 已裁决 `inconclusive_mixed_direction`；先回应后整理本地候选 `e806843d…bac96` 已完成，可见合同负担 A/B 已裁决 `visible_contract_directional_support`。首段六题技术有效、45 秒门和 60 秒门均为 `6/6`，当前等待产品负责人私有六卡内容裁决；程序职责迁移、第二段耗时、真实页面、完整 10 题回归、Judge、独立准入、真人 Preview 和发布继续待验证或关闭。
+- GI-088 回应优先 v2.9 真实 CONTINUE Low＋High 已完成 `2/2`：纯时间 `5852ms` 通过，High 状态合同失败使整体技术门为 `false`；Low Codex 初评 `minor`，Codex 与产品负责人均裁决完整回合 `fail`，本轮 `No-Go / stop`。后续 `4 not_run`；页面、Preview 与 Production 边界保持不变。
 - 文档治理两阶段及授权清理已经完成；[最终治理记录](./maintenance/2026-08-16-document-governance-cleanup-preview.md)保留全量台账、清理结果和仍受保护的独立成果。
 
 当前任务、工作区血缘、验证门和停止点统一从 [Handoff](./handoff.md) 读取；专项数字与裁决从对应 Map 和证据包读取。
@@ -44,8 +44,23 @@
 | 需要回答的问题 | 权威入口 |
 |---|---|
 | 现在正在做什么、停在哪里 | [当前阶段 Handoff](./handoff.md) |
+| 回应优先 v2.9 怎样用真实父状态验证纠正后继续 | [v2.9 真实纠正后继续验证](./plans/2026-08-19-gi088-response-first-v2-9-causal-continuation-gate.md) |
+| 回应优先 v2.9 真实纠正后继续实际结果 | [v2.9 真实纠正后继续结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/response-first-v2-9-causal-continuation-gate-v1-handoff.md) |
+| 回应优先 v2.8.1 怎样以真实 Low → High 和实际 post-state 验证连续回合 | [v2.8.1 真实连续回合因果探针](./plans/2026-08-19-gi088-response-first-v2-8-1-causal-continuation-probe.md) |
+| 回应优先 v2.9 怎样分开已知认识与尚待弄清的开放目标 | [v2.9 已知认识／开放目标分离](./plans/2026-08-19-gi088-response-first-v2-9-separated-open-gap-high.md) |
+| 回应优先 v2.8 怎样保存纠正、为何状态职责记为 minor | [v2.8 Correction-persistence High 结果](./plans/2026-08-19-gi088-response-first-v2-8-correction-persistence-high.md) |
+| 回应优先 v2.7 怎样关闭 High Thinking 并验证同一审计合同的速度与质量 | [v2.7 Thinking-disabled Audited High](./plans/2026-08-19-gi088-response-first-v2-7-thinking-disabled-audited-high.md) |
+| 回应优先 v2.6 怎样用较低思考强度验证同一问题自答方法 | [v2.6 Low-effort Audited High](./plans/2026-08-19-gi088-response-first-v2-6-low-effort-audited-high.md) |
+| 回应优先 v2.5 怎样用候选问题自答排除已有答案 | [v2.5 候选问题自答审计](./plans/2026-08-19-gi088-response-first-v2-5-question-self-answer-audit.md) |
+| 回应优先 v2.2 复核通过后怎样继续 Low 六题与 High | [复核通过后的继续执行](./plans/2026-08-17-gi088-response-first-v2-2-review-go-continuation.md) |
+| 回应优先 v2.2 为什么停止、v2.3 为什么未运行 | [事实 Low 与有依据 High最终结果](./plans/2026-08-17-gi088-response-first-v2-2-v2-3-factual-low-grounded-high.md) |
+| 新会话怎样继续讨论 v2.1 No-Go 后的 Low／High 职责与事实边界 | [v2.1 后续讨论交接](./plans/2026-08-17-gi088-response-first-v2-1-next-discussion-handoff.md)与[复制用 Prompt](./plans/2026-08-17-gi088-response-first-v2-1-next-discussion-prompt.md) |
+| 回应优先 v2.1 为什么在三题停止、哪些任务未运行 | [回应优先 v2.1 最终结果](./plans/2026-08-17-gi088-response-first-v2-1-quality-repair-and-preview.md) |
+| 回应优先 v2 为何 No-Go、执行了多少、哪些阶段未运行 | [回应优先 v2 最终结果](./plans/2026-08-16-gi088-response-first-v2-quality-responsibility-preview.md) |
+| Prompt、Interview Skill、模型、程序和产品负责人当前怎样分工；提问规则是什么 | [板块 7 当前运行合同](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) |
+| 两段式质量为何停止、下一轮修什么 | [两段式质量、后台提速与本地接入结果](./plans/2026-08-16-gi088-two-stage-quality-optimization-and-local-integration.md) |
 | 当前工作区怎样分批提交、验证和停止 | [2026-08-16 工作区提交收口](./maintenance/2026-08-16-workspace-commit-consolidation.md) |
-| 两段式怎么实施、Prompt／Skill／程序怎样分工 | [先回应后整理与职责重划实施计划](./plans/2026-08-16-gi088-response-first-two-stage-and-responsibility-split.md) |
+| 两段式历史本地候选当时怎样实施 | [先回应后整理与职责重划实施计划](./plans/2026-08-16-gi088-response-first-two-stage-and-responsibility-split.md) |
 | 为什么模型长期等待、下一会话讨论什么 | [GI-088 模型长等待根因讨论交接](./plans/2026-08-16-gi088-response-latency-root-cause-discussion-handoff.md) |
 | 当前文档治理范围与问题台账 | [2026-08-16 文档治理与工作区审计](./maintenance/2026-08-16-documentation-governance-and-workspace-audit.md) |
 | 第二阶段全量台账、清理候选与保护清单 | [2026-08-16 文档与工作区清理预览](./maintenance/2026-08-16-document-governance-cleanup-preview.md) |

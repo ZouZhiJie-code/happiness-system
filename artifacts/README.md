@@ -2,7 +2,7 @@
 
 - 文档职责：证据索引
 - 文档状态：现役
-- 最后核验：`2026-08-16`
+- 最后核验：`2026-08-19`
 - 权威入口：[项目知识导航](../docs/README.md)
 
 本目录保存当前正式证据、历史候选证据与本地运行过程。产品当前状态由相应总 Map 和稳定合同承担；证据包只证明自己的运行身份、版本、结果与裁决。
@@ -11,7 +11,7 @@
 
 | 主题 | 当前入口 | 证据职责 |
 |---|---|---|
-| GI-088 生成式访谈 | [当前评测资产入口](./generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md) | 先回应后整理本地候选已完成；首段六题技术与速度门 `6/6` 通过，等待产品负责人私有六卡内容裁决 |
+| GI-088 生成式访谈 | [当前评测资产入口](./generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md) | v2.9 真实 CONTINUE `2/2`，High 合同失败，Codex 与产品均 fail，No-Go；后续 `4 not_run`，Production 保持 baseline |
 | AI 评测治理 | [AI 评测总规范](../docs/ai-evaluation-standard.md)与[阶段 A 验收记录](./ai-evaluation-governance/2026-08-13-v0.9-stage-a-acceptance.md) | 项目级启动门、身份、预算、隐私和职责 |
 | 日志生成质量 | [日志生成评测入口](./journal-generation-evaluation/README.md) | 真人轨迹、记录卡、今日日记与独立准入准备 |
 | 网页端产品验收 | [第二轮产品验收证据](./daily-light-visual-review/2026-08-13-second-round-closeout/README.md) | 当前 Production 的上游视觉与交互验收基线 |

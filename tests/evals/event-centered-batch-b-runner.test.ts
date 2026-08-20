@@ -2051,7 +2051,7 @@ describe("Batch B event-centered evaluation runner", () => {
 
     expect(firstQuestion?.visiblePayload?.naturalResponse).toContain("当时最先出现的具体感受是什么？");
     expect(firstQuestion?.visiblePayload?.naturalResponse).not.toBe(rawResponse);
-    expect(firstQuestion?.rawModelIssues).toContain("raw_quality:multiple_question_targets");
+    expect(firstQuestion?.rawModelIssues).not.toContain("raw_quality:multiple_question_targets");
     expect(repairedQuestion?.visiblePayload?.naturalResponse).toBe("当时你是什么感受？");
 
     const angleChange = publicReport.results.find((item) => item.id === "EVB-PUB-074");
