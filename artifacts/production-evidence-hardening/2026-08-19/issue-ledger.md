@@ -43,7 +43,7 @@
 - 产品判断：自动 E2E 必须零真实模型调用。
 - Codex 评估：需要仅测试环境可启用、Production 启动即拒绝的确定性 AI 替身，并同时断言请求日志和 Trace 的模型执行字段。
 - 待验证假设：现有 Provider 注入点足以实现 fail-closed 测试替身，不改变正式路径。
-- 当前处理状态：本地发布线已实现并验证。历史三连跑与 rebase 到 `origin/main@305f209` 后的独立复跑均为 `11/11`；零模型 guard `9/9`，每轮 `AIRequestLog=0`、12 条 Trace 四类违规为 `0`，临时 Schema 残留 `0`。PR、远程 CI、Preview 和 Production 保持 pending。
+- 当前处理状态：本地与远程工程门已通过。PR #41 的 push／pull request 两套 E2E 均为 `11/11`，PR Job `AIRequestLog=0`、12 条 Trace 四类违规 `0`、临时 Schema 已删除；Preview 核心主链通过到今日日记 draft。编辑／保存／需更新续跑受 `PEH-022` 约束，Stage 2 Production blocked。
 
 ## PEH-006｜月度分析当前数据源与 Production 主链不一致
 
@@ -116,3 +116,11 @@
 - Codex 评估：当前保留数据可以维持发布证据的可追溯性。后续 Production smoke 应使用既有内部账号，或在获得独立授权后采用可审计、可自动回收的验收身份。
 - 待验证假设：后续 smoke 可在保持匿名保护、最小写入和零模型调用的同时，完成自动回收与审计闭环。
 - 当前处理状态：固定验收账号、`AuthSession` 和空 `InterviewSession` 保留；本轮不执行清理，等待产品负责人单独确认。
+
+## PEH-022｜Stage 2 Preview 日记续跑被验收输入与传输阻断
+
+- 已确认事实：Preview 已通过匿名／普通用户保护、上海日期、【帮我记】完整回应、完成记录、单卡保存和今日日记 draft 生成。首次人工编辑使用 17 字验收标题，超过 UI 的 16 字合同，产品返回 `400 INVALID_JOURNAL_DAILY_AUTOSAVE_REQUEST`；纠正后的首次重新登录在请求到达应用前遇到 Vercel CLI TLS 阻断。
+- 产品判断：首次 `400` 归入验收输入错误；应用未收到的 TLS 失败归入传输阻断。两项都不扩大为产品回归，未完成的编辑／保存／需更新／人工修改保护继续标记 `not_run`。
+- Codex 评估：本地和远程自动 E2E 已覆盖这些合同，但自动证据不替代 Preview 人工续跑。Stage 2 可以合入工程基础，Production 保持停止。
+- 待验证假设：网络通道恢复后，使用 16 字以内标题可在同一 Preview 数据上完成编辑、保存、来源变化需更新和更新后人工片段保留。
+- 当前处理状态：保留首次错误与 TLS 失败原始分账；等待一次最小 Preview 续跑。Stage 2 Production 还同时受 `PEH-020` 管理员成功读取门约束。

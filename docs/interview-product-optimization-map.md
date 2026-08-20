@@ -9,7 +9,7 @@
 
 文档状态：`生效中；五阶段生产主线完善已确认·实施中；Production 使用 event_centered + baseline`
 
-当前讨论位置：`DL-PROD-20260819｜阶段 1 Production 核心回验通过、管理员成功读取 pending；阶段 2 本地发布线已验证、PR／Preview pending；阶段 4 等待串行过门`
+当前讨论位置：`DL-PROD-20260819｜阶段 1 管理员成功读取 pending；阶段 2 远程工程门通过、Preview 核心主链部分通过、Production blocked；阶段 4 等待串行过门`
 
 落地验证状态：`总规范 v1.0 与阶段 B2 资产已冻结；阶段 C 保留 19 次技术阻断历史，阶段 C2 的 Plus 普通／思考均 20/20 且 No-Go，Max 思考 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
@@ -17,7 +17,7 @@
 
 当前跨模块专项：[`Daily Light 五阶段生产主线完善`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-当前停止点：阶段 1 管理员成功读取等待白名单内既有内部管理员合法登录态；阶段 2 已通过本地门，进入 PR／远程 CI／Preview 前状态，Production 继续等待阶段 1 门完成；阶段 4 继续等待串行过门。阶段 3 保持私有评审，阶段 5 保持候选隔离。数据库迁移、GI-088 新调用、生成式策略发布、月度洞察上线和破坏性清理继续使用独立停止门。
+当前停止点：阶段 1 管理员成功读取等待白名单内既有内部管理员合法登录态；阶段 2 已通过远程工程门，Preview 编辑／保存／需更新续跑等待传输通道恢复，Production 同时受 `PEH-020` 与 `PEH-022` 约束；阶段 4 继续等待串行过门。阶段 3 保持私有评审，阶段 5 保持候选隔离。数据库迁移、GI-088 新调用、生成式策略发布、月度洞察上线和破坏性清理继续使用独立停止门。
 
 网页端实现同步：管理分析合同 v2 已于 `2026-08-20` 发布 Production，deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已通过正式域名核心 smoke；项目主链继续使用 `event_centered + baseline`。管理员成功读取保持 pending；GI-088 的模型评测、独立准入和生成式能力授权边界保持原状态。
 

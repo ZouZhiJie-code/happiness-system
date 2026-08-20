@@ -1,0 +1,76 @@
+{
+  "receiptVersion": "2026-08-20.stage2-preview-gate.v1",
+  "sealedOn": "2026-08-20",
+  "privacyClass": "public_zero_body",
+  "status": "engineering_passed_manual_core_partial_production_blocked",
+  "identity": {
+    "pullRequest": 41,
+    "headSha": "e7e15416b491585865f67b48cff447eaf3c38a86",
+    "previewDeploymentId": "dpl_GAU2uR8BpbTsP4FQhhnqaGBmv4Sr",
+    "previewState": "READY",
+    "previewUrl": "https://xingfuxitong-c1gcu3x81-zouzhijies-projects.vercel.app"
+  },
+  "remoteVerification": {
+    "pullRequestRunId": 32336474525,
+    "pushRunId": 32336448157,
+    "conclusion": "success",
+    "testFiles": {
+      "passed": 361,
+      "skipped": 16,
+      "failed": 0
+    },
+    "testCases": {
+      "passed": 3216,
+      "skipped": 82,
+      "failed": 0
+    },
+    "buildStaticPages": {
+      "passed": 77,
+      "total": 77
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 43
+    },
+    "zeroModelE2e": {
+      "passed": 11,
+      "total": 11,
+      "aiRequestLogCount": 0,
+      "aiGenerationTraceCount": 12,
+      "modelCallViolations": 0,
+      "temporarySchemaDropped": true
+    }
+  },
+  "previewSmoke": {
+    "anonymousProtection": "passed",
+    "ordinaryUserAdminProtection": "passed",
+    "shanghaiEntryDate": "passed",
+    "captureMainlineThroughSavedEventCard": "passed",
+    "dailyJournalDraftGeneration": "passed",
+    "manualEditFirstAttempt": {
+      "status": "input_error",
+      "httpStatus": 400,
+      "errorCode": "INVALID_JOURNAL_DAILY_AUTOSAVE_REQUEST",
+      "cause": "acceptance_title_length_17_exceeded_ui_max_16"
+    },
+    "manualEditCorrection": "not_run_transport_blocked_before_login",
+    "dailyJournalSave": "not_run_transport_blocked_before_login",
+    "staleAfterEventChange": "not_run_transport_blocked_before_login",
+    "manualEditPreservationAfterUpdate": "not_run_transport_blocked_before_login",
+    "transportFailure": {
+      "layer": "vercel_cli_tls_before_application",
+      "applicationRequestReached": false,
+      "newBusinessWrites": 0,
+      "newInterviewResponses": 0
+    },
+    "manualProductModelCallCount": "not_observable_with_ordinary_user_permissions",
+    "administratorSuccessReadback": "not_run"
+  },
+  "releaseBoundary": {
+    "production": "blocked",
+    "blockers": [
+      "stage1_production_administrator_success_readback_pending",
+      "stage2_preview_journal_edit_save_update_continuation_not_run"
+    ]
+  }
+}

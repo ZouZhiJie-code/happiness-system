@@ -107,7 +107,7 @@
 |---|---|---|
 | 0. 保护现场与工作线 | 已完成 | GI-088 `175` 项成果完成指纹与隐私检查；最终 No-Go 状态已由检查点 `199aa94` 封存并推送，原工作区干净，分支与私有现场继续保留 |
 | 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
-| 2. 零模型 E2E | 本地发布线已验证·PR／Preview pending | rebase 后 24 文件边界；guard `9/9`、浏览器 `11/11`、`AIRequestLog=0`、12 条 Trace 四类违规 `0`、临时 Schema 残留 `0` |
+| 2. 零模型 E2E | 远程工程门通过·Preview 核心主链部分通过·Production blocked | PR #41 两套 CI／E2E 通过；Preview 通过事件卡与日记 draft，编辑／保存／需更新续跑受 `PEH-022` 阻断 |
 | 3. Golden Set v2 | 待验证 | 数据治理审计进行中，真实样本数量待只读核验 |
 | 4. 主链重构 | 待验证 | 等待阶段 2 回归保护 |
 | 5. 月度洞察评估 | 待验证 | 数据源差异已入账，候选尚未运行 |
@@ -138,4 +138,12 @@
 - rebase 后实现提交为 `5d0e795`，本地验证头为 `f12bf27`；类型检查、目标 Lint、文档检查和差异检查均通过，零模型 guard 为 `9/9`。
 - 安全 E2E 使用本机 loopback 专用测试库完成 `11/11`：1440×900 覆盖 10 项，1024×768 覆盖 1 项；`AIRequestLog=0`、12 条 Trace 四类模型调用违规为 `0`，临时 Schema 已删除且残留为 `0`。
 - 历史完整三连跑继续由[零模型 E2E 原始回执](../../../artifacts/production-evidence-hardening/2026-08-19/e2e-zero-model/README.md)承担；当前单轮只证明 rebase 后发布线未发生工程漂移。
-- 分支推送、Pull Request、远程 CI、Preview 人工主链、Production 发布均保持 pending；阶段 2 Production 继续受阶段 1 管理员成功读取门约束。
+- 该 PR 前检查点结束时，分支推送、Pull Request、远程 CI、Preview 人工主链和 Production 发布均为 pending；当前状态见下方 PR／Preview 证据。阶段 2 Production 继续受阶段 1 管理员成功读取门约束。
+
+### 阶段 2 PR／Preview 证据封存｜2026-08-20
+
+- PR #41 head `e7e1541` 的 push run `32336448157` 与 pull request run `32336474525` 均成功：`361` 个测试文件通过、`16` 个跳过，`3216` 条用例通过、`82` 条跳过、`0` 失败；构建 `77/77`，Lint `0 errors / 43 warnings`。
+- 两套远程零模型 E2E 均为 `11/11`；PR Job 记录 `AIRequestLog=0`、12 条 Trace 四类调用违规 `0`，临时 Schema 已删除。
+- Preview `dpl_GAU2uR8BpbTsP4FQhhnqaGBmv4Sr` 为 Ready；人工 smoke 已通过匿名／普通用户保护、上海日期、【帮我记】完整回应、完成记录、单卡保存和今日日记 draft 生成。
+- 首次编辑因验收标题 17 字超过 UI 16 字合同而返回预期结构化 `400`；纠正后的首次重新登录在应用收到请求前遇到 Vercel CLI TLS 阻断。编辑／保存、来源变化需更新和更新后人工修改保护保持 `not_run`，详见 `PEH-022`。
+- 当前结论为 `远程工程门通过 / Preview 核心主链部分通过 / Production blocked`；Stage 2 工程基础可以合入 main，Production 等待 `PEH-020` 与 `PEH-022` 同时完成。

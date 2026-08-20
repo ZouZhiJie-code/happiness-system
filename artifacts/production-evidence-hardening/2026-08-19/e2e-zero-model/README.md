@@ -3,7 +3,7 @@
 - 证据类型：公开脱敏工程回执
 - 验证状态：本地完整三连跑通过
 - 对应提交：`be98237`
-- 当前发布线状态：本地已验证，PR／远程 CI／Preview pending
+- 当前发布线状态：远程工程门通过，Preview 核心主链部分通过，Production blocked
 - Preview／Production：本回执不承担发布证明
 
 ## 为什么保留这份回执
@@ -16,7 +16,15 @@
 
 原始三连跑继续由提交 `be98237` 与下方机器回执承担。阶段 2 发布线 rebase 到 `origin/main@305f209` 后，等价实现提交为 `5d0e795`，本地验证头为 `f12bf27`；24 个文件边界中 Prisma 变更为 `0`。
 
-rebase 后新增一轮安全复核：guard `9/9`、浏览器 `11/11`；`AIRequestLog=0`，12 条 Trace 的四类模型调用违规为 `0`，临时 Schema 已删除且最终残留为 `0`。该单轮用于证明发布线重放后未发生工程漂移，不改写下方原始三连跑身份。PR、远程 CI、Preview 和 Production 继续保持 pending。
+rebase 后新增一轮安全复核：guard `9/9`、浏览器 `11/11`；`AIRequestLog=0`，12 条 Trace 的四类模型调用违规为 `0`，临时 Schema 已删除且最终残留为 `0`。该单轮用于证明发布线重放后未发生工程漂移，不改写下方原始三连跑身份。该本地检查点结束时，PR、远程 CI、Preview 和 Production 均为 pending；当前状态见下方 PR 与 Preview 结果。
+
+## PR 与 Preview 结果
+
+PR #41 在 head `e7e1541` 上的 push／pull request 两套 CI 均成功。远程常规门为 `361` 个测试文件通过、`16` 个跳过，`3216` 条用例通过、`82` 条跳过、`0` 失败；构建 `77/77`，Lint `0 errors / 43 warnings`。两套零模型 E2E Job 均为 `11/11`，其中 PR Job 记录 `AIRequestLog=0`、12 条 Trace、四类调用违规 `0`，临时 Schema 已删除。
+
+Preview `dpl_GAU2uR8BpbTsP4FQhhnqaGBmv4Sr` 为 Ready。人工 smoke 已通过匿名保护、普通用户后台保护、上海日期归属、【帮我记】完整回应、完成记录、单卡保存和今日日记 draft 生成。首次人工编辑使用了 17 字验收标题，超过 UI 的 16 字合同，产品正确返回 `400 INVALID_JOURNAL_DAILY_AUTOSAVE_REQUEST`；纠正后的首次重新登录在请求到达应用前遇到 Vercel CLI TLS 阻断，因此编辑／保存、来源变化需更新和更新后人工修改保护保持 `not_run`。
+
+当前发布结论为 `远程工程门通过 / Preview 核心主链部分通过 / Production blocked`。Stage 2 Production 等待两项完成：阶段 1 管理员成功读取；Preview 日记编辑、保存、需更新和人工修改保护续跑。机器可读边界见 [`preview-gate-receipt.json`](./preview-gate-receipt.json)。
 
 ## 本地三连跑结果
 

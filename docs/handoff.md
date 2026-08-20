@@ -9,7 +9,7 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 本地发布线已验证，PR／Preview 保持 pending。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 远程工程门通过，Preview 核心主链部分通过，Production blocked。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
@@ -35,7 +35,7 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 
 - 分支已 rebase 到 `origin/main@305f209`，24 个阶段 2 文件边界清楚，Prisma 变更为 `0`。
 - rebase 后类型检查、目标 Lint、文档和差异检查通过；guard `9/9`，浏览器 `11/11`，`AIRequestLog=0`、12 条 Trace 四类违规 `0`、临时 Schema 残留 `0`。
-- 历史完整三连跑继续保留原始运行身份；分支推送、PR、远程 CI、Preview 和 Production 均保持 pending。阶段 2 Production 等待阶段 1 管理员成功读取门完成。
+- 历史完整三连跑继续保留原始运行身份；PR #41 两套远程 CI／E2E 已通过，Preview 已通过事件卡和日记 draft。编辑／保存／需更新续跑因验收输入错误后 TLS 阻断保持 `not_run`；Stage 2 Production 等待 `PEH-020` 与 `PEH-022` 完成。
 
 实施并行覆盖数据口径、零模型 E2E 与评测资产；Production 发布按阶段 1 → 2 → 4 串行。GI-088 原工作区的状态冲突已经按最终证据收口，`175` 项成果由检查点 `199aa94` 封存并推送；原分支、worktree 与私有现场继续保留，清理仍等待最终单独确认。该封存不开放新的模型调用，也不改变本轮 Production 范围。
 

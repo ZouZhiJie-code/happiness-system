@@ -13,7 +13,7 @@
 
 当前执行入口：[DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-- 五阶段生产主线完善已获产品负责人确认并进入实施；当前专项为 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，状态 `已确认·实施中`。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 本地发布线已验证，PR／Preview 保持 pending。公开证据见[数据口径 v2 回执](../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)与[零模型 E2E 回执](../artifacts/production-evidence-hardening/2026-08-19/e2e-zero-model/README.md)。
+- 五阶段生产主线完善已获产品负责人确认并进入实施；当前专项为 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，状态 `已确认·实施中`。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 远程工程门通过，Preview 核心主链部分通过，Production blocked。公开证据见[数据口径 v2 回执](../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)与[零模型 E2E 回执](../artifacts/production-evidence-hardening/2026-08-19/e2e-zero-model/README.md)。
 - 新工作线已从最新 `origin/main` 建立，并通过基线提交 `5c36b49` 对齐当前 Production 源码 `ed8c36d`；分叉原因和处理证据见[问题台账 PEH-001](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 - 本轮范围为数据口径 v2、零模型端到端回归、Production 日志 Golden Set v2、主链重构和月度个性化洞察 Go/No-Go。阶段 1、2、4 逐步 Preview／Production；阶段 3 私有评审；阶段 5 保持隔离。
 - GI-088、生成式访谈发布、数据库迁移、月度 AI 洞察 Production 上线和破坏性清理继续使用独立停止门。Production 继续运行 `event_centered + baseline`。
