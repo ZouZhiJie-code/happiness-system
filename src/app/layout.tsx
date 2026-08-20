@@ -39,7 +39,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <div className="relative flex min-h-dvh flex-col">
                   <AuthLocalBootstrap userId={currentUser?.id ?? null} />
                   <Suspense fallback={<div className="h-[var(--site-header-frame-min-height)] w-full" />}>
-                    <SiteHeader isAdmin={isAdmin} authenticated={Boolean(currentUser)} />
+                    <SiteHeader
+                      isAdmin={isAdmin}
+                      authenticated={Boolean(currentUser)}
+                      userId={currentUser?.id ?? null}
+                    />
                   </Suspense>
                   <main className="flex min-h-0 w-full flex-1 flex-col">
                     <CalendarMainGate>{children}</CalendarMainGate>

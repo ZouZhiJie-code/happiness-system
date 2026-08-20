@@ -3,6 +3,10 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 
 import { SiteHeader } from "@/components/shared/site-header";
 import { authLocalUserIdStorageKey } from "@/features/auth/auth-local";
+import {
+  eventCenteredComposerDraftStoragePrefix,
+  interviewComposerDraftStoragePrefix
+} from "@/features/interview/client-recovery-state";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
 import { interviewSessionStorageKey } from "@/features/interview/dimensions";
 import { renderWithCalendarChrome } from "../helpers/render-with-calendar-chrome";
@@ -65,10 +69,12 @@ describe("site header journal toolbar", () => {
     };
     resizeObserverState.instances = [];
     window.localStorage.clear();
+    window.sessionStorage.clear();
     document.documentElement.style.removeProperty("--site-header-viewport-offset");
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     document.documentElement.style.removeProperty("--site-header-viewport-offset");
   });
@@ -125,7 +131,9 @@ describe("site header journal toolbar", () => {
       `${interviewSessionStorageKey}::user-1`,
       JSON.stringify({ joy: { sessionId: "session-joy" } })
     );
-    renderWithCalendarChrome(<SiteHeader />);
+    const recoveryKey = `${interviewComposerDraftStoragePrefix}::user-1::2026-08-20::joy::session-joy`;
+    window.sessionStorage.setItem(recoveryKey, "退出失败时保留的原话");
+    renderWithCalendarChrome(<SiteHeader userId="user-1" />);
     fireEvent.click(screen.getByRole("button", { name: "打开账户菜单" }));
     const menu = await screen.findByRole("menu");
 
@@ -135,6 +143,7 @@ describe("site header journal toolbar", () => {
     expect(global.fetch).toHaveBeenCalledWith("/api/auth/logout", { method: "POST" });
     expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBe("user-1");
     expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-1`)).not.toBeNull();
+    expect(window.sessionStorage.getItem(recoveryKey)).toBe("退出失败时保留的原话");
     expect(mockRouterReplace).not.toHaveBeenCalled();
     expect(mockRouterRefresh).not.toHaveBeenCalled();
   });
@@ -145,9 +154,13 @@ describe("site header journal toolbar", () => {
       `${interviewSessionStorageKey}::user-1`,
       JSON.stringify({ joy: { sessionId: "session-joy" } })
     );
+    const recoveryKey = `${eventCenteredComposerDraftStoragePrefix}::user-1::root-1::branch-1`;
+    const otherRecoveryKey = `${eventCenteredComposerDraftStoragePrefix}::user-2::root-2::branch-2`;
+    window.sessionStorage.setItem(recoveryKey, "当前用户原话");
+    window.sessionStorage.setItem(otherRecoveryKey, "其他用户原话");
     global.fetch = vi.fn(async () => new Response(null, { status: 204 })) as typeof fetch;
 
-    renderWithCalendarChrome(<SiteHeader />);
+    renderWithCalendarChrome(<SiteHeader userId="user-1" />);
     fireEvent.click(screen.getByRole("button", { name: "打开账户菜单" }));
     const menu = await screen.findByRole("menu");
 
@@ -162,6 +175,31 @@ describe("site header journal toolbar", () => {
     );
     expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBeNull();
     expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-1`)).toBeNull();
+    expect(window.sessionStorage.getItem(recoveryKey)).toBeNull();
+    expect(window.sessionStorage.getItem(otherRecoveryKey)).toBe("其他用户原话");
+  });
+
+  it("continues anonymous navigation when browser storage rejects cleanup", async () => {
+    window.localStorage.setItem(authLocalUserIdStorageKey, "user-1");
+    window.sessionStorage.setItem(
+      `${eventCenteredComposerDraftStoragePrefix}::user-1::root-1::branch-1`,
+      "浏览器限制下的原话"
+    );
+    global.fetch = vi.fn(async () => new Response(null, { status: 204 })) as typeof fetch;
+
+    renderWithCalendarChrome(<SiteHeader userId="user-1" />);
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new DOMException("blocked", "SecurityError");
+    });
+    fireEvent.click(screen.getByRole("button", { name: "打开账户菜单" }));
+    const menu = await screen.findByRole("menu");
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "退出登录" }));
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith("/");
+      expect(mockRouterRefresh).toHaveBeenCalledOnce();
+    });
+    expect(screen.queryByTestId("account-menu-error")).not.toBeInTheDocument();
   });
 
   it("keeps public authentication actions separate from product navigation", () => {

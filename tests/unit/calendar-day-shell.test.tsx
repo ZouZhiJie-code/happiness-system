@@ -382,12 +382,11 @@ describe("calendar day shell", () => {
     expect(trigger).toHaveFocus();
   });
 
-  it("restores focus through the trigger captured when the prompt opens", async () => {
+  it("moves focus to the current journal action when the opening trigger is replaced", async () => {
     const day = buildDayRecord();
     const view = render(<CalendarDayView day={day} today="2026-05-02" />);
     const trigger = screen.getByRole("button", { name: /查看当日完整日志/ });
     trigger.focus();
-    const focusSpy = vi.spyOn(trigger, "focus");
 
     fireEvent.click(trigger);
     expect(screen.getByRole("dialog", { name: "还没有汇总的日志" })).toBeInTheDocument();
@@ -409,11 +408,14 @@ describe("calendar day shell", () => {
       />
     );
     expect(screen.queryByRole("button", { name: /查看当日完整日志/ })).not.toBeInTheDocument();
+    const replacementLink = screen.getByRole("link", { name: /查看当日完整日志/ });
+    expect(trigger.isConnected).toBe(false);
 
     fireEvent.keyDown(window, { key: "Escape" });
 
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "还没有汇总的日志" })).not.toBeInTheDocument());
-    expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+    expect(document.activeElement).toBe(replacementLink);
+    expect(replacementLink).toHaveFocus();
   });
 
   it("prompts today's empty day with write journal and cancel actions", async () => {

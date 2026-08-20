@@ -1,10 +1,12 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 
 import {
   JournalDayWorkspace,
   JournalDayWorkspaceView
 } from "@/components/journal/journal-day-workspace";
+import { useJournalDailyEditor } from "@/components/journal/use-journal-daily-editor";
+import { useJournalRecordEditor } from "@/components/journal/use-journal-record-editor";
 import type {
   JournalDailyDisplayStatus,
   JournalDailyEntryRecord,
@@ -80,6 +82,51 @@ function buildView(displayStatus: JournalDailyDisplayStatus, options?: { empty?:
 
 function jsonResponse(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), { status, headers: { "Content-Type": "application/json" } });
+}
+
+function createDeferredResponse() {
+  let resolve!: (response: Response) => void;
+  const promise = new Promise<Response>((next) => {
+    resolve = next;
+  });
+  return { promise, resolve };
+}
+
+function useInterleavedEditorHarness(initialView: JournalDailyJournalView) {
+  const [view, setView] = React.useState(initialView);
+  const viewRef = React.useRef<JournalDailyJournalView | null>(initialView);
+  const sourceRefreshAppliedRef = React.useRef(false);
+  const commitView = React.useCallback((nextView: JournalDailyJournalView) => {
+    viewRef.current = nextView;
+    setView(nextView);
+  }, []);
+  const refresh = React.useCallback(() => {
+    if (sourceRefreshAppliedRef.current) return;
+    const latestView = viewRef.current;
+    if (!latestView) return;
+    sourceRefreshAppliedRef.current = true;
+    commitView({
+      ...latestView,
+      sourceSignature: "source-signature-2",
+      freshness: "stale",
+      displayStatus: "stale"
+    });
+  }, [commitView]);
+  const record = useJournalRecordEditor({
+    entryDate: initialView.entryDate,
+    view,
+    viewRef,
+    commitView,
+    refresh
+  });
+  const daily = useJournalDailyEditor({
+    entryDate: initialView.entryDate,
+    view,
+    viewRef,
+    commitView,
+    refresh
+  });
+  return { view, record, daily };
 }
 
 describe("journal day workspace", () => {
@@ -434,5 +481,322 @@ describe("journal day workspace", () => {
     await waitFor(() => expect(screen.queryByRole("textbox", { name: "日记正文" })).not.toBeInTheDocument());
     expect(screen.getByText("需更新")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "更新日记" })).toBeInTheDocument();
+  });
+
+  it.each([
+    { responseOrder: "daily-first", caseName: "日记响应先返回、记录响应后返回" },
+    { responseOrder: "record-first", caseName: "记录响应先返回、日记响应后返回" }
+  ] as const)("merges interleaved record and daily edits: $caseName", async ({ responseOrder }) => {
+    const recordDeferred = createDeferredResponse();
+    const dailyDeferred = createDeferredResponse();
+    const recordContent = "交错请求中更新后的记录正文。";
+    const dailyContent = "交错请求中更新后的今日日记。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+    const updatedDaily = {
+      ...buildEntry("modified", 2),
+      content: dailyContent,
+      sourceSignature: "source-signature-1"
+    };
+
+    global.fetch = vi.fn((input, init) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordDeferred.promise;
+      }
+      if (url === "/api/journal/daily/daily-1" && init?.method === "PATCH") {
+        return dailyDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        return Promise.resolve(jsonResponse({
+          ...updatedRecord,
+          savedRevision: 2,
+          savedAt: "2026-05-02T05:01:00.000Z"
+        }));
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useInterleavedEditorHarness(buildView("draft")));
+    act(() => {
+      result.current.record.beginEdit(source);
+      result.current.daily.beginEdit();
+    });
+    act(() => {
+      result.current.record.setEdit({
+        entryId: source.entryId,
+        title: source.title,
+        content: recordContent
+      });
+      result.current.daily.setEdit({
+        title: buildEntry().title,
+        content: dailyContent
+      });
+    });
+
+    let finishRecord!: Promise<void>;
+    let exitDaily!: Promise<void>;
+    act(() => {
+      finishRecord = result.current.record.finishEdit();
+      exitDaily = result.current.daily.exitEdit();
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/interview/event-centered/journal/record-1",
+      expect.objectContaining({ method: "PATCH" })
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/journal/daily/daily-1",
+      expect.objectContaining({ method: "PATCH" })
+    );
+
+    if (responseOrder === "daily-first") {
+      await act(async () => {
+        dailyDeferred.resolve(jsonResponse(updatedDaily));
+        await exitDaily;
+      });
+      await act(async () => {
+        recordDeferred.resolve(jsonResponse(updatedRecord));
+        await finishRecord;
+      });
+    } else {
+      await act(async () => {
+        recordDeferred.resolve(jsonResponse(updatedRecord));
+        await finishRecord;
+      });
+      await act(async () => {
+        dailyDeferred.resolve(jsonResponse(updatedDaily));
+        await exitDaily;
+      });
+    }
+
+    expect(result.current.view.savedSources[0]?.content).toBe(recordContent);
+    expect(result.current.view.entry?.content).toBe(dailyContent);
+    expect(result.current.view.sourceSignature).toBe("source-signature-2");
+    expect(result.current.view.freshness).toBe("stale");
+    expect(result.current.view.displayStatus).toBe("stale");
+  });
+
+  it("merges a record save response into a newer daily edit", async () => {
+    const recordPatchDeferred = createDeferredResponse();
+    const recordSaveDeferred = createDeferredResponse();
+    const dailyPatchDeferred = createDeferredResponse();
+    let markRecordSaveStarted!: () => void;
+    const recordSaveStarted = new Promise<void>((resolve) => {
+      markRecordSaveStarted = resolve;
+    });
+    const recordContent = "正式保存前更新后的记录正文。";
+    const dailyContent = "记录正式保存期间更新的今日日记。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+    const updatedDaily = {
+      ...buildEntry("modified", 2),
+      content: dailyContent,
+      sourceSignature: "source-signature-1"
+    };
+
+    global.fetch = vi.fn((input, init) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordPatchDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        markRecordSaveStarted();
+        return recordSaveDeferred.promise;
+      }
+      if (url === "/api/journal/daily/daily-1" && init?.method === "PATCH") {
+        return dailyPatchDeferred.promise;
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useInterleavedEditorHarness(buildView("draft")));
+    act(() => {
+      result.current.record.beginEdit(source);
+      result.current.daily.beginEdit();
+    });
+    act(() => {
+      result.current.record.setEdit({ entryId: source.entryId, title: source.title, content: recordContent });
+      result.current.daily.setEdit({ title: buildEntry().title, content: dailyContent });
+    });
+
+    let finishRecord!: Promise<void>;
+    let exitDaily!: Promise<void>;
+    act(() => {
+      finishRecord = result.current.record.finishEdit();
+      exitDaily = result.current.daily.exitEdit();
+    });
+    await act(async () => {
+      recordPatchDeferred.resolve(jsonResponse(updatedRecord));
+      await recordSaveStarted;
+    });
+    await act(async () => {
+      dailyPatchDeferred.resolve(jsonResponse(updatedDaily));
+      await exitDaily;
+    });
+    await act(async () => {
+      recordSaveDeferred.resolve(jsonResponse({
+        ...updatedRecord,
+        savedRevision: 2,
+        savedAt: "2026-05-02T05:01:00.000Z"
+      }));
+      await finishRecord;
+    });
+
+    expect(result.current.view.savedSources[0]?.content).toBe(recordContent);
+    expect(result.current.view.entry?.content).toBe(dailyContent);
+    expect(result.current.view.sourceSignature).toBe("source-signature-2");
+    expect(result.current.view.freshness).toBe("stale");
+    expect(result.current.view.displayStatus).toBe("stale");
+  });
+
+  it("keeps the latest source staleness when a daily save response arrives after a record edit", async () => {
+    const dailyPatchDeferred = createDeferredResponse();
+    const dailySaveDeferred = createDeferredResponse();
+    const recordPatchDeferred = createDeferredResponse();
+    let markDailySaveStarted!: () => void;
+    const dailySaveStarted = new Promise<void>((resolve) => {
+      markDailySaveStarted = resolve;
+    });
+    const recordContent = "日记正式保存期间更新的记录正文。";
+    const dailyContent = "正式保存后的今日日记。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+    const updatedDaily = {
+      ...buildEntry("modified", 2),
+      content: dailyContent,
+      sourceSignature: "source-signature-1"
+    };
+
+    global.fetch = vi.fn((input, init) => {
+      const url = String(input);
+      if (url === "/api/journal/daily/daily-1" && init?.method === "PATCH") {
+        return dailyPatchDeferred.promise;
+      }
+      if (url === "/api/journal/daily/daily-1/save" && init?.method === "POST") {
+        markDailySaveStarted();
+        return dailySaveDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordPatchDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        return Promise.resolve(jsonResponse({
+          ...updatedRecord,
+          savedRevision: 2,
+          savedAt: "2026-05-02T05:01:00.000Z"
+        }));
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useInterleavedEditorHarness(buildView("draft")));
+    act(() => {
+      result.current.record.beginEdit(source);
+      result.current.daily.beginEdit();
+    });
+    act(() => {
+      result.current.record.setEdit({ entryId: source.entryId, title: source.title, content: recordContent });
+      result.current.daily.setEdit({ title: buildEntry().title, content: dailyContent });
+    });
+
+    let finishRecord!: Promise<void>;
+    let saveDaily!: Promise<void>;
+    act(() => {
+      finishRecord = result.current.record.finishEdit();
+      saveDaily = result.current.daily.saveEdit();
+    });
+    await act(async () => {
+      dailyPatchDeferred.resolve(jsonResponse(updatedDaily));
+      await dailySaveStarted;
+    });
+    await act(async () => {
+      recordPatchDeferred.resolve(jsonResponse(updatedRecord));
+      await finishRecord;
+    });
+    await act(async () => {
+      dailySaveDeferred.resolve(jsonResponse({
+        ...updatedDaily,
+        status: "saved",
+        savedRevision: 2,
+        savedAt: "2026-05-02T05:02:00.000Z"
+      }));
+      await saveDaily;
+    });
+
+    expect(result.current.view.savedSources[0]?.content).toBe(recordContent);
+    expect(result.current.view.entry?.content).toBe(dailyContent);
+    expect(result.current.view.sourceSignature).toBe("source-signature-2");
+    expect(result.current.view.freshness).toBe("stale");
+    expect(result.current.view.displayStatus).toBe("stale");
+  });
+
+  it("marks the latest view generating after an accepted request", async () => {
+    const generationDeferred = createDeferredResponse();
+    const recordPatchDeferred = createDeferredResponse();
+    const recordContent = "生成请求等待期间更新的记录正文。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+
+    global.fetch = vi.fn((input, init) => {
+      const url = String(input);
+      if (url === "/api/journal/daily/generate" && init?.method === "POST") {
+        return generationDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordPatchDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        return Promise.resolve(jsonResponse({
+          ...updatedRecord,
+          savedRevision: 2,
+          savedAt: "2026-05-02T05:01:00.000Z"
+        }));
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useInterleavedEditorHarness(buildView("draft")));
+    let generateDaily!: Promise<void>;
+    act(() => {
+      generateDaily = result.current.daily.generate();
+      result.current.record.beginEdit(source);
+    });
+    act(() => {
+      result.current.record.setEdit({ entryId: source.entryId, title: source.title, content: recordContent });
+    });
+    let finishRecord!: Promise<void>;
+    act(() => {
+      finishRecord = result.current.record.finishEdit();
+    });
+    await act(async () => {
+      recordPatchDeferred.resolve(jsonResponse(updatedRecord));
+      await finishRecord;
+    });
+    await act(async () => {
+      generationDeferred.resolve(jsonResponse({ accepted: true }, 202));
+      await generateDaily;
+    });
+
+    expect(result.current.view.savedSources[0]?.content).toBe(recordContent);
+    expect(result.current.view.sourceSignature).toBe("source-signature-2");
+    expect(result.current.view.freshness).toBe("stale");
+    expect(result.current.view.displayStatus).toBe("generating");
   });
 });

@@ -1,26 +1,27 @@
 "use client";
 
 import { getLocalAuthUserId } from "@/features/auth/auth-local";
+import {
+  eventCenteredComposerDraftStoragePrefix,
+  eventCenteredJournalOperationStoragePrefix,
+  eventCenteredTurnOutboxStoragePrefix
+} from "@/features/interview/client-recovery-state";
 import type { EventCenteredRespondRequest } from "@/types/event-centered-dialogue";
-
-const DRAFT_PREFIX = "hs-event-centered-composer-draft";
-const OUTBOX_PREFIX = "hs-event-centered-turn-outbox";
-const JOURNAL_OPERATION_PREFIX = "hs-event-centered-journal-operation";
 
 function scope() {
   return getLocalAuthUserId() ?? "anonymous";
 }
 
 function composerKey(input: { rootSessionId: string; branchSessionId: string }) {
-  return [DRAFT_PREFIX, scope(), input.rootSessionId, input.branchSessionId].join("::");
+  return [eventCenteredComposerDraftStoragePrefix, scope(), input.rootSessionId, input.branchSessionId].join("::");
 }
 
 function outboxKey(input: { rootSessionId: string; branchSessionId: string }) {
-  return [OUTBOX_PREFIX, scope(), input.rootSessionId, input.branchSessionId].join("::");
+  return [eventCenteredTurnOutboxStoragePrefix, scope(), input.rootSessionId, input.branchSessionId].join("::");
 }
 
 function journalOperationKey(input: { rootSessionId: string; branchSessionId: string }) {
-  return [JOURNAL_OPERATION_PREFIX, scope(), input.rootSessionId, input.branchSessionId].join("::");
+  return [eventCenteredJournalOperationStoragePrefix, scope(), input.rootSessionId, input.branchSessionId].join("::");
 }
 
 export function readEventCenteredComposerDraft(input: { rootSessionId: string; branchSessionId: string }) {

@@ -70,12 +70,19 @@ export function useJournalDailyEditor({
         title,
         content
       }, requestContext);
-      const sourceChanged = updated.sourceSignature !== currentView.sourceSignature;
+      const latestView = viewRef.current;
+      if (
+        !latestView
+        || latestView.entryDate !== currentView.entryDate
+        || latestView.entry?.id !== updated.id
+      ) return;
+      const sourceChanged = updated.sourceSignature !== latestView.sourceSignature;
+      const remainsStale = sourceChanged || latestView.freshness === "stale";
       commitView({
-        ...currentView,
+        ...latestView,
         entry: updated,
-        freshness: sourceChanged ? "stale" : updated.status,
-        displayStatus: sourceChanged ? "stale" : "draft"
+        freshness: remainsStale ? "stale" : updated.status,
+        displayStatus: remainsStale ? "stale" : "draft"
       });
       setAutosaveStatus("saved");
     })();
@@ -114,15 +121,16 @@ export function useJournalDailyEditor({
         entryId: currentEntry.id,
         expectedContentRevision: currentEntry.contentRevision
       }, requestContext);
-      const currentView = viewRef.current;
-      if (currentView) {
-        commitView({
-          ...currentView,
-          entry: saved,
-          freshness: "saved",
-          displayStatus: "saved"
-        });
-      }
+      const latestView = viewRef.current;
+      if (!latestView || latestView.entryDate !== entryDate || latestView.entry?.id !== saved.id) return;
+      const sourceChanged = saved.sourceSignature !== latestView.sourceSignature;
+      const remainsStale = sourceChanged || latestView.freshness === "stale";
+      commitView({
+        ...latestView,
+        entry: saved,
+        freshness: remainsStale ? "stale" : "saved",
+        displayStatus: remainsStale ? "stale" : "saved"
+      });
       setAutosaveStatus("idle");
       setEdit(null);
     } catch {
@@ -163,7 +171,9 @@ export function useJournalDailyEditor({
         sourceSignature: view.sourceSignature,
         contentRevision: view.entry?.contentRevision ?? null
       }, requestContext);
-      commitView({ ...view, displayStatus: "generating" });
+      const latestView = viewRef.current;
+      if (!latestView || latestView.entryDate !== view.entryDate) return;
+      commitView({ ...latestView, displayStatus: "generating" });
       refresh();
     } catch {
       setError("这次整理暂时没有完成，可以重新尝试。");

@@ -91,7 +91,13 @@ export function useJournalRecordEditor({
         title,
         content
       }, requestContext);
-      commitView(replaceJournalSourceEntry(currentView, source.entryId, {
+      const latestView = viewRef.current;
+      if (
+        !latestView
+        || latestView.entryDate !== currentView.entryDate
+        || !latestView.savedSources.some((item) => item.entryId === source.entryId)
+      ) return;
+      commitView(replaceJournalSourceEntry(latestView, source.entryId, {
         title: updated.title,
         content: updated.content,
         contentRevision: updated.contentRevision,
@@ -137,7 +143,13 @@ export function useJournalRecordEditor({
         entryId: currentSource.entryId,
         expectedContentRevision: currentSource.contentRevision
       }, requestContext);
-      commitView(replaceJournalSourceEntry(currentView, currentSource.entryId, {
+      const latestView = viewRef.current;
+      if (
+        !latestView
+        || latestView.entryDate !== currentView.entryDate
+        || !latestView.savedSources.some((item) => item.entryId === currentSource.entryId)
+      ) return;
+      commitView(replaceJournalSourceEntry(latestView, currentSource.entryId, {
         title: saved.title,
         content: saved.content,
         contentRevision: saved.contentRevision,
