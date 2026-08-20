@@ -345,6 +345,42 @@ describe("journal day workspace", () => {
     expect(screen.getByRole("button", { name: "编辑日记" })).toBeInTheDocument();
   });
 
+  it.each([
+    ["ungenerated", "生成日记", "generate", null],
+    ["stale", "更新日记", "update", 1]
+  ] as const)(
+    "keeps the %s generation request bound to the current source signature and content revision",
+    async (status, action, task, expectedContentRevision) => {
+      global.fetch = vi.fn(async (input, init) => {
+        const url = String(input);
+        if (url.startsWith("/api/journal/day")) return jsonResponse(buildView(status));
+        if (url === "/api/journal/daily/generate" && init?.method === "POST") {
+          return jsonResponse({ accepted: true }, 202);
+        }
+        return jsonResponse({}, 404);
+      }) as typeof fetch;
+
+      render(<JournalDayWorkspace entryDate="2026-05-02" />);
+      fireEvent.click(await screen.findByRole("button", { name: action }));
+
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+        "/api/journal/daily/generate",
+        expect.objectContaining({ method: "POST" })
+      ));
+      const generationCall = vi.mocked(global.fetch).mock.calls.find(
+        ([input]) => String(input) === "/api/journal/daily/generate"
+      );
+      const payload = JSON.parse(String(generationCall?.[1]?.body));
+      expect(payload).toMatchObject({
+        entryDate: "2026-05-02",
+        task,
+        expectedSourceSignature: "source-signature-1",
+        expectedContentRevision
+      });
+      expect(payload.clientOperationId).toMatch(/^journal-daily-2026-05-02-\d+$/u);
+    }
+  );
+
   it("keeps the update progress visible while the action is busy", () => {
     render(
       <JournalDayWorkspaceView
