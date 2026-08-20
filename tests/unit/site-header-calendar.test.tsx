@@ -120,6 +120,11 @@ describe("site header journal toolbar", () => {
   });
 
   it("shows an in-place message when logout fails", async () => {
+    window.localStorage.setItem(authLocalUserIdStorageKey, "user-1");
+    window.localStorage.setItem(
+      `${interviewSessionStorageKey}::user-1`,
+      JSON.stringify({ joy: { sessionId: "session-joy" } })
+    );
     renderWithCalendarChrome(<SiteHeader />);
     fireEvent.click(screen.getByRole("button", { name: "打开账户菜单" }));
     const menu = await screen.findByRole("menu");
@@ -128,6 +133,10 @@ describe("site header journal toolbar", () => {
 
     expect(await screen.findByTestId("account-menu-error")).toHaveTextContent("退出失败，请稍后再试");
     expect(global.fetch).toHaveBeenCalledWith("/api/auth/logout", { method: "POST" });
+    expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBe("user-1");
+    expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-1`)).not.toBeNull();
+    expect(mockRouterReplace).not.toHaveBeenCalled();
+    expect(mockRouterRefresh).not.toHaveBeenCalled();
   });
 
   it("clears local interview state and uses the Next router after logout", async () => {
@@ -148,6 +157,9 @@ describe("site header journal toolbar", () => {
       expect(mockRouterReplace).toHaveBeenCalledWith("/");
       expect(mockRouterRefresh).toHaveBeenCalledOnce();
     });
+    expect(mockRouterReplace.mock.invocationCallOrder[0]).toBeLessThan(
+      mockRouterRefresh.mock.invocationCallOrder[0]
+    );
     expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBeNull();
     expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-1`)).toBeNull();
   });

@@ -845,7 +845,9 @@ describe("analysis shell", () => {
     const joyRow = screen.getByTestId("analysis-dimension-row-joy");
 
     fireEvent.click(within(joyRow).getByRole("button"));
-    expect(await screen.findByTestId("analysis-dimension-panel-joy")).toBeInTheDocument();
+    const joyPanel = await screen.findByTestId("analysis-dimension-panel-joy");
+    fireEvent.click(within(joyPanel).getByTestId("analysis-evidence-chip-entry-joy-2"));
+    expect(screen.getByTestId("analysis-evidence-preview-entry-joy-2")).toBeInTheDocument();
 
     rerender(
       <DimensionInsights
@@ -856,11 +858,15 @@ describe("analysis shell", () => {
       />
     );
     expect(screen.getByTestId("analysis-dimension-panel-joy")).toBeInTheDocument();
+    expect(screen.getByTestId("analysis-evidence-preview-entry-joy-2")).toBeInTheDocument();
 
     rerender(<DimensionInsights record={{ ...record, month: "2026-06" }} />);
     await waitFor(() => {
       expect(screen.queryByTestId("analysis-dimension-panel-joy")).not.toBeInTheDocument();
     });
+    fireEvent.click(within(screen.getByTestId("analysis-dimension-row-joy")).getByRole("button"));
+    expect(await screen.findByTestId("analysis-dimension-panel-joy")).toBeInTheDocument();
+    expect(screen.queryByTestId("analysis-evidence-preview-entry-joy-2")).not.toBeInTheDocument();
   });
 
   it("fetches month and range records in parallel", async () => {
