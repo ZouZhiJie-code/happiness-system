@@ -1,18 +1,28 @@
 const {
+  AIFeedbackRepositoryError,
   findFeedbackContext,
   getAIQualityConsent,
   recordAIQualityConsentDecision,
   revokeAIResponseFeedback,
   saveAIResponseFeedback
-} = vi.hoisted(() => ({
-  findFeedbackContext: vi.fn(),
-  getAIQualityConsent: vi.fn(),
-  recordAIQualityConsentDecision: vi.fn(),
-  revokeAIResponseFeedback: vi.fn(),
-  saveAIResponseFeedback: vi.fn()
-}));
+} = vi.hoisted(() => {
+  class RepositoryError extends Error {
+    constructor(readonly code: "CONSENT_REQUIRED") {
+      super(code);
+    }
+  }
+  return {
+    AIFeedbackRepositoryError: RepositoryError,
+    findFeedbackContext: vi.fn(),
+    getAIQualityConsent: vi.fn(),
+    recordAIQualityConsentDecision: vi.fn(),
+    revokeAIResponseFeedback: vi.fn(),
+    saveAIResponseFeedback: vi.fn()
+  };
+});
 
 vi.mock("@/server/repositories/ai-feedback.repository", () => ({
+  AIFeedbackRepositoryError,
   findFeedbackContext,
   getAIQualityConsent,
   recordAIQualityConsentDecision,
@@ -102,6 +112,25 @@ describe("AI feedback service", () => {
       tags: ["voice_mismatch"],
       comment: "这不像我平时写日记的语气。"
     });
+  });
+
+  it("maps a transaction-time consent withdrawal to the public consent error", async () => {
+    getAIQualityConsent.mockResolvedValue(currentConsent);
+    findFeedbackContext.mockResolvedValue({
+      id: "trace-1",
+      artifactType: "interview_turn",
+      feedback: null
+    });
+    saveAIResponseFeedback.mockRejectedValue(
+      new AIFeedbackRepositoryError("CONSENT_REQUIRED")
+    );
+
+    await expect(submitAIResponseFeedback({
+      traceId: "trace-1",
+      userId: "user-1",
+      vote: "upvote",
+      tags: []
+    })).rejects.toEqual(expect.objectContaining({ code: "CONSENT_REQUIRED" }));
   });
 
   it("persists consent withdrawal through the public service", async () => {

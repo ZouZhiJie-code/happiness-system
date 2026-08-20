@@ -196,8 +196,6 @@ function setupCompleteDetail(options: {
       stage: "finalize",
       activeEventId: "event-1",
       turnCount: 1,
-      lastAssistantQuestion: "分支问题",
-      draftSummary: "分支摘要",
       startedAt: new Date("2026-08-19T08:02:00.000Z"),
       pausedAt: null,
       completedAt: new Date("2026-08-19T08:08:00.000Z"),
@@ -218,8 +216,6 @@ function setupCompleteDetail(options: {
       stage: "finalize",
       activeEventId: "event-1",
       turnCount: 1,
-      lastAssistantQuestion: "根问题",
-      draftSummary: "根摘要",
       startedAt: new Date("2026-08-19T08:00:00.000Z"),
       pausedAt: null,
       completedAt: new Date("2026-08-19T08:07:00.000Z"),
@@ -242,8 +238,6 @@ function setupCompleteDetail(options: {
       stage: "finalize",
       activeEventId: "event-1",
       turnCount: 1,
-      lastAssistantQuestion: "重复分支",
-      draftSummary: "重复分支",
       startedAt: new Date("2026-08-19T08:02:00.000Z"),
       pausedAt: null,
       completedAt: new Date("2026-08-19T08:08:00.000Z"),
@@ -559,6 +553,11 @@ describe("journal Golden Set v2 repository", () => {
     });
     expect(transactionDatabase.interviewMessage.findMany).not.toHaveBeenCalled();
     expect(transactionDatabase.adminAuditLog.create).not.toHaveBeenCalled();
+    const sessionSelection = JSON.stringify(
+      transactionDatabase.interviewSession.findMany.mock.calls.at(-1)?.[0]?.select
+    );
+    expect(sessionSelection).not.toContain("lastAssistantQuestion");
+    expect(sessionSelection).not.toContain("draftSummary");
   });
 
   it("fails closed when any branch belongs to another entry date", async () => {

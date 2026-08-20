@@ -406,8 +406,6 @@ export async function readJournalGoldenSetV2CaseDetail(
           stage: true,
           activeEventId: true,
           turnCount: true,
-          lastAssistantQuestion: true,
-          draftSummary: true,
           startedAt: true,
           pausedAt: true,
           completedAt: true,

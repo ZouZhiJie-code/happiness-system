@@ -4,6 +4,7 @@ import {
   hasCurrentAIQualityConsent
 } from "@/features/ai-feedback/feedback-config";
 import {
+  AIFeedbackRepositoryError,
   findFeedbackContext,
   getAIQualityConsent,
   recordAIQualityConsentDecision,
@@ -82,13 +83,24 @@ export async function submitAIResponseFeedback(input: {
     throw new AIFeedbackError("INVALID_FEEDBACK_TAG");
   }
 
-  const feedback = await saveAIResponseFeedback({
-    traceId: input.traceId,
-    userId: input.userId,
-    vote: input.vote,
-    tags: input.tags,
-    comment: input.comment?.trim() || null
-  });
+  let feedback;
+  try {
+    feedback = await saveAIResponseFeedback({
+      traceId: input.traceId,
+      userId: input.userId,
+      vote: input.vote,
+      tags: input.tags,
+      comment: input.comment?.trim() || null
+    });
+  } catch (error) {
+    if (
+      error instanceof AIFeedbackRepositoryError
+      && error.code === "CONSENT_REQUIRED"
+    ) {
+      throw new AIFeedbackError("CONSENT_REQUIRED");
+    }
+    throw error;
+  }
   if (!feedback) throw new AIFeedbackError("TRACE_NOT_FOUND");
 
   return feedback;

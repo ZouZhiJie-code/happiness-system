@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "evidenceId": "2026-08-20.production-golden-set-v2-metadata-inventory-v1",
+  "evidenceDate": "2026-08-20",
+  "environment": "production",
+  "status": "insufficient_samples",
+  "collectionStatus": "collection_pending",
+  "consent": {
+    "policyVersion": "2026-07-19",
+    "eligibleUserCount": 115,
+    "eligibleInternalUserCount": 1
+  },
+  "eventCenteredFunnel": {
+    "rootSessionCount": 2,
+    "completedRootSessionCount": 1,
+    "completedRootWithUserTurnCount": 1,
+    "completedEventCount": 1,
+    "validSavedEventCardCount": 1
+  },
+  "candidateCoverage": {
+    "eventChainCandidateCount": 1,
+    "internalEventChainCandidateCount": 0,
+    "captureCount": 0,
+    "chatCount": 1,
+    "dailyJournalAnyStatusCount": 1,
+    "dailyJournalDraftCount": 1,
+    "dailyJournalSavedCount": 0,
+    "linkedSavedDailyJournalCount": 0,
+    "fullTrajectoryEligibleCount": 0
+  },
+  "specialBehaviorCoverage": {
+    "eventCardEditedCount": 0,
+    "dailyJournalNeedsUpdateCount": 0,
+    "recoveryCount": 0,
+    "manualSavedRevisionCount": 0,
+    "manualUpdateProtectionCount": 0,
+    "unionCount": 0,
+    "internalUnionCount": 0
+  },
+  "distribution": {
+    "privacyThreshold": 3,
+    "byDay": [],
+    "suppressedDayBucketCount": 1,
+    "byMonth": [
+      {
+        "month": "2026-08",
+        "total": 1,
+        "internal": 0,
+        "capture": 0,
+        "chat": 1
+      }
+    ]
+  },
+  "completionGate": {
+    "expectedFullTrajectoryCount": 30,
+    "minimumCaptureCount": 5,
+    "minimumChatCount": 5,
+    "minimumSpecialBehaviorCount": 5,
+    "fullTrajectoryGatePassed": false,
+    "modeCoverageGatePassed": false,
+    "specialBehaviorGatePassed": false
+  },
+  "safetyReceipt": {
+    "databaseAccess": "read_only",
+    "beginReadOnly": true,
+    "transactionReadOnlyReadback": "on",
+    "contentColumnsSelected": 0,
+    "productionContentReadCount": 0,
+    "auditWriteCount": 0,
+    "modelCallCount": 0,
+    "sampleMappingCreateCount": 0,
+    "contentAccessEnabled": false,
+    "temporaryCredentialFileRemoved": true,
+    "temporaryDirectoryRemoved": true
+  },
+  "publicEvidenceContainsUserContent": false,
+  "publicEvidenceContainsUserIdentity": false
+}

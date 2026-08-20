@@ -8,6 +8,8 @@ const { prisma, tx } = vi.hoisted(() => {
   return {
     tx: transactionClient,
     prisma: {
+      aICase: { findMany: vi.fn() },
+      aIGenerationTrace: { findMany: vi.fn() },
       $transaction: vi.fn(async (callback: (client: typeof transactionClient) => unknown) => callback(transactionClient))
     }
   };
@@ -16,6 +18,7 @@ const { prisma, tx } = vi.hoisted(() => {
 vi.mock("@/server/db/prisma", () => ({ prisma }));
 
 import {
+  loadOptimizationEvidence,
   publishOptimizationCandidate,
   reviewOptimizationCandidateStatus,
   rollbackOptimizationCandidate
@@ -23,6 +26,43 @@ import {
 
 describe("AI optimization repository", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it("requires current consent for both bad-case and positive optimization evidence", async () => {
+    prisma.aICase.findMany.mockResolvedValue([]);
+    prisma.aIGenerationTrace.findMany.mockResolvedValue([]);
+
+    await loadOptimizationEvidence(
+      new Date("2026-08-01T00:00:00.000Z"),
+      new Date("2026-09-01T00:00:00.000Z")
+    );
+
+    expect(prisma.aICase.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        trace: {
+          is: {
+            user: {
+              is: {
+                aiQualityConsentVersion: "2026-07-19",
+                aiQualityConsentAt: { not: null },
+                aiQualityConsentRevokedAt: null
+              }
+            }
+          }
+        }
+      })
+    }));
+    expect(prisma.aIGenerationTrace.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        user: {
+          is: {
+            aiQualityConsentVersion: "2026-07-19",
+            aiQualityConsentAt: { not: null },
+            aiQualityConsentRevokedAt: null
+          }
+        }
+      })
+    }));
+  });
 
   it("publishes an approved few-shot candidate, keeps six ranked examples and writes an audit record", async () => {
     tx.aIOptimizationCandidate.findUnique.mockResolvedValue({

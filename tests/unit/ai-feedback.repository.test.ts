@@ -1,11 +1,13 @@
 const { prismaTransaction, tx } = vi.hoisted(() => {
   const transactionClient = {
+    $queryRaw: vi.fn(),
     aIGenerationTrace: { findFirst: vi.fn(), update: vi.fn() },
     aIFeedback: { upsert: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     aIFeedbackRevision: { create: vi.fn() },
     aICase: { upsert: vi.fn(), update: vi.fn() },
     aIFewShotExample: { updateMany: vi.fn() },
-    user: { update: vi.fn() }
+    aIResponseRegeneration: { updateMany: vi.fn() },
+    user: { findUnique: vi.fn(), update: vi.fn() }
   };
   return {
     tx: transactionClient,
@@ -18,13 +20,22 @@ vi.mock("@/server/db/prisma", () => ({
 }));
 
 import {
+  AIFeedbackRepositoryError,
   recordAIQualityConsentDecision,
   revokeAIResponseFeedback,
   saveAIResponseFeedback
 } from "@/server/repositories/ai-feedback.repository";
 
 describe("AI feedback repository", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    tx.$queryRaw.mockResolvedValue([{ id: "user-1" }]);
+    tx.user.findUnique.mockResolvedValue({
+      aiQualityConsentVersion: "2026-07-19",
+      aiQualityConsentAt: new Date("2026-08-19T08:00:00.000Z"),
+      aiQualityConsentRevokedAt: null
+    });
+  });
 
   it("appends an immutable revision and marks the exact trace for feedback evaluation", async () => {
     tx.aIGenerationTrace.findFirst.mockResolvedValue({
@@ -70,6 +81,35 @@ describe("AI feedback repository", () => {
       where: { sourceTraceId: "trace-1", status: { in: ["candidate", "active"] } },
       data: { status: "retired", retiredAt: expect.any(Date) }
     });
+    expect(tx.aIResponseRegeneration.updateMany).toHaveBeenCalledWith({
+      where: { generatedTraceId: "trace-1" },
+      data: { downvotedAt: expect.any(Date) }
+    });
+    expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      tx.aIGenerationTrace.findFirst.mock.invocationCallOrder[0]
+    );
+  });
+
+  it("fails closed inside the save transaction when consent has been withdrawn", async () => {
+    tx.user.findUnique.mockResolvedValue({
+      aiQualityConsentVersion: "2026-07-19",
+      aiQualityConsentAt: new Date("2026-08-19T08:00:00.000Z"),
+      aiQualityConsentRevokedAt: new Date("2026-08-19T08:30:00.000Z")
+    });
+
+    await expect(saveAIResponseFeedback({
+      traceId: "trace-1",
+      userId: "user-1",
+      vote: "upvote",
+      tags: [],
+      comment: null
+    })).rejects.toEqual(
+      expect.objectContaining<Partial<AIFeedbackRepositoryError>>({
+        code: "CONSENT_REQUIRED"
+      })
+    );
+    expect(tx.aIGenerationTrace.findFirst).not.toHaveBeenCalled();
+    expect(tx.aIFeedback.upsert).not.toHaveBeenCalled();
   });
 
   it("records revocation as a new revision and removes user feedback from case signals", async () => {
@@ -116,6 +156,10 @@ describe("AI feedback repository", () => {
       where: { sourceTraceId: "trace-1", status: { in: ["candidate", "active"] } },
       data: { status: "retired", retiredAt: expect.any(Date) }
     });
+    expect(tx.aIResponseRegeneration.updateMany).toHaveBeenCalledWith({
+      where: { generatedTraceId: "trace-1" },
+      data: { downvotedAt: null }
+    });
   });
 
   it("retires all consent-bound examples when a user leaves the quality program", async () => {
@@ -132,7 +176,15 @@ describe("AI feedback repository", () => {
         revision: 1,
         vote: "upvote",
         tags: [],
-        comment: null
+        comment: null,
+        trace: {
+          evaluation: { totalScore: 60 },
+          case: {
+            sourceSignals: ["user_upvote", "assistant_server_guard"],
+            primaryIssueCode: "user_downvote:free_text",
+            summary: "用户反馈摘要"
+          }
+        }
       }
     ]);
     tx.aIFeedback.update.mockResolvedValue({ id: "feedback-1" });
@@ -142,6 +194,19 @@ describe("AI feedback repository", () => {
     expect(tx.aIFewShotExample.updateMany).toHaveBeenCalledWith({
       where: { sourceTraceId: "trace-1", status: { in: ["candidate", "active"] } },
       data: { status: "retired", retiredAt: expect.any(Date) }
+    });
+    expect(tx.aIResponseRegeneration.updateMany).toHaveBeenCalledWith({
+      where: { generatedTraceId: "trace-1" },
+      data: { downvotedAt: null }
+    });
+    expect(tx.aICase.update).toHaveBeenCalledWith({
+      where: { traceId: "trace-1" },
+      data: expect.objectContaining({
+        classification: "bad",
+        sourceSignals: ["assistant_server_guard"],
+        primaryIssueCode: null,
+        summary: "用户已撤回反馈，当前按自动评估结果分类。"
+      })
     });
   });
 });

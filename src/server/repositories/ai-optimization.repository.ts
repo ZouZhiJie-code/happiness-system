@@ -43,7 +43,18 @@ export async function loadOptimizationEvidence(periodStart: Date, periodEnd: Dat
     prisma.aICase.findMany({
       where: {
         classification: { in: ["bad", "review"] },
-        updatedAt: { gte: periodStart, lt: periodEnd }
+        updatedAt: { gte: periodStart, lt: periodEnd },
+        trace: {
+          is: {
+            user: {
+              is: {
+                aiQualityConsentVersion: CURRENT_PRIVACY_POLICY_VERSION,
+                aiQualityConsentAt: { not: null },
+                aiQualityConsentRevokedAt: null
+              }
+            }
+          }
+        }
       },
       include: {
         trace: {

@@ -2,12 +2,12 @@
 
 - 文档职责：公开评测资产入口
 - 文档状态：已确认·实施中
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-20`
 - 权威入口：[`DL-PROD-20260819`](../../../../docs/ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
 ## 1. 当前结论
 
-Golden Set v2 的隐私、评分、阻断、授权、撤回对账和 `10 / 30` 产品检查点合同已经进入工程实现。当前公开资产只证明评审基础已建立：真实样本 `0`、Production 正文读取 `0`、模型调用 `0`，内容质量和 Golden 身份均保持待验证。
+Golden Set v2 的隐私、评分、阻断、授权、撤回对账和 `10 / 30` 产品检查点合同已经进入工程实现。`2026-08-20` 完成 Production 零正文元数据盘点：当前有效同意用户 `115`、内部账号 `1`；完成根会话、用户回合、完成事件和已保存事件卡串联后只有 `1` 条 `chat` 事件链，当天日记为 `draft`，完整轨迹可入集数为 `0`。当前状态为 `insufficient_samples / collection_pending`；Production 正文读取 `0`、模型调用 `0`，内容质量和 Golden 身份继续待验证。
 
 30 条真实完整链路先组成“Production 真实复盘集／Golden 候选池”。每条样本经过来源核验、评分和人工裁决后，才可以按产品负责人决定获得 Golden 身份。历史或合成案例继续承担独立标注的程序回归职责。
 
@@ -15,6 +15,7 @@ Golden Set v2 的隐私、评分、阻断、授权、撤回对账和 `10 / 30` �
 
 - [`evaluation-start-card.md`](./evaluation-start-card.md)：本轮产品决策、数据身份、判尺、职责、隐私、预算和停止点；
 - [`manifest.json`](./manifest.json)：零正文公开清单、合同指纹、计划数量和当前计数；
+- [`production-metadata-inventory.json`](./production-metadata-inventory.json)：`2026-08-20` Production 只读元数据漏斗、模式／复杂链路覆盖、按日小样本抑制后的日期分布与零正文安全回执；
 - [`golden-set-v2-contract.ts`](../../../../src/features/journal-evaluation/golden-set-v2-contract.ts)：纯数据合同与确定性门禁；
 - [`journal-golden-set-v2-authorization.provider.ts`](../../../../src/server/services/journal-evaluation/journal-golden-set-v2-authorization.provider.ts)：受控私有映射的 fail-closed 读取与可注入授权接口；
 - [`initialize-golden-set-v2-private.ts`](../../../../scripts/journal-generation-eval/initialize-golden-set-v2-private.ts)：本地私有目录检查与初始化入口。
@@ -87,4 +88,4 @@ scripts/journal-generation-eval/initialize-golden-set-v2-private.ts --execute
 
 ## 7. 当前停止点
 
-当前安全门已经覆盖随机身份映射、样本级授权、并发撤回互斥、完整链路归属复核、审计后返回、私有缓存禁止和统一 `404`。Production 配置继续保持默认关闭；真实元数据、逐例正文、样本导出和人工裁决均为 `not_run`。本目录当前不支持 Production 批量导出。
+当前安全门已经覆盖随机身份映射、样本级授权、并发撤回互斥、完整链路归属复核、审计后返回、私有缓存禁止和统一 `404`。Production 元数据盘点已完成，样本状态为 `insufficient_samples / collection_pending`；通过内部账号自然使用继续累积 `30 / 5 / 5` 覆盖，达到门槛后再进入样本级授权和逐例评审。Production 配置继续保持默认关闭；逐例正文、样本导出和人工裁决均为 `not_run`。本目录当前不支持 Production 批量导出。

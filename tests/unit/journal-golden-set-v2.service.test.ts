@@ -177,13 +177,23 @@ describe("journal Golden Set v2 service", () => {
     );
   });
 
-  it("returns 404 without a repository read for missing, withdrawn, or expired mappings", async () => {
+  it("returns 404 without a repository read for missing, future, withdrawn, or expired mappings", async () => {
     vi.stubEnv("GOLDEN_SET_V2_CONTENT_ACCESS_ENABLED", "true");
     const source = authorizedSource();
 
     await expect(getJournalGoldenSetV2CaseDetail(
       { caseId: CASE_ID, adminUsername: "admin" },
       { authorizationProvider: provider([]), now: () => NOW }
+    )).rejects.toMatchObject({ code: "JOURNAL_GOLDEN_SET_V2_CASE_NOT_FOUND" });
+    await expect(getJournalGoldenSetV2CaseDetail(
+      { caseId: CASE_ID, adminUsername: "admin" },
+      {
+        authorizationProvider: provider([{
+          ...source,
+          authorization: { ...source.authorization, authorizedAt: "2026-08-19T10:00:00.000Z" }
+        }]),
+        now: () => NOW
+      }
     )).rejects.toMatchObject({ code: "JOURNAL_GOLDEN_SET_V2_CASE_NOT_FOUND" });
     await expect(getJournalGoldenSetV2CaseDetail(
       { caseId: CASE_ID, adminUsername: "admin" },

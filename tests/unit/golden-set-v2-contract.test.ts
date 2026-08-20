@@ -6,7 +6,9 @@ import {
   goldenSetV2AuthorizedSourceCollectionSchema,
   goldenSetV2AuthorizationSchema,
   goldenSetV2PrivateCaseSchema,
+  goldenSetV2PublicMetadataDistributionSchema,
   goldenSetV2ReviewSchema,
+  isGoldenSetV2AuthorizedSourceActive,
   reconcileGoldenSetV2Authorization,
   type GoldenSetV2CheckpointDecision,
   type GoldenSetV2CurrentConsentSnapshot,
@@ -205,6 +207,37 @@ describe("Golden Set v2 contract", () => {
     expect(mismatched.reasons).toContain("subject_reference_mismatch");
   });
 
+  it("keeps a future-dated sample authorization inactive until its authorized time", () => {
+    const futureAuthorization = {
+      ...authorization,
+      authorizedAt: "2026-08-19T10:00:00.000Z"
+    };
+    const mapping = {
+      caseId: CASE_ID,
+      authorization: futureAuthorization,
+      source: {
+        rootSessionRef: "private-root-session",
+        userIdRef: "private-user-ref",
+        username: "internal_capture",
+        entryDate: "2026-08-19",
+        recordMode: "capture" as const
+      }
+    };
+
+    expect(isGoldenSetV2AuthorizedSourceActive(
+      mapping,
+      new Date("2026-08-19T09:00:00.000Z")
+    )).toBe(false);
+    expect(reconcileGoldenSetV2Authorization({
+      authorization: futureAuthorization,
+      currentConsent
+    })).toMatchObject({
+      status: "quarantined",
+      reasons: ["sample_authorization_not_started"],
+      actions: { contentReadAllowed: false }
+    });
+  });
+
   it("fails closed for deleted accounts, expired authorization, and policy-version changes", () => {
     const deleted = reconcileGoldenSetV2Authorization({
       authorization,
@@ -309,5 +342,24 @@ describe("Golden Set v2 contract", () => {
       singleCaseBlockerCount: 0,
       checkpointDecisions: [checkpoint(30)]
     })).toThrow();
+  });
+
+  it("enforces daily small-cell suppression in public metadata", () => {
+    expect(goldenSetV2PublicMetadataDistributionSchema.safeParse({
+      privacyThreshold: 3,
+      byDay: [],
+      suppressedDayBucketCount: 1,
+      byMonth: [
+        { month: "2026-08", total: 1, internal: 0, capture: 0, chat: 1 }
+      ]
+    }).success).toBe(true);
+    expect(goldenSetV2PublicMetadataDistributionSchema.safeParse({
+      privacyThreshold: 3,
+      byDay: [
+        { day: "2026-08-13", total: 1, internal: 0, capture: 0, chat: 1 }
+      ],
+      suppressedDayBucketCount: 0,
+      byMonth: []
+    }).success).toBe(false);
   });
 });

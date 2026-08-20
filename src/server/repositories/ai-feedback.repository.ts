@@ -1,9 +1,116 @@
 import { randomUUID } from "node:crypto";
 
-import type { AIFeedbackVote } from "@prisma/client";
+import { Prisma, type AIFeedbackVote } from "@prisma/client";
 
-import { CURRENT_PRIVACY_POLICY_VERSION } from "@/features/ai-feedback/feedback-config";
+import {
+  CURRENT_PRIVACY_POLICY_VERSION,
+  hasCurrentAIQualityConsent
+} from "@/features/ai-feedback/feedback-config";
 import { prisma } from "@/server/db/prisma";
+
+export class AIFeedbackRepositoryError extends Error {
+  constructor(readonly code: "CONSENT_REQUIRED") {
+    super(code);
+    this.name = "AIFeedbackRepositoryError";
+  }
+}
+
+async function lockCurrentAIQualityConsent(
+  tx: Prisma.TransactionClient,
+  userId: string
+) {
+  const lockedUsers = await tx.$queryRaw<Array<{ id: string }>>(
+    Prisma.sql`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR SHARE`
+  );
+  if (lockedUsers.length !== 1) return false;
+
+  const user = await tx.user.findUnique({
+    where: { id: userId },
+    select: {
+      aiQualityConsentVersion: true,
+      aiQualityConsentAt: true,
+      aiQualityConsentRevokedAt: true
+    }
+  });
+  return Boolean(user && hasCurrentAIQualityConsent(user));
+}
+
+type FeedbackRevocationContext = {
+  traceId: string;
+  feedback: {
+    id: string;
+    revision: number;
+    vote: AIFeedbackVote;
+    tags: string[];
+    comment: string | null;
+  };
+  evaluation: { totalScore: number } | null;
+  evaluationCase: {
+    sourceSignals: string[];
+    primaryIssueCode: string | null;
+    summary: string | null;
+  } | null;
+};
+
+async function revokeFeedbackWithinTransaction(
+  tx: Prisma.TransactionClient,
+  context: FeedbackRevocationContext,
+  now: Date
+) {
+  const revision = context.feedback.revision + 1;
+  const feedback = await tx.aIFeedback.update({
+    where: { id: context.feedback.id },
+    data: { status: "revoked", revokedAt: now, revision }
+  });
+  await tx.aIFeedbackRevision.create({
+    data: {
+      feedbackId: context.feedback.id,
+      revision,
+      vote: context.feedback.vote,
+      tags: context.feedback.tags,
+      comment: context.feedback.comment,
+      status: "revoked"
+    }
+  });
+  await tx.aIGenerationTrace.update({
+    where: { id: context.traceId },
+    data: { feedbackEvaluationPending: false }
+  });
+  await tx.aIResponseRegeneration.updateMany({
+    where: { generatedTraceId: context.traceId },
+    data: { downvotedAt: null }
+  });
+  await tx.aIFewShotExample.updateMany({
+    where: { sourceTraceId: context.traceId, status: { in: ["candidate", "active"] } },
+    data: { status: "retired", retiredAt: now }
+  });
+
+  if (context.evaluationCase) {
+    const sourceSignals = context.evaluationCase.sourceSignals.filter(
+      (item) => !item.startsWith("user_")
+    );
+    const score = context.evaluation?.totalScore ?? 80;
+    const userDerivedCase = context.evaluationCase.sourceSignals.some(
+      (item) => item.startsWith("user_")
+    ) || context.evaluationCase.primaryIssueCode?.startsWith("user_downvote:") === true;
+    await tx.aICase.update({
+      where: { traceId: context.traceId },
+      data: {
+        classification: score < 70 ? "bad" : score < 85 ? "review" : "good",
+        priority: score < 70 ? 70 : score < 85 ? 50 : 10,
+        sourceSignals,
+        primaryIssueCode: context.evaluationCase.primaryIssueCode?.startsWith("user_downvote:")
+          ? null
+          : context.evaluationCase.primaryIssueCode,
+        summary: userDerivedCase
+          ? "用户已撤回反馈，当前按自动评估结果分类。"
+          : context.evaluationCase.summary
+      }
+    });
+  }
+
+  return feedback;
+}
 
 export function getAIQualityConsent(userId: string) {
   return prisma.user.findUnique({
@@ -41,33 +148,35 @@ export async function recordAIQualityConsentDecision(userId: string, participate
     if (!participate) {
       const activeFeedback = await tx.aIFeedback.findMany({
         where: { userId, status: "active" },
-        select: { id: true, traceId: true, revision: true, vote: true, tags: true, comment: true }
+        select: {
+          id: true,
+          traceId: true,
+          revision: true,
+          vote: true,
+          tags: true,
+          comment: true,
+          trace: {
+            select: {
+              evaluation: { select: { totalScore: true } },
+              case: {
+                select: {
+                  sourceSignals: true,
+                  primaryIssueCode: true,
+                  summary: true
+                }
+              }
+            }
+          }
+        }
       });
 
       for (const feedback of activeFeedback) {
-        const revision = feedback.revision + 1;
-        await tx.aIFeedback.update({
-          where: { id: feedback.id },
-          data: { status: "revoked", revokedAt: now, revision }
-        });
-        await tx.aIFeedbackRevision.create({
-          data: {
-            feedbackId: feedback.id,
-            revision,
-            vote: feedback.vote,
-            tags: feedback.tags,
-            comment: feedback.comment,
-            status: "revoked"
-          }
-        });
-        await tx.aIGenerationTrace.update({
-          where: { id: feedback.traceId },
-          data: { feedbackEvaluationPending: false }
-        });
-        await tx.aIFewShotExample.updateMany({
-          where: { sourceTraceId: feedback.traceId, status: { in: ["candidate", "active"] } },
-          data: { status: "retired", retiredAt: now }
-        });
+        await revokeFeedbackWithinTransaction(tx, {
+          traceId: feedback.traceId,
+          feedback,
+          evaluation: feedback.trace.evaluation,
+          evaluationCase: feedback.trace.case
+        }, now);
       }
     }
 
@@ -105,6 +214,10 @@ export async function saveAIResponseFeedback(input: {
   comment: string | null;
 }) {
   return prisma.$transaction(async (tx) => {
+    if (!await lockCurrentAIQualityConsent(tx, input.userId)) {
+      throw new AIFeedbackRepositoryError("CONSENT_REQUIRED");
+    }
+
     const trace = await tx.aIGenerationTrace.findFirst({
       where: { id: input.traceId, userId: input.userId, status: "completed" },
       select: { id: true, artifactType: true, feedback: true, case: true }
@@ -158,14 +271,12 @@ export async function saveAIResponseFeedback(input: {
         data: { status: "retired", retiredAt: new Date() }
       });
     }
-    if (tx.aIResponseRegeneration?.updateMany) {
-      await tx.aIResponseRegeneration.updateMany({
-        where: { generatedTraceId: trace.id },
-        data: {
-          downvotedAt: input.vote === "downvote" ? new Date() : null
-        }
-      });
-    }
+    await tx.aIResponseRegeneration.updateMany({
+      where: { generatedTraceId: trace.id },
+      data: {
+        downvotedAt: input.vote === "downvote" ? new Date() : null
+      }
+    });
 
     const feedbackSignal = input.vote === "downvote" ? "user_downvote" : "user_upvote";
     const sourceSignals = Array.from(
@@ -205,56 +316,11 @@ export async function revokeAIResponseFeedback(traceId: string, userId: string) 
 
     if (!trace?.feedback || trace.feedback.status === "revoked") return trace?.feedback ?? null;
 
-    const revision = trace.feedback.revision + 1;
-    const now = new Date();
-    const feedback = await tx.aIFeedback.update({
-      where: { id: trace.feedback.id },
-      data: { status: "revoked", revokedAt: now, revision }
-    });
-    await tx.aIFeedbackRevision.create({
-      data: {
-        feedbackId: feedback.id,
-        revision,
-        vote: feedback.vote,
-        tags: feedback.tags,
-        comment: feedback.comment,
-        status: "revoked"
-      }
-    });
-    await tx.aIGenerationTrace.update({
-      where: { id: trace.id },
-      data: { feedbackEvaluationPending: false }
-    });
-    if (tx.aIResponseRegeneration?.updateMany) {
-      await tx.aIResponseRegeneration.updateMany({
-        where: { generatedTraceId: trace.id },
-        data: { downvotedAt: null }
-      });
-    }
-    await tx.aIFewShotExample.updateMany({
-      where: { sourceTraceId: trace.id, status: { in: ["candidate", "active"] } },
-      data: { status: "retired", retiredAt: now }
-    });
-
-    if (trace.case) {
-      const sourceSignals = trace.case.sourceSignals.filter((item) => !item.startsWith("user_"));
-      const score = trace.evaluation?.totalScore ?? 80;
-      await tx.aICase.update({
-        where: { traceId: trace.id },
-        data: {
-          classification: score < 70 ? "bad" : score < 85 ? "review" : "good",
-          priority: score < 70 ? 70 : score < 85 ? 50 : 10,
-          sourceSignals,
-          primaryIssueCode: trace.case.primaryIssueCode?.startsWith("user_downvote:")
-            ? null
-            : trace.case.primaryIssueCode,
-          summary: trace.case.primaryIssueCode?.startsWith("user_downvote:")
-            ? "用户已撤回反馈，当前按自动评估结果分类。"
-            : trace.case.summary
-        }
-      });
-    }
-
-    return feedback;
+    return revokeFeedbackWithinTransaction(tx, {
+      traceId: trace.id,
+      feedback: trace.feedback,
+      evaluation: trace.evaluation,
+      evaluationCase: trace.case
+    }, new Date());
   });
 }

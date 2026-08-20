@@ -306,7 +306,8 @@ export function isGoldenSetV2AuthorizedSourceActive(
   checkedAt: Date
 ) {
   const authorization = mapping.authorization;
-  return authorization.withdrawnAt === null
+  return Date.parse(authorization.authorizedAt) <= checkedAt.getTime()
+    && authorization.withdrawnAt === null
     && (
       authorization.expiresAt === null
       || Date.parse(authorization.expiresAt) > checkedAt.getTime()
@@ -335,6 +336,7 @@ export type GoldenSetV2CurrentConsentSnapshot = z.infer<typeof goldenSetV2Curren
 export const GOLDEN_SET_V2_RECONCILIATION_REASONS = [
   "subject_reference_mismatch",
   "account_deleted",
+  "sample_authorization_not_started",
   "sample_authorization_withdrawn",
   "sample_authorization_expired",
   "consent_missing",
@@ -373,6 +375,9 @@ export function reconcileGoldenSetV2Authorization(input: {
     reasons.push("subject_reference_mismatch");
   }
   if (!currentConsent.subjectExists) reasons.push("account_deleted");
+  if (Date.parse(authorization.authorizedAt) > Date.parse(currentConsent.checkedAt)) {
+    reasons.push("sample_authorization_not_started");
+  }
   if (authorization.withdrawnAt) reasons.push("sample_authorization_withdrawn");
   if (
     authorization.expiresAt
@@ -601,3 +606,42 @@ export const goldenSetV2PublicManifestSchema = z.object({
 });
 
 export type GoldenSetV2PublicManifest = z.infer<typeof goldenSetV2PublicManifestSchema>;
+
+export const GOLDEN_SET_V2_PUBLIC_SMALL_CELL_THRESHOLD = 3 as const;
+
+const goldenSetV2PublicDistributionCountShape = {
+  total: z.number().int().nonnegative(),
+  internal: z.number().int().nonnegative(),
+  capture: z.number().int().nonnegative(),
+  chat: z.number().int().nonnegative()
+};
+
+function validateGoldenSetV2PublicDistributionCounts(
+  bucket: { total: number; internal: number; capture: number; chat: number },
+  context: z.RefinementCtx
+) {
+  if (bucket.internal > bucket.total || bucket.capture + bucket.chat !== bucket.total) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "GOLDEN_SET_V2_PUBLIC_DISTRIBUTION_COUNT_INVALID"
+    });
+  }
+}
+
+export const goldenSetV2PublicMetadataDistributionSchema = z.object({
+  privacyThreshold: z.literal(GOLDEN_SET_V2_PUBLIC_SMALL_CELL_THRESHOLD),
+  byDay: z.array(
+    z.object({
+      ...goldenSetV2PublicDistributionCountShape,
+      day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
+      total: z.number().int().min(GOLDEN_SET_V2_PUBLIC_SMALL_CELL_THRESHOLD)
+    }).strict().superRefine(validateGoldenSetV2PublicDistributionCounts)
+  ),
+  suppressedDayBucketCount: z.number().int().nonnegative(),
+  byMonth: z.array(
+    z.object({
+      ...goldenSetV2PublicDistributionCountShape,
+      month: z.string().regex(/^\d{4}-\d{2}$/u)
+    }).strict().superRefine(validateGoldenSetV2PublicDistributionCounts)
+  )
+}).strict();
