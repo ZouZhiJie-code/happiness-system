@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v88",
-  "status": "complete_response_first_v1_2_minimal_envelope_in_progress",
-  "currentQueueStage": "complete_response_first_v1_2_minimal_state_contract",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v89",
+  "status": "complete_response_first_v1_2_1_json_mode_off_in_progress",
+  "currentQueueStage": "complete_response_first_v1_2_1_transport_stability",
   "semanticQualityDecisionPresentation": {
     "status": "product_owner_confirmed",
     "productJudgment": "每个语义质量判断先逐例展示与判断直接相关的用户输入和 AI 实际输出；Codex 只作初评，产品负责人基于原文作最终裁决。",
@@ -118,13 +118,13 @@
     "stopPoint": "v1_1_production_contract_no_go_superseded_by_v1_2_minimal_envelope"
   },
   "completeResponseFirstV12": {
-    "status": "confirmed_in_progress_results_pending",
-    "confirmedFact": "v1.1 纯文本候选保持 7 pass / 1 minor / 0 fail 的 Codex 初评方向；生产旧合同 8 次请求稳定完成但仅 2/8 合同有效，证明当前主要阻力位于输出合同与状态职责。",
-    "productJudgment": "继续推进到隔离页面验收；语义质量仍逐题展示完整相关用户输入与实际 AI 输出，由产品负责人最终裁决；验收前 Production 保持 baseline。",
-    "codexAssessment": "首个单因素是把完整事件中心模型输出收缩为完整 response 与本回合最少状态。模型负责自然回应和少量语义提取，程序负责来源、问题一致性、状态映射和原子写入。",
+    "status": "no_go_json_transport_instability",
+    "confirmedFact": "v1.2 已完成同一八题 8/8。八次均 HTTP 200、finishReason=stop、Thinking 关闭、低于 15 秒且未触发 Token 上限；中位 3497.5ms、最长 6376ms。4/8 最小合同有效，另 4/8 在非空上游内容上报 Unexpected end of JSON input。",
+    "productJudgment": "继续推进到隔离页面验收；先用单因素排除 Provider JSON 模式不稳定。语义质量仍逐题展示完整相关用户输入与实际 AI 输出，由产品负责人最终裁决；验收前 Production 保持 baseline。",
+    "codexAssessment": "最小合同已经把旧完整状态合同的语义负担移除；当前批次 No-Go 由 4 次 JSON 解析失败触发。HTTP、耗时、Token 和 Thinking 证据均不支持把失败归因于超时或 Token 截断。",
     "openHypotheses": [
-      "最小 envelope 能否把八题合同有效率从 2/8 提升到 8/8。",
-      "增加少量事实与控制字段后，中位可见耗时能否回到 6 秒内。",
+      "取消 Provider response_format=json_object 后，同一严格 JSON 是否能稳定达到 8/8 可解析。",
+      "四条 v1.2 有效正文的质量方向能否在技术稳定批次中保持。",
       "确定性状态映射能否支持刷新、恢复、纠正和继续回合。"
     ],
     "execution": {
@@ -132,7 +132,7 @@
       "strategy": "complete_response_v1_2",
       "architecture": "one_call_complete_response_plus_minimal_state",
       "callsAuthorized": 8,
-      "callsConsumed": 0,
+      "callsConsumed": 8,
       "concurrency": 1,
       "retries": 0,
       "recoveryCalls": 0,
@@ -143,10 +143,40 @@
     },
     "evidence": {
       "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md",
-      "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-receipt.json",
-      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-handoff.md"
+      "startCard": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-start-card.json",
+      "receipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-receipt.json",
+      "handoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md",
+      "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-stage-ledger-v1.json"
     },
-    "stopPoint": "complete_v1_2_engineering_and_eight_case_production_contract_gate_before_preview"
+    "stopPoint": "v1_2_no_go_v1_2_1_json_mode_single_factor_confirmed"
+  },
+  "completeResponseFirstV121": {
+    "status": "confirmed_in_progress_results_pending",
+    "confirmedFact": "父 v1.2 已证明八题速度、HTTP、finishReason、Thinking 和 Token 均稳定，但 4/8 JSON 解析失败。",
+    "productJudgment": "继续执行到可页面验收水平；本轮授权覆盖同一八题 8 次调用，语义裁决继续基于完整原文和实际输出。",
+    "codexAssessment": "唯一行为变化是取消 Provider response_format=json_object；Prompt、Schema、模型、Thinking、Temperature、Token、输入和本地严格校验保持固定。解析失败原文进入 0600 私有诊断。",
+    "openHypotheses": [
+      "Provider JSON 模式是否是四次 Unexpected end 的主要触发因素。",
+      "省略 API JSON 模式后，模型能否仍稳定遵循同一最小 JSON Schema。"
+    ],
+    "execution": {
+      "candidate": "2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off",
+      "strategy": "complete_response_v1_2_1",
+      "callsAuthorized": 8,
+      "callsConsumed": 0,
+      "concurrency": 1,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md",
+      "parentReceipt": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-receipt.json",
+      "parentHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md"
+    },
+    "stopPoint": "eight_case_transport_and_quality_gate_before_preview"
   },
   "responseFirstV29": {
     "status": "correction_gate_product_pass_continuation_product_fail_no_go",

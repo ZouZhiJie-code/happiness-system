@@ -15,6 +15,7 @@ import { GENERATIVE_MVP_SMOKE_CASES } from "@/features/interview/event-centered/
 import {
   getEventCenteredStrategyMode,
   isCompleteResponseFirstEventCenteredStrategyEnabled,
+  isCompleteResponseFirstV12EventCenteredStrategyEnabled,
   isGenerativeEventCenteredStrategyEnabled
 } from "@/features/interview/event-centered/generative-release";
 
@@ -158,11 +159,17 @@ describe("event-centered generative strategy assets", () => {
     expect(getEventCenteredStrategyMode({
       INTERVIEW_EVENT_CENTERED_STRATEGY: "COMPLETE_RESPONSE_V1_1"
     })).toBe("complete_response_v1_1");
+    expect(getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "COMPLETE_RESPONSE_V1_2"
+    })).toBe("complete_response_v1_2");
     expect(isGenerativeEventCenteredStrategyEnabled("generative")).toBe(true);
     expect(isGenerativeEventCenteredStrategyEnabled("complete_response_v1_1")).toBe(true);
+    expect(isGenerativeEventCenteredStrategyEnabled("complete_response_v1_2")).toBe(true);
     expect(isCompleteResponseFirstEventCenteredStrategyEnabled("complete_response_v1_1"))
       .toBe(true);
     expect(isCompleteResponseFirstEventCenteredStrategyEnabled("generative"))
       .toBe(false);
+    expect(isCompleteResponseFirstV12EventCenteredStrategyEnabled("complete_response_v1_2"))
+      .toBe(true);
   });
 });

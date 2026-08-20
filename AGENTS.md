@@ -14,7 +14,7 @@ Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、�
 - GI-088 生成式访谈、独立准入、真人 Preview 和生成式能力发布继续关闭。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
 - `2026-08-13` 阶段 C2 已修复 Judge 运行器并完成全新校准：Plus 普通与思考均 `20/20` 且 No-Go；Max 思考 `15/20` 后因连接与 DNS 故障形成 `technical_blocked`。累计 `64` 次、4 次补跑、0.584052 元，历史身份保持不变。
 - `2026-08-19` GI-088 回应优先 v2.9 纠正首题产品 `pass` 后，真实 CONTINUE 已完成 Low＋High `2/2`：Low `3967ms`、Codex 初评 `minor`；High `1885ms`、HTTP 200／stop／完整 JSON，但缺少覆盖判断与开放目标，状态合同失败；纯时间 `5852ms` 通过，整体技术门因合同失败为 `false`。Codex 与产品负责人均裁决完整回合 `fail`，本轮 `No-Go / stop`；后续 `4 not_run`，页面、Preview 和发布均为 `not_run`；Production 保持 `event_centered + baseline`。
-- `2026-08-20` GI-088 完整回应优先 v1.1 生产合同复验已完成 `8/8`：八次均 HTTP 200／stop、15 秒内且未截断，中位 `7757ms`、最长 `10843ms`；旧完整状态合同只有 `2/8` 有效，两个有效输出都只复述后结束，质量 No-Go。当前进入 v1.2 最小生产合同，模型只提交完整回应与本回合最少状态；新预算 `0/8`，结果待验证。页面、Preview 和发布仍未运行；Production 继续保持 `event_centered + baseline`。
+- `2026-08-20` GI-088 完整回应优先 v1.2 最小生产合同已完成 `8/8`：八次均 HTTP 200／stop、低于 15 秒且未触发 Token 上限，中位 `3497.5ms`、最长 `6376ms`；`4/8` 合同有效，另 `4/8` 收到非空但不完整的 JSON，均报 `Unexpected end of JSON input`，形成技术 No-Go。当前进入 v1.2.1 单因素验证，只取消 Provider `response_format=json_object`，Prompt、Schema、模型、Thinking、Temperature、`1280` Token 与同一八题保持固定；新预算 `0/8`。页面、Preview 和发布仍未运行；Production 继续保持 `event_centered + baseline`。
 - 网页端产品主线：`访谈记录 → 当天时间线事件卡片 → 今日日记`。访谈页负责表达、回应、保存和返回当天；日记页负责生成、查看和更新当天日记。
 - 五个维度为 `joy / fulfillment / reflection / improvement / gratitude`。理论与完成规则由 [`docs/theory/`](./docs/theory/) 承担。
 - 历史候选、测试数字和部署记录只承担各自时期的证据职责，不能自动转化为当前产品结论或发布授权。

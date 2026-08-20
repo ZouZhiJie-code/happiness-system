@@ -24,11 +24,17 @@ import {
 } from "@/features/interview/event-centered/generative-turn-policy";
 import {
   isCompleteResponseFirstEventCenteredStrategyEnabled,
+  isCompleteResponseFirstV12EventCenteredStrategyEnabled,
   isGenerativeEventCenteredStrategyEnabled
 } from "@/features/interview/event-centered/generative-release";
 import {
   EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME
 } from "@/features/interview/event-centered/complete-response-first";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_STRATEGY,
+  alignEventCenteredCompleteResponseFirstV12Policy
+} from "@/features/interview/event-centered/complete-response-first-v1-2";
 import {
   EVENT_CENTERED_ANGLE_CARD_VERSION,
   EVENT_CENTERED_FEW_SHOT_VERSION,
@@ -113,6 +119,7 @@ import {
   extractEventCenteredPersonalReactionFact,
   generateEventCenteredGenerativeSemanticPlanAI,
   generateEventCenteredGenerativeVisibleTurnAI,
+  generateEventCenteredCompleteResponseV12AI,
   generateEventCenteredThoughtMapUpdateAI,
   generateEventCenteredThoughtQuestionAI,
   generateEventCenteredTurnOnceAI,
@@ -1067,12 +1074,15 @@ function resolveCurrentQuestionContext(
 
 function recentGenerativeTurns(
   data: EventCenteredInterviewWorkspaceData,
-  limit = 3
+  limit = 3,
+  includeCompleteAssistantResponse = false
 ) {
   const turns: Array<{
     user: string;
     assistantUnderstanding: string;
     assistantQuestion: string | null;
+    assistantResponse?: string;
+    assistantMessageId?: string;
   }> = [];
   let latestUser: string | null = null;
   for (const message of data.messages) {
@@ -1087,11 +1097,18 @@ function recentGenerativeTurns(
       latestUser = null;
       continue;
     }
-    turns.push({
+    const turn = {
       user: latestUser,
       assistantUnderstanding: payload.naturalUnderstanding,
-      assistantQuestion: payload.questionSpec ? payload.naturalResponse : null
-    });
+      assistantQuestion: payload.questionSpec ? payload.naturalResponse : null,
+      ...(includeCompleteAssistantResponse
+        ? {
+            assistantResponse: displayWorkspaceMessage(message),
+            assistantMessageId: message.id
+          }
+        : {})
+    };
+    turns.push(turn);
     latestUser = null;
   }
   return turns.slice(-Math.max(1, limit));
@@ -1959,8 +1976,12 @@ export async function respondEventCenteredInterview(
       effectiveRequest.action === "continue_exploration";
     const thoughtOnly = isEventCenteredThoughtOnlyScope();
     const generativeEnabled = isGenerativeEventCenteredStrategyEnabled();
-    const completeResponseFirstEnabled =
+    const completeResponseFirstV11Enabled =
       isCompleteResponseFirstEventCenteredStrategyEnabled();
+    const completeResponseFirstV12Enabled =
+      isCompleteResponseFirstV12EventCenteredStrategyEnabled();
+    const completeResponseFirstEnabled =
+      completeResponseFirstV11Enabled || completeResponseFirstV12Enabled;
     const thoughtControl = thoughtOnly
       ? gi066ThoughtControl({ action: effectiveRequest.action, rawText })
       : "none" as const;
@@ -1994,6 +2015,7 @@ export async function respondEventCenteredInterview(
     );
     const deterministicControlOnly = (isControl || thoughtDeterministicControl) && !autoEnterThought;
     const eventRecordingRecognition = isEventRecordingPhase &&
+      !completeResponseFirstV12Enabled &&
       !deterministicControlOnly &&
       !autoEnterThought &&
       !preservesCurrentQuestionDeterministically;
@@ -2004,7 +2026,7 @@ export async function respondEventCenteredInterview(
     });
     const generativeAttempted = generativeEnabled &&
       !deterministicControlOnly &&
-      (!isEventRecordingPhase || autoEnterThought) &&
+      (!isEventRecordingPhase || autoEnterThought || completeResponseFirstV12Enabled) &&
       !preservesCurrentQuestionDeterministically &&
       !deterministicUnableAnswerHandling;
     const requiresThoughtCandidateGeneration = thoughtOnly &&
@@ -2037,7 +2059,9 @@ export async function respondEventCenteredInterview(
       ? "baseline"
       : deterministicUnableAnswerHandling
         ? "baseline"
-      : completeResponseFirstEnabled
+      : completeResponseFirstV12Enabled
+        ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_STRATEGY
+      : completeResponseFirstV11Enabled
         ? "complete_response_v1_1"
         : generativeEnabled
           ? "generative"
@@ -2107,8 +2131,13 @@ export async function respondEventCenteredInterview(
       currentQuestionSurfaceLevel: answeredQuestionSurfaceLevel,
       currentQuestionCognitiveAction: state.currentQuestion?.cognitiveAction ?? null,
       correctionRequested: effectiveRequest.action === "correct_understanding",
+      correctionTargetAssistantMessageId: correctionTargetMessage?.id ?? null,
       facts: factProjection.facts,
-      recentTurns: recentGenerativeTurns(before, completeResponseFirstEnabled ? 8 : 3),
+      recentTurns: recentGenerativeTurns(
+        before,
+        completeResponseFirstEnabled ? 8 : 3,
+        completeResponseFirstV12Enabled
+      ),
       askedTargets: generativeRun?.askedTargets ?? [],
       answeredTargets: generativeRun?.answeredTargets ?? [],
       deniedTargets: generativeRun?.deniedTargets ?? [],
@@ -2133,9 +2162,15 @@ export async function respondEventCenteredInterview(
       completeResponseFirst: completeResponseFirstEnabled,
       ...(completeResponseFirstEnabled
         ? {
-            maxTokens: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.maxTokens,
-            maxAttempts: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.maxAttempts,
-            timeoutMs: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.timeoutMs
+            maxTokens: completeResponseFirstV12Enabled
+              ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.maxTokens
+              : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.maxTokens,
+            maxAttempts: completeResponseFirstV12Enabled
+              ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.maxAttempts
+              : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.maxAttempts,
+            timeoutMs: completeResponseFirstV12Enabled
+              ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.timeoutMs
+              : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.timeoutMs
           }
         : {}),
       onRetry: async ({ attempt }) => {
@@ -2240,7 +2275,9 @@ export async function respondEventCenteredInterview(
         };
       } else if (generativeArchitecture === "one_call") {
         const modelStartedAt = Date.now();
-        generativeResult = await generateEventCenteredTurnOnceAI(generativeInput);
+        generativeResult = completeResponseFirstV12Enabled
+          ? await generateEventCenteredCompleteResponseV12AI(generativeInput)
+          : await generateEventCenteredTurnOnceAI(generativeInput);
         timing.visibleResponseModelMs = elapsedMs(modelStartedAt);
       } else {
         const inputFingerprint = eventCenteredGenerativeInputFingerprint(generativeInput);
@@ -2304,6 +2341,8 @@ export async function respondEventCenteredInterview(
         ? "baseline"
       : generativeRuntimeFallback
         ? "baseline"
+        : completeResponseFirstV12Enabled
+          ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_STRATEGY
         : generativeEnabled
           ? "generative"
           : "baseline";
@@ -2581,7 +2620,7 @@ export async function respondEventCenteredInterview(
           }
         }
       : null;
-    const policy = gi066ThoughtExecution
+    const basePolicy = gi066ThoughtExecution
       ? applyGI066ThoughtPolicy({
           state,
           protocol: gi066ThoughtExecution.protocol,
@@ -2619,6 +2658,17 @@ export async function respondEventCenteredInterview(
           understanding: decision,
           bareAngleChange
         });
+    const policy = completeResponseFirstV12Enabled &&
+      effectiveGenerativeTurn &&
+      generativeResult?.completeResponseEnvelope
+      ? alignEventCenteredCompleteResponseFirstV12Policy({
+          state,
+          action: effectiveRequest.action,
+          turn: effectiveGenerativeTurn,
+          output: generativeResult.completeResponseEnvelope,
+          basePolicy
+        })
+      : basePolicy;
     if (
       deepEntryRuntimeFallback &&
       generativeAngle &&
@@ -2697,7 +2747,8 @@ export async function respondEventCenteredInterview(
           payload: createGenerativeEventCenteredPayload({
             turn: effectiveGenerativeTurn,
             policy,
-            completeResponseFirst: completeResponseFirstEnabled
+            completeResponseFirst: completeResponseFirstEnabled,
+            completeResponseText: generativeResult?.completeResponseText
           }),
           outputOrigin: "llm" as const,
           attempts: [],
@@ -2787,6 +2838,7 @@ export async function respondEventCenteredInterview(
     });
     const correctionRepairApplied = Boolean(
       correction &&
+      !completeResponseFirstV12Enabled &&
       effectiveGenerativeTurn &&
       !responseAcknowledgesCorrection(responseResult.payload.naturalUnderstanding)
     );
@@ -2806,7 +2858,8 @@ export async function respondEventCenteredInterview(
         .map(displayWorkspaceMessage),
       adviceRequested: Boolean(decision.adviceRequest),
       pendingHypothesisStatement: decision.unsupportedHypothesis?.statement ?? null,
-      firstCheckpointUnderstanding: firstCheckpointPresentation?.understanding ?? null
+      firstCheckpointUnderstanding: firstCheckpointPresentation?.understanding ?? null,
+      singleBubbleCompleteResponse: completeResponseFirstV12Enabled
     });
     let responsePayload: EventCenteredAssistantPayload = responsePayloadForQuality;
     if (!quality.passed) {
@@ -2979,6 +3032,7 @@ export async function respondEventCenteredInterview(
           generativeLimitReason: generativeResult?.semanticArtifact?.limitReason ?? null,
           generativeSemanticPlan: effectiveGenerativeTurn?.semanticPlan ?? null,
           generativeVisibleTurn: effectiveGenerativeTurn?.visibleTurn ?? null,
+          completeResponseEnvelope: generativeResult?.completeResponseEnvelope ?? null,
           thoughtDecision: gi066ThoughtExecution
             ? {
                 action: gi066ThoughtExecution.plan.action,

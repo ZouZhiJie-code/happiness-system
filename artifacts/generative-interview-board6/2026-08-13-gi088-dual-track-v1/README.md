@@ -5,9 +5,9 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-版本：`完整回应优先 v1.1 生产旧合同 No-Go；v1.2 最小生产合同实施中`
+版本：`完整回应优先 v1.2 JSON 传输 No-Go；v1.2.1 JSON 模式单因素实施中`
 
-状态：`v1.1 生产合同复验 8/8 请求完成、2/8 合同有效，质量 No-Go；v1.2 最小生产合同 0/8、结果待验证；页面、Preview 与发布 not_run；Production baseline`
+状态：`v1.2 请求 8/8 完成、4/8 合同有效，4/8 JSON 不完整并技术 No-Go；v1.2.1 新预算 0/8、结果待验证；页面、Preview 与发布 not_run；Production baseline`
 
 现行职责、单一回答焦点规则和旧身份边界统一读取[板块 7 当前运行合同](../../../docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。本目录中的原始回执继续保存当时请求、失败码和调用事实。
 
@@ -17,18 +17,22 @@
 
 ## 0. 当前任务
 
-当前父结果见[v1.1 生产合同交接](./complete-response-first-v1-1-production-contract-quality-v1-handoff.md)、[回执](./complete-response-first-v1-1-production-contract-quality-v1-receipt.json)和[阶段账](./complete-response-first-v1-1-production-contract-stage-ledger-v1.json)。v1.1 纯文本[结果交接](./complete-response-first-v1-1-quality-v1-handoff.md)继续承担语义方法父证据；公开区只保存身份、指纹、状态和数量，私有正文继续隔离。
+当前父结果见[v1.2 结果交接](./complete-response-first-v1-2-production-contract-quality-v1-handoff.md)、[回执](./complete-response-first-v1-2-production-contract-quality-v1-receipt.json)和[阶段账](./complete-response-first-v1-2-production-contract-stage-ledger-v1.json)。v1.1 纯文本[结果交接](./complete-response-first-v1-1-quality-v1-handoff.md)继续承担语义方法父证据；公开区只保存身份、指纹、状态和数量，私有正文继续隔离。
 
 ### 完整回应优先当前任务
 
 - 父候选／运行：`2026-08-19.gi088-complete-response-first-v1`／`2026-08-19.gi088-complete-response-first-quality-v1`
 - 父结果：技术与正文合同 `8/8`；中位 `3087ms`、最长 `6976ms`；Codex 初评 RPR-REAL-22 与 RPR-REAL-21 fail，v1 质量 No-Go，产品裁决 pending
-- 当前候选：`2026-08-19.gi088-complete-response-first-v1-1-new-information-target`
-- 当前运行：`2026-08-19.gi088-complete-response-first-v1-1-quality-v1`
-- 当前唯一变化：把旧完整事件中心输出收缩为完整回应与本回合最少状态；v1.1 的未答新增信息目标方法保持不变
-- 数据与预算：同一 `3＋5`；预算已消费 `8/8`，并发 1，重试、恢复、回退 0
-- 技术结果：`8/8 technical_valid / stop`；中位 `3406ms`、最长 `4621ms`；`1280` Token 未截断
-- 质量状态：Codex `7 pass / 1 minor / 0 fail`；`RPR-REAL-21` minor；产品裁决 pending
+- 当前候选：`2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off`
+- 当前运行：`2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off-quality-v1`
+- 当前唯一变化：Provider 请求省略 `response_format=json_object`；同一 Prompt、严格 JSON Schema 与本地投影保持不变
+- 数据与预算：同一 `3＋5`；新预算 `0/8`，并发 1，重试、恢复、回退 0
+- 父技术结果：v1.2 `8/8` HTTP 200／stop；`4/8` 合同有效，`4/8` 非空 JSON 不完整；中位 `3497.5ms`、最长 `6376ms`
+- 当前质量状态：v1.2.1 结果待验证；技术稳定后逐题交付完整原文与实际输出
+- [v1.2 公开启动卡](./complete-response-first-v1-2-production-contract-quality-v1-start-card.json)
+- [v1.2 公开回执](./complete-response-first-v1-2-production-contract-quality-v1-receipt.json)
+- [v1.2 结果交接](./complete-response-first-v1-2-production-contract-quality-v1-handoff.md)
+- [v1.2 阶段账](./complete-response-first-v1-2-production-contract-stage-ledger-v1.json)
 - [v1.1 公开启动卡](./complete-response-first-v1-1-quality-v1-start-card.json)
 - [v1.1 公开回执](./complete-response-first-v1-1-quality-v1-receipt.json)
 - [v1.1 结果交接](./complete-response-first-v1-1-quality-v1-handoff.md)

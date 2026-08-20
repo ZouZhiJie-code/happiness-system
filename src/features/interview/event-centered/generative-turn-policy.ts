@@ -789,6 +789,7 @@ export function createGenerativeEventCenteredPayload(input: {
   turn: EventCenteredGenerativeTurn;
   policy: EventCenteredTurnPolicyResult;
   completeResponseFirst?: boolean;
+  completeResponseText?: string;
 }): EventCenteredAssistantPayload {
   const semanticPlan = input.turn.semanticPlan as
     | EventCenteredGenerativeTurn["semanticPlan"]
@@ -834,10 +835,8 @@ export function createGenerativeEventCenteredPayload(input: {
   return {
     ...payload,
     naturalUnderstanding: "",
-    naturalResponse: composeEventCenteredCompleteResponse(
-      input.turn,
-      payload.naturalResponse
-    ),
+    naturalResponse: input.completeResponseText?.trim() ||
+      composeEventCenteredCompleteResponse(input.turn, payload.naturalResponse),
     presentation: "visible"
   };
 }

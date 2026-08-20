@@ -7,15 +7,15 @@
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 完整回应优先 v1.1 生产合同复验 2/8 有效并 No-Go；v1.2 最小生产合同实施中；Production baseline`
+当前讨论位置：`GI-088 完整回应优先 v1.2 运行 8/8、4/8 合同有效，JSON 传输技术 No-Go；v1.2.1 JSON 模式单因素验证实施中；Production baseline`
 
-下一建议板块：`完成 v1.2 最小生产合同 3＋5 复验；质量门通过后部署隔离 Preview 交付真实页面验收`
+下一建议板块：`完成 v1.2.1 同一 3＋5 复验；技术与质量门通过后部署隔离 Preview 交付真实页面验收`
 
-当前专项：[完整回应优先 v1.2 最小生产合同](./plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md)
+当前专项：[完整回应优先 v1.2.1 JSON 模式单因素验证](./plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md)
 
 Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 
-本次同步范围：`封存 v1.1 生产合同复验 8/8 调用、2/8 合同有效和质量 No-Go；新增 v1.2 最小生产合同、8 次预算与 Preview 停止门`
+本次同步范围：`封存 v1.2 运行 8/8、4/8 合同有效及 JSON 传输 No-Go；新增 v1.2.1 单因素、8 次预算与 Preview 停止门`
 
 网页端实现同步：第二轮验收基线已于 `2026-08-13` 发布 Production，项目主链使用 `event_centered + baseline`；GI-088 真人评测、模型质量裁决和生成式能力发布继续沿本 Map 的既有流程推进。
 
@@ -23,7 +23,22 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 
 工作方法状态：[`生成式访谈 AI 产品工作方法 v1.0`](./technical/interview-event-centered/00-generative-interview-ai-product-working-method.md)为`已冻结`；产品负责人已于 `2026-08-06` 独立确认
 
-## 2026-08-20｜GI-088 完整回应优先 v1.2 最小生产合同实施卡
+## 2026-08-20｜GI-088 完整回应优先 v1.2.1 JSON 模式单因素实施卡
+
+| 项目 | 本轮确认值 |
+|---|---|
+| 当前专项 | [完整回应优先 v1.2.1 JSON 模式单因素验证](./plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md) |
+| 父证据 | v1.2 调用 `8/8`；全部 HTTP 200／stop、低于 15 秒且未触发 Token 上限；合同 `4/8` 有效，另 `4/8` 的非空 JSON 正文不完整并报 `Unexpected end of JSON input`，技术 No-Go |
+| 唯一变化 | Provider 请求省略 `response_format=json_object`；模型仍按同一 Prompt 输出同一严格 JSON，本地继续使用同一 Schema 与投影 |
+| 隔离策略 | `INTERVIEW_EVENT_CENTERED_STRATEGY=complete_response_v1_2_1`；Production 保持 `event_centered + baseline` |
+| 固定因素 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`maxTokens=1280`、一次尝试、45 秒、同一 `3＋5` 与单气泡原子提交 |
+| 预算与停止门 | 新预算 `0/8`；连续两次技术失败、严重泄漏、忽略停止／纠正或预算失控时停止；技术稳定后整批原文评审 |
+| 当前状态 | `已确认·实施中`；实现、八题结果、页面、Preview 与发布待验证 |
+| 发布边界 | 产品负责人页面验收通过前保持 Production baseline；通过后按已授权范围部署并验证回退 |
+
+v1.2 No-Go 证据见[结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md)、[回执](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-receipt.json)和[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-stage-ledger-v1.json)。
+
+## 2026-08-20｜GI-088 完整回应优先 v1.2 最小生产合同结果卡
 
 | 项目 | 本轮确认值 |
 |---|---|
@@ -33,10 +48,11 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 | 隔离策略 | `INTERVIEW_EVENT_CENTERED_STRATEGY=complete_response_v1_2`；Production 保持 `event_centered + baseline` |
 | 运行条件 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`maxTokens=1280`、一次尝试、45 秒硬门 |
 | 验证 | 同一 `3＋5` 生产合同复验；专项与全量工程验证；隔离 Preview 最多 `15` 次 |
-| 当前状态 | `已确认·实施中`；v1.2 代码、生产合同复验、Preview 与发布结果待验证 |
-| 停止点 | 真实页面交产品负责人验收；通过前不切换 Production |
+| 实际结果 | 调用 `8/8`；全部 HTTP 200／stop，合同 `4/8` 有效，另 `4/8` 报 `Unexpected end of JSON input`；中位 `3497.5ms`、最长 `6376ms`，最高 completion `373/1280` |
+| 当前状态 | `No-Go`；JSON 传输技术不稳定，语义整批评审未进入 |
+| 停止点 | v1.2 已封存；由 v1.2.1 单因素验证接续 |
 
-v1.1 生产合同 No-Go 证据见[结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-handoff.md)、[回执](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-receipt.json)和[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-stage-ledger-v1.json)。
+v1.2 最小合同结果见[结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md)。v1.1 生产合同 No-Go 证据继续见[历史结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-handoff.md)。
 
 ## 2026-08-19｜GI-088 完整回应优先 v1.1 离线结果卡
 

@@ -7,9 +7,9 @@
 
 产品决策状态：`当前运行合同 v1 已确认；继承 GI-067 / GI-068～080 冻结结论；GI-081～088 的旧候选、结果和运行身份只承担历史证据职责`
 
-落地验证状态：`v1.1 生产合同复验 8/8 调用、2/8 合同有效并质量 No-Go；v1.2 最小生产合同已确认·实施中；Production baseline`
+落地验证状态：`v1.2 运行 8/8、4/8 合同有效，JSON 传输技术 No-Go；v1.2.1 JSON 模式单因素已确认·实施中；Production baseline`
 
-Production：`项目主链保持 event_centered + baseline；隔离 complete_response_v1_2 合同、接入与 Preview 待验证`
+Production：`项目主链保持 event_centered + baseline；隔离 complete_response_v1_2_1 合同、接入与 Preview 待验证`
 
 工作方法：[生成式访谈 AI 产品工作方法 v1.0](./00-generative-interview-ai-product-working-method.md)（`已冻结`）
 
@@ -25,7 +25,19 @@ Production：`项目主链保持 event_centered + baseline；隔离 complete_res
 
 > 本文是生成式访谈实现层的唯一当前入口。当前职责和现行规则只在这里维护；总 Map、Handoff、评测文档和问题台账只保存状态、证据与本页链接。GI-081～088 的诊断过程统一归入历史证据。
 
-## 完整回应优先 v1.2 最小生产合同卡｜2026-08-20
+## 完整回应优先 v1.2.1 JSON 模式单因素卡｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 接入身份 | `2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off` |
+| 当前专项 | [v1.2.1 JSON 模式单因素验证](../../plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md) |
+| 父结果 | v1.2 调用 `8/8`，全部 HTTP 200／stop、低于 15 秒且未触发 Token 上限；合同 `4/8` 有效，另 `4/8` 收到非空但不完整的 JSON，技术 No-Go |
+| 唯一变化 | Provider 请求省略 `response_format=json_object`；模型输出 Schema、本地解析与状态投影保持固定 |
+| 运行配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、一次尝试、45 秒硬门 |
+| 质量门 | 同一 `3＋5` 新预算 `0/8`；达到 `8/8` 技术与合同有效后，逐题展示完整原文和实际输出 |
+| 当前状态 | `已确认·实施中`；结果、页面、Preview 与发布待验证，Production baseline |
+
+## 完整回应优先 v1.2 最小生产合同结果卡｜2026-08-20
 
 | 项目 | 当前合同 |
 |---|---|
@@ -37,7 +49,8 @@ Production：`项目主链保持 event_centered + baseline；隔离 complete_res
 | 运行配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、一次尝试、45 秒硬门 |
 | 隔离与兼容 | 新策略 `complete_response_v1_2`；`baseline`、历史 `generative` 与 v1.1 证据保持兼容；无需数据库迁移 |
 | 质量门 | 接入后重新运行相同 `3＋5`；每题展示完整相关原文和实际输出；页面 Preview 最多 `15` 次 |
-| 当前状态 | `已确认·实施中`；代码、8 题结果和 Preview 待验证，Production baseline |
+| 实际结果 | `8/8` HTTP 200／stop；`4/8` 合同有效，`4/8` 非空 JSON 不完整并报 `Unexpected end of JSON input`；中位 `3497.5ms`、最长 `6376ms` |
+| 当前状态 | `No-Go`；由 v1.2.1 单因素接续，Preview 未进入，Production baseline |
 
 ## 完整回应优先 v1.1 离线结果卡｜2026-08-19
 

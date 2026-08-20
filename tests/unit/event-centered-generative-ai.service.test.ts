@@ -18,6 +18,7 @@ import {
   createSemanticPlanArtifactHash,
   EVENT_CENTERED_GENERATIVE_SEMANTIC_PLAN_ARTIFACT_VERSION,
   EVENT_CENTERED_GENERATIVE_SEMANTIC_PLAN_PROMPT_VERSION,
+  generateEventCenteredCompleteResponseV12AI,
   generateEventCenteredGenerativeSemanticPlanAI,
   generateEventCenteredGenerativeTurnAI,
   generateEventCenteredGenerativeVisibleTurnAI,
@@ -678,6 +679,66 @@ describe("event-centered generative architecture", () => {
     expect(serializedPrompt).not.toContain("完整回应历史用户-1");
     expect(serializedPrompt).toContain("完整回应历史用户-2");
     expect(serializedPrompt).toContain("完整回应历史用户-9");
+  });
+
+  it("v1.2 只请求最小结构，并原样保留完整可见正文", async () => {
+    mocks.completeStructuredOutput.mockResolvedValue({
+      response: "这次可以往结果出现之前看一步。还没看到结果时，你会不会已经开始衡量自己？",
+      interaction: {
+        kind: "ask",
+        question: "还没看到结果时，你会不会已经开始衡量自己？"
+      },
+      facts: [{
+        statement: "用户仍然很在意比较",
+        quote: "还是很在意比较",
+        kind: "stated_interpretation"
+      }],
+      correction: {
+        kind: "none",
+        supersededAssistantMessageId: null
+      }
+    });
+
+    const result = await generateEventCenteredCompleteResponseV12AI(baseInput({
+      rawText: "其实我还是很在意比较，继续和我深挖一下。",
+      recentTurns: [{
+        user: "其实我还是很在意比较。",
+        assistantUnderstanding: "",
+        assistantQuestion: null,
+        assistantResponse: "我明白了，你仍然很在意比较。",
+        assistantMessageId: "assistant-1"
+      }],
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test" }
+    }));
+
+    expect(result.validationIssues).toEqual([]);
+    expect(result.completeResponseText).toBe(
+      "这次可以往结果出现之前看一步。还没看到结果时，你会不会已经开始衡量自己？"
+    );
+    expect(result.turn?.reply.question).toBe(
+      "还没看到结果时，你会不会已经开始衡量自己？"
+    );
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-2-minimal-envelope"
+    );
+    expect(mocks.completeStructuredOutput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxTokens: 1_280,
+        maxAttempts: 1,
+        timeoutMs: 45_000,
+        temperature: 0.2,
+        responseFormat: "json_object",
+        thinking: "disabled"
+      })
+    );
+    const prompt = mocks.completeStructuredOutput.mock.calls[0]?.[0].messages
+      .map((message: { content: string }) => message.content)
+      .join("\n");
+    expect(prompt).toContain("我明白了，你仍然很在意比较。");
+    expect(prompt).not.toContain('"semanticPlan"');
   });
 
   it("唯一分流顺序先判断用户成果和 AI 综合，再考虑继续提问", async () => {

@@ -46,6 +46,16 @@ import {
   EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_METHOD,
   EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_VERSION
 } from "@/features/interview/event-centered/complete-response-first";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_PROMPT_VERSION,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_VERSION,
+  buildEventCenteredCompleteResponseFirstV12Messages,
+  eventCenteredCompleteResponseFirstV12OutputSchema,
+  projectEventCenteredCompleteResponseFirstV12Turn,
+  validateEventCenteredCompleteResponseFirstV12Output,
+  type EventCenteredCompleteResponseFirstV12Output
+} from "@/features/interview/event-centered/complete-response-first-v1-2";
 import { isEventCenteredThoughtOnlyScope } from "@/features/interview/event-centered-release";
 import { createPromptEnvelope } from "@/features/ai-quality/prompt-manifest";
 import type { AIProvider } from "@/server/services/ai/ai-provider";
@@ -162,6 +172,8 @@ export type EventCenteredGenerativeRecentTurn = {
   user: string;
   assistantUnderstanding: string;
   assistantQuestion: string | null;
+  assistantResponse?: string;
+  assistantMessageId?: string;
 };
 
 export type EventCenteredGenerativeArchitecture = "one_call" | "two_call";
@@ -177,6 +189,8 @@ export type EventCenteredGenerativeGenerationInput = {
   currentQuestionCognitiveAction: EventCenteredCognitiveAction | null;
   /** 显式“纠正理解”操作由系统提供；普通文本仍使用高置信纠正规则。 */
   correctionRequested?: boolean;
+  /** 显式纠正操作指向的当前分支助手消息；v1.2 只用于来源校验。 */
+  correctionTargetAssistantMessageId?: string | null;
   facts: JournalEventFactRecord[];
   recentTurns: EventCenteredGenerativeRecentTurn[];
   askedTargets: string[];
@@ -234,6 +248,10 @@ export type EventCenteredGenerativeGenerationResult = {
   fewShotVersion: string;
   fewShotIds: string[];
   architecture: EventCenteredGenerativeArchitecture;
+  /** v1.2 单一可见负责人生成的原样正文；页面投影不得再次拼接或改写。 */
+  completeResponseText?: string;
+  /** v1.2 最小结构只进入私有运行 Trace 与确定性保存映射。 */
+  completeResponseEnvelope?: EventCenteredCompleteResponseFirstV12Output;
 };
 
 export type EventCenteredGenerativeSemanticPlanArtifact = {
@@ -3957,6 +3975,105 @@ export async function generateEventCenteredGenerativeTurnAI(
     return generateTwoCall({ ...input, provider });
   }
   return generateOneCall({ ...input, provider });
+}
+
+/**
+ * v1.2 把本轮用户可见回应交给一次调用完整生成。模型只填写最小结构，
+ * 服务端随后把它确定性映射到现有事实、问题状态与 Trace 写入链路。
+ */
+export async function generateEventCenteredCompleteResponseV12AI(
+  input: EventCenteredGenerativeGenerationInput
+): Promise<EventCenteredGenerativeGenerationResult> {
+  const provider = input.provider === undefined
+    ? await getEventCenteredAIProvider()
+    : input.provider;
+  const attempts: StructuredOutputAttempt[] = [];
+  const messages = buildEventCenteredCompleteResponseFirstV12Messages(input);
+  const envelope = createPromptEnvelope({
+    promptKey: "interview.event_centered.complete_response_first_v1_2",
+    promptVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_PROMPT_VERSION,
+    messages
+  });
+  const promptLineage = [{
+    promptKey: envelope.promptKey,
+    promptVersion: envelope.promptVersion,
+    resolvedPromptHash: envelope.resolvedPromptHash
+  }];
+  const output = await completeStructuredOutput<EventCenteredCompleteResponseFirstV12Output>({
+    provider,
+    stage: "question",
+    schema: eventCenteredCompleteResponseFirstV12OutputSchema,
+    messages: envelope.messages,
+    temperature: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.temperature,
+    maxTokens: input.maxTokens ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.maxTokens,
+    maxAttempts: input.maxAttempts ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.maxAttempts,
+    timeoutMs: input.timeoutMs ?? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.timeoutMs,
+    responseFormat: "json_object",
+    thinking: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.thinking,
+    signal: input.signal,
+    onAttempt: (attempt) => {
+      attempts.push(attempt);
+    }
+  });
+
+  if (!output) {
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues: attemptIssues(attempts),
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_VERSION
+    });
+  }
+
+  const validationIssues = validateEventCenteredCompleteResponseFirstV12Output({
+    generationInput: input,
+    output
+  });
+  if (validationIssues.length > 0) {
+    for (let index = attempts.length - 1; index >= 0; index -= 1) {
+      const attempt = attempts[index];
+      if (!attempt?.success) continue;
+      attempts[index] = {
+        ...attempt,
+        success: false,
+        errorCode: "OUTPUT_VALIDATION_FAILED",
+        errorMessage: validationIssues.join(";")
+      };
+      break;
+    }
+    return failedGenerativeResult({
+      provider,
+      attempts,
+      promptLineage,
+      validationIssues,
+      fewShotIds: [],
+      architecture: "one_call",
+      strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_VERSION
+    });
+  }
+
+  return {
+    turn: projectEventCenteredCompleteResponseFirstV12Turn({
+      generationInput: input,
+      output
+    }),
+    semanticArtifact: null,
+    outputOrigin: "llm",
+    attempts,
+    promptLineage,
+    validationIssues: [],
+    qualityDiagnostics: [],
+    strategyVersion: EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_VERSION,
+    angleCardVersion: EVENT_CENTERED_ANGLE_CARD_VERSION,
+    fewShotVersion: EVENT_CENTERED_FEW_SHOT_VERSION,
+    fewShotIds: [],
+    architecture: "one_call",
+    completeResponseText: output.response,
+    completeResponseEnvelope: output
+  };
 }
 
 /** 历史对照与显式 one_call 调用继续复用既有单次组合入口。 */

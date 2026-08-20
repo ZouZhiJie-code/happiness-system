@@ -28,8 +28,10 @@ const mocks = vi.hoisted(() => ({
   resume: vi.fn(),
   generativeEnabled: vi.fn(() => false),
   completeResponseFirstEnabled: vi.fn(() => false),
+  completeResponseFirstV12Enabled: vi.fn(() => false),
   thoughtOnly: vi.fn(() => false),
   generateOnce: vi.fn(),
+  generateCompleteResponseV12: vi.fn(),
   generatePlan: vi.fn(),
   generateVisible: vi.fn(),
   generateThoughtMap: vi.fn(),
@@ -55,7 +57,9 @@ vi.mock("@/features/interview/event-centered-release", () => ({
 vi.mock("@/features/interview/event-centered/generative-release", () => ({
   isGenerativeEventCenteredStrategyEnabled: mocks.generativeEnabled,
   isCompleteResponseFirstEventCenteredStrategyEnabled:
-    mocks.completeResponseFirstEnabled
+    mocks.completeResponseFirstEnabled,
+  isCompleteResponseFirstV12EventCenteredStrategyEnabled:
+    mocks.completeResponseFirstV12Enabled
 }));
 
 vi.mock("@/server/repositories/event-centered-interview.repository", () => ({
@@ -114,6 +118,7 @@ vi.mock("@/server/services/interview/event-centered-ai.service", () => ({
     : [],
   generateEventCenteredGenerativeSemanticPlanAI: mocks.generatePlan,
   generateEventCenteredGenerativeVisibleTurnAI: mocks.generateVisible,
+  generateEventCenteredCompleteResponseV12AI: mocks.generateCompleteResponseV12,
   generateEventCenteredThoughtMapUpdateAI: mocks.generateThoughtMap,
   generateEventCenteredThoughtQuestionAI: mocks.generateThoughtQuestion,
   generateEventCenteredTurnOnceAI: mocks.generateOnce,
@@ -571,8 +576,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.generativeEnabled.mockReturnValue(false);
   mocks.completeResponseFirstEnabled.mockReturnValue(false);
+  mocks.completeResponseFirstV12Enabled.mockReturnValue(false);
   mocks.thoughtOnly.mockReturnValue(false);
   mocks.generateOnce.mockResolvedValue(null);
+  mocks.generateCompleteResponseV12.mockResolvedValue(null);
   mocks.generatePlan.mockResolvedValue(null);
   mocks.generateVisible.mockResolvedValue(null);
   mocks.generateThoughtMap.mockResolvedValue({
@@ -1177,6 +1184,73 @@ describe("event-centered respond service", () => {
           requestedStrategy: "complete_response_v1_1",
           effectiveStrategy: "generative",
           generativeArchitecture: "one_call"
+        }
+      }
+    });
+  });
+
+  it("v1.2 使用最小结构生成器，并把完整正文原样写入一个气泡", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV12Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response =
+      "这次可以往结果出现之前看一步。还没看到结果时，你会不会已经开始衡量自己？";
+    const question = "还没看到结果时，你会不会已经开始衡量自己？";
+    mocks.generateCompleteResponseV12.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_2",
+        promptVersion: "v1.2",
+        resolvedPromptHash: "hash-v1.2"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-2-minimal-envelope",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV12).toHaveBeenCalledOnce();
+    expect(mocks.generateOnce).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_2",
+          effectiveStrategy: "complete_response_v1_2",
+          generativeArchitecture: "one_call"
+        },
+        finalOutput: {
+          completeResponseEnvelope: {
+            interaction: { kind: "ask", question }
+          }
         }
       }
     });

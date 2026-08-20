@@ -9,7 +9,7 @@
 
 置信度：`高`
 
-落地验证状态：`完整回应优先 v1.1 技术与正文合同 8/8；Codex 7 pass / 1 minor / 0 fail，产品裁决 pending，当前 awaiting_product_review`
+落地验证状态：`完整回应优先 v1.2 运行 8/8、4/8 合同有效并因 JSON 传输 No-Go；v1.2.1 JSON 模式单因素 0/8、实施中`
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 
@@ -24,6 +24,19 @@ Production 状态：`项目主链使用 event_centered + baseline；生成式访
 板块 7 当前入口：[模型主导语义判断的候选实现与验证](./07-board7-model-led-semantic-implementation.md)
 
 当前 Prompt、Interview Skill、模型、程序和产品负责人的职责，以及单一回答焦点与重复追问规则，只在板块 7 当前入口维护。本页保留 QR-04 判尺、运行身份、指标、质量结果和历史证据。
+
+## 完整回应优先 v1.2.1 JSON 模式单因素启动卡｜2026-08-20
+
+| 项目 | 本专项当前答案 |
+|---|---|
+| 父结果 | v1.2 八次均 HTTP 200／stop、低于 15 秒且未触发 Token 上限；`4/8` 合同有效，`4/8` 非空 JSON 不完整并报 `Unexpected end of JSON input` |
+| 产品决策 | 关闭 Provider JSON 模式后，同一最小合同能否稳定达到 `8/8`，并保留 v1.1 的完整回应质量方向 |
+| 候选与运行身份 | `2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off`；`2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off-quality-v1` |
+| 唯一行为变化 | 省略 `response_format=json_object`；Prompt、Schema、本地解析、模型、Thinking、Temperature、Token 与数据固定 |
+| 数据与预算 | 同一 `3` 条开发题＋`5` 条冻结回归题；新预算 `0/8`，重试／恢复／回退 `0` |
+| 技术门 | `8/8` HTTP 200／stop、正文可解析、最小合同有效、Thinking 关闭、单例不高于 `15s`、无 length |
+| 质量门 | 技术稳定后完整跑完并逐例交付原文；硬案例全 pass，总计零 fail、最多一个 minor |
+| 当前状态 | `已确认·实施中`；结果、页面、Preview 与发布待验证，Production baseline |
 
 ## 完整回应优先 v1.1 离线结果卡｜2026-08-19
 

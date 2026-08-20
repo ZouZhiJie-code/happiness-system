@@ -589,6 +589,8 @@ export function runEventCenteredTurnQualityGate(input: {
   adviceRequested: boolean;
   pendingHypothesisStatement: string | null;
   firstCheckpointUnderstanding?: string | null;
+  /** v1.2 的完整正文已经通过最小合同校验；checkpoint 只承担状态职责。 */
+  singleBubbleCompleteResponse?: boolean;
 }) {
   if (input.payload.presentation === "hidden") {
     return { passed: true, safetyBlockers: [], qualityIssues: [] };
@@ -618,9 +620,9 @@ export function runEventCenteredTurnQualityGate(input: {
   if (
     input.payload.checkpoint?.kind === "first" &&
     (
-      input.payload.naturalUnderstanding !== (
+      (!input.singleBubbleCompleteResponse && input.payload.naturalUnderstanding !== (
         input.firstCheckpointUnderstanding ?? EVENT_CENTERED_FIRST_CHECKPOINT_UNDERSTANDING
-      ) ||
+      )) ||
       input.payload.questionSpec !== null ||
       questionCount > 0
     )
@@ -628,6 +630,7 @@ export function runEventCenteredTurnQualityGate(input: {
     qualityIssues.push("first_checkpoint_overreach");
   }
   if (
+    !input.singleBubbleCompleteResponse &&
     input.payload.checkpoint?.kind === "first" &&
     normalize(input.payload.naturalUnderstanding) === normalize(input.payload.naturalResponse)
   ) {

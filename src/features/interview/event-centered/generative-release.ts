@@ -1,11 +1,15 @@
 import {
   EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY
 } from "@/features/interview/event-centered/complete-response-first";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_STRATEGY
+} from "@/features/interview/event-centered/complete-response-first-v1-2";
 
 export type EventCenteredStrategyMode =
   | "baseline"
   | "generative"
-  | typeof EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY;
+  | typeof EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY
+  | typeof EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_STRATEGY;
 
 type EventCenteredStrategyEnvironment = {
   INTERVIEW_EVENT_CENTERED_STRATEGY?: string;
@@ -25,6 +29,9 @@ export function getEventCenteredStrategyMode(
   if (normalized === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY) {
     return EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY;
   }
+  if (normalized === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_STRATEGY) {
+    return EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_STRATEGY;
+  }
   return normalized === "generative" ? "generative" : "baseline";
 }
 
@@ -32,11 +39,18 @@ export function isGenerativeEventCenteredStrategyEnabled(
   mode = getEventCenteredStrategyMode()
 ) {
   return mode === "generative" ||
-    mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY;
+    mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY ||
+    mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_STRATEGY;
 }
 
 export function isCompleteResponseFirstEventCenteredStrategyEnabled(
   mode = getEventCenteredStrategyMode()
 ) {
   return mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_STRATEGY;
+}
+
+export function isCompleteResponseFirstV12EventCenteredStrategyEnabled(
+  mode = getEventCenteredStrategyMode()
+) {
+  return mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_STRATEGY;
 }
