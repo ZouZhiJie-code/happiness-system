@@ -9,7 +9,7 @@
 
 文档状态：`生效中；五阶段生产主线完善已确认·实施中；Production 使用 event_centered + baseline`
 
-当前讨论位置：`DL-PROD-20260819｜阶段 1 管理员成功读取 pending；阶段 2 热修复远程门与 main CI 全绿、Preview 通过至需更新、Production blocked；阶段 3 本地安全候选完成、收集 pending；阶段 4 等待串行过门；阶段 5 No-Go / insufficient_evidence`
+当前讨论位置：`DL-PROD-20260819｜阶段 1 管理员成功读取 pending；阶段 2 热修复远程门与 main CI 全绿、Preview 通过至需更新、Production blocked；阶段 3 独立复审与干净重基线本地门通过、收集 pending；阶段 4 等待串行过门；阶段 5 No-Go / insufficient_evidence`
 
 落地验证状态：`总规范 v1.0 与阶段 B2 资产已冻结；阶段 C 保留 19 次技术阻断历史，阶段 C2 的 Plus 普通／思考均 20/20 且 No-Go，Max 思考 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
@@ -17,7 +17,7 @@
 
 当前跨模块专项：[`Daily Light 五阶段生产主线完善`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-当前停止点：阶段 1 管理员成功读取等待白名单内既有内部管理员合法登录态；阶段 2 已通过远程工程门，Preview 编辑／保存／需更新续跑等待传输通道恢复，Production 同时受 `PEH-020` 与 `PEH-022` 约束；阶段 4 继续等待串行过门。阶段 3 终审修复候选已通过隔离 PostgreSQL `12` 个测试用例／`18/18` 个并发场景与本地完整工程门，正文开关继续关闭、真实逐例正文 `not_run`，等待独立复审、分支重基线、PR、自然样本、样本级授权和后续发布门；阶段 5 保持候选隔离。数据库迁移、GI-088 新调用、生成式策略发布、月度洞察上线和破坏性清理继续使用独立停止门。
+当前停止点：阶段 1 管理员成功读取等待白名单内既有内部管理员合法登录态；阶段 2 Preview 已通过编辑、保存和需更新，浏览器续跑等待稳定网络／线路，Production 同时受 `PEH-020`、`PEH-022` 与 `PEH-028` 约束；凭证轮换见 `PEH-029`。阶段 3 已通过独立复审、最新 main 干净重基线、隔离 PostgreSQL `18/18` 和本地完整门，`P0=0 / P1=0 / P2=3`，正文开关继续关闭、真实逐例正文 `not_run`，等待 PR、远程 CI、隔离 Preview、自然样本与样本级授权。阶段 4 继续等待串行过门；阶段 5 维持 No-Go 候选隔离。数据库迁移、GI-088 新调用、生成式策略发布、月度洞察上线和破坏性清理继续使用独立停止门。
 
 网页端实现同步：管理分析合同 v2 已于 `2026-08-20` 发布 Production，deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已通过正式域名核心 smoke；阶段 2 PR #41 已合入 main `77de8d1`，只形成 Preview，正式域名继续运行阶段 1 deployment。项目主链继续使用 `event_centered + baseline`。管理员成功读取保持 pending；GI-088 的模型评测、独立准入和生成式能力授权边界保持原状态。
 

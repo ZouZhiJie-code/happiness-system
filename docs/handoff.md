@@ -9,11 +9,11 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已形成未推送本地安全候选，样本状态为 `insufficient_samples / collection_pending`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已完成独立复审、最新 main 干净重基线与本地完整门，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
-- 当前本地候选分支：`codex/production-evidence-hardening-stage3-release-20260820`
+- 当前本地候选分支：`codex/production-evidence-hardening-stage3-final-20260820`
 - 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
 - Stage 3 当前基线：`aef37577`，已包含 PR #43 merge `795417d` 与 Stage 5 merge `aef37577`
 - Production 发布头：`a86a4ba`
@@ -26,14 +26,15 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 
 阶段 3 本地候选事实：
 
-- 独立 worktree：`/Users/zouzhijie/Desktop/Happiness-system-stage3-release-20260820`；分支：`codex/production-evidence-hardening-stage3-release-20260820`；基线：`origin/main@77de8d1`。
-- 已封存提交序列：`34acb1f` 统一退出合同，`1b4820d` 建立 Golden Set v2 fail-closed 基础，`7c87119` 修复并发撤回、派生证据清理、未来授权、归属前零正文和按日小样本抑制，`550d0df` 增加真实 PostgreSQL 撤回门，`fb68598` 完成首轮终审加固；本轮最终 P1／P2 修复以分支最新本地 HEAD 承担。
+- 原候选 worktree 与分支继续原样保留。最终 worktree：`/Users/zouzhijie/Desktop/Happiness-system-stage3-final-20260820`；分支：`codex/production-evidence-hardening-stage3-final-20260820`；基线：`origin/main@aef37577`。
+- 最终发布线只带入七个 Stage 3 提交，代码节点 `5f5d6cc`；64 份非冲突文件与终审版本逐文件一致，6 份冲突文档完整保留 Stage 2、Stage 3 和 Stage 5 事实。旧 Stage 2 提交与 `beedab5` 带入数均为 `0`。
 - Production 零正文元数据证据显示完整轨迹可入集数 `0`，状态 `insufficient_samples / collection_pending`；内容开关保持关闭，Production 正文读取 `0`、模型调用 `0`。
 - 终审修复候选中，候选列表与验证 POST 只返回候选、问题簇、发布、Few-shot 和验证元数据，初始页面与动作响应均不下发逐例正文；候选证据与影响证据接口使用 `private, no-store`。验证 target／regression／Few-shot、候选证据与影响证据正文统一经过 current-consent 双层门，并在同一事务写入审计。
 - 验证与动态 active Few-shot 的 Provider 调用使用最长 `55s` 的临时同意租约：相关 User 共享锁保持到单次调用和事务结束；调用先行时撤回等待，撤回先行时后续正文不会外发。Provider、事务超时或提交结果未知均不自动二次调用。该方案面向当前低并发阶段，连接池、事务时长和撤回等待进入 `PEH-026` 与阶段 4 观察门。
 - 撤回覆盖该用户全部 AIGenerationTrace，包含无 AIFeedback 自动 Bad Case；draft／approved 候选一次去重转为 rejected，并只从当前 `evidenceTraceIds` 移除该用户的直接 trace 引用。共享候选按 ID 稳定顺序逐行加锁后重读，双用户撤回不会复活先前引用；published／rolled_back 历史状态与引用保持。
-- 专用本地 loopback PostgreSQL `12` 个测试用例、`18/18` 个并发场景通过，新增共享候选丢失更新回归、验证 dispatch 租约、Provider 失败单次调用、动态 Few-shot dispatch 租约和影响证据撤回双序；`AIRequestLog=0`、模型调用 `0`，最终临时 Schema `daily_light_stage3_consent_5f621b969f9e5945` 已删除且残留 `0`。定向回归 `14` 个文件、`119/119` 通过；全量回归 `368` 个文件／`3283` 条用例通过、`17` 个文件／`94` 条用例按既有条件跳过；Lint `0 errors / 43 inherited warnings`，类型、构建和 Prisma 已通过，文档与差异终检随本提交完成。
-- 当前候选未推送、未开 PR、未部署 Preview／Production；独立复审、真实逐例正文、样本导出、人工评审和产品检查点均为 `not_run`。
+- 第二轮独立复审结论为 `P0=0 / P1=0 / P2=3`。三个 P2 分别为持久化 dispatch acknowledgment／幂等账本、数据库级 single-running 与孤儿 running 恢复、`55s` 长事务容量与超时余量；继续由 `PEH-026`、`PEH-027` 和阶段 4 观察门承担。
+- 干净重基线后，专用本地 loopback PostgreSQL `12` 个测试用例、`18/18` 个并发场景再次通过，`AIRequestLog=0`、模型调用 `0`，本轮临时 Schema 已删除且残留 `0`。定向回归 `119/119`；全量回归 `374` 个文件／`3300` 条用例通过、`17` 个文件／`94` 条用例按既有条件跳过、失败 `0`；零模型 E2E `11/11`，12 条 Trace 模型违规 `0`。Lint `0 errors / 43 inherited warnings`，类型、Production build `77/77`、两套 Prisma、文档、敏感扫描与差异检查通过。
+- 当前候选未推送、未开 PR、未部署 Preview／Production；真实逐例正文、样本导出、人工评审和产品检查点均为 `not_run`。完整轨迹 `0/30`，Production 正文读取与模型调用均为 `0`。
 
 阶段 1 Production 证据：
 
@@ -53,6 +54,7 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - main run `32337995170` 出现一个 GI-088 工作台异步单例失败；Stage 5 同一提交的 push run `32338658277` 全绿，PR run attempt 1 又在同一文件等待结构化错误时单例波动，failed-only attempt 2 已主动取消。首次本地修复后的全量运行在 `361/377` 文件进度处又暴露跨日期会话标题与地址 effect 的单次时序差；旧版与修复后的精确用例均完成 `50/50 P4`，修复仍依据实际失败等待地址栏两个字段同时更新。
 - GI payload 已恢复真实首次选择路径，fake digest 只作为测试替身；该 payload `50/50 P4`、完整 GI 文件 `20/20 P4`、混合压力 `270/270 P4` 通过。第二轮已改为按接口地址分流，随机顺序 `750/750`、精确场景 `200/200`、连续三轮全量和零模型 E2E `11/11` 均通过。只修改两个测试文件，产品源码 `0`。
 - PR #43 final head `a4173d7` 的 push run `32346020465` 与 pull request run `32346025037` 均在 attempt 1 全绿、重试 `0`，两套 E2E 均为 `11/11`；PR #43 已合入 main merge `795417d`，main push run `32346808393` 的常规测试与零模型 E2E 全绿。
+- Preview transport 根因已定位为本机 Xray／上游 TLS 链路间歇重置；deployment、证书和 Protection 状态正常。浏览器验收等待稳定网络／线路；一次 verbose 诊断造成保护凭证只在本地任务终端可见，Git、文档和外发敏感值均为 `0`，凭证轮换等待单独授权。详见 `PEH-028`、`PEH-029`。
 - Stage 2 Production 等待 `PEH-020` 与剩余 `PEH-022` 同时完成。正式域名继续使用阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
 
 阶段 5 隔离候选证据：

@@ -184,5 +184,21 @@
     "publicEvidenceContainsUserContent": false,
     "publicEvidenceContainsUserIdentity": false,
     "credentialRecorded": false
+  },
+  "rebaseVerification": {
+    "executedAt": "2026-08-20",
+    "baseSha": "aef37577aecb6b79c87ae9808c57905674dff4cb",
+    "codeHead": "5f5d6cc3dacdb6908353d99a44dbf655c5ff8c29",
+    "schema": "daily_light_stage3_consent_97e68623ca324b9e",
+    "testFileCount": 1,
+    "testCaseCount": 12,
+    "scenarioCount": 18,
+    "passedScenarioCount": 18,
+    "failedScenarioCount": 0,
+    "aiRequestLogCount": 0,
+    "traceCount": 0,
+    "modelCallCount": 0,
+    "schemaDropped": true,
+    "residualSchemaCount": 0
   }
 }

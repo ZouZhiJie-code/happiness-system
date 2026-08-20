@@ -149,8 +149,8 @@
 - 已确认事实：候选列表曾直接返回 Few-shot 的 `inputSnapshot / output` 与验证 `results.candidateOutput`；候选证据页、验证目标、回归与 Few-shot 正文读取缺少同一事务内的 current-consent 双层门和内容审计；活跃 Few-shot 可被新草稿 upsert 改写；验证启动使用读重试且同候选可并发创建多条 running 记录；候选创建、审批、发布与验证采用先读状态后写状态，用户撤回可与这些动作交错；退出清理只从活跃 AIFeedback 起步，遗漏无反馈自动 Bad Case。
 - 产品判断：用户当前同意是候选派生、正文读取和状态推进的共同前提；撤回后 draft／approved 候选退出后续流程，published／rolled_back 只承担历史记录；管理列表默认只展示候选、问题簇、发布、Few-shot 与验证元数据；活跃示例和验证任务都要经过候选门。
 - Codex 评估：相关用户按稳定顺序取得共享锁、在锁内复核 current consent，再对候选执行 expected-status 原子门，使候选操作与撤回形成可解释的先后关系。候选列表、验证列表与验证 POST 均使用元数据白名单；候选证据、影响证据和验证正文读取同事务审计；两类证据接口返回 `private, no-store`。正常应用路径在候选锁内拒绝重复 running，运行时 active Few-shot 按来源用户当前同意过滤。
-- 待验证假设：本地 `12` 个真实 PostgreSQL 测试用例中的 `18/18` 个场景与 `119/119` 定向测试已经覆盖当前 P1 回归；新本地提交仍需要独立只读复审和最新 main 重基线后复跑。
-- 当前处理状态：终审修复候选完成。全量回归 `368` 个文件／`3283` 条用例通过，`17` 个文件／`94` 条用例按既有条件跳过；真实 PostgreSQL 最终 Schema `daily_light_stage3_consent_5f621b969f9e5945` 已删除，残留 `0`，模型调用与 AIRequestLog 均为 `0`。公开回执只声明 pending 候选当前 `evidenceTraceIds` 的直接引用移除，并明确 published／rolled_back 历史引用保留。分支保持未推送，独立复审 pending。
+- 待验证假设：当前本地回归门可以持续覆盖已知高风险路径；三个 P2 在后续 PR／远程 CI／隔离 Preview 和阶段 4 观察中保持可控，分别由 `PEH-026`、`PEH-027` 和阶段 4 观察门承担。
+- 当前处理状态：终审修复与独立复审完成。最终代码节点 `5f5d6cc` 基于 `origin/main@aef37577`，只带入七个 Stage 3 提交；全量回归 `374` 个文件／`3300` 条用例通过，`17` 个文件／`94` 条用例按既有条件跳过，失败 `0`。本轮 PostgreSQL Schema 已删除且残留 `0`，模型调用与 AIRequestLog 均为 `0`。公开回执只声明 pending 候选当前 `evidenceTraceIds` 的直接引用移除，并明确 published／rolled_back 历史引用保留。分支保持未推送，PR 与远程门 pending。
 
 ## PEH-026｜撤回成功后的正文外发与临时 dispatch 租约
 
@@ -158,12 +158,28 @@
 - 产品判断：撤回成功返回后，系统不再发起包含该用户质量改进正文的新请求。已取得来源 User 共享锁并开始的单次 dispatch 可以完成，撤回请求等待该事务结束；撤回先取得更新权时，后续 dispatch 关闭。
 - Codex 评估：当前低并发阶段使用最长 `55s` 的 interactive transaction，按稳定 User 顺序持有共享锁并覆盖正文读取、单次 Provider 调用和事务提交。验证及 active Few-shot 禁止通用读重试；Provider、事务超时或提交结果未知时均不自动二次调用。现有 Provider 超时上限 `12s`，`55s` 只承担数据库 fail-closed 外壳。
 - 待验证假设：该临时方案在当前内部低并发量下不会造成连接池拥塞、撤回长尾或 P95 明显上升；Stage 4 需观察调用 P95、撤回等待 P95、interactive transaction 时长、连接池占用／耗尽、事务超时和提交结果未知。
-- 当前处理状态：验证 dispatch、Provider 失败单次调用和动态 Few-shot dispatch 的真实 PostgreSQL 场景已通过；提交结果未知零自动重试由单元测试覆盖。长期方案为具备传输确认的 durable dispatch acknowledgment／consent epoch，相关 Schema、Provider 合同与运行账本改造进入独立设计门。
+- 当前处理状态：验证 dispatch、Provider 失败单次调用和动态 Few-shot dispatch 的真实 PostgreSQL 场景已通过；提交结果未知零自动重试由单元测试覆盖。P2-1 为持久化 dispatch acknowledgment／幂等账本，P2-3 为 `55s` 长事务的容量与超时余量；相关 Schema、Provider 合同、运行账本和观测改造进入独立设计门。
 
 ## PEH-027｜验证唯一性、陈旧任务和大规模撤回事务仍需结构治理
 
 - 已确认事实：`AIOptimizationValidation` 当前只有普通索引；正常应用事务可串行拒绝同候选并发 running，但数据库层尚无 partial unique 约束。进程异常可能留下陈旧 running；撤回会按用户全部 trace 扫描并逐候选加锁，数据量增长后事务时长会上升。
 - 产品判断：当前 Stage 3 保持无 Prisma Schema 变更；结构迁移、自动恢复和规模优化进入独立停止门，现有收据只证明本轮数据量和应用路径。
-- Codex 评估：后续方案需共同处理数据库唯一约束、running lease／过期恢复、幂等人工重试、候选分批失效和撤回事务耗时预算。单独增加其中一项会留下状态或隐私边界缺口。
+- Codex 评估：P2-2 需共同处理数据库级 single-running 约束与孤儿 running 恢复；后续规模方案同时覆盖幂等人工重试、候选分批失效和撤回事务耗时预算。
 - 待验证假设：在当前内部样本量下，逐候选稳定加锁可以维持可接受事务时长；样本积累到第 10 条前建立规模基线。
 - 当前处理状态：登记为数据库迁移停止门内的结构债。Stage 3 发布候选继续关闭；Stage 4 观察门增加 running 年龄、撤回事务 P95、锁等待和连接池指标。
+
+## PEH-028｜Stage 2 Preview 浏览器验收受到本地传输链路阻断
+
+- 已确认事实：只读诊断确认 Preview deployment、证书和 Deployment Protection 状态正常；请求在到达应用前由本机 Xray／上游 TLS 链路间歇重置。已完成的 Preview 人工范围仍到“需更新”，日记更新与人工片段保护继续等待浏览器续跑。
+- 产品判断：Stage 2 浏览器验收保持 blocked，使用稳定网络或稳定线路完成剩余最小续跑后再判断 Production。
+- Codex 评估：本项归因传输环境，当前证据不改变 `PEH-022` 已验证范围，也不扩大为产品回归。
+- 待验证假设：稳定线路下，同一 Preview 数据可完成日记更新，并保留更新前的用户人工片段。
+- 当前处理状态：deployment、证书和 Protection 证据已封存；等待稳定网络／线路。Production 继续使用阶段 1 deployment。
+
+## PEH-029｜Verbose 诊断造成保护凭证终端暴露
+
+- 已确认事实：一次 verbose 诊断在当前本地任务终端显示了 Deployment Protection 绕行请求头及其凭证值；该值进入 Git、项目文档和外部发送的数量均为 `0`，本次公开记录保持敏感值 `0`。
+- 产品判断：凭证轮换使用独立授权与平台写入门；本阶段继续完成本地代码和证据验证。
+- Codex 评估：终端可见形成凭证治理风险；仓库敏感扫描确认真实凭证命中 `0`，代码与公开证据边界保持通过。
+- 待验证假设：完成轮换并使旧凭证失效后，可关闭本项剩余风险。
+- 当前处理状态：已登记、零值封存；凭证轮换 pending，等待产品负责人单独授权。

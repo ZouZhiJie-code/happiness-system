@@ -5,8 +5,8 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[`docs/README.md`](../../README.md)
 - 任务编号：`DL-PROD-20260819`
-- 当前本地候选分支：`codex/production-evidence-hardening-stage3-release-20260820`
-- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-stage3-release-20260820`
+- 当前本地候选分支：`codex/production-evidence-hardening-stage3-final-20260820`
+- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-stage3-final-20260820`
 - 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
 
 ## 1. 目标与当前事实
@@ -110,7 +110,7 @@
 | 0. 保护现场与工作线 | 已完成 | GI-088 `175` 项成果完成指纹与隐私检查；最终 No-Go 状态已由检查点 `199aa94` 封存并推送，原工作区干净，分支与私有现场继续保留 |
 | 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
 | 2. 零模型 E2E | 已合入 main·热修复远程门与 main CI 全绿·Preview 通过至需更新·Production blocked | PR #41 合入 `77de8d1`；PR #43 final head 两套 CI 全绿并合入 `795417d`，main CI 全绿；日记更新与人工保护待跑 |
-| 3. Golden Set v2 | 终审修复候选完成·独立复审 pending·收集 pending | 零正文元数据盘点确认完整轨迹可入集数 `0`；隔离 PostgreSQL `12` 个测试用例／`18/18` 个并发场景与本地完整工程门通过，正文开关保持关闭，未推送／未部署 |
+| 3. Golden Set v2 | 独立复审与干净重基线本地门通过·收集 pending | `P0=0 / P1=0 / P2=3`；完整轨迹 `0/30`；隔离 PostgreSQL `12` 个测试用例／`18/18` 个并发场景与本地完整工程门通过，正文开关保持关闭，PR／远程门 pending |
 | 4. 主链重构 | 待验证 | 等待阶段 2 回归保护 |
 | 5. 月度洞察评估 | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；2 条低数据量用例 Provider 调用 `0`，其余 4 条候选调用 `not_run`；真实用户月 `0`、模型调用 `0`，Production 保持确定性 `AnalysisNarrative` |
 
@@ -160,17 +160,19 @@
 - `PEH-023` 首轮本地工程门已通过。最小修复范围固定为 `tests/unit/gi088-evaluation-workbench.test.tsx` 与 `tests/unit/event-centered-interview-workspace.test.tsx`，产品源码变更 `0`；该版本连续三轮全量均为 `3216` 通过、`82` 跳过、`0` 失败，零模型 E2E 为 `11/11`、`AIRequestLog=0`、12 条 Trace 模型调用违规 `0`、临时 Schema 残留 `0`。PR #43 初始 head 的 push／pull request 两套 CI 均在 attempt 1 成功、重试 `0`，Preview Ready。
 - 只改 8 份文档的 head `c897d7a` 中，push run `32343781979` 全绿；pull request run `32343785173` 的 E2E `11/11`，常规测试再次在结构化错误场景等待 `30.194s` 后失败。随机顺序 seed 24 已确认后台 `/operation-events` 抢占按调用序号配置的预设响应。第二轮修复改为按接口地址分流；随机顺序 `750/750`、精确场景 `200/200` 通过，连续三轮全量均为 `3216` 通过、`82` 跳过、`0` 失败，零模型 E2E `11/11` 且模型调用违规 `0`；该节点结束时新 head 远程门待验证，最终结果见下一项。
 - PR #43 final head `a4173d7` 的 push run `32346020465` 与 pull request run `32346025037` 均在 attempt 1 全绿，重试 `0`，两套零模型 E2E 均为 `11/11`。PR #43 已合入 main merge `795417d`；main push run `32346808393` 的常规测试与零模型 E2E 全绿。Production 继续使用阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
+- Preview transport 根因已定位为本机 Xray／上游 TLS 链路间歇重置；deployment、证书和 Protection 状态正常。浏览器验收继续 blocked，等待稳定网络／线路；诊断中的保护凭证终端暴露与轮换停止门分别见 `PEH-028`、`PEH-029`，公开材料敏感值保持 `0`。
 - 原始本地三连跑 [`receipt.json`](../../../artifacts/production-evidence-hardening/2026-08-19/e2e-zero-model/receipt.json) 与阶段 1 Production 回执继续保留各自运行身份。
 
 ### 阶段 3 本地安全候选｜2026-08-20
 
-- 独立 worktree `/Users/zouzhijie/Desktop/Happiness-system-stage3-release-20260820` 从 `origin/main@77de8d1` 建立，分支为 `codex/production-evidence-hardening-stage3-release-20260820`。已封存提交序列为 `34acb1f`、`1b4820d`、`7c87119`、`b8a6b66`、`550d0df`、`fb68598`；本轮最终 P1／P2 修复以分支最新本地 HEAD 承担，分支保持未推送、未开 PR，后续对齐当前 main `aef37577`，并保留 hotfix `PEH-023` 与本段 Stage 3 最终状态后再进入 PR。
+- 原候选 worktree 与分支继续原样保留。最终发布线从 `origin/main@aef37577` 新建独立 worktree `/Users/zouzhijie/Desktop/Happiness-system-stage3-final-20260820`，分支为 `codex/production-evidence-hardening-stage3-final-20260820`；依序只带入 `34acb1f`、`1b4820d`、`7c87119`、`b8a6b66`、`550d0df`、`fb68598`、`e4f951a`，最终代码节点为 `5f5d6cc`。旧 Stage 2 提交与 `beedab5` 带入数均为 `0`。
 - Golden Set v2 已具备随机 case ID、内部账号与样本级 `full_trajectory_review` 联合门、当前 consent epoch／撤回／过期／未来授权 reconciliation、统一 `404`、默认关闭正文开关、Serializable 读取事务和审计后返回。
 - AI 质量退出会在同一事务撤回反馈、清理 `AICase` 用户信号与回复再生成点踩时间、退役 Few-shot，并按该用户全部 trace 一次去重失效 draft／approved 优化候选；无 AIFeedback 自动 Bad Case 同样覆盖，published／rolled_back 历史保持。反馈保存与候选创建、审批、发布、验证都通过稳定 User 锁序、current-consent 双层复核和 expected-status 原子门关闭并发窗口。
 - 候选列表与验证 POST 只返回候选、问题簇、发布、Few-shot 与验证元数据，初始页面和动作响应不下发 `inputSnapshot / output / validation.results / candidateOutput`；验证 target／regression／Few-shot、候选证据与影响证据正文都在稳定 User 锁内复核当前同意并同事务审计，两个正文接口成功与错误响应均为 `private, no-store`。正常应用路径的同候选并发验证只保留一条 running，验证启动和正文事务均不使用通用读重试。
 - 验证与动态 active Few-shot 的 Provider 调用在最长 `55s` 的 interactive transaction 内持有来源 User 共享锁；调用先行时撤回等待，撤回先行时后续不会发送相关正文，Provider 失败、事务超时和提交结果未知均不自动二次调用。新草稿不能重绑或改写既有 active 示例。
 - 详情读取在根身份、用户、日期、记录方式、事件卡／日记 ID、归属和来源链接通过前只查询元数据；公开 Production 盘点对按日与按月小样本统一使用阈值 `3` 抑制。私有目录检查递归覆盖未来载荷的 `0700/0600`、符号链接和 Git 跟踪状态，资产测试确认公开材料零用户正文与零身份字段。
 - Production 零正文元数据盘点结论为 `insufficient_samples / collection_pending`：事件链候选 `1`，已保存完整日记链 `0`，完整轨迹可入集数 `0`。Production 正文读取 `0`、模型调用 `0`、样本映射创建 `0`。
-- 专用本地 loopback PostgreSQL `12` 个测试用例、`18/18` 个并发场景通过：除原双向顺序外，新增共享候选丢失更新回归、验证 dispatch 租约、Provider 失败单次调用、动态 active Few-shot dispatch 租约和影响证据撤回双序。发布先完成时 published 历史保留，rolled_back 历史保持。`AIRequestLog=0`、模型调用 `0`，临时 Schema `daily_light_stage3_consent_5f621b969f9e5945` 已删除且残留 `0`。公开回执见 [`consent-concurrency-postgres-receipt.json`](../../../artifacts/production-evidence-hardening/2026-08-19/golden-set-v2/consent-concurrency-postgres-receipt.json)。
-- 当前本地门：定向回归 `14` 个文件、`119/119` 通过；全量回归 `368` 个文件、`3283` 条用例通过，`17` 个文件、`94` 条用例按既有条件跳过；Lint `0 errors / 43 inherited warnings`，类型检查、构建和 Prisma 已通过，文档与差异终检随本提交完成。
-- 当前停止点：正文开关继续关闭；独立复审、Preview、Production、真实逐例正文、样本导出、人工评审、第 10／30 条产品裁决均为 `not_run`。隔离 PostgreSQL 并发门与本地完整回归已经完成，下一门为独立复审、对齐最新 main、分支推送／PR 和后续发布裁决。
+- 独立复审结论为 `P0=0 / P1=0 / P2=3`。三个 P2 是持久化 dispatch acknowledgment／幂等账本、数据库级 single-running 与孤儿 running 恢复、`55s` 长事务容量与超时余量；继续由 `PEH-026`、`PEH-027` 和阶段 4 观察门承担。
+- 干净重基线后，专用本地 loopback PostgreSQL `12` 个测试用例、`18/18` 个并发场景再次通过；本轮 Schema `daily_light_stage3_consent_97e68623ca324b9e` 已删除，残留 `0`，`AIRequestLog=0`、模型调用 `0`。公开历史回执见 [`consent-concurrency-postgres-receipt.json`](../../../artifacts/production-evidence-hardening/2026-08-19/golden-set-v2/consent-concurrency-postgres-receipt.json)。
+- 最终本地门：定向回归 `14` 个文件、`119/119` 通过；全量回归 `374` 个文件、`3300` 条用例通过，`17` 个文件、`94` 条用例按既有条件跳过，失败 `0`；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 违规 `0`、临时 Schema 残留 `0`。Lint `0 errors / 43 inherited warnings`，类型检查、Production build `77/77`、两套 Prisma、文档、敏感扫描与差异检查通过。Prisma Schema、依赖锁文件和 CI 配置差异为 `0`；`package.json` 只增加本地 `test:stage3:consent-postgres` 脚本入口。
+- 当前停止点：正文开关继续关闭；Preview、Production、真实逐例正文、样本导出、人工评审、第 10／30 条产品裁决均为 `not_run`。完整轨迹为 `0/30`，Production 正文读取与模型调用均为 `0`；下一门为分支推送／PR、远程 CI 和隔离 Preview 裁决。
