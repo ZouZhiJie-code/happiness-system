@@ -11,6 +11,8 @@ tsconfig.tsbuildinfo
 .env.production.local
 coverage
 dist
+playwright-report/
+test-results/
 *.log
 !.env.example
 

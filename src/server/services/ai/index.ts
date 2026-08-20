@@ -1,6 +1,7 @@
 import type { AIRuntimeCapability } from "@/features/admin-ai-runtime/types";
 import { logger } from "@/server/lib/logger";
 import { AIProviderError, type AIProvider } from "@/server/services/ai/ai-provider";
+import { isE2EZeroModelEnabled } from "@/server/services/ai/e2e-zero-model-guard";
 import { readDeepSeekConfig, readVolcengineArkConfig } from "@/server/services/ai/provider-config";
 import { resolveAIRuntimeConfig, type AIRuntimeResolution } from "@/server/services/ai/runtime-config-resolver";
 import { createRuntimeAIProvider } from "@/server/services/ai/runtime-provider-factory";
@@ -218,6 +219,8 @@ export async function getAIProviderStatus(
 }
 
 export async function getAIProvider(capability: AIRuntimeCapability): Promise<AIProvider | null> {
+  if (isE2EZeroModelEnabled()) return null;
+
   const resolution = await resolveAIRuntimeConfig(capability);
 
   if (!resolution) {
