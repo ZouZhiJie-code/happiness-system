@@ -7,7 +7,7 @@
 
 最后更新：`2026-08-20`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 已形成未推送本地安全候选，隔离 PostgreSQL 7 个测试用例／13/13 个并发场景与本地完整工程门通过，样本收集 pending；GI-088 阶段 C2 technical_blocked：Plus 双 No-Go，Max 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
+当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 终审修复候选已完成本地 12 个 PostgreSQL 测试用例／18/18 个并发场景与完整工程门，独立复审、重基线和样本收集 pending；GI-088 阶段 C2 technical_blocked：Plus 双 No-Go，Max 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
 ## 1. 为什么需要这份规则
 

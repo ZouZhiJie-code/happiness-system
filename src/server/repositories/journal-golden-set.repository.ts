@@ -441,6 +441,58 @@ export async function readJournalGoldenSetV2CaseDetail(
         throw new JournalGoldenSetV2RepositoryError("JOURNAL_GOLDEN_SET_V2_CASE_NOT_FOUND");
       }
 
+      // Resolve and validate the event-card / daily-journal ownership and source
+      // graph using metadata only. No message, turn, event-card, daily-journal,
+      // snapshot, or revision body may be selected before this gate passes.
+      const journalEventMetadata = await database.journalEvent.findFirst({
+        where: {
+          rootSessionId: identity.id,
+          userId: identity.userId,
+          entryDate: identity.entryDate,
+          status: "completed",
+          entry: { is: { status: "saved" } }
+        },
+        select: {
+          id: true,
+          userId: true,
+          rootSessionId: true,
+          entryDate: true,
+          status: true,
+          entry: { select: { id: true, status: true } }
+        }
+      });
+      const dailyEntryMetadata = await database.journalDailyEntry.findFirst({
+        where: {
+          userId: identity.userId,
+          entryDate: identity.entryDate,
+          status: "saved"
+        },
+        select: {
+          id: true,
+          userId: true,
+          entryDate: true,
+          status: true,
+          sourceEntryIds: true,
+          sourceEventIds: true
+        }
+      });
+      if (
+        !journalEventMetadata?.entry
+        || !dailyEntryMetadata
+        || journalEventMetadata.userId !== identity.userId
+        || journalEventMetadata.rootSessionId !== identity.id
+        || journalEventMetadata.entryDate.getTime() !== identity.entryDate.getTime()
+        || journalEventMetadata.status !== "completed"
+        || journalEventMetadata.entry.status !== "saved"
+        || dailyEntryMetadata.userId !== identity.userId
+        || dailyEntryMetadata.entryDate.getTime() !== identity.entryDate.getTime()
+        || dailyEntryMetadata.status !== "saved"
+        || !dailyEntryMetadata.sourceEntryIds.includes(journalEventMetadata.entry.id)
+        || !dailyEntryMetadata.sourceEventIds.includes(journalEventMetadata.id)
+      ) {
+        throw new JournalGoldenSetV2RepositoryError("JOURNAL_GOLDEN_SET_V2_CASE_NOT_FOUND");
+      }
+
       const messages = await database.interviewMessage.findMany({
         where: {
           sessionId: { in: sessionIds }
@@ -503,7 +555,8 @@ export async function readJournalGoldenSetV2CaseDetail(
 
       const journalEvent = await database.journalEvent.findFirst({
         where: {
-          rootSessionId: identity.id,
+          id: journalEventMetadata.id,
+          rootSessionId: journalEventMetadata.rootSessionId,
           userId: identity.userId,
           entryDate: identity.entryDate,
           status: "completed",
@@ -575,6 +628,7 @@ export async function readJournalGoldenSetV2CaseDetail(
 
       const dailyEntry = await database.journalDailyEntry.findFirst({
         where: {
+          id: dailyEntryMetadata.id,
           userId: identity.userId,
           entryDate: identity.entryDate,
           status: "saved"

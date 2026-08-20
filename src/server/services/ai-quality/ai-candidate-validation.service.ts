@@ -7,9 +7,8 @@ import { AI_EVALUATION_RUBRIC_VERSION, evaluateGenerationTraceRules } from "@/fe
 import { assistantTurnPayloadSchema } from "@/features/interview/schema/interview.schema";
 import { joyDraftResultSchema } from "@/features/joy-interview/schema/joy-ai.schema";
 import {
-  completeOptimizationValidation,
-  failOptimizationValidation,
-  loadOptimizationValidationInput
+  runOptimizationValidationWithConsentLease,
+  type OptimizationValidationLeaseInput
 } from "@/server/repositories/ai-optimization.repository";
 import { getAIProvider } from "@/server/services/ai";
 import { completeStructuredOutput } from "@/server/services/ai/structured-output";
@@ -129,11 +128,9 @@ function evaluateOutput(trace: {
 
 async function replayCase(input: {
   provider: AIProvider;
-  trace: Awaited<ReturnType<typeof loadOptimizationValidationInput>> extends infer R
-    ? R extends { targetTraces: Array<infer T> } ? T : never
-    : never;
+  trace: OptimizationValidationLeaseInput["targetTraces"][number];
   kind: "target" | "regression";
-  candidate: NonNullable<Awaited<ReturnType<typeof loadOptimizationValidationInput>>>["candidate"];
+  candidate: OptimizationValidationLeaseInput["candidate"];
 }) : Promise<ValidationCaseResult> {
   const requestMessages = parseMessages(input.trace.invocations[0]?.requestMessages);
   if (!requestMessages) {
@@ -207,7 +204,7 @@ async function replayCase(input: {
 }
 
 function fewShotEligibilityResults(
-  traces: NonNullable<Awaited<ReturnType<typeof loadOptimizationValidationInput>>>["targetTraces"]
+  traces: OptimizationValidationLeaseInput["targetTraces"]
 ) : ValidationCaseResult[] {
   return traces.map((trace) => {
     const passed = trace.feedback?.status === "active" && trace.feedback.vote === "upvote" && (trace.evaluation?.totalScore ?? 0) >= 85;
@@ -228,20 +225,11 @@ function fewShotEligibilityResults(
 }
 
 export async function validateAIOptimizationCandidate(input: { candidateId: string; adminUsername: string }) {
-  const validationInput = await loadOptimizationValidationInput({
+  return runOptimizationValidationWithConsentLease({
     candidateId: input.candidateId,
     rubricVersion: AI_EVALUATION_RUBRIC_VERSION,
     adminUsername: input.adminUsername
-  });
-  if (!validationInput) throw new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND");
-  if (validationInput.candidate.path === "engineering") throw new Error("ENGINEERING_CANDIDATE_REQUIRES_MANUAL_VALIDATION");
-  if (!(["draft", "approved"] as string[]).includes(validationInput.candidate.status)) {
-    throw new Error("OPTIMIZATION_CANDIDATE_NOT_VALIDATABLE");
-  }
-
-  const validation = validationInput.validation;
-
-  try {
+  }, async (validationInput) => {
     const provider = await getAIProvider("chat");
     const needsReplay = validationInput.candidate.path === "system_prompt" || validationInput.regressionTraces.length > 0;
     if (needsReplay && !provider) throw new Error("VALIDATION_PROVIDER_UNAVAILABLE");
@@ -269,11 +257,7 @@ export async function validateAIOptimizationCandidate(input: { candidateId: stri
       ? `验证通过：${targetPassed}/${targetResults.length} 条目标证据通过，${regressionPassed}/${regressionResults.length} 条优质回归案例保持稳定。`
       : `验证未通过：${targetPassed}/${targetResults.length} 条目标证据通过，${regressionPassed}/${regressionResults.length} 条优质回归案例保持稳定。`;
 
-    return completeOptimizationValidation({
-      validationId: validation.id,
-      candidateId: validationInput.candidate.id,
-      expectedCandidateStatus: validationInput.expectedStatus,
-      consentTraceIds: validationInput.consentTraceIds,
+    return {
       status: passed ? "passed" : "failed",
       targetCaseCount: targetResults.length,
       targetPassedCount: targetPassed,
@@ -283,12 +267,6 @@ export async function validateAIOptimizationCandidate(input: { candidateId: stri
       averageScoreDelta,
       summary,
       results
-    });
-  } catch (error) {
-    const code = error instanceof Error && /^[A-Z][A-Z0-9_]{2,119}$/u.test(error.message)
-      ? error.message
-      : "OPTIMIZATION_VALIDATION_FAILED";
-    await failOptimizationValidation(validation.id, code);
-    throw error;
-  }
+    };
+  });
 }

@@ -12,7 +12,6 @@ import type {
   AdminAIQualityImpactEvidenceResponse,
   AdminAIQualityImpactResponse
 } from "@/features/ai-quality/admin-impact";
-import { recordAdminAuditLog } from "@/server/repositories/admin-analytics.repository";
 import {
   findAIQualityImpactEvidencePage,
   findAIQualityImpactRelease,
@@ -223,7 +222,7 @@ export async function getAIQualityCandidateImpactEvidence(input: {
 }): Promise<AdminAIQualityImpactEvidenceResponse> {
   const page = Math.max(1, Math.floor(input.page ?? 1));
   const now = input.now ?? new Date();
-  const readResult = await withAdminReadRetry(async () => {
+  const evidenceQuery = await withAdminReadRetry(async () => {
     const candidate = await findAIQualityImpactRelease(input.candidateId);
     if (!candidate) throw new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND");
     const release = candidate.releases[0];
@@ -247,7 +246,7 @@ export async function getAIQualityCandidateImpactEvidence(input: {
       rolledBackAt: release.rolledBackAt,
       nextReleaseAt: nextRelease?.publishedAt
     });
-    return findAIQualityImpactEvidencePage({
+    return {
       candidateId: input.candidateId,
       promptKey: release.promptKey,
       start: window.observationStart,
@@ -256,19 +255,12 @@ export async function getAIQualityCandidateImpactEvidence(input: {
       kind: input.kind,
       page,
       pageSize: IMPACT_EVIDENCE_PAGE_SIZE
-    });
+    };
   });
-  await Promise.all(
-    readResult.traces.map((trace) =>
-      recordAdminAuditLog({
-        adminUsername: input.adminUsername,
-        targetUserId: trace.userId,
-        resourceType: "ai_quality_impact_evidence",
-        resourceId: trace.id,
-        action: "view_content"
-      })
-    )
-  );
+  const readResult = await findAIQualityImpactEvidencePage({
+    ...evidenceQuery,
+    adminUsername: input.adminUsername
+  });
   return {
     candidateId: input.candidateId,
     kind: input.kind,

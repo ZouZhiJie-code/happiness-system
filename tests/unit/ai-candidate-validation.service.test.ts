@@ -1,7 +1,5 @@
 const repository = vi.hoisted(() => ({
-  loadOptimizationValidationInput: vi.fn(),
-  completeOptimizationValidation: vi.fn(),
-  failOptimizationValidation: vi.fn()
+  runOptimizationValidationWithConsentLease: vi.fn()
 }));
 const { getAIProvider, completeStructuredOutput } = vi.hoisted(() => ({
   getAIProvider: vi.fn(),
@@ -17,13 +15,11 @@ import { validateAIOptimizationCandidate } from "@/server/services/ai-quality/ai
 describe("AI candidate validation service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    repository.completeOptimizationValidation.mockImplementation(async (input) => input);
-    repository.failOptimizationValidation.mockResolvedValue(undefined);
     getAIProvider.mockResolvedValue({ name: "test-provider", complete: vi.fn() });
   });
 
   it("replays a problem trace with the candidate patch and persists a passed quality gate", async () => {
-    repository.loadOptimizationValidationInput.mockResolvedValue({
+    const validationInput = {
       validation: { id: "validation-1" },
       expectedStatus: "approved",
       consentTraceIds: ["trace-bad"],
@@ -56,7 +52,20 @@ describe("AI candidate validation service", () => {
         invocations: [{ requestMessages: [{ role: "system", content: "访谈" }, { role: "user", content: "我不想继续了" }] }]
       }],
       regressionTraces: []
-    });
+    };
+    let completion: Record<string, unknown> | null = null;
+    repository.runOptimizationValidationWithConsentLease.mockImplementation(
+      async (_input, operation) => {
+        completion = await operation(validationInput);
+        return {
+          id: "validation-1",
+          ...completion,
+          errorCode: null,
+          startedAt: new Date(),
+          completedAt: new Date()
+        };
+      }
+    );
     completeStructuredOutput.mockResolvedValue({
       insight: "",
       thinkingSummary: "好，我们先停在这里。",
@@ -70,11 +79,12 @@ describe("AI candidate validation service", () => {
     const result = await validateAIOptimizationCandidate({ candidateId: "candidate-1", adminUsername: "admin" });
 
     expect(result.status).toBe("passed");
-    expect(repository.completeOptimizationValidation).toHaveBeenCalledWith(expect.objectContaining({
-      validationId: "validation-1",
+    expect(repository.runOptimizationValidationWithConsentLease).toHaveBeenCalledWith({
       candidateId: "candidate-1",
-      expectedCandidateStatus: "approved",
-      consentTraceIds: ["trace-bad"],
+      rubricVersion: expect.any(String),
+      adminUsername: "admin"
+    }, expect.any(Function));
+    expect(completion).toEqual(expect.objectContaining({
       status: "passed",
       targetCaseCount: 1,
       targetPassedCount: 1
@@ -87,7 +97,7 @@ describe("AI candidate validation service", () => {
   });
 
   it("validates few-shot eligibility without replaying its own source example", async () => {
-    repository.loadOptimizationValidationInput.mockResolvedValue({
+    const validationInput = {
       validation: { id: "validation-1" },
       expectedStatus: "draft",
       consentTraceIds: ["trace-good"],
@@ -98,11 +108,60 @@ describe("AI candidate validation service", () => {
         evaluation: { totalScore: 92 }
       }],
       regressionTraces: []
-    });
+    };
+    repository.runOptimizationValidationWithConsentLease.mockImplementation(
+      async (_input, operation) => ({
+        id: "validation-1",
+        ...await operation(validationInput),
+        errorCode: null,
+        startedAt: new Date(),
+        completedAt: new Date()
+      })
+    );
 
     const result = await validateAIOptimizationCandidate({ candidateId: "candidate-fs", adminUsername: "admin" });
 
     expect(result.status).toBe("passed");
     expect(completeStructuredOutput).not.toHaveBeenCalled();
+  });
+
+  it("does not retry provider dispatch when validation replay fails", async () => {
+    const validationInput = {
+      validation: { id: "validation-1" },
+      expectedStatus: "draft",
+      consentTraceIds: ["trace-1"],
+      candidate: {
+        id: "candidate-1",
+        status: "draft",
+        path: "system_prompt",
+        proposal: { instructionPatch: "保持简洁" },
+        fewShotExamples: []
+      },
+      targetTraces: [{
+        id: "trace-1",
+        status: "completed",
+        artifactType: "interview_turn",
+        dimension: "joy",
+        outputOrigin: "llm",
+        contextSnapshot: {},
+        finalOutput: {},
+        pipelineDecisions: [],
+        feedback: null,
+        evaluation: null,
+        invocations: [{ requestMessages: [{ role: "user", content: "继续" }] }]
+      }],
+      regressionTraces: []
+    };
+    repository.runOptimizationValidationWithConsentLease.mockImplementation(
+      async (_input, operation) => operation(validationInput)
+    );
+    completeStructuredOutput.mockRejectedValue(new Error("REQUEST_FAILED"));
+
+    await expect(validateAIOptimizationCandidate({
+      candidateId: "candidate-1",
+      adminUsername: "admin"
+    })).rejects.toThrow("REQUEST_FAILED");
+    expect(repository.runOptimizationValidationWithConsentLease).toHaveBeenCalledTimes(1);
+    expect(completeStructuredOutput).toHaveBeenCalledTimes(1);
   });
 });

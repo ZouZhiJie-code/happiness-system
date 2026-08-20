@@ -27,8 +27,10 @@ async function makeProjectRoot() {
   const projectRoot = await mkdtemp(join(tmpdir(), "golden-set-v2-private-"));
   temporaryRoots.push(projectRoot);
   const privateRoot = resolve(projectRoot, GOLDEN_SET_V2_PRIVATE_ROOT);
-  await mkdir(privateRoot, { recursive: true });
-  await writeFile(resolve(privateRoot, ".gitignore"), "*\n!.gitignore\n", { mode: 0o644 });
+  await mkdir(privateRoot, { recursive: true, mode: 0o700 });
+  await chmod(privateRoot, 0o700);
+  await writeFile(resolve(privateRoot, ".gitignore"), "*\n!.gitignore\n", { mode: 0o600 });
+  await chmod(resolve(privateRoot, ".gitignore"), 0o600);
   await execFileAsync("git", ["init", "-q"], { cwd: projectRoot });
   return { projectRoot, privateRoot };
 }
@@ -84,7 +86,8 @@ describe("Golden Set v2 private workspace", () => {
       filesystemWriteCount: 0,
       productionAccessPerformed: false,
       modelCallCount: 0,
-      git: { probeIgnored: true, trackedPrivateFileCount: 0 }
+      git: { probeIgnored: true, trackedPrivateFileCount: 0 },
+      filesystem: { directoryCount: 1, fileCount: 1 }
     });
     expect(await readFile(resolve(privateRoot, ".gitignore"), "utf8")).toBe(before);
   });
@@ -92,6 +95,10 @@ describe("Golden Set v2 private workspace", () => {
   it("initializes only ignored local ledgers with 0700/0600 permissions", async () => {
     const { projectRoot, privateRoot } = await makeProjectRoot();
     await chmod(privateRoot, 0o755);
+    await mkdir(join(privateRoot, "cases/nested"), { recursive: true, mode: 0o755 });
+    await chmod(join(privateRoot, "cases/nested"), 0o755);
+    await writeFile(join(privateRoot, "cases/nested/case.json"), "PRIVATE", { mode: 0o644 });
+    await chmod(join(privateRoot, "cases/nested/case.json"), 0o644);
     const result = await initializeGoldenSetV2PrivateWorkspace(safeEnv, projectRoot);
 
     expect(result).toMatchObject({
@@ -99,6 +106,7 @@ describe("Golden Set v2 private workspace", () => {
       directoryMode: "0700",
       fileMode: "0600",
       ledgerFileCount: 4,
+      recursiveFilesystem: { directoryCount: 8, fileCount: 6 },
       productionAccessPerformed: false,
       modelCallCount: 0
     });
@@ -110,7 +118,8 @@ describe("Golden Set v2 private workspace", () => {
       join(privateRoot, "reviews"),
       join(privateRoot, "reconciliation"),
       join(privateRoot, "quarantine"),
-      join(privateRoot, "locks")
+      join(privateRoot, "locks"),
+      join(privateRoot, "cases/nested")
     ]) {
       expect((await stat(directory)).mode & 0o777).toBe(0o700);
     }
@@ -119,16 +128,36 @@ describe("Golden Set v2 private workspace", () => {
       join(privateRoot, "authorizations/source-authorizations.ndjson"),
       join(privateRoot, "reviews/reviews.ndjson"),
       join(privateRoot, "reconciliation/reconciliation.ndjson"),
-      join(privateRoot, "reconciliation/withdrawals.ndjson")
+      join(privateRoot, "reconciliation/withdrawals.ndjson"),
+      join(privateRoot, "cases/nested/case.json")
     ]) {
       expect((await stat(file)).mode & 0o777).toBe(0o600);
-      if (!file.endsWith(".gitignore")) expect(await readFile(file, "utf8")).toBe("");
     }
+    for (const ledger of [
+      "authorizations/source-authorizations.ndjson",
+      "reviews/reviews.ndjson",
+      "reconciliation/reconciliation.ndjson",
+      "reconciliation/withdrawals.ndjson"
+    ]) expect(await readFile(join(privateRoot, ledger), "utf8")).toBe("");
+    expect(await readFile(join(privateRoot, "cases/nested/case.json"), "utf8")).toBe("PRIVATE");
 
     await expect(assertGoldenSetV2PrivateGitProtection(projectRoot)).resolves.toMatchObject({
       probeIgnored: true,
       trackedPrivateFileCount: 0
     });
+  });
+
+  it("fails the read-only inspection when a future nested private payload has broad permissions", async () => {
+    const { projectRoot, privateRoot } = await makeProjectRoot();
+    await initializeGoldenSetV2PrivateWorkspace(safeEnv, projectRoot);
+    const nestedPayload = join(privateRoot, "reviews/run-1/review.json");
+    await mkdir(join(privateRoot, "reviews/run-1"), { recursive: true, mode: 0o700 });
+    await writeFile(nestedPayload, "PRIVATE", { mode: 0o644 });
+    await chmod(nestedPayload, 0o644);
+
+    await expect(inspectGoldenSetV2PrivateWorkspace(safeEnv, projectRoot)).rejects.toEqual(
+      expect.objectContaining({ code: "GOLDEN_SET_V2_PRIVATE_PERMISSION_INVALID" })
+    );
   });
 
   it("rejects symlink escapes and tracked private payloads", async () => {
@@ -188,6 +217,15 @@ describe("Golden Set v2 private workspace", () => {
     await expect(assertGoldenSetV2PrivateGitProtection(fifth.projectRoot)).rejects.toEqual(
       expect.objectContaining({
         code: "GOLDEN_SET_V2_PRIVATE_FILE_TRACKED"
+      })
+    );
+
+    const sixth = await makeProjectRoot();
+    await mkdir(resolve(sixth.privateRoot, "cases/nested"), { recursive: true, mode: 0o700 });
+    await symlink(externalDirectory, resolve(sixth.privateRoot, "cases/nested/escape"));
+    await expect(initializeGoldenSetV2PrivateWorkspace(safeEnv, sixth.projectRoot)).rejects.toEqual(
+      expect.objectContaining({
+        code: "GOLDEN_SET_V2_PRIVATE_SYMLINK_FORBIDDEN"
       })
     );
   });

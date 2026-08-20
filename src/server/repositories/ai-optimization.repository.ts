@@ -12,17 +12,32 @@ function toJson(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
-const CURRENT_CONSENT_USER_FILTER = {
+export const CURRENT_CONSENT_USER_FILTER = {
   aiQualityConsentVersion: CURRENT_PRIVACY_POLICY_VERSION,
   aiQualityConsentAt: { not: null },
   aiQualityConsentRevokedAt: null
 } as const;
 
-const CURRENT_CONSENT_TRACE_FILTER = {
+export const CURRENT_CONSENT_TRACE_FILTER = {
   user: { is: CURRENT_CONSENT_USER_FILTER }
 } as const;
 
 type CandidateMutableStatus = Extract<AIOptimizationStatus, "draft" | "approved">;
+
+const OPTIMIZATION_VALIDATION_METADATA_SELECT = {
+  id: true,
+  status: true,
+  targetCaseCount: true,
+  targetPassedCount: true,
+  regressionCaseCount: true,
+  regressionPassedCount: true,
+  criticalRegressionCount: true,
+  averageScoreDelta: true,
+  summary: true,
+  errorCode: true,
+  startedAt: true,
+  completedAt: true
+} as const;
 
 function uniqueSorted(values: string[]) {
   return Array.from(new Set(values)).sort((left, right) => left.localeCompare(right));
@@ -35,7 +50,7 @@ function sameStringSet(left: string[], right: string[]) {
     && leftSorted.every((value, index) => value === rightSorted[index]);
 }
 
-async function lockCurrentConsentForTraceIds(
+export async function lockCurrentConsentForTraceIds(
   tx: Prisma.TransactionClient,
   traceIds: string[]
 ) {
@@ -434,233 +449,242 @@ export function findOptimizationCandidate(id: string) {
   });
 }
 
-export async function loadOptimizationValidationInput(input: {
+async function loadOptimizationValidationInputWithinTransaction(
+  tx: Prisma.TransactionClient,
+  input: {
+    candidateId: string;
+    rubricVersion: string;
+    adminUsername: string;
+  }
+) {
+  // This snapshot contains only identity and relation metadata. Content is
+  // selected after the related User rows are share-locked and rechecked.
+  const snapshot = await tx.aIOptimizationCandidate.findUnique({
+    where: { id: input.candidateId },
+    select: {
+      id: true,
+      status: true,
+      path: true,
+      artifactType: true,
+      dimension: true,
+      promptKey: true,
+      evidenceTraceIds: true,
+      fewShotExamples: { select: { id: true, sourceTraceId: true } }
+    }
+  });
+  if (!snapshot) return null;
+  if (!(snapshot.status === "draft" || snapshot.status === "approved")) {
+    throw new Error("OPTIMIZATION_CANDIDATE_NOT_VALIDATABLE");
+  }
+  if (snapshot.path === "engineering") {
+    throw new Error("ENGINEERING_CANDIDATE_REQUIRES_MANUAL_VALIDATION");
+  }
+
+  const evidenceTraceIds = uniqueSorted(snapshot.evidenceTraceIds);
+  const targetMetadata = await tx.aIGenerationTrace.findMany({
+    where: {
+      id: { in: evidenceTraceIds },
+      ...CURRENT_CONSENT_TRACE_FILTER
+    },
+    select: { id: true, userId: true }
+  });
+  if (targetMetadata.length !== evidenceTraceIds.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  const regressionMetadata = snapshot.promptKey
+    ? await tx.aIGenerationTrace.findMany({
+        where: {
+          id: { notIn: evidenceTraceIds },
+          artifactType: snapshot.artifactType ?? undefined,
+          dimension: snapshot.dimension,
+          status: "completed",
+          feedback: { is: { status: "active", vote: "upvote" } },
+          evaluation: { is: { totalScore: { gte: 85 } } },
+          invocations: { some: { success: true, promptKey: snapshot.promptKey } },
+          ...CURRENT_CONSENT_TRACE_FILTER
+        },
+        select: { id: true, userId: true },
+        orderBy: { createdAt: "desc" },
+        take: 3
+      })
+    : [];
+  const eligibleFewShotMetadata = snapshot.fewShotExamples.length
+    ? await tx.aIFewShotExample.findMany({
+        where: {
+          id: { in: snapshot.fewShotExamples.map((example) => example.id) },
+          sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER }
+        },
+        select: { id: true, sourceTraceId: true }
+      })
+    : [];
+  if (eligibleFewShotMetadata.length !== snapshot.fewShotExamples.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  const consentTraceIds = uniqueSorted([
+    ...evidenceTraceIds,
+    ...regressionMetadata.map((trace) => trace.id),
+    ...eligibleFewShotMetadata.map((example) => example.sourceTraceId)
+  ]);
+  await lockCurrentConsentForTraceIds(tx, consentTraceIds);
+  await lockCandidateAtExpectedStatus(
+    tx,
+    snapshot.id,
+    [snapshot.status],
+    "OPTIMIZATION_CANDIDATE_STATE_CHANGED"
+  );
+
+  const runningValidation = await tx.aIOptimizationValidation.findFirst({
+    where: { candidateId: snapshot.id, status: "running" },
+    select: { id: true }
+  });
+  if (runningValidation) {
+    throw new Error("OPTIMIZATION_VALIDATION_ALREADY_RUNNING");
+  }
+
+  const candidate = await tx.aIOptimizationCandidate.findUnique({
+    where: { id: snapshot.id },
+    include: {
+      fewShotExamples: {
+        where: { sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER } },
+        include: { sourceTrace: { select: { userId: true } } }
+      }
+    }
+  });
+  if (
+    !candidate
+    || candidate.status !== snapshot.status
+    || !sameStringSet(candidate.evidenceTraceIds, evidenceTraceIds)
+    || !sameStringSet(
+      candidate.fewShotExamples.map((example) => example.id),
+      snapshot.fewShotExamples.map((example) => example.id)
+    )
+  ) {
+    throw new Error("OPTIMIZATION_CANDIDATE_STATE_CHANGED");
+  }
+
+  const invocationSelect = {
+    requestMessages: true,
+    provider: true,
+    model: true,
+    promptKey: true,
+    promptVersion: true
+  } as const;
+  const selectedTargetTraceIds = evidenceTraceIds.slice(0, 3);
+  const targetTraces = await tx.aIGenerationTrace.findMany({
+    where: {
+      id: { in: selectedTargetTraceIds },
+      ...CURRENT_CONSENT_TRACE_FILTER
+    },
+    include: {
+      evaluation: true,
+      feedback: true,
+      invocations: {
+        where: { success: true, ...(candidate.promptKey ? { promptKey: candidate.promptKey } : {}) },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: invocationSelect
+      }
+    }
+  });
+  if (targetTraces.length !== selectedTargetTraceIds.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  const regressionTraceIds = regressionMetadata.map((trace) => trace.id);
+  const regressionTraces = regressionTraceIds.length
+    ? await tx.aIGenerationTrace.findMany({
+        where: {
+          id: { in: regressionTraceIds },
+          ...CURRENT_CONSENT_TRACE_FILTER
+        },
+        include: {
+          evaluation: true,
+          feedback: true,
+          invocations: {
+            where: { success: true, promptKey: candidate.promptKey ?? undefined },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: invocationSelect
+          }
+        }
+      })
+    : [];
+  if (regressionTraces.length !== regressionTraceIds.length) {
+    throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+  }
+
+  const targetById = new Map(targetTraces.map((trace) => [trace.id, trace]));
+  const regressionById = new Map(regressionTraces.map((trace) => [trace.id, trace]));
+  const orderedTargets = selectedTargetTraceIds.flatMap((traceId) => {
+    const trace = targetById.get(traceId);
+    return trace ? [trace] : [];
+  });
+  const orderedRegressions = regressionTraceIds.flatMap((traceId) => {
+    const trace = regressionById.get(traceId);
+    return trace ? [trace] : [];
+  });
+
+  const auditRows = [
+    ...orderedTargets.map((trace) => ({
+      adminUsername: input.adminUsername,
+      targetUserId: trace.userId,
+      resourceType: "ai_optimization_validation_trace",
+      resourceId: trace.id,
+      action: "validate_content"
+    })),
+    ...orderedRegressions.map((trace) => ({
+      adminUsername: input.adminUsername,
+      targetUserId: trace.userId,
+      resourceType: "ai_optimization_validation_trace",
+      resourceId: trace.id,
+      action: "validate_content"
+    })),
+    ...candidate.fewShotExamples.map((example) => ({
+      adminUsername: input.adminUsername,
+      targetUserId: example.sourceTrace.userId,
+      resourceType: "ai_optimization_validation_few_shot",
+      resourceId: example.id,
+      action: "validate_content"
+    }))
+  ];
+  if (auditRows.length > 0) {
+    await tx.adminAuditLog.createMany({ data: auditRows });
+  }
+
+  const validation = await tx.aIOptimizationValidation.create({
+    data: {
+      candidateId: candidate.id,
+      rubricVersion: input.rubricVersion,
+      createdBy: input.adminUsername,
+      results: []
+    }
+  });
+
+  return {
+    validation,
+    expectedStatus: snapshot.status as CandidateMutableStatus,
+    consentTraceIds,
+    candidate,
+    targetTraces: orderedTargets,
+    regressionTraces: orderedRegressions
+  };
+}
+
+export function loadOptimizationValidationInput(input: {
   candidateId: string;
   rubricVersion: string;
   adminUsername: string;
 }) {
-  return prisma.$transaction(async (tx) => {
-    // This snapshot contains only identity and relation metadata. Content is
-    // selected after the related User rows are share-locked and rechecked.
-    const snapshot = await tx.aIOptimizationCandidate.findUnique({
-      where: { id: input.candidateId },
-      select: {
-        id: true,
-        status: true,
-        path: true,
-        artifactType: true,
-        dimension: true,
-        promptKey: true,
-        evidenceTraceIds: true,
-        fewShotExamples: { select: { id: true, sourceTraceId: true } }
-      }
-    });
-    if (!snapshot) return null;
-    if (!(snapshot.status === "draft" || snapshot.status === "approved")) {
-      throw new Error("OPTIMIZATION_CANDIDATE_NOT_VALIDATABLE");
-    }
-    if (snapshot.path === "engineering") {
-      throw new Error("ENGINEERING_CANDIDATE_REQUIRES_MANUAL_VALIDATION");
-    }
-
-    const evidenceTraceIds = uniqueSorted(snapshot.evidenceTraceIds);
-    const targetMetadata = await tx.aIGenerationTrace.findMany({
-      where: {
-        id: { in: evidenceTraceIds },
-        ...CURRENT_CONSENT_TRACE_FILTER
-      },
-      select: { id: true, userId: true }
-    });
-    if (targetMetadata.length !== evidenceTraceIds.length) {
-      throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
-    }
-
-    const regressionMetadata = snapshot.promptKey
-      ? await tx.aIGenerationTrace.findMany({
-          where: {
-            id: { notIn: evidenceTraceIds },
-            artifactType: snapshot.artifactType ?? undefined,
-            dimension: snapshot.dimension,
-            status: "completed",
-            feedback: { is: { status: "active", vote: "upvote" } },
-            evaluation: { is: { totalScore: { gte: 85 } } },
-            invocations: { some: { success: true, promptKey: snapshot.promptKey } },
-            ...CURRENT_CONSENT_TRACE_FILTER
-          },
-          select: { id: true, userId: true },
-          orderBy: { createdAt: "desc" },
-          take: 3
-        })
-      : [];
-    const eligibleFewShotMetadata = snapshot.fewShotExamples.length
-      ? await tx.aIFewShotExample.findMany({
-          where: {
-            id: { in: snapshot.fewShotExamples.map((example) => example.id) },
-            sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER }
-          },
-          select: { id: true, sourceTraceId: true }
-        })
-      : [];
-    if (eligibleFewShotMetadata.length !== snapshot.fewShotExamples.length) {
-      throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
-    }
-
-    const consentTraceIds = uniqueSorted([
-      ...evidenceTraceIds,
-      ...regressionMetadata.map((trace) => trace.id),
-      ...eligibleFewShotMetadata.map((example) => example.sourceTraceId)
-    ]);
-    await lockCurrentConsentForTraceIds(tx, consentTraceIds);
-    await lockCandidateAtExpectedStatus(
-      tx,
-      snapshot.id,
-      [snapshot.status],
-      "OPTIMIZATION_CANDIDATE_STATE_CHANGED"
-    );
-
-    const runningValidation = await tx.aIOptimizationValidation.findFirst({
-      where: { candidateId: snapshot.id, status: "running" },
-      select: { id: true }
-    });
-    if (runningValidation) {
-      throw new Error("OPTIMIZATION_VALIDATION_ALREADY_RUNNING");
-    }
-
-    const candidate = await tx.aIOptimizationCandidate.findUnique({
-      where: { id: snapshot.id },
-      include: {
-        fewShotExamples: {
-          where: { sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER } },
-          include: { sourceTrace: { select: { userId: true } } }
-        }
-      }
-    });
-    if (
-      !candidate
-      || candidate.status !== snapshot.status
-      || !sameStringSet(candidate.evidenceTraceIds, evidenceTraceIds)
-      || !sameStringSet(
-        candidate.fewShotExamples.map((example) => example.id),
-        snapshot.fewShotExamples.map((example) => example.id)
-      )
-    ) {
-      throw new Error("OPTIMIZATION_CANDIDATE_STATE_CHANGED");
-    }
-
-    const invocationSelect = {
-      requestMessages: true,
-      provider: true,
-      model: true,
-      promptKey: true,
-      promptVersion: true
-    } as const;
-    const selectedTargetTraceIds = evidenceTraceIds.slice(0, 3);
-    const targetTraces = await tx.aIGenerationTrace.findMany({
-      where: {
-        id: { in: selectedTargetTraceIds },
-        ...CURRENT_CONSENT_TRACE_FILTER
-      },
-      include: {
-        evaluation: true,
-        feedback: true,
-        invocations: {
-          where: { success: true, ...(candidate.promptKey ? { promptKey: candidate.promptKey } : {}) },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: invocationSelect
-        }
-      }
-    });
-    if (targetTraces.length !== selectedTargetTraceIds.length) {
-      throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
-    }
-
-    const regressionTraceIds = regressionMetadata.map((trace) => trace.id);
-    const regressionTraces = regressionTraceIds.length
-      ? await tx.aIGenerationTrace.findMany({
-          where: {
-            id: { in: regressionTraceIds },
-            ...CURRENT_CONSENT_TRACE_FILTER
-          },
-          include: {
-            evaluation: true,
-            feedback: true,
-            invocations: {
-              where: { success: true, promptKey: candidate.promptKey ?? undefined },
-              orderBy: { createdAt: "desc" },
-              take: 1,
-              select: invocationSelect
-            }
-          }
-        })
-      : [];
-    if (regressionTraces.length !== regressionTraceIds.length) {
-      throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
-    }
-
-    const targetById = new Map(targetTraces.map((trace) => [trace.id, trace]));
-    const regressionById = new Map(regressionTraces.map((trace) => [trace.id, trace]));
-    const orderedTargets = selectedTargetTraceIds.flatMap((traceId) => {
-      const trace = targetById.get(traceId);
-      return trace ? [trace] : [];
-    });
-    const orderedRegressions = regressionTraceIds.flatMap((traceId) => {
-      const trace = regressionById.get(traceId);
-      return trace ? [trace] : [];
-    });
-
-    const auditRows = [
-      ...orderedTargets.map((trace) => ({
-        adminUsername: input.adminUsername,
-        targetUserId: trace.userId,
-        resourceType: "ai_optimization_validation_trace",
-        resourceId: trace.id,
-        action: "validate_content"
-      })),
-      ...orderedRegressions.map((trace) => ({
-        adminUsername: input.adminUsername,
-        targetUserId: trace.userId,
-        resourceType: "ai_optimization_validation_trace",
-        resourceId: trace.id,
-        action: "validate_content"
-      })),
-      ...candidate.fewShotExamples.map((example) => ({
-        adminUsername: input.adminUsername,
-        targetUserId: example.sourceTrace.userId,
-        resourceType: "ai_optimization_validation_few_shot",
-        resourceId: example.id,
-        action: "validate_content"
-      }))
-    ];
-    if (auditRows.length > 0) {
-      await tx.adminAuditLog.createMany({ data: auditRows });
-    }
-
-    const validation = await tx.aIOptimizationValidation.create({
-      data: {
-        candidateId: candidate.id,
-        rubricVersion: input.rubricVersion,
-        createdBy: input.adminUsername,
-        results: []
-      }
-    });
-
-    return {
-      validation,
-      expectedStatus: snapshot.status as CandidateMutableStatus,
-      consentTraceIds,
-      candidate,
-      targetTraces: orderedTargets,
-      regressionTraces: orderedRegressions
-    };
-  });
+  return prisma.$transaction((tx) => loadOptimizationValidationInputWithinTransaction(tx, input));
 }
 
-export function completeOptimizationValidation(input: {
-  validationId: string;
-  candidateId: string;
-  expectedCandidateStatus: CandidateMutableStatus;
-  consentTraceIds: string[];
+export type OptimizationValidationLeaseInput = NonNullable<
+  Awaited<ReturnType<typeof loadOptimizationValidationInputWithinTransaction>>
+>;
+
+export type OptimizationValidationCompletion = {
   status: "passed" | "failed";
   targetCaseCount: number;
   targetPassedCount: number;
@@ -670,44 +694,110 @@ export function completeOptimizationValidation(input: {
   averageScoreDelta: number;
   summary: string;
   results: unknown;
-}) {
-  return prisma.$transaction(async (tx) => {
-    await lockCurrentConsentForTraceIds(tx, input.consentTraceIds);
-    await lockCandidateAtExpectedStatus(
-      tx,
-      input.candidateId,
-      [input.expectedCandidateStatus],
-      "OPTIMIZATION_CANDIDATE_STATE_CHANGED"
-    );
-    const result = await tx.aIOptimizationValidation.updateMany({
-      where: {
-        id: input.validationId,
-        candidateId: input.candidateId,
-        status: "running"
-      },
-      data: {
-        status: input.status,
-        targetCaseCount: input.targetCaseCount,
-        targetPassedCount: input.targetPassedCount,
-        regressionCaseCount: input.regressionCaseCount,
-        regressionPassedCount: input.regressionPassedCount,
-        criticalRegressionCount: input.criticalRegressionCount,
-        averageScoreDelta: input.averageScoreDelta,
-        summary: input.summary,
-        results: toJson(input.results),
-        completedAt: new Date()
-      }
-    });
-    if (result.count !== 1) throw new Error("OPTIMIZATION_VALIDATION_NOT_RUNNING");
-    return tx.aIOptimizationValidation.findUniqueOrThrow({ where: { id: input.validationId } });
+};
+
+type CompleteOptimizationValidationInput = OptimizationValidationCompletion & {
+  validationId: string;
+  candidateId: string;
+  expectedCandidateStatus: CandidateMutableStatus;
+  consentTraceIds: string[];
+};
+
+async function completeOptimizationValidationWithinTransaction(
+  tx: Prisma.TransactionClient,
+  input: CompleteOptimizationValidationInput
+) {
+  await lockCurrentConsentForTraceIds(tx, input.consentTraceIds);
+  await lockCandidateAtExpectedStatus(
+    tx,
+    input.candidateId,
+    [input.expectedCandidateStatus],
+    "OPTIMIZATION_CANDIDATE_STATE_CHANGED"
+  );
+  const result = await tx.aIOptimizationValidation.updateMany({
+    where: {
+      id: input.validationId,
+      candidateId: input.candidateId,
+      status: "running"
+    },
+    data: {
+      status: input.status,
+      targetCaseCount: input.targetCaseCount,
+      targetPassedCount: input.targetPassedCount,
+      regressionCaseCount: input.regressionCaseCount,
+      regressionPassedCount: input.regressionPassedCount,
+      criticalRegressionCount: input.criticalRegressionCount,
+      averageScoreDelta: input.averageScoreDelta,
+      summary: input.summary,
+      results: toJson(input.results),
+      completedAt: new Date()
+    }
+  });
+  if (result.count !== 1) throw new Error("OPTIMIZATION_VALIDATION_NOT_RUNNING");
+  return tx.aIOptimizationValidation.findUniqueOrThrow({
+    where: { id: input.validationId },
+    select: OPTIMIZATION_VALIDATION_METADATA_SELECT
+  });
+}
+
+export function completeOptimizationValidation(input: CompleteOptimizationValidationInput) {
+  return prisma.$transaction((tx) => completeOptimizationValidationWithinTransaction(tx, input));
+}
+
+async function failOptimizationValidationWithinTransaction(
+  tx: Prisma.TransactionClient,
+  validationId: string,
+  errorCode: string
+) {
+  return tx.aIOptimizationValidation.updateMany({
+    where: { id: validationId, status: "running" },
+    data: { status: "error", errorCode, completedAt: new Date() }
   });
 }
 
 export function failOptimizationValidation(validationId: string, errorCode: string) {
-  return prisma.aIOptimizationValidation.updateMany({
-    where: { id: validationId, status: "running" },
-    data: { status: "error", errorCode, completedAt: new Date() }
-  });
+  return failOptimizationValidationWithinTransaction(prisma, validationId, errorCode);
+}
+
+export async function runOptimizationValidationWithConsentLease(
+  input: {
+    candidateId: string;
+    rubricVersion: string;
+    adminUsername: string;
+  },
+  operation: (
+    validationInput: OptimizationValidationLeaseInput
+  ) => Promise<OptimizationValidationCompletion>
+) {
+  const outcome = await prisma.$transaction(async (tx) => {
+    const validationInput = await loadOptimizationValidationInputWithinTransaction(tx, input);
+    if (!validationInput) throw new Error("OPTIMIZATION_CANDIDATE_NOT_FOUND");
+
+    try {
+      const completion = await operation(validationInput);
+      const validation = await completeOptimizationValidationWithinTransaction(tx, {
+        validationId: validationInput.validation.id,
+        candidateId: validationInput.candidate.id,
+        expectedCandidateStatus: validationInput.expectedStatus,
+        consentTraceIds: validationInput.consentTraceIds,
+        ...completion
+      });
+      return { ok: true as const, validation };
+    } catch (error) {
+      const code = error instanceof Error && /^[A-Z][A-Z0-9_]{2,119}$/u.test(error.message)
+        ? error.message
+        : "OPTIMIZATION_VALIDATION_FAILED";
+      await failOptimizationValidationWithinTransaction(
+        tx,
+        validationInput.validation.id,
+        code
+      );
+      return { ok: false as const, error };
+    }
+  }, { maxWait: 5_000, timeout: 55_000 });
+
+  if (!outcome.ok) throw outcome.error;
+  return outcome.validation;
 }
 
 export async function findOptimizationCandidateEvidencePage(input: {
@@ -1075,8 +1165,25 @@ export async function rollbackOptimizationCandidate(candidateId: string, adminUs
   });
 }
 
-export function loadActivePromptOptimization(promptKey: string) {
-  return Promise.all([
+export type ActivePromptOptimization = {
+  promptCandidate: {
+    id: string;
+    proposal: Prisma.JsonValue;
+    publishedAt: Date | null;
+  } | null;
+  fewShotExamples: Array<{
+    id: string;
+    inputSnapshot: Prisma.JsonValue;
+    output: Prisma.JsonValue;
+    qualityScore: number;
+  }>;
+};
+
+export async function runWithActivePromptOptimizationConsentLease<T>(
+  promptKey: string,
+  operation: (optimization: ActivePromptOptimization) => Promise<T>
+) {
+  const [promptCandidate, exampleMetadata] = await Promise.all([
     prisma.aIOptimizationCandidate.findFirst({
       where: { promptKey, path: "system_prompt", status: "published" },
       select: { id: true, proposal: true, publishedAt: true },
@@ -1088,9 +1195,64 @@ export function loadActivePromptOptimization(promptKey: string) {
         status: "active",
         sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER }
       },
-      select: { id: true, inputSnapshot: true, output: true, qualityScore: true },
+      select: { id: true, sourceTraceId: true },
       orderBy: [{ qualityScore: "desc" }, { promotedAt: "desc" }],
       take: 6
     })
-  ]).then(([promptCandidate, fewShotExamples]) => ({ promptCandidate, fewShotExamples }));
+  ]);
+
+  if (exampleMetadata.length === 0) {
+    return operation({ promptCandidate, fewShotExamples: [] });
+  }
+
+  return prisma.$transaction(async (tx) => {
+    await lockCurrentConsentForTraceIds(
+      tx,
+      exampleMetadata.map((example) => example.sourceTraceId)
+    );
+
+    const orderedExampleIds = uniqueSorted(exampleMetadata.map((example) => example.id));
+    const lockedExamples = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+      SELECT "id"
+      FROM "AIFewShotExample"
+      WHERE "id" IN (${Prisma.join(orderedExampleIds)})
+      ORDER BY "id" ASC
+      FOR SHARE
+    `);
+    if (lockedExamples.length !== orderedExampleIds.length) {
+      throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+    }
+
+    const fewShotExamples = await tx.aIFewShotExample.findMany({
+      where: {
+        id: { in: orderedExampleIds },
+        promptKey,
+        status: "active",
+        sourceTrace: { is: CURRENT_CONSENT_TRACE_FILTER }
+      },
+      select: {
+        id: true,
+        sourceTraceId: true,
+        inputSnapshot: true,
+        output: true,
+        qualityScore: true
+      },
+      orderBy: [{ qualityScore: "desc" }, { promotedAt: "desc" }]
+    });
+    if (
+      fewShotExamples.length !== exampleMetadata.length
+      || !sameStringSet(
+        fewShotExamples.map((example) => example.id),
+        exampleMetadata.map((example) => example.id)
+      )
+      || fewShotExamples.some((example) =>
+        exampleMetadata.find((metadata) => metadata.id === example.id)?.sourceTraceId
+          !== example.sourceTraceId
+      )
+    ) {
+      throw new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED");
+    }
+
+    return operation({ promptCandidate, fewShotExamples });
+  }, { maxWait: 5_000, timeout: 55_000 });
 }

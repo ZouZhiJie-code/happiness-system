@@ -344,22 +344,31 @@ describe("Golden Set v2 contract", () => {
     })).toThrow();
   });
 
-  it("enforces daily small-cell suppression in public metadata", () => {
+  it("enforces daily and monthly small-cell suppression in public metadata", () => {
     expect(goldenSetV2PublicMetadataDistributionSchema.safeParse({
       privacyThreshold: 3,
       byDay: [],
       suppressedDayBucketCount: 1,
       byMonth: [
         { month: "2026-08", total: 1, internal: 0, capture: 0, chat: 1 }
-      ]
-    }).success).toBe(true);
+      ],
+      suppressedMonthBucketCount: 0
+    }).success).toBe(false);
     expect(goldenSetV2PublicMetadataDistributionSchema.safeParse({
       privacyThreshold: 3,
       byDay: [
         { day: "2026-08-13", total: 1, internal: 0, capture: 0, chat: 1 }
       ],
       suppressedDayBucketCount: 0,
-      byMonth: []
+      byMonth: [],
+      suppressedMonthBucketCount: 1
     }).success).toBe(false);
+    expect(goldenSetV2PublicMetadataDistributionSchema.safeParse({
+      privacyThreshold: 3,
+      byDay: [],
+      suppressedDayBucketCount: 1,
+      byMonth: [],
+      suppressedMonthBucketCount: 1
+    }).success).toBe(true);
   });
 });

@@ -6,7 +6,12 @@ const { prismaTransaction, tx } = vi.hoisted(() => {
     aIFeedbackRevision: { create: vi.fn() },
     aICase: { upsert: vi.fn(), update: vi.fn() },
     aIFewShotExample: { updateMany: vi.fn() },
-    aIOptimizationCandidate: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+    aIOptimizationCandidate: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn()
+    },
     aIResponseRegeneration: { updateMany: vi.fn() },
     user: { findUnique: vi.fn(), update: vi.fn() }
   };
@@ -203,9 +208,27 @@ describe("AI feedback repository", () => {
     ]);
     tx.aIFeedback.update.mockResolvedValue({ id: "feedback-1" });
     tx.aIOptimizationCandidate.findMany.mockResolvedValue([
-      { id: "candidate-draft", status: "draft", evidenceTraceIds: ["trace-1", "trace-2"] },
-      { id: "candidate-approved", status: "approved", evidenceTraceIds: ["trace-auto-bad"] }
+      { id: "candidate-approved" },
+      { id: "candidate-draft" }
     ]);
+    tx.aIOptimizationCandidate.findUnique
+      .mockResolvedValueOnce({
+        id: "candidate-approved",
+        status: "approved",
+        evidenceTraceIds: ["trace-auto-bad"],
+        reviewedBy: null,
+        reviewReason: null
+      })
+      .mockResolvedValueOnce({
+        id: "candidate-draft",
+        status: "draft",
+        evidenceTraceIds: ["trace-1", "trace-2"],
+        reviewedBy: null,
+        reviewReason: null
+      });
+    tx.$queryRaw
+      .mockResolvedValueOnce([{ id: "candidate-approved" }])
+      .mockResolvedValueOnce([{ id: "candidate-draft" }]);
 
     await recordAIQualityConsentDecision("user-1", false);
 
@@ -232,24 +255,17 @@ describe("AI feedback repository", () => {
           }
         ]
       },
-      select: { id: true, status: true, evidenceTraceIds: true },
+      select: { id: true },
       orderBy: { id: "asc" }
     });
     expect(tx.aIOptimizationCandidate.updateMany).toHaveBeenNthCalledWith(1, {
       where: {
-        id: "candidate-draft",
-        OR: [
-          { status: { in: ["draft", "approved"] } },
-          {
-            status: "rejected",
-            reviewedBy: "system:ai_quality_consent_withdrawal",
-            reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
-          }
-        ]
+        id: "candidate-approved",
+        status: "approved"
       },
       data: {
         status: "rejected",
-        evidenceTraceIds: ["trace-2"],
+        evidenceTraceIds: [],
         reviewedBy: "system:ai_quality_consent_withdrawal",
         reviewedAt: expect.any(Date),
         reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
@@ -257,19 +273,12 @@ describe("AI feedback repository", () => {
     });
     expect(tx.aIOptimizationCandidate.updateMany).toHaveBeenNthCalledWith(2, {
       where: {
-        id: "candidate-approved",
-        OR: [
-          { status: { in: ["draft", "approved"] } },
-          {
-            status: "rejected",
-            reviewedBy: "system:ai_quality_consent_withdrawal",
-            reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
-          }
-        ]
+        id: "candidate-draft",
+        status: "draft"
       },
       data: {
         status: "rejected",
-        evidenceTraceIds: [],
+        evidenceTraceIds: ["trace-2"],
         reviewedBy: "system:ai_quality_consent_withdrawal",
         reviewedAt: expect.any(Date),
         reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
@@ -285,5 +294,36 @@ describe("AI feedback repository", () => {
       })
     });
     expect(tx.aICase.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads the locked candidate state before removing consent-bound trace references", async () => {
+    tx.user.update.mockResolvedValue({
+      privacyPolicyVersion: "2026-07-19",
+      aiQualityConsentVersion: "2026-07-19",
+      aiQualityConsentAt: null,
+      aiQualityConsentRevokedAt: new Date()
+    });
+    tx.aIGenerationTrace.findMany.mockResolvedValue([{
+      id: "trace-left",
+      feedback: null,
+      evaluation: null,
+      case: null
+    }]);
+    tx.aIOptimizationCandidate.findMany.mockResolvedValue([{ id: "candidate-shared" }]);
+    tx.$queryRaw.mockResolvedValue([{ id: "candidate-shared" }]);
+    tx.aIOptimizationCandidate.findUnique.mockResolvedValue({
+      id: "candidate-shared",
+      status: "rejected",
+      evidenceTraceIds: ["trace-right"],
+      reviewedBy: "system:ai_quality_consent_withdrawal",
+      reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
+    });
+
+    await recordAIQualityConsentDecision("user-left", false);
+
+    expect(tx.aIOptimizationCandidate.updateMany).not.toHaveBeenCalled();
+    expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      tx.aIOptimizationCandidate.findUnique.mock.invocationCallOrder[0]
+    );
   });
 });

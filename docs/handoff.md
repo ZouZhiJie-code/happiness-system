@@ -27,12 +27,13 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 阶段 3 本地候选事实：
 
 - 独立 worktree：`/Users/zouzhijie/Desktop/Happiness-system-stage3-release-20260820`；分支：`codex/production-evidence-hardening-stage3-release-20260820`；基线：`origin/main@77de8d1`。
-- 已封存提交序列：`34acb1f` 统一退出合同，`1b4820d` 建立 Golden Set v2 fail-closed 基础，`7c87119` 修复并发撤回、派生证据清理、未来授权、归属前零正文和按日小样本抑制，`550d0df` 增加真实 PostgreSQL 撤回门；独立终审 P1／P2 修复以分支最新本地 HEAD 承担。
+- 已封存提交序列：`34acb1f` 统一退出合同，`1b4820d` 建立 Golden Set v2 fail-closed 基础，`7c87119` 修复并发撤回、派生证据清理、未来授权、归属前零正文和按日小样本抑制，`550d0df` 增加真实 PostgreSQL 撤回门，`fb68598` 完成首轮终审加固；本轮最终 P1／P2 修复以分支最新本地 HEAD 承担。
 - Production 零正文元数据证据显示完整轨迹可入集数 `0`，状态 `insufficient_samples / collection_pending`；内容开关保持关闭，Production 正文读取 `0`、模型调用 `0`。
-- 独立终审修复后，候选列表只返回候选、问题簇、发布、Few-shot 与验证元数据，初始页面不下发 Few-shot 或验证逐例正文；验证 target／regression／Few-shot 与候选证据正文读取统一经过 current-consent 双层门并在同一事务写入审计；候选创建、审批、发布和验证统一采用稳定 User 锁序、同意复核与 expected-status 原子门；active Few-shot 运行时读取按来源用户当前同意过滤，新草稿不能改写既有示例，同候选并发验证只保留一条 running。
-- 撤回现在覆盖该用户全部 AIGenerationTrace，包含无 AIFeedback 自动 Bad Case；draft／approved 候选一次去重转为 rejected，并只从 `evidenceTraceIds` 移除该用户的直接 trace 引用；published／rolled_back 历史状态与引用保持。
-- 专用本地 loopback PostgreSQL `7` 个测试用例、`13/13` 个并发场景通过，覆盖反馈保存、候选创建、审批、发布、验证启动与撤回的双向顺序，并新增活跃 Few-shot 重用保护、单候选验证互斥和双用户稳定锁序；`AIRequestLog=0`、模型调用 `0`，最终临时 Schema `daily_light_stage3_consent_1b020dd4905e1d40` 已删除且残留 `0`。定向回归 `20` 个文件、`107/107` 通过；全量回归 `367` 个文件／`3271` 条用例通过、`17` 个文件／`89` 条用例按既有条件跳过；Lint `0 errors / 43 inherited warnings`，类型、构建、Prisma、文档与差异检查通过。
-- 当前候选未推送、未开 PR、未部署 Preview／Production；真实逐例正文、样本导出、人工评审和产品检查点均为 `not_run`。
+- 终审修复候选中，候选列表与验证 POST 只返回候选、问题簇、发布、Few-shot 和验证元数据，初始页面与动作响应均不下发逐例正文；候选证据与影响证据接口使用 `private, no-store`。验证 target／regression／Few-shot、候选证据与影响证据正文统一经过 current-consent 双层门，并在同一事务写入审计。
+- 验证与动态 active Few-shot 的 Provider 调用使用最长 `55s` 的临时同意租约：相关 User 共享锁保持到单次调用和事务结束；调用先行时撤回等待，撤回先行时后续正文不会外发。Provider、事务超时或提交结果未知均不自动二次调用。该方案面向当前低并发阶段，连接池、事务时长和撤回等待进入 `PEH-026` 与阶段 4 观察门。
+- 撤回覆盖该用户全部 AIGenerationTrace，包含无 AIFeedback 自动 Bad Case；draft／approved 候选一次去重转为 rejected，并只从当前 `evidenceTraceIds` 移除该用户的直接 trace 引用。共享候选按 ID 稳定顺序逐行加锁后重读，双用户撤回不会复活先前引用；published／rolled_back 历史状态与引用保持。
+- 专用本地 loopback PostgreSQL `12` 个测试用例、`18/18` 个并发场景通过，新增共享候选丢失更新回归、验证 dispatch 租约、Provider 失败单次调用、动态 Few-shot dispatch 租约和影响证据撤回双序；`AIRequestLog=0`、模型调用 `0`，最终临时 Schema `daily_light_stage3_consent_5f621b969f9e5945` 已删除且残留 `0`。定向回归 `14` 个文件、`119/119` 通过；全量回归 `368` 个文件／`3283` 条用例通过、`17` 个文件／`94` 条用例按既有条件跳过；Lint `0 errors / 43 inherited warnings`，类型、构建和 Prisma 已通过，文档与差异终检随本提交完成。
+- 当前候选未推送、未开 PR、未部署 Preview／Production；独立复审、真实逐例正文、样本导出、人工评审和产品检查点均为 `not_run`。
 
 阶段 1 Production 证据：
 

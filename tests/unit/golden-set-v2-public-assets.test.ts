@@ -75,6 +75,12 @@ describe("Golden Set v2 public assets", () => {
     expect(inventory).toMatchObject({
       status: "insufficient_samples",
       collectionStatus: "collection_pending",
+      distribution: {
+        byDay: [],
+        suppressedDayBucketCount: 1,
+        byMonth: [],
+        suppressedMonthBucketCount: 1
+      },
       safetyReceipt: {
         contentColumnsSelected: 0,
         productionContentReadCount: 0,
@@ -87,9 +93,9 @@ describe("Golden Set v2 public assets", () => {
     expect(concurrencyReceipt).toMatchObject({
       status: "passed",
       finalRun: {
-        testCaseCount: 7,
-        scenarioCount: 13,
-        passedScenarioCount: 13,
+        testCaseCount: 12,
+        scenarioCount: 18,
+        passedScenarioCount: 18,
         failedScenarioCount: 0
       },
       finalPrivacyAssertions: {
@@ -105,6 +111,11 @@ describe("Golden Set v2 public assets", () => {
         activeFewShotBodyPreservedAgainstDraftReuse: true,
         singleRunningValidationPerCandidate: true,
         multiUserStableLockOrderCovered: true,
+        sharedCandidateLostUpdatePrevented: true,
+        validationDispatchWithdrawalLeaseCovered: true,
+        validationProviderFailureNotRetried: true,
+        activeFewShotDispatchWithdrawalLeaseCovered: true,
+        impactEvidenceWithdrawalLeaseCovered: true,
         consentRevoked: true
       },
       cleanup: { schemaDropped: true, residualSchemaCount: 0 },

@@ -41,15 +41,8 @@
     "privacyThreshold": 3,
     "byDay": [],
     "suppressedDayBucketCount": 1,
-    "byMonth": [
-      {
-        "month": "2026-08",
-        "total": 1,
-        "internal": 0,
-        "capture": 0,
-        "chat": 1
-      }
-    ]
+    "byMonth": [],
+    "suppressedMonthBucketCount": 1
   },
   "completionGate": {
     "expectedFullTrajectoryCount": 30,

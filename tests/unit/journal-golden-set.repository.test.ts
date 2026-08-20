@@ -367,6 +367,7 @@ function setupCompleteDetail(options: {
   };
   transactionDatabase.journalDailyEntry.findFirst.mockResolvedValue({
     id: "daily-entry-1",
+    userId: "user-1",
     entryDate: new Date("2026-08-19T00:00:00.000Z"),
     title: "今天的亮光",
     content: "今天完成了关键工作。",
@@ -582,6 +583,8 @@ describe("journal Golden Set v2 repository", () => {
     }, { now: () => CHECKED_AT })).rejects.toMatchObject({
       code: "JOURNAL_GOLDEN_SET_V2_CASE_NOT_FOUND"
     });
+    expect(transactionDatabase.interviewMessage.findMany).not.toHaveBeenCalled();
+    expect(transactionDatabase.interviewUserTurn.findMany).not.toHaveBeenCalled();
     expect(transactionDatabase.adminAuditLog.create).not.toHaveBeenCalled();
   });
 
@@ -665,6 +668,25 @@ describe("journal Golden Set v2 repository", () => {
           status: "saved"
         }
       })
+    );
+    const eventMetadataSelection = JSON.stringify(
+      transactionDatabase.journalEvent.findFirst.mock.calls[0][0]?.select
+    );
+    const dailyMetadataSelection = JSON.stringify(
+      transactionDatabase.journalDailyEntry.findFirst.mock.calls[0][0]?.select
+    );
+    for (const selection of [eventMetadataSelection, dailyMetadataSelection]) {
+      expect(selection).not.toContain('"content":true');
+      expect(selection).not.toContain('"title":true');
+      expect(selection).not.toContain('"sourceSnapshot":true');
+      expect(selection).not.toContain('"paragraphs":true');
+      expect(selection).not.toContain('"revisions"');
+    }
+    expect(transactionDatabase.journalEvent.findFirst.mock.invocationCallOrder[0]).toBeLessThan(
+      transactionDatabase.interviewMessage.findMany.mock.invocationCallOrder[0]
+    );
+    expect(transactionDatabase.journalDailyEntry.findFirst.mock.invocationCallOrder[0]).toBeLessThan(
+      transactionDatabase.interviewMessage.findMany.mock.invocationCallOrder[0]
     );
     expect(transactionDatabase.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
       transactionDatabase.interviewMessage.findMany.mock.invocationCallOrder[0]

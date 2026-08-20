@@ -15,8 +15,8 @@ Golden Set v2 的隐私、评分、阻断、授权、撤回对账和 `10 / 30` �
 
 - [`evaluation-start-card.md`](./evaluation-start-card.md)：本轮产品决策、数据身份、判尺、职责、隐私、预算和停止点；
 - [`manifest.json`](./manifest.json)：零正文公开清单、合同指纹、计划数量和当前计数；
-- [`production-metadata-inventory.json`](./production-metadata-inventory.json)：`2026-08-20` Production 只读元数据漏斗、模式／复杂链路覆盖、按日小样本抑制后的日期分布与零正文安全回执；
-- [`consent-concurrency-postgres-receipt.json`](./consent-concurrency-postgres-receipt.json)：专用本地 PostgreSQL 同意撤回双锁序、单候选验证互斥、多用户稳定锁序、活跃 Few-shot 保护、派生证据失效、零模型和临时 Schema 清理回执；
+- [`production-metadata-inventory.json`](./production-metadata-inventory.json)：`2026-08-20` Production 只读元数据漏斗、模式／复杂链路覆盖、按日与按月小样本抑制后的分布与零正文安全回执；
+- [`consent-concurrency-postgres-receipt.json`](./consent-concurrency-postgres-receipt.json)：专用本地 PostgreSQL 同意撤回双锁序、共享候选丢失更新、验证／Few-shot dispatch 租约、影响证据读取、单候选验证互斥、零模型和临时 Schema 清理回执；
 - [`golden-set-v2-contract.ts`](../../../../src/features/journal-evaluation/golden-set-v2-contract.ts)：纯数据合同与确定性门禁；
 - [`journal-golden-set-v2-authorization.provider.ts`](../../../../src/server/services/journal-evaluation/journal-golden-set-v2-authorization.provider.ts)：受控私有映射的 fail-closed 读取与可注入授权接口；
 - [`initialize-golden-set-v2-private.ts`](../../../../scripts/journal-generation-eval/initialize-golden-set-v2-private.ts)：本地私有目录检查与初始化入口。
@@ -52,11 +52,11 @@ Golden Set v2 的隐私、评分、阻断、授权、撤回对账和 `10 / 30` �
 - 样本授权只在 `authorizedAt` 到达后生效；未来授权进入 `sample_authorization_not_started` 隔离状态；
 - 命中撤回、删除、重新同意形成的新 consent epoch、授权过期、政策版本变化或身份不一致时，禁止继续读取并退出活跃集合；私有内容进入隔离处置，公开只保留非内容回执，并补充替代样本；
 - 正文事务先读取零正文身份元数据，再对用户同意行执行参数化 `FOR SHARE` 锁，并在锁内复核当前 consent epoch。撤回先取得更新权时，正文读取会看到撤回或触发 Serializable 冲突并关闭；正文读取先取得共享锁时，撤回更新等待该次审计事务结束；
-- 详情重新核验已完成根会话、已完成事件、已保存事件卡、已保存今日日记以及全部分支的用户／日期归属；未知、失效和越界样本使用同一个 `404` 合同；
+- 详情先用元数据核验根会话、全部分支、事件卡和今日日记的 ID、用户／日期归属及来源链接，通过后才读取消息、用户回合、事件卡、日记、快照和修订正文；未知、失效和越界样本使用同一个 `404` 合同；
 - Production 用户业务数据保持只读；未来正文访问所需 `AdminAuditLog` 是唯一允许的治理写入。
-- AI 优化候选列表只返回 Few-shot 数量、状态、评分和时间等元数据；`inputSnapshot / output` 正文只在验证事务中通过 current-consent 双层门后读取，并逐条写入内容审计。
-- 候选创建、审批、发布和验证先按稳定用户顺序锁定全部来源，再复核当前同意并执行 expected-status 原子门；运行时 active Few-shot 同时按来源用户的当前同意过滤。
-- 公开按日分布使用阈值 `3`；低于阈值的日期桶只记录抑制数量，不披露具体日期与模式组合。
+- AI 优化候选列表与验证 POST 只返回 Few-shot 数量、状态、评分、时间和验证汇总等元数据；`inputSnapshot / output / candidateOutput` 逐例正文只在 current-consent 双层门后通过受控事务读取。候选证据与影响证据接口的成功和错误响应均使用 `Cache-Control: private, no-store`。
+- 候选创建、审批、发布和验证先按稳定用户顺序锁定全部来源，再复核当前同意并执行 expected-status 原子门。验证与动态 active Few-shot 的单次 Provider 调用持有来源 User 共享锁直到事务结束；撤回成功返回后，不会再发起包含该用户质量改进正文的新 dispatch。
+- 公开按日与按月分布统一使用阈值 `3`；低于阈值的桶只记录抑制数量，不披露具体日期／月份与模式组合，公开总量继续保留。
 
 完整原话、身份映射、授权账、逐例评审和撤回处理只允许进入本目录的 `.private/`。该目录使用 `0700`，文件使用 `0600`，Git 只跟踪 `.private/.gitignore`。
 
@@ -89,12 +89,14 @@ node_modules/.bin/vite-node --script \
 scripts/journal-generation-eval/initialize-golden-set-v2-private.ts --execute
 ```
 
-守卫会拒绝 Production、Vercel、固定 `.private` 根目录之外的路径、符号链接和被 Git 跟踪的私有载荷。初始化只创建空目录与空 NDJSON 账本，不访问数据库、Production 或模型。
+守卫会拒绝 Production、Vercel、固定 `.private` 根目录之外的路径、目录树内任意符号链接和被 Git 跟踪的私有载荷。检查模式递归验证全部既有目录为 `0700`、文件为 `0600`；执行模式在初始化空账本时统一收紧既有常规目录／文件权限，并保持正文内容不变。两种模式都不访问数据库、Production 或模型。
 
 ## 7. 当前停止点
 
-当前安全门已经覆盖随机身份映射、样本级授权与生效时间、并发撤回互斥、完整链路归属复核、归属前零正文、审计后返回、公开按日小样本抑制、私有缓存禁止和统一 `404`。候选列表只下发候选、问题簇、发布、Few-shot 与验证元数据；候选证据正文和验证正文均在稳定 User 锁、当前同意二次复核与同事务审计后读取。活跃 Few-shot 不能被新草稿改写，同一候选只允许一条 running 验证。
+当前安全门已经覆盖随机身份映射、样本级授权与生效时间、并发撤回互斥、完整链路归属复核、归属前零正文、审计后返回、公开日／月小样本抑制、私有目录递归审计和统一 `404`。候选列表与验证动作只下发元数据；候选证据、影响证据和验证正文均在稳定 User 锁、当前同意复核与同事务审计后读取。活跃 Few-shot 不能被新草稿改写，正常应用路径的同候选并发验证只保留一条 running。
 
-专用本地 PostgreSQL 共完成 `7` 个测试用例、`13/13` 个并发场景：候选创建、审批、发布和验证分别覆盖候选操作先行与撤回先行；验证先行只启动验证，撤回后完成阶段按当前同意门拒绝；反馈保存覆盖共享锁与撤回独占锁两个方向；另覆盖活跃 Few-shot 重用保护、单候选并发验证和双用户反向证据输入后的稳定锁序。撤回按该用户全部 trace 处理，包含无 AIFeedback 自动 Bad Case；pending 候选转为 rejected，并从 `evidenceTraceIds` 移除该用户的直接 trace 引用。发布先完成时 published 历史继续保留，rolled_back 历史同样保持；相关正文的后续读取继续受当前同意过滤。最终临时 Schema `daily_light_stage3_consent_1b020dd4905e1d40` 已删除且残留 `0`，`AIRequestLog=0`、模型调用 `0`。
+专用本地 PostgreSQL 共完成 `12` 个测试用例、`18/18` 个并发场景：原候选操作／撤回双序继续通过，并新增共享候选 stale-read 回归门、验证 dispatch 租约、Provider 失败单次调用、动态 active Few-shot dispatch 租约和影响证据撤回双序。撤回按该用户全部 trace 处理，包含无 AIFeedback 自动 Bad Case；pending 候选转为 rejected，并从当前 `evidenceTraceIds` 移除该用户的直接 trace 引用。发布先完成时 published 历史继续保留，rolled_back 历史同样保持。最终临时 Schema `daily_light_stage3_consent_5f621b969f9e5945` 已删除且残留 `0`，`AIRequestLog=0`、模型调用 `0`。
 
-本地工程门已通过：定向回归 `20` 个文件／`107/107`，全量回归 `367` 个文件／`3271` 条用例通过、`17` 个文件／`89` 条用例按既有条件跳过；Lint `0 errors / 43 inherited warnings`，类型、构建、Prisma、文档和差异检查通过。Production 元数据盘点状态继续为 `insufficient_samples / collection_pending`；通过内部账号自然使用继续累积 `30 / 5 / 5` 覆盖，达到门槛后再进入样本级授权和逐例评审。Production 配置继续保持默认关闭；逐例正文、样本导出和人工裁决均为 `not_run`。本目录当前不支持 Production 批量导出。
+本地工程门已通过：定向回归 `14` 个文件／`119/119`，全量回归 `368` 个文件／`3283` 条用例通过、`17` 个文件／`94` 条用例按既有条件跳过；Lint `0 errors / 43 inherited warnings`，类型、构建和 Prisma 通过，文档与差异终检随本提交完成。Production 元数据盘点状态继续为 `insufficient_samples / collection_pending`；通过内部账号自然使用继续累积 `30 / 5 / 5` 覆盖，达到门槛后再进入样本级授权和逐例评审。Production 配置继续保持默认关闭；独立复审、逐例正文、样本导出和人工裁决均为 `not_run`。本目录当前不支持 Production 批量导出。
+
+当前 `55s` dispatch 租约面向内部低并发阶段。长期还需引入 durable dispatch acknowledgment／consent epoch，并在数据库迁移停止门内处理 running validation 唯一约束、陈旧任务恢复与大规模撤回事务；详见 `PEH-026`、`PEH-027`。

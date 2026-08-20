@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { chmod, lstat, mkdir, open, readFile, stat } from "node:fs/promises";
+import { chmod, lstat, mkdir, open, readFile, readdir, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 
@@ -212,6 +212,56 @@ function permissionBits(mode: number) {
   return mode & 0o777;
 }
 
+async function auditGoldenSetV2PrivateTree(
+  privateRoot: string,
+  options: { normalizePermissions: boolean }
+) {
+  let directoryCount = 0;
+  let fileCount = 0;
+
+  async function visit(path: string): Promise<void> {
+    const metadata = await lstat(path);
+    if (metadata.isSymbolicLink()) {
+      fail(
+        "GOLDEN_SET_V2_PRIVATE_SYMLINK_FORBIDDEN",
+        "Golden Set v2 私有目录树中检测到符号链接。"
+      );
+    }
+    if (metadata.isDirectory()) {
+      if (options.normalizePermissions) await chmod(path, 0o700);
+      const current = await stat(path);
+      if (permissionBits(current.mode) !== 0o700) {
+        fail(
+          "GOLDEN_SET_V2_PRIVATE_PERMISSION_INVALID",
+          "Golden Set v2 私有目录权限必须为 0700。"
+        );
+      }
+      directoryCount += 1;
+      const children = (await readdir(path)).sort((left, right) => left.localeCompare(right));
+      for (const child of children) await visit(resolve(path, child));
+      return;
+    }
+    if (!metadata.isFile()) {
+      fail(
+        "GOLDEN_SET_V2_PRIVATE_PERMISSION_INVALID",
+        "Golden Set v2 私有目录树只允许常规目录和文件。"
+      );
+    }
+    if (options.normalizePermissions) await chmod(path, 0o600);
+    const current = await stat(path);
+    if (permissionBits(current.mode) !== 0o600) {
+      fail(
+        "GOLDEN_SET_V2_PRIVATE_PERMISSION_INVALID",
+        "Golden Set v2 私有文件权限必须为 0600。"
+      );
+    }
+    fileCount += 1;
+  }
+
+  await visit(privateRoot);
+  return { directoryCount, fileCount };
+}
+
 export async function inspectGoldenSetV2PrivateWorkspace(
   env: GoldenSetV2PrivateWorkspaceEnv,
   projectRoot = process.cwd()
@@ -223,11 +273,15 @@ export async function inspectGoldenSetV2PrivateWorkspace(
     await assertNoSymlinkOnPath(projectRoot, resolve(isolation.dataDirectory, directory));
   }
   const git = await assertGoldenSetV2PrivateGitProtection(projectRoot);
+  const filesystem = await auditGoldenSetV2PrivateTree(isolation.privateRoot, {
+    normalizePermissions: false
+  });
   return {
     status: "safe_to_initialize" as const,
     privateRoot: isolation.privateRoot,
     dataDirectory: isolation.dataDirectory,
     git,
+    filesystem,
     filesystemWriteCount: 0 as const,
     productionAccessPerformed: false as const,
     modelCallCount: 0 as const
@@ -238,29 +292,35 @@ export async function initializeGoldenSetV2PrivateWorkspace(
   env: GoldenSetV2PrivateWorkspaceEnv,
   projectRoot = process.cwd()
 ) {
-  const inspection = await inspectGoldenSetV2PrivateWorkspace(env, projectRoot);
-  await ensureDirectory(inspection.privateRoot);
-  await ensureDirectory(inspection.dataDirectory);
+  const isolation = validateGoldenSetV2PrivateWorkspace(env, projectRoot);
+  await assertNoSymlinkOnPath(projectRoot, isolation.privateRoot);
+  await assertNoSymlinkOnPath(projectRoot, isolation.dataDirectory);
   for (const directory of PRIVATE_DIRECTORIES) {
-    const directoryPath = resolve(inspection.dataDirectory, directory);
+    await assertNoSymlinkOnPath(projectRoot, resolve(isolation.dataDirectory, directory));
+  }
+  const git = await assertGoldenSetV2PrivateGitProtection(projectRoot);
+  await ensureDirectory(isolation.privateRoot);
+  await ensureDirectory(isolation.dataDirectory);
+  for (const directory of PRIVATE_DIRECTORIES) {
+    const directoryPath = resolve(isolation.dataDirectory, directory);
     await assertNoSymlinkOnPath(projectRoot, directoryPath);
     await ensureDirectory(directoryPath);
   }
 
-  const gitignorePath = resolve(inspection.privateRoot, ".gitignore");
+  const gitignorePath = resolve(isolation.privateRoot, ".gitignore");
   await assertNoSymlinkOnPath(projectRoot, gitignorePath);
   await chmod(gitignorePath, 0o600);
   for (const ledger of PRIVATE_LEDGER_FILES) {
-    const ledgerPath = resolve(inspection.dataDirectory, ledger);
+    const ledgerPath = resolve(isolation.dataDirectory, ledger);
     await assertNoSymlinkOnPath(projectRoot, ledgerPath);
     await ensurePrivateFile(ledgerPath);
   }
 
   const directoryModes = await Promise.all(
     [...new Set([
-      inspection.privateRoot,
-      inspection.dataDirectory,
-      ...PRIVATE_DIRECTORIES.map((directory) => resolve(inspection.dataDirectory, directory))
+      isolation.privateRoot,
+      isolation.dataDirectory,
+      ...PRIVATE_DIRECTORIES.map((directory) => resolve(isolation.dataDirectory, directory))
     ])]
       .map(async (directory) => ({
         directory,
@@ -268,7 +328,7 @@ export async function initializeGoldenSetV2PrivateWorkspace(
       }))
   );
   const fileModes = await Promise.all(
-    [gitignorePath, ...PRIVATE_LEDGER_FILES.map((file) => resolve(inspection.dataDirectory, file))]
+    [gitignorePath, ...PRIVATE_LEDGER_FILES.map((file) => resolve(isolation.dataDirectory, file))]
       .map(async (file) => ({ file, mode: permissionBits((await stat(file)).mode) }))
   );
   if (directoryModes.some((entry) => entry.mode !== 0o700)
@@ -278,15 +338,20 @@ export async function initializeGoldenSetV2PrivateWorkspace(
       "Golden Set v2 私有目录或账本权限未达到 0700/0600。"
     );
   }
+  const recursiveFilesystem = await auditGoldenSetV2PrivateTree(isolation.privateRoot, {
+    normalizePermissions: true
+  });
 
   return {
     status: "private_workspace_ready" as const,
-    privateRoot: inspection.privateRoot,
-    dataDirectory: inspection.dataDirectory,
+    privateRoot: isolation.privateRoot,
+    dataDirectory: isolation.dataDirectory,
+    git,
     directoryCount: directoryModes.length,
     ledgerFileCount: PRIVATE_LEDGER_FILES.length,
     directoryMode: "0700" as const,
     fileMode: "0600" as const,
+    recursiveFilesystem,
     productionAccessPerformed: false as const,
     modelCallCount: 0 as const
   };

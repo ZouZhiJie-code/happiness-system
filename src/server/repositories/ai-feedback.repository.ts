@@ -91,7 +91,7 @@ async function invalidateConsentBoundCandidates(
 ) {
   const uniqueTraceIds = Array.from(new Set(traceIds));
   if (uniqueTraceIds.length === 0) return;
-  const pendingCandidates = await tx.aIOptimizationCandidate.findMany({
+  const pendingCandidateIds = await tx.aIOptimizationCandidate.findMany({
     where: {
       evidenceTraceIds: { hasSome: uniqueTraceIds },
       OR: [
@@ -103,28 +103,59 @@ async function invalidateConsentBoundCandidates(
         }
       ]
     },
-    select: { id: true, status: true, evidenceTraceIds: true },
+    select: { id: true },
     orderBy: { id: "asc" }
   });
 
-  for (const candidate of pendingCandidates) {
+  for (const { id } of pendingCandidateIds) {
+    const lockedRows = await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+      SELECT "id"
+      FROM "AIOptimizationCandidate"
+      WHERE "id" = ${id}
+      FOR UPDATE
+    `);
+    if (lockedRows.length !== 1) continue;
+
+    const candidate = await tx.aIOptimizationCandidate.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        evidenceTraceIds: true,
+        reviewedBy: true,
+        reviewReason: true
+      }
+    });
+    const eligible = candidate && (
+      candidate.status === "draft"
+      || candidate.status === "approved"
+      || (
+        candidate.status === "rejected"
+        && candidate.reviewedBy === CONSENT_WITHDRAWAL_REVIEWED_BY
+        && candidate.reviewReason === CONSENT_WITHDRAWAL_REVIEW_REASON
+      )
+    );
+    if (!candidate || !eligible) continue;
+
+    const evidenceTraceIds = candidate.evidenceTraceIds.filter(
+      (traceId) => !uniqueTraceIds.includes(traceId)
+    );
+    if (evidenceTraceIds.length === candidate.evidenceTraceIds.length) continue;
+
     const update = await tx.aIOptimizationCandidate.updateMany({
       where: {
         id: candidate.id,
-        OR: [
-          { status: { in: ["draft", "approved"] } },
-          {
-            status: "rejected",
-            reviewedBy: CONSENT_WITHDRAWAL_REVIEWED_BY,
-            reviewReason: CONSENT_WITHDRAWAL_REVIEW_REASON
-          }
-        ]
+        status: candidate.status,
+        ...(candidate.status === "rejected"
+          ? {
+              reviewedBy: CONSENT_WITHDRAWAL_REVIEWED_BY,
+              reviewReason: CONSENT_WITHDRAWAL_REVIEW_REASON
+            }
+          : {})
       },
       data: {
         status: "rejected",
-        evidenceTraceIds: candidate.evidenceTraceIds.filter(
-          (traceId) => !uniqueTraceIds.includes(traceId)
-        ),
+        evidenceTraceIds,
         reviewedBy: CONSENT_WITHDRAWAL_REVIEWED_BY,
         reviewedAt: now,
         reviewReason: CONSENT_WITHDRAWAL_REVIEW_REASON

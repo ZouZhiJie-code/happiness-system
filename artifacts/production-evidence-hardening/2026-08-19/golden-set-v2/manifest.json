@@ -6,7 +6,7 @@
   "contract": {
     "version": "2.0",
     "path": "src/features/journal-evaluation/golden-set-v2-contract.ts",
-    "sha256": "09c274822acfba6cb8c65b9290cb16f57a0279c6da71e5832bd0dde6aa9e7059"
+    "sha256": "81d7d3dbacf71de223b02af0c73f1c8776e105775148d1abd59082efae4e92a1"
   },
   "expectedCaseCount": 30,
   "minimumCoverage": {

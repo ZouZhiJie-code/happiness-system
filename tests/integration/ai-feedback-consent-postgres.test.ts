@@ -18,6 +18,7 @@ const REVIEW_REASON = "AI_QUALITY_CONSENT_WITHDRAWN";
 
 type RepositoryModule = typeof import("@/server/repositories/ai-feedback.repository");
 type OptimizationRepositoryModule = typeof import("@/server/repositories/ai-optimization.repository");
+type ImpactRepositoryModule = typeof import("@/server/repositories/ai-quality-impact.repository");
 
 type SeededScenario = {
   userId: string;
@@ -82,6 +83,7 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
   let serviceDatabase: PrismaClient;
   let repository: RepositoryModule;
   let optimizationRepository: OptimizationRepositoryModule;
+  let impactRepository: ImpactRepositoryModule;
   let schema: string;
   let applicationName: string;
   let advisoryLockKey: bigint;
@@ -159,9 +161,16 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
       FOR EACH ROW
       EXECUTE FUNCTION "stage3_pause_candidate_write"()
     `);
+    await database.$executeRawUnsafe(`
+      CREATE TRIGGER "stage3_pause_admin_audit_write_trigger"
+      BEFORE INSERT ON "AdminAuditLog"
+      FOR EACH ROW
+      EXECUTE FUNCTION "stage3_pause_candidate_write"()
+    `);
 
     repository = await import("@/server/repositories/ai-feedback.repository");
     optimizationRepository = await import("@/server/repositories/ai-optimization.repository");
+    impactRepository = await import("@/server/repositories/ai-quality-impact.repository");
     serviceDatabase = (await import("@/server/db/prisma")).prisma;
   }, TEST_TIMEOUT_MS);
 
@@ -386,6 +395,42 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
         rolledBack: rolledBackCandidate.id
       }
     };
+  }
+
+  async function seedMinimalConsentTrace() {
+    const now = new Date();
+    const user = await database.user.create({
+      data: {
+        id: `stage3-minimal-user-${randomUUID()}`,
+        username: `stage3_minimal_${randomUUID().replaceAll("-", "")}`,
+        passwordHash: "local-integration-only",
+        agreedToTermsAt: now,
+        agreedToPrivacyAt: now,
+        privacyPolicyVersion: "2026-07-19",
+        aiQualityConsentVersion: "2026-07-19",
+        aiQualityConsentAt: now,
+        aiQualityConsentRevokedAt: null
+      }
+    });
+    const trace = await database.aIGenerationTrace.create({
+      data: {
+        userId: user.id,
+        artifactType: "interview_turn",
+        status: "completed",
+        outputOrigin: "fallback",
+        contextSnapshot: {
+          providerAttemptCount: 0,
+          actualModelCallExecuted: false
+        },
+        pipelineDecisions: {
+          providerAttemptCount: 0,
+          actualModelCallExecuted: false
+        },
+        finalOutput: { source: "local-minimal-integration" },
+        completedAt: now
+      }
+    });
+    return { userId: user.id, traceId: trace.id };
   }
 
   async function holdFeedbackUpdateGate() {
@@ -929,6 +974,319 @@ describeIntegration("AI quality consent PostgreSQL serialization", () => {
       await gate.transaction.catch(() => undefined);
       await cleanupScenario(left);
       await cleanupScenario(right);
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("serializes shared-candidate updates when both withdrawals reach the original evidence set", async () => {
+    const left = await seedMinimalConsentTrace();
+    const right = await seedMinimalConsentTrace();
+    const run = await database.aIOptimizationRun.create({
+      data: {
+        periodStart: new Date("2026-08-01T00:00:00.000Z"),
+        periodEnd: new Date("2026-09-01T00:00:00.000Z"),
+        status: "completed",
+        completedAt: new Date()
+      }
+    });
+    const candidate = await database.aIOptimizationCandidate.create({
+      data: {
+        runId: run.id,
+        path: "engineering",
+        status: "draft",
+        artifactType: "interview_turn",
+        title: "shared candidate stale-read guard",
+        rationale: "local integration only",
+        proposal: {},
+        evidenceTraceIds: [left.traceId, right.traceId]
+      }
+    });
+    const gate = await holdFeedbackUpdateGate();
+    const operations: Array<Promise<unknown>> = [];
+    try {
+      const leftWithdrawal = captureOutcome(
+        repository.recordAIQualityConsentDecision(left.userId, false)
+      );
+      const rightWithdrawal = captureOutcome(
+        repository.recordAIQualityConsentDecision(right.userId, false)
+      );
+      operations.push(leftWithdrawal, rightWithdrawal);
+
+      await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 1 });
+      gate.release();
+      await expect(leftWithdrawal).resolves.toMatchObject({ ok: true });
+      await expect(rightWithdrawal).resolves.toMatchObject({ ok: true });
+      await gate.transaction;
+
+      await expect(database.aIOptimizationCandidate.findUnique({
+        where: { id: candidate.id }
+      })).resolves.toMatchObject({
+        status: "rejected",
+        evidenceTraceIds: [],
+        reviewedBy: REVIEWED_BY,
+        reviewReason: REVIEW_REASON
+      });
+      await expect(database.aIRequestLog.count()).resolves.toBe(0);
+    } finally {
+      gate.release();
+      await Promise.allSettled(operations);
+      await gate.transaction.catch(() => undefined);
+      await database.aIOptimizationRun.deleteMany({ where: { id: run.id } });
+      await database.user.deleteMany({ where: { id: { in: [left.userId, right.userId] } } });
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("keeps validation dispatch inside the consent lease until withdrawal can finish", async () => {
+    const seed = await seedScenario("candidate");
+    const dispatchGate = createReleaseGate();
+    let markDispatchStarted!: () => void;
+    const dispatchStarted = new Promise<void>((resolve) => {
+      markDispatchStarted = resolve;
+    });
+    let leaseResolvedAt: number | null = null;
+    let withdrawalResolvedAt: number | null = null;
+    const operations: Array<Promise<unknown>> = [];
+    try {
+      const leaseOutcome = captureOutcome(
+        optimizationRepository.runOptimizationValidationWithConsentLease({
+          candidateId: seed.candidateIds.draft,
+          rubricVersion: "local-integration-rubric",
+          adminUsername: "local-integration"
+        }, async (validationInput) => {
+          markDispatchStarted();
+          await dispatchGate.released;
+          return {
+            status: "passed",
+            targetCaseCount: validationInput.targetTraces.length,
+            targetPassedCount: validationInput.targetTraces.length,
+            regressionCaseCount: validationInput.regressionTraces.length,
+            regressionPassedCount: validationInput.regressionTraces.length,
+            criticalRegressionCount: 0,
+            averageScoreDelta: 0,
+            summary: "local integration dispatch lease",
+            results: []
+          };
+        })
+      ).then((result) => {
+        leaseResolvedAt = Date.now();
+        return result;
+      });
+      operations.push(leaseOutcome);
+      await dispatchStarted;
+
+      const withdrawalOutcome = captureOutcome(
+        repository.recordAIQualityConsentDecision(seed.userId, false)
+      ).then((result) => {
+        withdrawalResolvedAt = Date.now();
+        return result;
+      });
+      operations.push(withdrawalOutcome);
+      await waitForBlockedLocks({ advisoryWaiting: 0, rowWaiting: 1 });
+      expect(withdrawalResolvedAt).toBeNull();
+
+      dispatchGate.release();
+      await expect(leaseOutcome).resolves.toMatchObject({
+        ok: true,
+        value: { status: "passed" }
+      });
+      await expect(withdrawalOutcome).resolves.toMatchObject({ ok: true });
+      expect(leaseResolvedAt).not.toBeNull();
+      expect(withdrawalResolvedAt).not.toBeNull();
+      expect(withdrawalResolvedAt!).toBeGreaterThanOrEqual(leaseResolvedAt!);
+      await assertRevokedOutcome(seed);
+      await expect(database.aIOptimizationValidation.findFirst({
+        where: { candidateId: seed.candidateIds.draft },
+        orderBy: { startedAt: "desc" }
+      })).resolves.toMatchObject({ status: "passed" });
+    } finally {
+      dispatchGate.release();
+      await Promise.allSettled(operations);
+      await cleanupScenario(seed);
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("records one validation provider failure and never retries the dispatch callback", async () => {
+    const seed = await seedScenario("candidate");
+    let dispatchCount = 0;
+    try {
+      await expect(optimizationRepository.runOptimizationValidationWithConsentLease({
+        candidateId: seed.candidateIds.draft,
+        rubricVersion: "local-integration-rubric",
+        adminUsername: "local-integration"
+      }, async () => {
+        dispatchCount += 1;
+        throw new Error("VALIDATION_PROVIDER_UNAVAILABLE");
+      })).rejects.toThrow("VALIDATION_PROVIDER_UNAVAILABLE");
+
+      expect(dispatchCount).toBe(1);
+      await expect(database.aIOptimizationValidation.findFirst({
+        where: { candidateId: seed.candidateIds.draft },
+        orderBy: { startedAt: "desc" }
+      })).resolves.toMatchObject({
+        status: "error",
+        errorCode: "VALIDATION_PROVIDER_UNAVAILABLE"
+      });
+      await expect(database.aIRequestLog.count()).resolves.toBe(0);
+    } finally {
+      await cleanupScenario(seed);
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("keeps active few-shot content inside one dispatch lease and removes it after withdrawal", async () => {
+    const seed = await seedScenario("active");
+    const dispatchGate = createReleaseGate();
+    let markDispatchStarted!: () => void;
+    const dispatchStarted = new Promise<void>((resolve) => {
+      markDispatchStarted = resolve;
+    });
+    let withdrawalResolved = false;
+    const operations: Array<Promise<unknown>> = [];
+    try {
+      const dispatchOutcome = captureOutcome(
+        optimizationRepository.runWithActivePromptOptimizationConsentLease(
+          "interview.question.local-integration",
+          async (optimization) => {
+            expect(optimization.fewShotExamples).toEqual([
+              expect.objectContaining({
+                id: seed.fewShotId,
+                inputSnapshot: { source: "local-integration" },
+                output: { source: "local-integration" }
+              })
+            ]);
+            markDispatchStarted();
+            await dispatchGate.released;
+            return "provider-dispatched-once";
+          }
+        )
+      );
+      operations.push(dispatchOutcome);
+      await dispatchStarted;
+
+      const withdrawalOutcome = captureOutcome(
+        repository.recordAIQualityConsentDecision(seed.userId, false)
+      ).then((result) => {
+        withdrawalResolved = true;
+        return result;
+      });
+      operations.push(withdrawalOutcome);
+      await waitForBlockedLocks({ advisoryWaiting: 0, rowWaiting: 1 });
+      expect(withdrawalResolved).toBe(false);
+
+      dispatchGate.release();
+      await expect(dispatchOutcome).resolves.toEqual({
+        ok: true,
+        value: "provider-dispatched-once"
+      });
+      await expect(withdrawalOutcome).resolves.toMatchObject({ ok: true });
+      await assertRevokedOutcome(seed);
+
+      let postWithdrawalExamples: unknown[] | null = null;
+      await optimizationRepository.runWithActivePromptOptimizationConsentLease(
+        "interview.question.local-integration",
+        async (optimization) => {
+          postWithdrawalExamples = optimization.fewShotExamples;
+          return null;
+        }
+      );
+      expect(postWithdrawalExamples).toEqual([]);
+      await expect(database.aIRequestLog.count()).resolves.toBe(0);
+    } finally {
+      dispatchGate.release();
+      await Promise.allSettled(operations);
+      await cleanupScenario(seed);
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("serializes impact-evidence content, audit and withdrawal with zero visible request-log fixtures", async () => {
+    const seed = await seedScenario("candidate");
+    const gate = await holdFeedbackUpdateGate();
+    const operations: Array<Promise<unknown>> = [];
+    const promptKey = "interview.question.local-integration";
+    const versionMarker = "+opt:impact-consent";
+    const impactInput = {
+      candidateId: seed.candidateIds.draft,
+      adminUsername: "local-integration",
+      promptKey,
+      start: new Date(Date.now() - 86_400_000),
+      end: new Date(Date.now() + 86_400_000),
+      versionMarker,
+      kind: "attention" as const,
+      page: 1,
+      pageSize: 5
+    };
+    try {
+      const readOutcome = captureOutcome(database.$transaction(async (tx) => {
+        const requestLog = await tx.aIRequestLog.create({
+          data: {
+            traceId: seed.automaticTraceId,
+            stage: "question",
+            provider: "local-uncommitted-fixture",
+            promptKey,
+            promptVersion: `v1${versionMarker}`,
+            success: true
+          }
+        });
+        const result = await impactRepository.findAIQualityImpactEvidencePageWithinTransaction(
+          tx,
+          impactInput
+        );
+        await tx.aIRequestLog.delete({ where: { id: requestLog.id } });
+        return result;
+      }));
+      operations.push(readOutcome);
+      await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 0 });
+
+      const withdrawalOutcome = captureOutcome(
+        repository.recordAIQualityConsentDecision(seed.userId, false)
+      );
+      operations.push(withdrawalOutcome);
+      await waitForBlockedLocks({ advisoryWaiting: 1, rowWaiting: 1 });
+
+      gate.release();
+      await expect(readOutcome).resolves.toMatchObject({
+        ok: true,
+        value: {
+          total: 1,
+          traces: [{ id: seed.automaticTraceId }]
+        }
+      });
+      await expect(withdrawalOutcome).resolves.toMatchObject({ ok: true });
+      await gate.transaction;
+      await expect(database.adminAuditLog.count({
+        where: {
+          adminUsername: "local-integration",
+          resourceType: "ai_quality_impact_evidence",
+          resourceId: seed.automaticTraceId,
+          action: "view_content"
+        }
+      })).resolves.toBe(1);
+
+      const auditCountBefore = await database.adminAuditLog.count();
+      const afterWithdrawal = await database.$transaction(async (tx) => {
+        const requestLog = await tx.aIRequestLog.create({
+          data: {
+            traceId: seed.automaticTraceId,
+            stage: "question",
+            provider: "local-uncommitted-fixture",
+            promptKey,
+            promptVersion: `v1${versionMarker}`,
+            success: true
+          }
+        });
+        const result = await impactRepository.findAIQualityImpactEvidencePageWithinTransaction(
+          tx,
+          impactInput
+        );
+        await tx.aIRequestLog.delete({ where: { id: requestLog.id } });
+        return result;
+      });
+      expect(afterWithdrawal).toMatchObject({ total: 0, traces: [] });
+      await expect(database.adminAuditLog.count()).resolves.toBe(auditCountBefore);
+      await expect(database.aIRequestLog.count()).resolves.toBe(0);
+    } finally {
+      gate.release();
+      await Promise.allSettled(operations);
+      await gate.transaction.catch(() => undefined);
+      await cleanupScenario(seed);
     }
   }, TEST_TIMEOUT_MS);
 

@@ -641,7 +641,9 @@ export const goldenSetV2PublicMetadataDistributionSchema = z.object({
   byMonth: z.array(
     z.object({
       ...goldenSetV2PublicDistributionCountShape,
-      month: z.string().regex(/^\d{4}-\d{2}$/u)
+      month: z.string().regex(/^\d{4}-\d{2}$/u),
+      total: z.number().int().min(GOLDEN_SET_V2_PUBLIC_SMALL_CELL_THRESHOLD)
     }).strict().superRefine(validateGoldenSetV2PublicDistributionCounts)
-  )
+  ),
+  suppressedMonthBucketCount: z.number().int().nonnegative()
 }).strict();

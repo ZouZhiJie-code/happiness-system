@@ -32,6 +32,7 @@ describe("AI quality impact APIs", () => {
       { params: Promise.resolve({ candidateId: "candidate-1" }) }
     );
     expect(invalid.status).toBe(400);
+    expect(invalid.headers.get("cache-control")).toBe("private, no-store");
 
     service.getAIQualityCandidateImpactEvidence.mockResolvedValue({ candidateId: "candidate-1", items: [] });
     const response = await getEvidence(
@@ -39,6 +40,7 @@ describe("AI quality impact APIs", () => {
       { params: Promise.resolve({ candidateId: "candidate-1" }) }
     );
     expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(service.getAIQualityCandidateImpactEvidence).toHaveBeenCalledWith({
       candidateId: "candidate-1",
       adminUsername: "admin_user",
@@ -57,5 +59,23 @@ describe("AI quality impact APIs", () => {
     expect(response.status).toBe(403);
     expect(payload).toMatchObject({ error: "ADMIN_FORBIDDEN", code: "ADMIN_FORBIDDEN" });
     expect(payload.requestId).toEqual(expect.any(String));
+  });
+
+  it("fails closed when impact evidence consent changes during the controlled read", async () => {
+    service.getAIQualityCandidateImpactEvidence.mockRejectedValue(
+      new Error("OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED")
+    );
+    const response = await getEvidence(
+      new Request("http://localhost/api/admin/ai-quality/candidates/candidate-1/impact/evidence?kind=attention"),
+      { params: Promise.resolve({ candidateId: "candidate-1" }) }
+    );
+
+    expect(response.status).toBe(409);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    await expect(response.json()).resolves.toMatchObject({
+      error: "OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED",
+      code: "OPTIMIZATION_EVIDENCE_CONSENT_REQUIRED",
+      requestId: expect.any(String)
+    });
   });
 });
