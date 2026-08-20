@@ -15,11 +15,11 @@
 当前 Production 事实：
 
 - 正式域名：`https://dailylight.chat`
-- deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`
-- 发布时间：`2026-08-13`
+- deployment：`dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY／PROMOTED）
+- 发布时间：`2026-08-20`
 - 运行模式：`event_centered + baseline`
-- 源码血缘：已封存 commit `ed8c36d`；新分支以最新 `origin/main` 为父节点，并通过基线提交 `5c36b49` 恢复该 Production 源码树
-- 上一正式版本：`dpl_ATtwPhXLvmHURAutRzKyimNSWyir`，承担 `legacy + baseline` 回退
+- 源码血缘：最终发布头 `a86a4ba`，tree `70ca8f4` 与 main 合并提交 `305f209` 的 tree 完全一致
+- 回退目标：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY），承担上一版 `event_centered + baseline` 回退
 
 ## 2. 实施范围
 
@@ -99,15 +99,15 @@
 - 计划外模型预算；
 - 删除分支、worktree、私有现场或其他破坏性清理。
 
-阶段 1 的工程验证、Preview 行为和只读数据库对账已通过，Production 发布保持 `待验证`；其余阶段继续使用各自当前状态。任何核心回归、内容丢失、恢复失败、权限回归或线上指标恶化都会暂停对应批次并回退到上一正式 deployment。
+阶段 1 已发布 Production，工程验证、Preview 行为、只读数据库对账和正式域名核心 smoke 已通过；管理员成功读取保持 pending。其余阶段继续使用各自当前状态。任何核心回归、内容丢失、恢复失败、权限回归或线上指标恶化都会暂停对应批次并回退到上一正式 deployment。
 
 ## 6. 当前进度
 
 | 阶段 | 状态 | 当前证据 |
 |---|---|---|
 | 0. 保护现场与工作线 | 已完成 | GI-088 `175` 项成果完成指纹与隐私检查；最终 No-Go 状态已由检查点 `199aa94` 封存并推送，原工作区干净，分支与私有现场继续保留 |
-| 1. 数据口径 v2 | Preview 已通过·Production 待发布 | 实现 `7bbe285`；验证头 `51925b6`；PR #40 远程 CI、Preview 行为和六步漏斗只读对账通过 |
-| 2. 零模型 E2E | 待验证 | 只读审计完成，等待实现 |
+| 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
+| 2. 零模型 E2E | 远程工程门通过·Preview 核心主链部分通过·Production blocked | PR #41 两套 CI／E2E 通过；Preview 通过事件卡与日记 draft，编辑／保存／需更新续跑受 `PEH-022` 阻断 |
 | 3. Golden Set v2 | 待验证 | 数据治理审计进行中，真实样本数量待只读核验 |
 | 4. 主链重构 | 待验证 | 等待阶段 2 回归保护 |
 | 5. 月度洞察评估 | 待验证 | 数据源差异已入账，候选尚未运行 |
@@ -120,4 +120,30 @@
 - Preview deployment `dpl_DExPivo5Qqfk97kH9jVahU8yWQ8A`：管理员、匿名、普通用户、空态、错误态和旧链展开区通过。
 - `2026-07-22..2026-08-20`、`Asia/Shanghai`：Preview API 与独立 SQL 的六步漏斗均为 `6 / 5 / 5 / 1 / 1 / 1`，逐项差异为 `0`。
 - 数据库事务为只读，用户正文读取 `0`、业务写入 `0`、临时秘密残留 `0`。留存与质量保存独立 SQL 统计；后续 Preview API 再读受到 deployment protection／TLS 路径阻断，本轮不声明新的留存与质量 API 逐字段回读。
-- Production 继续使用 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`。完整公开零正文证据见[数据口径 v2 回执](../../../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)。
+- 该发布前检查点的 Production 仍使用 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`；当前正式版本见下方发布后证据。完整公开零正文证据见[数据口径 v2 回执](../../../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)。
+
+### 阶段 1 Production 发布后证据封存｜2026-08-20
+
+- 最终发布头 `a86a4ba` 经 PR #40 合入 main merge `305f209`；两者源码 tree 均为 `70ca8f4366be6a8cb968385050b0aa3d10bbdbc7`。
+- 最终 CI run `32333975329` 成功：`360` 个测试文件通过、`16` 个跳过，`3207` 条用例通过、`82` 条跳过、`0` 失败，Lint 为 `0 errors / 43 warnings`。
+- Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 为 READY／PROMOTED，`https://dailylight.chat` 已指向该版本；回退目标 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2` 为 READY。
+- 正式域名匿名管理接口 `401`、普通用户管理接口 `403`，注册登录、session、空 joy session 和非法日期合同均通过；模型端点调用 `0`。发布后 `19` 条日志中 `5xx / error / fatal / warning` 均为 `0`。
+- smoke 创建固定验收账号、`AuthSession` 和空 `InterviewSession`；当前保留并等待产品负责人单独确认清理。后续治理见 `PEH-021`。
+- 管理员白名单存在 `1` 个身份；当前执行环境缺少合法凭证且两种受控浏览器环境均无既有登录态，Production 管理员成功读取保持 pending。
+- Production 运行依赖审计为 `0`；全依赖审计的 `3 moderate / 1 high / 1 critical` 位于 Vite／Vitest 开发测试工具链，已进入 `PEH-019` 独立治理。
+
+### 阶段 2 PR 前证据封存｜2026-08-20
+
+- 独立发布分支已 rebase 到 `origin/main@305f209`，重复的阶段 1 测试治理提交自动移除；差异收敛为 24 个阶段 2 文件，Prisma 变更为 `0`。
+- rebase 后实现提交为 `5d0e795`，本地验证头为 `f12bf27`；类型检查、目标 Lint、文档检查和差异检查均通过，零模型 guard 为 `9/9`。
+- 安全 E2E 使用本机 loopback 专用测试库完成 `11/11`：1440×900 覆盖 10 项，1024×768 覆盖 1 项；`AIRequestLog=0`、12 条 Trace 四类模型调用违规为 `0`，临时 Schema 已删除且残留为 `0`。
+- 历史完整三连跑继续由[零模型 E2E 原始回执](../../../artifacts/production-evidence-hardening/2026-08-19/e2e-zero-model/README.md)承担；当前单轮只证明 rebase 后发布线未发生工程漂移。
+- 该 PR 前检查点结束时，分支推送、Pull Request、远程 CI、Preview 人工主链和 Production 发布均为 pending；当前状态见下方 PR／Preview 证据。阶段 2 Production 继续受阶段 1 管理员成功读取门约束。
+
+### 阶段 2 PR／Preview 证据封存｜2026-08-20
+
+- PR #41 head `e7e1541` 的 push run `32336448157` 与 pull request run `32336474525` 均成功：`361` 个测试文件通过、`16` 个跳过，`3216` 条用例通过、`82` 条跳过、`0` 失败；构建 `77/77`，Lint `0 errors / 43 warnings`。
+- 两套远程零模型 E2E 均为 `11/11`；PR Job 记录 `AIRequestLog=0`、12 条 Trace 四类调用违规 `0`，临时 Schema 已删除。
+- Preview `dpl_GAU2uR8BpbTsP4FQhhnqaGBmv4Sr` 为 Ready；人工 smoke 已通过匿名／普通用户保护、上海日期、【帮我记】完整回应、完成记录、单卡保存和今日日记 draft 生成。
+- 首次编辑因验收标题 17 字超过 UI 16 字合同而返回预期结构化 `400`；纠正后的首次重新登录在应用收到请求前遇到 Vercel CLI TLS 阻断。编辑／保存、来源变化需更新和更新后人工修改保护保持 `not_run`，详见 `PEH-022`。
+- 当前结论为 `远程工程门通过 / Preview 核心主链部分通过 / Production blocked`；Stage 2 工程基础可以合入 main，Production 等待 `PEH-020` 与 `PEH-022` 同时完成。

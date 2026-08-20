@@ -1,6 +1,7 @@
 import { getEventCenteredProductScope } from "@/features/interview/event-centered-release";
 import { getAIProvider } from "@/server/services/ai";
 import type { AIProvider } from "@/server/services/ai/ai-provider";
+import { isE2EZeroModelEnabled } from "@/server/services/ai/e2e-zero-model-guard";
 import { readDeepSeekConfig } from "@/server/services/ai/provider-config";
 import { createRuntimeAIProvider } from "@/server/services/ai/runtime-provider-factory";
 
@@ -121,6 +122,8 @@ export async function getEventCenteredAIProvider(
   dependencies: EventCenteredProviderDependencies = {}
 ): Promise<AIProvider | null> {
   const env = dependencies.env ?? process.env;
+  if (isE2EZeroModelEnabled(env)) return null;
+
   if (!candidateRequested(env)) {
     return (dependencies.getFallbackProvider ?? getAIProvider)("chat");
   }

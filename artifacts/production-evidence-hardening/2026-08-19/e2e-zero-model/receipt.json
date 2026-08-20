@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "DL-PROD-20260819-E2E-ZERO-MODEL-V1",
+  "evidenceType": "public_redacted_engineering_receipt",
+  "commit": "be98237",
+  "status": {
+    "localThreeRunGate": "passed",
+    "ci": "configured_not_run",
+    "preview": "not_run",
+    "production": "not_run"
+  },
+  "browserCoverage": {
+    "chromium1440x900": 10,
+    "chromium1024x768": 1,
+    "totalScenariosPerRun": 11,
+    "workers": 4,
+    "databaseConcurrencyScenarios": "serial"
+  },
+  "runs": [
+    {
+      "ordinal": 1,
+      "result": "passed",
+      "passed": 11,
+      "total": 11,
+      "durationSeconds": 5.6,
+      "temporarySchema": "daily_light_e2e_mt0xpgeg_45ef174f8a",
+      "schemaDropped": true,
+      "aiRequestLogCount": 0,
+      "aiGenerationTraceCount": 12,
+      "violations": {
+        "outputOriginLlm": 0,
+        "positiveProviderAttemptCount": 0,
+        "actualModelCallExecutedTrue": 0,
+        "nonDisabledProviderAttempt": 0,
+        "total": 0
+      }
+    },
+    {
+      "ordinal": 2,
+      "result": "passed",
+      "passed": 11,
+      "total": 11,
+      "durationSeconds": 5.7,
+      "temporarySchema": "daily_light_e2e_mt0xqkhy_410fec5134",
+      "schemaDropped": true,
+      "aiRequestLogCount": 0,
+      "aiGenerationTraceCount": 12,
+      "violations": {
+        "outputOriginLlm": 0,
+        "positiveProviderAttemptCount": 0,
+        "actualModelCallExecutedTrue": 0,
+        "nonDisabledProviderAttempt": 0,
+        "total": 0
+      }
+    },
+    {
+      "ordinal": 3,
+      "result": "passed",
+      "passed": 11,
+      "total": 11,
+      "durationSeconds": 5.8,
+      "temporarySchema": "daily_light_e2e_mt0xr8ke_a2598cdff9",
+      "schemaDropped": true,
+      "aiRequestLogCount": 0,
+      "aiGenerationTraceCount": 12,
+      "violations": {
+        "outputOriginLlm": 0,
+        "positiveProviderAttemptCount": 0,
+        "actualModelCallExecutedTrue": 0,
+        "nonDisabledProviderAttempt": 0,
+        "total": 0
+      }
+    }
+  ],
+  "cleanup": {
+    "allRunSchemasDropped": true,
+    "finalResidualSchemaCount": 0,
+    "interruptedRunCleanup": "passed",
+    "interruptedRunZeroModelReceiptEmitted": true,
+    "interruptedRunSchemaDropReceiptEmitted": true
+  },
+  "analyticsContractV2": {
+    "contractVersion": 2,
+    "currentProductFunnel": {
+      "openedDay": 1,
+      "firstContentSubmitted": 1,
+      "completeResponseReceived": 1,
+      "eventCardSaved": 1,
+      "dailyJournalGenerated": 1,
+      "dailyJournalSaved": 1
+    },
+    "legacyFunnelPresent": true
+  },
+  "ciPolicy": {
+    "playwrightRetries": 0,
+    "randomFailurePolicy": "fail_immediately"
+  },
+  "privacy": {
+    "containsDatabaseAddress": false,
+    "containsAccountIdentifier": false,
+    "containsCredential": false,
+    "containsUserInput": false,
+    "containsConversationContent": false,
+    "containsJournalContent": false
+  }
+}

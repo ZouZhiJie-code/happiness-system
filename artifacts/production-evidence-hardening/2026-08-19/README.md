@@ -10,9 +10,9 @@
 | 资产 | 状态 | 说明 |
 |---|---|---|
 | [问题台账](./issue-ledger.md) | 实施中 | 记录事实、产品判断、Codex 评估、假设和处理状态 |
-| Production 源码基线 | 已封存 | `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2` → `ed8c36d` → 工作线基线 `5c36b49` |
-| [数据口径 v2 证据](./analytics-contract-v2/README.md) | Preview 已通过·Production 待发布 | 已封存远程 CI、Preview 行为验收和独立只读数据库对账；公开回执保持零正文 |
-| 零模型 E2E 证据 | 待验证 | 三次本地运行、CI 与零调用断言后续进入本目录 |
+| Production 发布血缘 | 已封存 | `a86a4ba` → tree `70ca8f4` = main merge `305f209` → `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` → `https://dailylight.chat`；回退目标 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2` READY |
+| [数据口径 v2 证据](./analytics-contract-v2/README.md) | Production 已发布·核心回验通过·管理员成功读取 pending | 已封存最终 CI、Preview、只读数据库对账、正式域名核心 smoke 和线上日志；公开回执保持零正文 |
+| [零模型 E2E 证据](./e2e-zero-model/README.md) | 远程工程门通过·Preview 核心主链部分通过·Production blocked | PR #41 两套 CI 与 E2E 通过；Preview 通过事件卡和日记 draft，编辑／保存／需更新续跑因验收输入错误后 TLS 阻断保持 `not_run` |
 | Golden Set v2 | 待验证 | 公开目录只保存匿名状态、哈希、数量、评分和脱敏摘要；正文保存在 Git 排除的 `.private` |
 | 主链重构证据 | 待验证 | 三批兼容回归、部署和观察回执后续进入本目录 |
 | 月度洞察 Go/No-Go | 待验证 | 启动卡、调用账本、公开脱敏回执和私有评审包后续进入本目录 |

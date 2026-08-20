@@ -9,23 +9,33 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 的远程 CI、Preview 行为和只读数据库对账已通过，当前状态为 `Preview Ready / Production 待发布`；其余阶段继续按专项记录推进。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 远程工程门通过，Preview 核心主链部分通过，Production blocked。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
 - 分支：`codex/production-evidence-hardening-20260819`
 - 最新 main 父节点：`138b595`
-- Production 源码基线：`ed8c36d`
-- 基线校准提交：`5c36b49`
-- 正式 deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`
+- Production 发布头：`a86a4ba`
+- main 合并提交：`305f209`
+- 正式 deployment：`dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY／PROMOTED）
+- 回退 deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY）
 - Production 模式：`event_centered + baseline`
 
-阶段 1 发布前证据：
+阶段 1 Production 证据：
 
-- 数据合同实现 `7bbe285`，发布验证头 `51925b6`，PR #40 CI run `32331657275` 成功；CI 原始日志为 `3205 passed / 82 skipped / 0 failed`。
+- 数据合同实现 `7bbe285`，最终发布头 `a86a4ba`，PR #40 main merge `305f209`；二者源码 tree 均为 `70ca8f4`。最终 CI run `32333975329` 成功，`3207 passed / 82 skipped / 0 failed`，Lint `0 errors / 43 warnings`。
 - Preview deployment `dpl_DExPivo5Qqfk97kH9jVahU8yWQ8A` 已通过管理员、匿名、普通用户、空态、错误态和旧链展开区验收。
 - `2026-07-22..2026-08-20` 的六步漏斗 Preview API 与独立 SQL 均为 `6 / 5 / 5 / 1 / 1 / 1`，差异为 `0`；数据库事务只读，正文读取、业务写入和临时秘密残留均为 `0`。
-- 留存与质量保留本轮独立 SQL 统计；后续 Preview API 再读受到 deployment protection／TLS 路径阻断，本轮不声明新的留存与质量 API 逐字段回读。Production 发布和正式域名回验继续待执行，回退目标为 `dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`。完整证据见[数据口径 v2 回执](../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)。
+- 留存与质量保留本轮独立 SQL 统计；后续 Preview API 再读受到 deployment protection／TLS 路径阻断，逐字段一致性范围继续使用已封存证据。
+- Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已 READY／PROMOTED，正式域名匿名 `401`、普通用户 `403`、注册登录、session、空 joy session 和非法日期合同均通过；模型端点调用 `0`，抽查 `19` 条日志的 `5xx / error / fatal / warning` 均为 `0`。
+- 管理员白名单存在 `1` 个身份；当前缺少合法凭证且两种受控浏览器环境均无既有登录态，管理员成功读取保持 pending。完整证据见[数据口径 v2 回执](../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)。
+- smoke 创建的固定验收账号、`AuthSession` 和空 `InterviewSession` 继续保留，清理等待产品负责人单独确认；Production 运行依赖审计为 `0`，Vite／Vitest 开发测试工具链告警进入独立治理。
+
+阶段 2 本地发布线证据：
+
+- 分支已 rebase 到 `origin/main@305f209`，24 个阶段 2 文件边界清楚，Prisma 变更为 `0`。
+- rebase 后类型检查、目标 Lint、文档和差异检查通过；guard `9/9`，浏览器 `11/11`，`AIRequestLog=0`、12 条 Trace 四类违规 `0`、临时 Schema 残留 `0`。
+- 历史完整三连跑继续保留原始运行身份；PR #41 两套远程 CI／E2E 已通过，Preview 已通过事件卡和日记 draft。编辑／保存／需更新续跑因验收输入错误后 TLS 阻断保持 `not_run`；Stage 2 Production 等待 `PEH-020` 与 `PEH-022` 完成。
 
 实施并行覆盖数据口径、零模型 E2E 与评测资产；Production 发布按阶段 1 → 2 → 4 串行。GI-088 原工作区的状态冲突已经按最终证据收口，`175` 项成果由检查点 `199aa94` 封存并推送；原分支、worktree 与私有现场继续保留，清理仍等待最终单独确认。该封存不开放新的模型调用，也不改变本轮 Production 范围。
 
