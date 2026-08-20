@@ -110,7 +110,7 @@
 | 2. 零模型 E2E | 已合入 main·Preview 通过至需更新·第二轮本地工程门通过·远程待验证·Production blocked | PR #41 合入 `77de8d1`；编辑／保存／需更新通过，日记更新与人工保护待跑；`PEH-023` 已按接口分流测试响应，本地完整门通过 |
 | 3. Golden Set v2 | 待验证 | 数据治理审计进行中，真实样本数量待只读核验 |
 | 4. 主链重构 | 待验证 | 等待阶段 2 回归保护 |
-| 5. 月度洞察评估 | 待验证 | 数据源差异已入账，候选尚未运行 |
+| 5. 月度洞察评估 | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；2 条低数据量用例 Provider 调用 `0`，其余 4 条候选调用 `not_run`；真实用户月 `0`、模型调用 `0`，Production 保持确定性 `AnalysisNarrative` |
 
 问题、归因和处理状态统一记录在[问题台账](../../../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 

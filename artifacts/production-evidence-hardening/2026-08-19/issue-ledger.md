@@ -47,11 +47,11 @@
 
 ## PEH-006｜月度分析当前数据源与 Production 主链不一致
 
-- 已确认事实：`/analysis` 的旧月度聚合主要读取 `JoyEntry + DailyJournalEntry`；Production 的事件中心月度成果由 `JournalPeriodReport`、`JournalDailyEntry` 和 `JournalEventEntry` 承担。
-- 产品判断：月度个性化洞察只评估当前 Production 用户实际可见的月度材料。
-- Codex 评估：直接在现有 `AnalysisNarrative` 占位层接模型会评到旧链数据，应先增加当前成果物的确定性材料投影。
-- 待验证假设：`JournalPeriodReport` 现有 material precedence 足以承接候选输入，无需原始完整对话。
-- 当前处理状态：阶段 5 前置实现项；候选模型调用保持 `0`。
+- 已确认事实：候选已从 `JournalPeriodReport` 的周报、今日日记、旧日记和事件卡去重结果建立确定性材料投影；旧五维 `/analysis` 聚合未进入候选输入。6 条合成边界夹具的输入与输出合同全部通过，其中 2 条低数据量用例验证 Provider 调用为 `0`，其余 4 条候选调用保持 `not_run`；真实用户月 `0`，模型调用 `0`。
+- 产品判断：月度个性化洞察只评估当前 Production 用户实际可见的月度材料；本轮证据支持 `No-Go / insufficient_evidence`，Production 继续使用确定性 `AnalysisNarrative`。
+- Codex 评估：当前成果物投影、低数据量门、来源日期合同和调用上限已经形成隔离候选；样本级外部评测授权与已发布 Chat Provider 冻结指纹尚未齐备，当前证据无法支持产品接入。
+- 待验证假设：未来取得 `external_monthly_eval` 样本级授权并冻结新的运行身份后，最多 6 个真实用户月可以完成逐例产品裁决；该假设不影响本轮 No-Go 完成状态。
+- 当前处理状态：阶段 5 已完成评估并封存 `No-Go / insufficient_evidence`；真实用户月 `0`、模型调用 `0`、Production 接入关闭。证据见[月度洞察公开回执](./monthly-insight-v1/README.md)。
 
 ## PEH-007｜Production 源码快照缺少文档治理命令
 

@@ -15,7 +15,7 @@
 | [零模型 E2E 证据](./e2e-zero-model/README.md) | 已合入 main·Preview 通过至需更新·第二轮本地工程门通过·远程待验证·Production blocked | PR #41 合入 `77de8d1`；编辑／保存／需更新通过，日记更新前 TLS 阻断；`PEH-023` 已切断后台观测请求与业务响应替身的顺序竞争，产品源码 `0` |
 | Golden Set v2 | 待验证 | 公开目录只保存匿名状态、哈希、数量、评分和脱敏摘要；正文保存在 Git 排除的 `.private` |
 | 主链重构证据 | 待验证 | 三批兼容回归、部署和观察回执后续进入本目录 |
-| 月度洞察 Go/No-Go | 待验证 | 启动卡、调用账本、公开脱敏回执和私有评审包后续进入本目录 |
+| [月度洞察 Go/No-Go](./monthly-insight-v1/README.md) | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；真实用户月 `0`、模型调用 `0`，Production 继续使用确定性 `AnalysisNarrative` |
 
 ## 隐私边界
 

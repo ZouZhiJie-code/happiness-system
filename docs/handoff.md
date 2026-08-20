@@ -9,7 +9,7 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 已合入 main，Preview 通过至“需更新”，热修复第二轮本地工程门通过、远程待验证，Production blocked。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
@@ -40,6 +40,13 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - main run `32337995170` 出现一个 GI-088 工作台异步单例失败；Stage 5 同一提交的 push run `32338658277` 全绿，PR run attempt 1 又在同一文件等待结构化错误时单例波动，failed-only attempt 2 已主动取消。首次本地修复后的全量运行在 `361/377` 文件进度处又暴露跨日期会话标题与地址 effect 的单次时序差；旧版与修复后的精确用例均完成 `50/50 P4`，修复仍依据实际失败等待地址栏两个字段同时更新。
 - GI payload 已恢复真实首次选择路径，fake digest 只作为测试替身；该 payload `50/50 P4`、完整 GI 文件 `20/20 P4`、混合压力 `270/270 P4` 通过。`PEH-023` 首轮本地工程门与初始 head 两套远程 CI 已通过。文档 head `c897d7a` 的 push run 全绿，PR run 再次暴露按调用序号配置的响应会被后台 `/operation-events` 抢占；第二轮已改为按接口地址分流，随机顺序 `750/750`、精确场景 `200/200`、连续三轮全量和零模型 E2E `11/11` 均通过。只修改两个测试文件，产品源码 `0`；新 head 远程门待验证。
 - Stage 2 Production 等待 `PEH-020`、剩余 `PEH-022` 和 `PEH-023` 同时完成。正式域名继续使用阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
+
+阶段 5 隔离候选证据：
+
+- 候选输入只使用当前事件中心月度成果投影、评分趋势和日期引用；原始完整对话不进入候选，Production 页面与接口未接入该能力。
+- 6 条合成边界夹具的数据合同全部通过；2 条低数据量用例验证 Provider 调用为 `0`，其余 4 条候选调用保持 `not_run`。
+- 获得 `external_monthly_eval` 样本级授权的真实用户月为 `0`，已发布 Chat Provider 配置指纹尚未冻结，因此模型调用和产品负责人逐例裁决均为 `0`。
+- 阶段结论为 `No-Go / insufficient_evidence`；评估本身已完成，Production 继续使用确定性 `AnalysisNarrative`。公开证据见[月度洞察 v1 回执](../artifacts/production-evidence-hardening/2026-08-19/monthly-insight-v1/README.md)。
 
 实施并行覆盖数据口径、零模型 E2E 与评测资产；Production 发布按阶段 1 → 2 → 4 串行。GI-088 原工作区的状态冲突已经按最终证据收口，`175` 项成果由检查点 `199aa94` 封存并推送；原分支、worktree 与私有现场继续保留，清理仍等待最终单独确认。该封存不开放新的模型调用，也不改变本轮 Production 范围。
 
