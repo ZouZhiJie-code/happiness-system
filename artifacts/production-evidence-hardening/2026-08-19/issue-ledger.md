@@ -43,7 +43,7 @@
 - 产品判断：自动 E2E 必须零真实模型调用。
 - Codex 评估：需要仅测试环境可启用、Production 启动即拒绝的确定性 AI 替身，并同时断言请求日志和 Trace 的模型执行字段。
 - 待验证假设：现有 Provider 注入点足以实现 fail-closed 测试替身，不改变正式路径。
-- 当前处理状态：本地与远程工程门已通过。PR #41 的 push／pull request 两套 E2E 均为 `11/11`，PR Job `AIRequestLog=0`、12 条 Trace 四类违规 `0`、临时 Schema 已删除；Preview 核心主链通过到今日日记 draft。编辑／保存／需更新续跑受 `PEH-022` 约束，Stage 2 Production blocked。
+- 当前处理状态：PR #41 已合入 main；push／pull request 两套 E2E 均为 `11/11`，PR Job `AIRequestLog=0`、12 条 Trace 四类违规 `0`、临时 Schema 已删除。Preview 已通过至“需更新”；剩余日记更新与人工片段保护见 `PEH-022`，合并后 CI 稳定修复见 `PEH-023`。Stage 2 Production blocked。
 
 ## PEH-006｜月度分析当前数据源与 Production 主链不一致
 
@@ -119,8 +119,18 @@
 
 ## PEH-022｜Stage 2 Preview 日记续跑被验收输入与传输阻断
 
-- 已确认事实：Preview 已通过匿名／普通用户保护、上海日期、【帮我记】完整回应、完成记录、单卡保存和今日日记 draft 生成。首次人工编辑使用 17 字验收标题，超过 UI 的 16 字合同，产品返回 `400 INVALID_JOURNAL_DAILY_AUTOSAVE_REQUEST`；纠正后的首次重新登录在请求到达应用前遇到 Vercel CLI TLS 阻断。
-- 产品判断：首次 `400` 归入验收输入错误；应用未收到的 TLS 失败归入传输阻断。两项都不扩大为产品回归，未完成的编辑／保存／需更新／人工修改保护继续标记 `not_run`。
-- Codex 评估：本地和远程自动 E2E 已覆盖这些合同，但自动证据不替代 Preview 人工续跑。Stage 2 可以合入工程基础，Production 保持停止。
-- 待验证假设：网络通道恢复后，使用 16 字以内标题可在同一 Preview 数据上完成编辑、保存、来源变化需更新和更新后人工片段保留。
-- 当前处理状态：保留首次错误与 TLS 失败原始分账；等待一次最小 Preview 续跑。Stage 2 Production 还同时受 `PEH-020` 管理员成功读取门约束。
+- 已确认事实：Preview 已通过匿名／普通用户保护、上海日期、【帮我记】完整回应、完成记录、单卡保存和今日日记 draft 生成。首次人工编辑使用 17 字验收标题，超过 UI 的 16 字合同，产品返回 `400 INVALID_JOURNAL_DAILY_AUTOSAVE_REQUEST`；首次纠正前的登录受到 Vercel CLI TLS 阻断。最终 Preview `dpl_5okCGtSkeA7h6uCQUAWv9ur5UtHG` 续跑已通过 16 字以内标题编辑、日记保存和事件卡变化后的“需更新”；调用日记更新前再次遇到 Vercel CLI TLS 阻断，应用未收到该更新请求。
+- 产品判断：首次 `400` 归入验收输入错误；应用未收到的两次 TLS 失败归入传输阻断。编辑、保存和需更新获得 Preview 人工证据；日记更新与更新后人工片段保护继续标记 `not_run`。
+- Codex 评估：Preview 核心链路的已验证范围已经扩展到“需更新”，人工修改保护仍依赖一次成功更新。Stage 2 工程基础已合入 main，Production 继续使用停止门。
+- 待验证假设：网络通道恢复后，同一 Preview 数据可以完成日记更新，并保留更新前的用户人工片段。
+- 当前处理状态：保留首次错误、首次 TLS 和续跑 TLS 的独立分账；等待日记更新与人工片段保护最小续跑。Stage 2 Production 还同时受 `PEH-020` 与 `PEH-023` 约束。
+
+## PEH-023｜Stage 2 合并后异步测试波动
+
+- 已确认事实：PR #41 已合入 main merge `77de8d1`，正式域名继续指向阶段 1 Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。main run `32337995170` 的零模型 E2E 为 `11/11`；常规测试在 `tests/unit/gi088-evaluation-workbench.test.tsx:508` 等待“同一焦点，容易回答”时单例 `10.176s` 失败，随后构建与 Lint 跳过。Stage 5 同一提交的 push run `32338658277` 全绿；PR run `32338697673` attempt 1 的 test job `96333218076` 在同一文件 `:686` 等待 `GI088_TURN_OUT_OF_DATE`，单例 `30.174s` 后失败；failed-only attempt 2 已主动取消。上述数据来自对应 Job 日志。
+- 已确认事实（首轮本地与远程热修复）：首次修复后的全量运行在 `361/377` 文件进度处，`tests/unit/event-centered-interview-workspace.test.tsx` 的跨日期会话用例发生一次时序失败；所选会话标题已经更新，地址栏 effect 尚未完成。旧版精确用例随后完成 `50/50 P4`，仍按这次实际失败修复为等待地址栏 `sessionId=root-2` 与 `entryDate=2026-07-21` 同时更新；修复后精确用例再次完成 `50/50 P4`。GI payload 已恢复用户首次选择“包含提问”的真实路径，fake digest 只承担测试替身；该 payload 完成 `50/50 P4`，完整 GI 文件完成 `20/20 P4`。PR #43 初始 head `9ca5de2` 的 push／pull request 两套 CI 均在 attempt 1 成功。
+- 已确认事实（最终文档 head 暴露的第二个时序源）：head `c897d7a` 只改 8 份文档。push run `32343781979` 全绿；pull request run `32343785173` 的 E2E 为 `11/11`，常规测试在同一结构化错误用例等待 `30.194s` 后失败，构建与 Lint 跳过。只读随机顺序复现确认，草稿恢复 effect 的合法 `/operation-events` 请求会在特定调度下抢占按“第 1／2／3 次调用”配置的响应，随后真正的 `/turn` 或 `/start-task` 获得另一份预设结果。
+- 产品判断：本项按工程发布门处理，Stage 5 产品结论继续使用其隔离评测证据。Stage 2 Production 等待两个测试文件完成远程复核。
+- Codex 评估：跨日期地址同步与 GI 请求替身是两类独立测试观察问题。GI 的确定性摘要已排除真实 WebCrypto 性能影响；第二轮修复继续保留真实 outbox、幂等键、409 解析和恢复动作，只把两条用例的响应替身改为按接口地址分流，并分别验证目标提交次数。
+- 待验证假设：按接口地址分流后，后台观测请求的先后顺序不再改变 `/start-task`、`/turn` 与 `/session` 的业务响应；新 head 可以在重试为 `0` 的本地全量门和 push／pull request 两套远程 CI 中稳定通过。
+- 当前处理状态：`第二轮本地工程门通过·远程待验证`。随机顺序 seed 1～50、8 并发共 `750/750` 通过；两条精确场景 100 轮、12 并发共 `200/200` 通过，未知请求与重复目标请求均为 `0`，原失败 seed 24 已通过。连续三轮全量均为 `3216` 通过、`82` 跳过、`0` 失败；类型检查、Lint、构建 `77/77`、Prisma、文档和差异检查通过；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 模型违规 `0`、临时 Schema 残留 `0`。新 head 的 push／pull request 两套远程门待执行。

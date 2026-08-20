@@ -220,6 +220,17 @@ function jsonResponse(payload: unknown, status = 200) {
 }
 
 function installBrowserGlobals() {
+  vi.spyOn(webcrypto.subtle, "digest").mockImplementation(async (_algorithm, data) => {
+    const input = ArrayBuffer.isView(data)
+      ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+      : new Uint8Array(data);
+    const digest = new Uint8Array(32);
+    input.forEach((byte, index) => {
+      const outputIndex = index % digest.length;
+      digest[outputIndex] = (digest[outputIndex]! + byte + index) % 256;
+    });
+    return digest.buffer;
+  });
   vi.stubGlobal("crypto", webcrypto as unknown as Crypto);
   vi.stubGlobal("matchMedia", undefined);
   Object.defineProperty(window, "matchMedia", {
@@ -230,6 +241,19 @@ function installBrowserGlobals() {
       removeEventListener: vi.fn()
     })
   });
+}
+
+async function clickEnabledButton(name: string | RegExp) {
+  const button = await screen.findByRole(
+    "button",
+    { name },
+    { timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS }
+  );
+  await waitFor(() => expect(button).toBeEnabled(), {
+    timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
+  });
+  fireEvent.click(button);
+  return button;
 }
 
 describe("GI-088 v8r2 evaluation workbench", () => {
@@ -311,7 +335,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<Gi088EvaluationWorkbench />);
-    fireEvent.click(await screen.findByRole("button", { name: "创建 0/12 运行" }));
+    await clickEnabledButton("创建 0/12 运行");
 
     await screen.findByRole("heading", { name: "持续聊下去，也能随时回看和纠正" });
     const body = JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body));
@@ -354,9 +378,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
 
     render(<Gi088EvaluationWorkbench />);
 
-    fireEvent.click(await screen.findByRole("button", {
-      name: "创建同候选复测"
-    }));
+    await clickEnabledButton("创建同候选复测");
     await waitFor(() => expect(screen.getByLabelText("当前运行"))
       .toHaveValue("run-1"));
     expect(screen.getAllByRole("option").map((option) =>
@@ -383,7 +405,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     fireEvent.change(await screen.findByLabelText("继续自然交流"), {
       target: { value: "我希望她先理解我当时为什么那么累。" }
     });
-    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+    await clickEnabledButton("发送");
 
     await waitFor(() => expect(fetchMock.mock.calls.filter(([input]) =>
       String(input) === "/api/preview/gi088/turn"
@@ -444,23 +466,42 @@ describe("GI-088 v8r2 evaluation workbench", () => {
   it("流响应丢失后复用 unresolved outbox 的 clientTurnId", async () => {
     const ready = evaluationSession({ active: false });
     const started = evaluationSession();
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(jsonResponse(ready))
-      .mockRejectedValueOnce(new Error("stream lost"))
-      .mockResolvedValueOnce(jsonResponse(started));
+    let startRequestCount = 0;
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url === "/api/preview/gi088/runs") return jsonResponse(ready);
+      if (url === "/api/preview/gi088/operation-events") {
+        return jsonResponse({ recorded: true });
+      }
+      if (url === "/api/preview/gi088/start-task") {
+        startRequestCount += 1;
+        if (startRequestCount === 1) throw new Error("stream lost");
+        return jsonResponse(started);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
     vi.stubGlobal("fetch", fetchMock);
     render(<Gi088EvaluationWorkbench />);
 
     fireEvent.change(await screen.findByLabelText("你的第一段表达 U1"), {
       target: { value: "跟奶奶解释很累，但我还是想让她理解我。" }
     });
-    fireEvent.click(screen.getByRole("button", { name: "开始 Thinking high 评测" }));
-    await screen.findByText("评测工作台暂时无法连接。当前内容仍在，请恢复网络后读取最新状态。");
-    fireEvent.click(screen.getByRole("button", { name: "开始 Thinking high 评测" }));
+    await clickEnabledButton("开始 Thinking high 评测");
+    await screen.findByText(
+      "评测工作台暂时无法连接。当前内容仍在，请恢复网络后读取最新状态。",
+      undefined,
+      { timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS }
+    );
+    await clickEnabledButton("开始 Thinking high 评测");
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
-    const first = JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body));
-    const second = JSON.parse(String((fetchMock.mock.calls[2]![1] as RequestInit).body));
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([input]) =>
+      String(input) === "/api/preview/gi088/start-task"
+    )).toHaveLength(2));
+    const startCalls = fetchMock.mock.calls.filter(([input]) =>
+      String(input) === "/api/preview/gi088/start-task"
+    );
+    const first = JSON.parse(String((startCalls[0]![1] as RequestInit).body));
+    const second = JSON.parse(String((startCalls[1]![1] as RequestInit).body));
     expect(Object.keys(first).sort()).toEqual([
       "action",
       "clientOperationId",
@@ -472,7 +513,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     expect(first.clientOperationId).toBe(second.clientOperationId);
     expect(first.clientOperationId).toMatch(/^gi088-turn-/u);
     expect(window.sessionStorage.getItem(GI088_OUTBOX_MAP_STORAGE_KEY)).toBeNull();
-  });
+  }, HIGH_LOAD_TEST_TIMEOUT_MS);
 
   it("processing 期间每 2 秒只 GET session，不发 automatic retry POST", async () => {
     const pending = evaluationSession({ processing: true });
@@ -504,13 +545,14 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     render(<Gi088EvaluationWorkbench />);
 
     await screen.findByTestId("gi088-question-review");
-    fireEvent.click(screen.getByRole("button", { name: "包含提问" }));
-    fireEvent.click(await screen.findByRole(
-      "button",
-      { name: "同一焦点，容易回答" },
-      { timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS }
-    ));
-    fireEvent.click(screen.getByRole("button", { name: "保存本轮分类" }));
+    expect(screen.queryByRole("button", { name: "同一焦点，容易回答" }))
+      .not.toBeInTheDocument();
+    const presentButton = await clickEnabledButton("包含提问");
+    await waitFor(() => expect(presentButton).toHaveAttribute("aria-pressed", "true"), {
+      timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
+    });
+    await clickEnabledButton("同一焦点，容易回答");
+    await clickEnabledButton("保存本轮分类");
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     const body = JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body));
@@ -548,11 +590,27 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<Gi088EvaluationWorkbench />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "程序介入正确" }));
-    fireEvent.change(screen.getByLabelText("复核理由（必填）"), {
+    const correctInterventionButton = await screen.findByRole("button", {
+      name: "程序介入正确"
+    });
+    await waitFor(() => expect(correctInterventionButton).toBeEnabled(), {
+      timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
+    });
+    fireEvent.click(correctInterventionButton);
+    fireEvent.change(await screen.findByLabelText(
+      "复核理由（必填）",
+      undefined,
+      { timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS }
+    ), {
       target: { value: "用户明确停止，程序介入正确。" }
     });
-    fireEvent.click(screen.getByRole("button", { name: "保存程序介入复核" }));
+    const saveInterventionReviewButton = screen.getByRole("button", {
+      name: "保存程序介入复核"
+    });
+    await waitFor(() => expect(saveInterventionReviewButton).toBeEnabled(), {
+      timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
+    });
+    fireEvent.click(saveInterventionReviewButton);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     const body = JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body));
@@ -564,7 +622,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
       outcome: "correct"
     });
     expect(body.clientOperationId).toMatch(/^gi088-turn-/u);
-  });
+  }, HIGH_LOAD_TEST_TIMEOUT_MS);
 
   it("安全终止当前任务保留原因并提交确认", async () => {
     const value = evaluationSession();
@@ -581,11 +639,27 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<Gi088EvaluationWorkbench />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "安全终止当前任务" }));
-    fireEvent.change(screen.getByLabelText("终止原因（必填）"), {
+    const openAbortButton = await screen.findByRole("button", {
+      name: "安全终止当前任务"
+    });
+    await waitFor(() => expect(openAbortButton).toBeEnabled(), {
+      timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
+    });
+    fireEvent.click(openAbortButton);
+    fireEvent.change(await screen.findByLabelText(
+      "终止原因（必填）",
+      undefined,
+      { timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS }
+    ), {
       target: { value: "页面故障阻断本项，保留现有证据。" }
     });
-    fireEvent.click(screen.getByRole("button", { name: "确认终止当前任务" }));
+    const confirmAbortButton = screen.getByRole("button", {
+      name: "确认终止当前任务"
+    });
+    await waitFor(() => expect(confirmAbortButton).toBeEnabled(), {
+      timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
+    });
+    fireEvent.click(confirmAbortButton);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     const body = JSON.parse(String((fetchMock.mock.calls[1]![1] as RequestInit).body));
@@ -597,7 +671,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
       abandonRecovery: false
     });
     expect(body.clientOperationId).toMatch(/^gi088-turn-/u);
-  });
+  }, HIGH_LOAD_TEST_TIMEOUT_MS);
 
   it("历史运行保持对话只读，同时全局保留验签下载入口", async () => {
     const value = evaluationSession({ readOnly: true });
@@ -658,20 +732,30 @@ describe("GI-088 v8r2 evaluation workbench", () => {
 
   it("typed issue.action=read_latest_state 只读取最新 session", async () => {
     const value = evaluationSession();
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(jsonResponse(value))
-      .mockResolvedValueOnce(jsonResponse({
-        issue: {
-          code: "GI088_TURN_OUT_OF_DATE",
-          message: "所见对话已经更新，请先读取最新状态。",
-          retryable: false,
-          dataSaved: "no",
-          impact: "turn",
-          action: "read_latest_state",
-          requestId: "request-1"
-        }
-      }, 409))
-      .mockResolvedValueOnce(jsonResponse(value));
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url === "/api/preview/gi088/runs") return jsonResponse(value);
+      if (url === "/api/preview/gi088/operation-events") {
+        return jsonResponse({ recorded: true });
+      }
+      if (url === "/api/preview/gi088/turn") {
+        return jsonResponse({
+          issue: {
+            code: "GI088_TURN_OUT_OF_DATE",
+            message: "所见对话已经更新，请先读取最新状态。",
+            retryable: false,
+            dataSaved: "no",
+            impact: "turn",
+            action: "read_latest_state",
+            requestId: "request-1"
+          }
+        }, 409);
+      }
+      if (url === "/api/preview/gi088/session?runId=run-1&taskId=A1") {
+        return jsonResponse(value);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
     vi.stubGlobal("fetch", fetchMock);
     render(<Gi088EvaluationWorkbench />);
 
@@ -683,6 +767,25 @@ describe("GI-088 v8r2 evaluation workbench", () => {
       timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
     });
     fireEvent.click(sendButton);
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([input]) =>
+      String(input) === "/api/preview/gi088/turn"
+    )).toHaveLength(1), {
+      timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
+    });
+    const turnCall = fetchMock.mock.calls.find(([input]) =>
+      String(input) === "/api/preview/gi088/turn"
+    );
+    expect(turnCall).toBeDefined();
+    const turnBody = JSON.parse(String((turnCall![1] as RequestInit).body));
+    expect(turnBody).toMatchObject({
+      runId: "run-1",
+      taskId: "A1",
+      branch: "high",
+      content: "继续聊这一小块。",
+      baseAssistantMessageId: "a1-high"
+    });
+    expect(turnBody.clientOperationId).toBe(turnBody.clientTurnId);
+    expect(turnBody.clientOperationId).toMatch(/^gi088-turn-/u);
     const issueCode = await screen.findByText(
       "GI088_TURN_OUT_OF_DATE",
       { selector: "span" },
@@ -696,13 +799,16 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     expect(issueAlert).toHaveTextContent("GI088_TURN_OUT_OF_DATE");
     fireEvent.click(within(issueAlert).getByRole("button", { name: "读取最新状态" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3), {
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([input]) =>
+      String(input) === "/api/preview/gi088/session?runId=run-1&taskId=A1"
+    )).toHaveLength(1), {
       timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
     });
-    expect(fetchMock.mock.calls[2]![0]).toBe(
-      "/api/preview/gi088/session?runId=run-1&taskId=A1"
+    const sessionCall = fetchMock.mock.calls.find(([input]) =>
+      String(input) === "/api/preview/gi088/session?runId=run-1&taskId=A1"
     );
-    expect(fetchMock.mock.calls[2]![1]).toMatchObject({ cache: "no-store" });
-    expect((fetchMock.mock.calls[2]![1] as RequestInit).method).toBeUndefined();
+    expect(sessionCall).toBeDefined();
+    expect(sessionCall![1]).toMatchObject({ cache: "no-store" });
+    expect((sessionCall![1] as RequestInit).method).toBeUndefined();
   }, HIGH_LOAD_TEST_TIMEOUT_MS);
 });

@@ -1,14 +1,19 @@
 {
-  "receiptVersion": "2026-08-20.stage2-preview-gate.v1",
+  "receiptVersion": "2026-08-20.stage2-preview-gate.v2",
   "sealedOn": "2026-08-20",
   "privacyClass": "public_zero_body",
-  "status": "engineering_passed_manual_core_partial_production_blocked",
+  "status": "merged_preview_update_partial_ci_fix_second_local_engineering_pass_remote_pending_production_blocked",
   "identity": {
     "pullRequest": 41,
     "headSha": "e7e15416b491585865f67b48cff447eaf3c38a86",
     "previewDeploymentId": "dpl_GAU2uR8BpbTsP4FQhhnqaGBmv4Sr",
     "previewState": "READY",
-    "previewUrl": "https://xingfuxitong-c1gcu3x81-zouzhijies-projects.vercel.app"
+    "previewUrl": "https://xingfuxitong-c1gcu3x81-zouzhijies-projects.vercel.app",
+    "finalHeadSha": "553d4886c458ccff9d5d149b9b5f16867055ef67",
+    "finalPreviewDeploymentId": "dpl_5okCGtSkeA7h6uCQUAWv9ur5UtHG",
+    "finalPreviewState": "READY",
+    "finalPreviewUrl": "https://xingfuxitong-f755dnith-zouzhijies-projects.vercel.app",
+    "mainMergeSha": "77de8d164df90e920cd325213f49bb7647f0e51c"
   },
   "remoteVerification": {
     "pullRequestRunId": 32336474525,
@@ -39,6 +44,12 @@
       "aiGenerationTraceCount": 12,
       "modelCallViolations": 0,
       "temporarySchemaDropped": true
+    },
+    "finalHeadRuns": {
+      "pushRunId": 32337508459,
+      "pullRequestRunId": 32337511943,
+      "conclusion": "success",
+      "zeroModelE2e": "11_of_11_each"
     }
   },
   "previewSmoke": {
@@ -53,24 +64,258 @@
       "errorCode": "INVALID_JOURNAL_DAILY_AUTOSAVE_REQUEST",
       "cause": "acceptance_title_length_17_exceeded_ui_max_16"
     },
-    "manualEditCorrection": "not_run_transport_blocked_before_login",
-    "dailyJournalSave": "not_run_transport_blocked_before_login",
-    "staleAfterEventChange": "not_run_transport_blocked_before_login",
-    "manualEditPreservationAfterUpdate": "not_run_transport_blocked_before_login",
-    "transportFailure": {
+    "initialTransportFailure": {
       "layer": "vercel_cli_tls_before_application",
       "applicationRequestReached": false,
       "newBusinessWrites": 0,
       "newInterviewResponses": 0
     },
+    "continuation": {
+      "previewDeploymentId": "dpl_5okCGtSkeA7h6uCQUAWv9ur5UtHG",
+      "manualEditCorrection": "passed",
+      "dailyJournalSave": "passed",
+      "staleAfterEventChange": "passed",
+      "dailyJournalUpdate": "not_run_transport_blocked_before_request",
+      "manualEditPreservationAfterUpdate": "not_run_daily_update_dependency",
+      "transportFailure": {
+        "stage": "before_daily_journal_update",
+        "layer": "vercel_cli_tls_before_application",
+        "applicationRequestReached": false
+      }
+    },
     "manualProductModelCallCount": "not_observable_with_ordinary_user_permissions",
     "administratorSuccessReadback": "not_run"
   },
+  "postMergeVerification": {
+    "mainRunId": 32337995170,
+    "conclusion": "failure",
+    "zeroModelE2e": "passed_11_of_11",
+    "testFiles": {
+      "passed": 360,
+      "skipped": 16,
+      "failed": 1
+    },
+    "testCases": {
+      "passed": 3215,
+      "skipped": 82,
+      "failed": 1
+    },
+    "singleFailure": {
+      "file": "tests/unit/gi088-evaluation-workbench.test.tsx",
+      "line": 508,
+      "waitedFor": "same_focus_low_burden_control",
+      "durationMs": 10176
+    },
+    "build": "skipped_after_test_failure",
+    "lint": "skipped_after_test_failure"
+  },
+  "stage5Corroboration": {
+    "commitRelation": "same_stage5_head",
+    "pushRunId": 32338658277,
+    "pushConclusion": "success",
+    "pullRequestRunId": 32338697673,
+    "pullRequestAttempt1TestJobId": 96333218076,
+    "pullRequestAttempt1Conclusion": "single_test_failure",
+    "pullRequestAttempt1SingleFailure": {
+      "file": "tests/unit/gi088-evaluation-workbench.test.tsx",
+      "line": 686,
+      "waitedFor": "GI088_TURN_OUT_OF_DATE",
+      "durationMs": 30174
+    },
+    "failedOnlyAttempt2": "cancelled",
+    "interpretation": "asynchronous_test_variance_not_stage5_product_failure"
+  },
+  "localHotfixVerification": {
+    "status": "second_local_engineering_passed_remote_pending",
+    "scope": {
+      "testFiles": [
+        "tests/unit/gi088-evaluation-workbench.test.tsx",
+        "tests/unit/event-centered-interview-workspace.test.tsx"
+      ],
+      "productionSourceFiles": 0
+    },
+    "firstFullSuiteAfterInitialFix": {
+      "progressAtFailure": "361_of_377_test_files",
+      "conclusion": "single_timing_failure",
+      "file": "tests/unit/event-centered-interview-workspace.test.tsx",
+      "case": "lists_cross_date_sessions_and_opens_selected_conversation",
+      "observedState": {
+        "selectedHeadingUpdated": true,
+        "locationEffectCompleted": false
+      }
+    },
+    "crossDateSessionCase": {
+      "prePatchExactStress": "passed_50_of_50_p4",
+      "evidenceDecision": "still_wait_for_both_location_fields",
+      "postPatchExactStress": "passed_50_of_50_p4",
+      "requiredLocationFields": [
+        "sessionId=root-2",
+        "entryDate=2026-07-21"
+      ]
+    },
+    "gi088PayloadCase": {
+      "realFirstSelectionPathRestored": true,
+      "fakeDigestScope": "test_double_only",
+      "exactStress": "passed_50_of_50_p4",
+      "completeFileStress": "passed_20_of_20_p4"
+    },
+    "combinedHighLoad": "passed_270_of_270_p4",
+    "orderedMockRace": {
+      "confirmedByRandomizedReproduction": true,
+      "reproducedSeed": 24,
+      "backgroundRequest": "/api/preview/gi088/operation-events",
+      "affectedBusinessRequests": [
+        "/api/preview/gi088/start-task",
+        "/api/preview/gi088/turn"
+      ],
+      "cause": "background_observation_consumed_position_based_mock_response",
+      "fix": "route_responses_by_url_and_count_business_requests_independently",
+      "productionSourceFilesChanged": 0
+    },
+    "secondLocalPressure": {
+      "randomizedSingleFile": {
+        "seeds": "1_through_50",
+        "processConcurrency": 8,
+        "testExecutions": 750,
+        "passed": 750,
+        "failed": 0
+      },
+      "focusedRaceCases": {
+        "processRuns": 100,
+        "processConcurrency": 12,
+        "testExecutions": 200,
+        "passed": 200,
+        "failed": 0,
+        "unknownRequests": 0,
+        "duplicateTargetRequests": 0
+      },
+      "reproducedSeedNowPassed": 24,
+      "fullEngineeringGate": {
+        "consecutiveFullSuiteRuns": 3,
+        "testFilesPassedPerRun": 361,
+        "testFilesSkippedPerRun": 16,
+        "testsPassedPerRun": 3216,
+        "testsSkippedPerRun": 82,
+        "failuresPerRun": 0,
+        "durationsSeconds": [
+          29.4,
+          30.19,
+          29.97
+        ],
+        "typecheck": "passed",
+        "fullLint": "passed_0_errors_43_inherited_warnings",
+        "build": "passed_77_of_77_with_16_inherited_tracing_warnings",
+        "prismaValidate": "passed_with_dummy_loopback",
+        "docsCheck": "passed_24_core_843_links_1_current_entry",
+        "diffCheck": "passed",
+        "zeroModelE2e": {
+          "tests": "passed_11_of_11",
+          "playwrightSeconds": 5.9,
+          "wallSeconds": 17.52,
+          "aiRequestLogCount": 0,
+          "traceCount": 12,
+          "modelCallViolations": 0,
+          "temporarySchema": "daily_light_e2e_mt17xxl8_247c07e5db",
+          "temporarySchemaDropped": true,
+          "temporarySchemaResidualCount": 0
+        }
+      },
+      "remoteVerification": "pending"
+    },
+    "currentEngineeringGates": {
+      "testCommit": "0e5907b",
+      "consecutiveFullSuiteRuns": 3,
+      "testFilesPassedPerRun": 361,
+      "testFilesSkippedPerRun": 16,
+      "testsPassedPerRun": 3216,
+      "testsSkippedPerRun": 82,
+      "failuresPerRun": 0,
+      "focusedTests": "passed_40_of_40",
+      "typecheck": "passed",
+      "targetLint": "passed",
+      "fullLint": "passed_0_errors_43_inherited_warnings",
+      "build": "passed_77_of_77_with_16_inherited_tracing_warnings",
+      "prismaValidate": "passed",
+      "docsCheck": "passed",
+      "diffCheck": "passed",
+      "zeroModelE2e": {
+        "tests": "passed_11_of_11",
+        "durationSeconds": 8.8,
+        "aiRequestLogCount": 0,
+        "traceCount": 12,
+        "modelCallViolations": 0,
+        "temporarySchema": "daily_light_e2e_mt16dp87_91393cea70",
+        "temporarySchemaDropped": true,
+        "temporarySchemaResidualCount": 0
+      }
+    },
+    "remoteVerification": {
+      "initialHeadSha": "9ca5de20a8b2ad830dace611a559b1cc4efdfc66",
+      "pushRunId": 32342959894,
+      "pullRequestRunId": 32342989092,
+      "attempts": 1,
+      "retries": 0,
+      "conclusion": "success",
+      "testFilesPassedPerRun": 361,
+      "testFilesSkippedPerRun": 16,
+      "testsPassedPerRun": 3216,
+      "testsSkippedPerRun": 82,
+      "build": "passed_77_of_77_each",
+      "zeroModelE2e": {
+        "tests": "passed_11_of_11_each",
+        "aiRequestLogCount": 0,
+        "traceCount": 12,
+        "pushSchema": "daily_light_e2e_mt16pl5c_a7a62cc7a7",
+        "pullRequestSchema": "daily_light_e2e_mt16q8j6_7e45c3f23f",
+        "temporarySchemasDropped": true
+      },
+      "preview": {
+        "deploymentId": "dpl_Fi6fKBfesct1Z1jeNthe5NfHMkvH",
+        "state": "READY",
+        "url": "https://xingfuxitong-p7juqhbux-zouzhijies-projects.vercel.app"
+      },
+      "docsOnlyHead": {
+        "headSha": "c897d7a1d1cef93159c07bd081e169c4dfc3543b",
+        "changeScope": "8_docs_and_artifacts_files_only",
+        "pushRun": {
+          "runId": 32343781979,
+          "attempts": 1,
+          "retries": 0,
+          "conclusion": "success",
+          "testsPassed": 3216,
+          "testsSkipped": 82,
+          "zeroModelE2e": "passed_11_of_11"
+        },
+        "pullRequestRun": {
+          "runId": 32343785173,
+          "attempts": 1,
+          "retries": 0,
+          "conclusion": "failure",
+          "testsPassed": 3215,
+          "testsSkipped": 82,
+          "testsFailed": 1,
+          "failedFile": "tests/unit/gi088-evaluation-workbench.test.tsx",
+          "failedCase": "typed issue.action=read_latest_state only reads latest session",
+          "failedWaitMs": 30194,
+          "zeroModelE2e": "passed_11_of_11"
+        },
+        "preview": {
+          "deploymentId": "dpl_DbMX4YLQDLiNsMHwTWmiS5Y4romE",
+          "state": "READY",
+          "url": "https://xingfuxitong-l6zwxkkqn-zouzhijies-projects.vercel.app"
+        },
+        "interpretation": "position_based_fetch_double_race_confirmed_and_fixed_locally"
+      },
+      "nextHead": "pending_remote_verification"
+    }
+  },
   "releaseBoundary": {
     "production": "blocked",
+    "productionDeploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
     "blockers": [
       "stage1_production_administrator_success_readback_pending",
-      "stage2_preview_journal_edit_save_update_continuation_not_run"
+      "stage2_preview_daily_update_and_manual_edit_preservation_not_run",
+      "stage2_postmerge_ci_stabilization_pending"
     ]
   }
 }

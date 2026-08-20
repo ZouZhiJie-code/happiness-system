@@ -3,7 +3,7 @@
 - 证据类型：公开脱敏工程回执
 - 验证状态：本地完整三连跑通过
 - 对应提交：`be98237`
-- 当前发布线状态：远程工程门通过，Preview 核心主链部分通过，Production blocked
+- 当前发布线状态：已合入 main，Preview 通过至“需更新”，热修复第二轮本地工程门通过、远程待验证，Production blocked
 - Preview／Production：本回执不承担发布证明
 
 ## 为什么保留这份回执
@@ -18,13 +18,29 @@
 
 rebase 后新增一轮安全复核：guard `9/9`、浏览器 `11/11`；`AIRequestLog=0`，12 条 Trace 的四类模型调用违规为 `0`，临时 Schema 已删除且最终残留为 `0`。该单轮用于证明发布线重放后未发生工程漂移，不改写下方原始三连跑身份。该本地检查点结束时，PR、远程 CI、Preview 和 Production 均为 pending；当前状态见下方 PR 与 Preview 结果。
 
-## PR 与 Preview 结果
+## PR、Preview 与 main 合并结果
 
 PR #41 在 head `e7e1541` 上的 push／pull request 两套 CI 均成功。远程常规门为 `361` 个测试文件通过、`16` 个跳过，`3216` 条用例通过、`82` 条跳过、`0` 失败；构建 `77/77`，Lint `0 errors / 43 warnings`。两套零模型 E2E Job 均为 `11/11`，其中 PR Job 记录 `AIRequestLog=0`、12 条 Trace、四类调用违规 `0`，临时 Schema 已删除。
 
+最终 head `553d488` 的 push run `32337508459` 与 pull request run `32337511943` 继续通过，两套零模型 E2E 均为 `11/11`。PR #41 随后合入 main merge `77de8d1`；该合并只形成 Preview，正式域名继续指向阶段 1 Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
+
 Preview `dpl_GAU2uR8BpbTsP4FQhhnqaGBmv4Sr` 为 Ready。人工 smoke 已通过匿名保护、普通用户后台保护、上海日期归属、【帮我记】完整回应、完成记录、单卡保存和今日日记 draft 生成。首次人工编辑使用了 17 字验收标题，超过 UI 的 16 字合同，产品正确返回 `400 INVALID_JOURNAL_DAILY_AUTOSAVE_REQUEST`；纠正后的首次重新登录在请求到达应用前遇到 Vercel CLI TLS 阻断，因此编辑／保存、来源变化需更新和更新后人工修改保护保持 `not_run`。
 
-当前发布结论为 `远程工程门通过 / Preview 核心主链部分通过 / Production blocked`。Stage 2 Production 等待两项完成：阶段 1 管理员成功读取；Preview 日记编辑、保存、需更新和人工修改保护续跑。机器可读边界见 [`preview-gate-receipt.json`](./preview-gate-receipt.json)。
+最终 Preview `dpl_5okCGtSkeA7h6uCQUAWv9ur5UtHG` 完成一次最小续跑：16 字以内标题的人工编辑、日记保存和事件卡变化后的“需更新”均通过；调用日记更新前再次遇到 Vercel CLI TLS 阻断，应用未收到该更新请求。因此日记更新与更新后人工片段保护保持 `not_run`，首次输入错误和两次传输失败继续分别记账。
+
+main push run `32337995170` 的零模型 E2E 为 `11/11`，常规测试出现一个 GI-088 工作台异步单例失败：`360` 个测试文件通过、`16` 个跳过、`1` 个失败，`3215` 条用例通过、`82` 条跳过、`1` 个失败；构建与 Lint 随前序失败跳过。Stage 5 同一提交的 push run `32338658277` 全绿，PR run `32338697673` attempt 1 又在同一测试文件等待结构化错误 `GI088_TURN_OUT_OF_DATE`，单例 `30.174s` 后失败；failed-only attempt 2 已主动取消。两组远程事实共同确认 GI-088 工作台存在异步测试波动，Stage 5 产品候选继续使用自身证据判断。
+
+首次本地修复后的全量运行在 `361/377` 文件进度处出现第二类单次时序失败：跨日期会话界面标题已经切换为所选记录，地址栏更新 effect 尚未完成。该精确用例的旧版随后完成 `50/50 P4`，仍按实际失败证据修复为同时等待地址栏 `sessionId` 与 `entryDate`；修复后再次完成 `50/50 P4`。GI payload 用例继续覆盖用户真实首次选择“包含提问”的路径，fake digest 只承担测试替身；该用例完成 `50/50 P4`，完整 GI 文件完成 `20/20 P4`，两个工作区混合压力为 `270/270 P4`。
+
+首轮热修复提交 `0e5907b` 只改两个测试文件，产品源码变更 `0`。该版本连续三轮全量均为 `361` 个文件通过、`16` 个跳过，`3216` 条用例通过、`82` 条跳过、`0` 失败；相关四文件 `40/40`。类型检查、目标与全量 Lint、构建 `77/77`、Prisma、文档与差异检查均通过。零模型浏览器回归为 `11/11`，`AIRequestLog=0`、12 条 Trace 的模型调用违规为 `0`，临时 Schema 已删除且残留为 `0`。
+
+PR #43 初始 head `9ca5de2` 的 push run `32342959894` 与 pull request run `32342989092` 均在 attempt 1 成功，重试为 `0`。两套常规门各为 `361` 个文件通过、`16` 个跳过，`3216` 条用例通过、`82` 条跳过，构建 `77/77`；两套零模型 E2E 各为 `11/11`、`AIRequestLog=0`、12 条 Trace，隔离 Schema 均已删除。Preview `dpl_Fi6fKBfesct1Z1jeNthe5NfHMkvH` 为 Ready。
+
+随后只改 8 份文档的 head `c897d7a` 触发全新检查：push run `32343781979` 全绿；pull request run `32343785173` 的零模型 E2E 为 `11/11`，常规测试在结构化错误场景等待 `30.194s` 后失败。随机顺序 seed 24 已复现同源问题：草稿恢复 effect 的 `/operation-events` 会抢占按调用序号配置的预设响应，使真正的 `/start-task` 或 `/turn` 得到另一份结果。第二轮修复将两条用例改为按接口地址分流，并分别统计业务请求；真实 outbox、幂等键、409 解析和“读取最新状态”链路保持不变。
+
+第二轮本地验证已完成：随机顺序 seed 1～50、8 并发共 `750/750` 通过；两条精确场景 100 轮、12 并发共 `200/200` 通过，未知请求与重复目标请求均为 `0`，原失败 seed 24 已通过。连续三轮全量均为 `361` 个文件通过、`16` 个跳过，`3216` 条用例通过、`82` 条跳过、`0` 失败；类型检查、Lint、构建 `77/77`、Prisma、文档和差异检查均通过。零模型 E2E 为 `11/11`，`AIRequestLog=0`、12 条 Trace 模型违规 `0`，临时 Schema 已删除且残留 `0`。新 head 的 push／pull request 两套零重试 CI 仍待执行。
+
+当前发布结论为 `已合入 main / Preview 通过至需更新 / 第二轮本地工程门通过、远程待验证 / Production blocked`。Stage 2 Production 等待阶段 1 管理员成功读取、Preview 日记更新与人工修改保护、以及 `PEH-023` 新 head 验证完成。机器可读边界见 [`preview-gate-receipt.json`](./preview-gate-receipt.json)。
 
 ## 本地三连跑结果
 
@@ -60,3 +76,5 @@ Preview `dpl_GAU2uR8BpbTsP4FQhhnqaGBmv4Sr` 为 Ready。人工 smoke 已通过匿
 ## 机器可读证据
 
 完整结构化结果见 [`receipt.json`](./receipt.json)。
+
+`receipt.json` 继续承担原始本地三连跑身份；本次 PR、Preview、main 合并和 CI 修复边界只进入 [`preview-gate-receipt.json`](./preview-gate-receipt.json)，阶段 1 Production 回执保持原身份。
