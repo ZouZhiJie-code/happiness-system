@@ -5,8 +5,9 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[`docs/README.md`](../../README.md)
 - 任务编号：`DL-PROD-20260819`
-- 工作分支：`codex/production-evidence-hardening-20260819`
-- 工作区：`/Users/zouzhijie/Desktop/Happiness-system-production-evidence-hardening-20260819`
+- 当前本地候选分支：`codex/production-evidence-hardening-stage3-release-20260820`
+- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-stage3-release-20260820`
+- 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
 
 ## 1. 目标与当前事实
 
@@ -108,7 +109,7 @@
 | 0. 保护现场与工作线 | 已完成 | GI-088 `175` 项成果完成指纹与隐私检查；最终 No-Go 状态已由检查点 `199aa94` 封存并推送，原工作区干净，分支与私有现场继续保留 |
 | 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
 | 2. 零模型 E2E | 已合入 main·热修复远程门与 main CI 全绿·Preview 通过至需更新·Production blocked | PR #41 合入 `77de8d1`；PR #43 final head 两套 CI 全绿并合入 `795417d`，main CI 全绿；日记更新与人工保护待跑 |
-| 3. Golden Set v2 | 待验证 | 数据治理审计进行中，真实样本数量待只读核验 |
+| 3. Golden Set v2 | 本地安全候选完成·收集 pending | 零正文元数据盘点确认完整轨迹可入集数 `0`；安全门与公开隐私合同完成，正文开关保持关闭，未推送／未部署 |
 | 4. 主链重构 | 待验证 | 等待阶段 2 回归保护 |
 | 5. 月度洞察评估 | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；2 条低数据量用例 Provider 调用 `0`，其余 4 条候选调用 `not_run`；真实用户月 `0`、模型调用 `0`，Production 保持确定性 `AnalysisNarrative` |
 
@@ -159,3 +160,13 @@
 - 只改 8 份文档的 head `c897d7a` 中，push run `32343781979` 全绿；pull request run `32343785173` 的 E2E `11/11`，常规测试再次在结构化错误场景等待 `30.194s` 后失败。随机顺序 seed 24 已确认后台 `/operation-events` 抢占按调用序号配置的预设响应。第二轮修复改为按接口地址分流；随机顺序 `750/750`、精确场景 `200/200` 通过，连续三轮全量均为 `3216` 通过、`82` 跳过、`0` 失败，零模型 E2E `11/11` 且模型调用违规 `0`；该节点结束时新 head 远程门待验证，最终结果见下一项。
 - PR #43 final head `a4173d7` 的 push run `32346020465` 与 pull request run `32346025037` 均在 attempt 1 全绿，重试 `0`，两套零模型 E2E 均为 `11/11`。PR #43 已合入 main merge `795417d`；main push run `32346808393` 的常规测试与零模型 E2E 全绿。Production 继续使用阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
 - 原始本地三连跑 [`receipt.json`](../../../artifacts/production-evidence-hardening/2026-08-19/e2e-zero-model/receipt.json) 与阶段 1 Production 回执继续保留各自运行身份。
+
+### 阶段 3 本地安全候选｜2026-08-20
+
+- 独立 worktree `/Users/zouzhijie/Desktop/Happiness-system-stage3-release-20260820` 从 `origin/main@77de8d1` 建立，分支为 `codex/production-evidence-hardening-stage3-release-20260820`。提交序列为 `34acb1f`、`1b4820d`、`7c87119`；当前未推送、未开 PR。
+- Golden Set v2 已具备随机 case ID、内部账号与样本级 `full_trajectory_review` 联合门、当前 consent epoch／撤回／过期／未来授权 reconciliation、统一 `404`、默认关闭正文开关、Serializable 读取事务和审计后返回。
+- AI 质量退出会在同一事务撤回反馈、清理 `AICase` 用户信号与回复再生成点踩时间、退役 Few-shot；反馈保存通过参数化 `FOR SHARE` 锁与事务内二次同意校验关闭并发重写窗口。优化 Bad Case 与 Good Trace 都要求当前有效同意。
+- 详情读取在根身份、用户、日期、记录方式、完整分支归属通过前只查询元数据；公开 Production 盘点按日小样本阈值 `3` 抑制，资产测试确认零用户正文与零身份字段。
+- Production 零正文元数据盘点结论为 `insufficient_samples / collection_pending`：事件链候选 `1`，已保存完整日记链 `0`，完整轨迹可入集数 `0`。Production 正文读取 `0`、模型调用 `0`、样本映射创建 `0`。
+- 本地定向回归 `12` 个文件、`77/77` 通过；`npm run typecheck`、目标 ESLint 和 `git diff --check` 通过。环境未配置 `DAILY_LIGHT_E2E_DATABASE_URL` 或其他安全测试数据库地址，真实 PostgreSQL 并发撤回测试为 `not_run`。
+- 当前停止点：正文开关继续关闭；Preview、Production、真实逐例正文、样本导出、人工评审、第 10／30 条产品裁决均为 `not_run`。下一门为隔离 PostgreSQL 并发验证、分支推送／PR 和后续发布裁决。

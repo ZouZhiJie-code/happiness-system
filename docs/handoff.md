@@ -9,12 +9,13 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已形成未推送本地安全候选，样本状态为 `insufficient_samples / collection_pending`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
-- 分支：`codex/production-evidence-hardening-20260819`
-- 最新 main 节点：`795417d`
+- 当前本地候选分支：`codex/production-evidence-hardening-stage3-release-20260820`
+- 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
+- 最新 main 父节点：`aef37577`
 - Production 发布头：`a86a4ba`
 - 阶段 1 main 合并提交：`305f209`
 - 阶段 2 main 合并提交：`77de8d1`
@@ -22,6 +23,14 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - 正式 deployment：`dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY／PROMOTED）
 - 回退 deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY）
 - Production 模式：`event_centered + baseline`
+
+阶段 3 本地候选事实：
+
+- 独立 worktree：`/Users/zouzhijie/Desktop/Happiness-system-stage3-release-20260820`；分支：`codex/production-evidence-hardening-stage3-release-20260820`；基线：`origin/main@77de8d1`。
+- 提交序列：`34acb1f` 统一退出合同，`1b4820d` 建立 Golden Set v2 fail-closed 基础，`7c87119` 修复并发撤回、派生证据清理、未来授权、归属前零正文和按日小样本抑制。
+- Production 零正文元数据证据显示完整轨迹可入集数 `0`，状态 `insufficient_samples / collection_pending`；内容开关保持关闭，Production 正文读取 `0`、模型调用 `0`。
+- 本地定向回归 `12` 个文件、`77/77` 通过；类型检查、目标 Lint 和差异检查通过。当前没有配置安全的本地 PostgreSQL 测试地址，真实并发撤回测试为 `not_run`。
+- 当前候选未推送、未开 PR、未部署 Preview／Production；真实逐例正文、样本导出、人工评审和产品检查点均为 `not_run`。
 
 阶段 1 Production 证据：
 

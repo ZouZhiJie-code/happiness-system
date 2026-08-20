@@ -48,10 +48,12 @@ Golden Set v2 的隐私、评分、阻断、授权、撤回对账和 `10 / 30` �
 - 服务端通过 `GOLDEN_SET_V2_AUTHORIZED_SOURCES_JSON` 读取最多 `30` 条严格私有映射；每条映射同时绑定随机 case ID、样本授权、内部账号、用户 ID、记录日期、记录方式和真实 root。缺失、格式错误、重复或合同不合法时，shortlist 返回空集合，详情统一返回 `404`；
 - 正文开关 `GOLDEN_SET_V2_CONTENT_ACCESS_ENABLED` 只接受精确值 `true`，默认关闭；浏览器接口只返回随机 case ID，真实 root 保持在服务端私有映射内；
 - shortlist、正文读取、人工评审、检查点／封存前分别执行 reconciliation；
+- 样本授权只在 `authorizedAt` 到达后生效；未来授权进入 `sample_authorization_not_started` 隔离状态；
 - 命中撤回、删除、重新同意形成的新 consent epoch、授权过期、政策版本变化或身份不一致时，禁止继续读取并退出活跃集合；私有内容进入隔离处置，公开只保留非内容回执，并补充替代样本；
 - 正文事务先读取零正文身份元数据，再对用户同意行执行参数化 `FOR SHARE` 锁，并在锁内复核当前 consent epoch。撤回先取得更新权时，正文读取会看到撤回或触发 Serializable 冲突并关闭；正文读取先取得共享锁时，撤回更新等待该次审计事务结束；
 - 详情重新核验已完成根会话、已完成事件、已保存事件卡、已保存今日日记以及全部分支的用户／日期归属；未知、失效和越界样本使用同一个 `404` 合同；
 - Production 用户业务数据保持只读；未来正文访问所需 `AdminAuditLog` 是唯一允许的治理写入。
+- 公开按日分布使用阈值 `3`；低于阈值的日期桶只记录抑制数量，不披露具体日期与模式组合。
 
 完整原话、身份映射、授权账、逐例评审和撤回处理只允许进入本目录的 `.private/`。该目录使用 `0700`，文件使用 `0600`，Git 只跟踪 `.private/.gitignore`。
 
@@ -88,4 +90,4 @@ scripts/journal-generation-eval/initialize-golden-set-v2-private.ts --execute
 
 ## 7. 当前停止点
 
-当前安全门已经覆盖随机身份映射、样本级授权、并发撤回互斥、完整链路归属复核、审计后返回、私有缓存禁止和统一 `404`。Production 元数据盘点已完成，样本状态为 `insufficient_samples / collection_pending`；通过内部账号自然使用继续累积 `30 / 5 / 5` 覆盖，达到门槛后再进入样本级授权和逐例评审。Production 配置继续保持默认关闭；逐例正文、样本导出和人工裁决均为 `not_run`。本目录当前不支持 Production 批量导出。
+当前安全门已经覆盖随机身份映射、样本级授权与生效时间、并发撤回互斥、完整链路归属复核、归属前零正文、审计后返回、公开按日小样本抑制、私有缓存禁止和统一 `404`。Production 元数据盘点已完成，样本状态为 `insufficient_samples / collection_pending`；通过内部账号自然使用继续累积 `30 / 5 / 5` 覆盖，达到门槛后再进入样本级授权和逐例评审。Production 配置继续保持默认关闭；逐例正文、样本导出和人工裁决均为 `not_run`。本目录当前不支持 Production 批量导出。
