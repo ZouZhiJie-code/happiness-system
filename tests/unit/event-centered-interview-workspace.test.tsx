@@ -232,8 +232,10 @@ describe("EventCenteredInterviewWorkspace", () => {
     fireEvent.click(secondOption);
 
     expect(await screen.findByRole("heading", { name: "下班路上" })).toBeVisible();
-    expect(window.location.search).toContain("sessionId=root-2");
-    expect(window.location.search).toContain("entryDate=2026-07-21");
+    await waitFor(() => {
+      expect(window.location.search).toContain("sessionId=root-2");
+      expect(window.location.search).toContain("entryDate=2026-07-21");
+    });
   });
 
   it("keeps an optimistic user bubble until the reliable response completes", async () => {
