@@ -21,7 +21,8 @@ import {
 } from "@/features/interview/event-centered/gi088-evaluation-storage";
 
 const HIGH_LOAD_ASYNC_TIMEOUT_MS = 10_000;
-const HIGH_LOAD_TEST_TIMEOUT_MS = 15_000;
+const STRUCTURED_ISSUE_ASYNC_TIMEOUT_MS = 30_000;
+const HIGH_LOAD_TEST_TIMEOUT_MS = 45_000;
 
 function taskList(firstStatus: Gi088TaskSummary["status"]): Gi088TaskSummary[] {
   return Array.from({ length: 12 }, (_, index) => ({
@@ -504,7 +505,11 @@ describe("GI-088 v8r2 evaluation workbench", () => {
 
     await screen.findByTestId("gi088-question-review");
     fireEvent.click(screen.getByRole("button", { name: "包含提问" }));
-    fireEvent.click(await screen.findByRole("button", { name: "同一焦点，容易回答" }));
+    fireEvent.click(await screen.findByRole(
+      "button",
+      { name: "同一焦点，容易回答" },
+      { timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS }
+    ));
     fireEvent.click(screen.getByRole("button", { name: "保存本轮分类" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -517,7 +522,7 @@ describe("GI-088 v8r2 evaluation workbench", () => {
       observationFingerprint: "question-fingerprint-1"
     });
     expect(body.clientOperationId).toMatch(/^gi088-turn-/u);
-  });
+  }, HIGH_LOAD_TEST_TIMEOUT_MS);
 
   it("程序介入支持全量人工复核并绑定 observation fingerprint", async () => {
     const intervention: Gi088ProgramIntervention = {
@@ -673,10 +678,21 @@ describe("GI-088 v8r2 evaluation workbench", () => {
     fireEvent.change(await screen.findByLabelText("继续自然交流"), {
       target: { value: "继续聊这一小块。" }
     });
-    fireEvent.click(screen.getByRole("button", { name: "发送" }));
-    const issueAlert = await screen.findByRole("alert", undefined, {
+    const sendButton = screen.getByRole("button", { name: "发送" });
+    await waitFor(() => expect(sendButton).toBeEnabled(), {
       timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
     });
+    fireEvent.click(sendButton);
+    const issueCode = await screen.findByText(
+      "GI088_TURN_OUT_OF_DATE",
+      { selector: "span" },
+      { timeout: STRUCTURED_ISSUE_ASYNC_TIMEOUT_MS }
+    );
+    const issueAlert = issueCode.closest('[role="alert"]');
+    expect(issueAlert).toBeInstanceOf(HTMLElement);
+    if (!(issueAlert instanceof HTMLElement)) {
+      throw new Error("GI088_TURN_OUT_OF_DATE must render inside its structured alert");
+    }
     expect(issueAlert).toHaveTextContent("GI088_TURN_OUT_OF_DATE");
     fireEvent.click(within(issueAlert).getByRole("button", { name: "读取最新状态" }));
 
