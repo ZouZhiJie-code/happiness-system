@@ -3141,6 +3141,322 @@ describe("event-centered respond service", () => {
     );
   });
 
+  it("公开工作台在成功回合后保持完整 JSON 合同", async () => {
+    const state = createInitialEventCenteredDialogueState();
+    state.phase = "guided_reflection";
+    state.reflectionReady = true;
+    state.activeAngle = "thought";
+    state.lastCompletedAngle = "feeling";
+    state.lastProcessedTurnId = "turn-1";
+    state.angleRuns.feeling = {
+      status: "completed",
+      questionOpportunityCount: 1,
+      currentOutcomeId: "outcome-feeling-1",
+      answeredTargets: ["personal_reaction"],
+      askedTargets: ["personal_reaction"],
+      deniedTargets: []
+    };
+    state.angleRuns.thought = {
+      status: "active",
+      questionOpportunityCount: 2,
+      currentOutcomeId: null,
+      answeredTargets: ["immediate_thought"],
+      askedTargets: ["immediate_thought", "judgment_basis"],
+      deniedTargets: []
+    };
+    state.angleRuns.action = {
+      status: "closed",
+      questionOpportunityCount: 1,
+      currentOutcomeId: null,
+      answeredTargets: [],
+      askedTargets: ["next_action"],
+      deniedTargets: ["next_action"]
+    };
+    state.currentQuestion = {
+      opportunityNumber: 2,
+      angle: "thought",
+      target: "judgment_basis",
+      surfaceLevel: "open_anchor",
+      repairCount: 0,
+      assistantMessageId: "assistant-question-1"
+    };
+    state.currentQuestionIntent = {
+      targetId: "judgment_basis",
+      semanticGoal: "理解当时判断的依据",
+      minimumAnswerScope: "一条明确的判断依据"
+    };
+
+    const questionPayload = assistantPayload({
+      naturalUnderstanding: "你当时主动说明了延期风险。",
+      naturalResponse: "当时什么判断让你决定现在就说？",
+      responseKind: "question",
+      questionSpec: {
+        phase: "guided_reflection",
+        angle: "thought",
+        target: "judgment_basis",
+        opportunityNumber: 2,
+        surfaceLevel: "open_anchor",
+        anchorText: "主动说明延期风险",
+        repairCount: 0
+      },
+      checkpoint: null
+    });
+    const messages = [
+      {
+        id: "opening-1",
+        sessionId: "root-1",
+        branchSessionId: "branch-1",
+        userTurnId: null,
+        clientTurnId: null,
+        generationTraceId: null,
+        role: "assistant" as const,
+        inputMode: null,
+        content: "先从这件事开始吧。刚刚发生了什么？",
+        rawText: null,
+        sequence: 0,
+        responseGroupId: null,
+        responseVersion: null,
+        regenerationIntent: null,
+        regeneratedFromMessageId: null,
+        createdAt: now
+      },
+      {
+        id: "user-message-1",
+        sessionId: "root-1",
+        branchSessionId: "branch-1",
+        userTurnId: "turn-1",
+        clientTurnId: "client-1",
+        generationTraceId: null,
+        role: "user" as const,
+        inputMode: "text" as const,
+        content: "今天开会时我主动说明了延期风险。",
+        rawText: "今天开会时我主动说明了延期风险。",
+        sequence: 1,
+        responseGroupId: null,
+        responseVersion: null,
+        regenerationIntent: null,
+        regeneratedFromMessageId: null,
+        createdAt: now
+      },
+      {
+        id: "assistant-question-1",
+        sessionId: "root-1",
+        branchSessionId: "branch-1",
+        userTurnId: "turn-1",
+        clientTurnId: "client-1",
+        generationTraceId: "trace-1",
+        role: "assistant" as const,
+        inputMode: null,
+        content: JSON.stringify(questionPayload),
+        rawText: null,
+        sequence: 2,
+        responseGroupId: "response-group-1",
+        responseVersion: 2,
+        regenerationIntent: "deepen" as const,
+        regeneratedFromMessageId: "assistant-question-v1",
+        createdAt: now
+      }
+    ];
+    mocks.getWorkspaceData.mockResolvedValue(workspaceData({
+      identity: {
+        ...identity(),
+        latestMessageSequence: 2
+      },
+      snapshotData: state,
+      messages,
+      responseVersions: [
+        {
+          ...messages[2],
+          id: "assistant-question-v1",
+          branchSessionId: "branch-v1",
+          responseVersion: 1,
+          regenerationIntent: null,
+          regeneratedFromMessageId: null
+        },
+        messages[2]
+      ],
+      journalEntry: {
+        id: "journal-entry-1",
+        status: "saved",
+        generationVersion: 2,
+        contentRevision: 3,
+        savedRevision: 3,
+        updatedAt: now
+      }
+    }));
+    mocks.workspaceProjections.mockResolvedValue({
+      angleProjection: {
+        ...angleProjection(),
+        outcomesByAngle: {
+          feeling: {
+            id: "outcome-feeling-1",
+            eventId: "event-1",
+            branchSessionId: "branch-1",
+            sourceTurnId: "turn-before",
+            assistantMessageId: "assistant-feeling-1",
+            generationTraceId: "trace-feeling-1",
+            angle: "feeling",
+            kind: "insight",
+            statement: "你当时最明显的感受是紧张，也希望团队尽早知情。",
+            createdAt: now,
+            facts: []
+          }
+        },
+        completedAngles: ["feeling"],
+        availableAngles: ["thought", "relationship", "action"],
+        reopenedAngles: ["relationship"]
+      },
+      factProjection: factProjection()
+    });
+
+    const workspace = await getEventCenteredInterviewWorkspace("user-1", "root-1");
+
+    expect(JSON.parse(JSON.stringify(workspace))).toEqual({
+      mode: "event_centered",
+      recordMode: "chat",
+      rootSessionId: "root-1",
+      activeBranchSessionId: "branch-1",
+      eventId: "event-1",
+      branchStateId: "state-1",
+      entryDate: "2026-07-22",
+      conversationSchemaVersion: 3,
+      sessionStatus: "active",
+      eventStatus: "active",
+      latestMessageSequence: 2,
+      journalEvent: {
+        id: "event-1",
+        entryDate: "2026-07-22",
+        daySequence: 1,
+        status: "active",
+        startedAt: now,
+        generationStartedAt: null,
+        completedAt: null,
+        abandonedAt: null
+      },
+      messages: [
+        {
+          id: "opening-1",
+          role: "assistant",
+          content: "先从这件事开始吧。刚刚发生了什么？",
+          rawText: "先从这件事开始吧。刚刚发生了什么？",
+          sequence: 0,
+          userTurnId: null,
+          clientTurnId: null,
+          generationTraceId: null,
+          assistantPayload: null,
+          responseVersion: null,
+          createdAt: now
+        },
+        {
+          id: "user-message-1",
+          role: "user",
+          content: "今天开会时我主动说明了延期风险。",
+          rawText: "今天开会时我主动说明了延期风险。",
+          sequence: 1,
+          userTurnId: "turn-1",
+          clientTurnId: "client-1",
+          generationTraceId: null,
+          assistantPayload: null,
+          responseVersion: null,
+          createdAt: now
+        },
+        {
+          id: "assistant-question-1",
+          role: "assistant",
+          content: "你当时主动说明了延期风险。\n当时什么判断让你决定现在就说？",
+          rawText: "你当时主动说明了延期风险。\n当时什么判断让你决定现在就说？",
+          sequence: 2,
+          userTurnId: "turn-1",
+          clientTurnId: "client-1",
+          generationTraceId: "trace-1",
+          assistantPayload: {
+            ...questionPayload,
+            presentation: "visible"
+          },
+          responseVersion: {
+            groupId: "response-group-1",
+            version: 2,
+            versionCount: 2,
+            canRegenerate: true,
+            canSwitch: true,
+            versions: [
+              {
+                messageId: "assistant-question-v1",
+                branchSessionId: "branch-v1",
+                version: 1,
+                active: false
+              },
+              {
+                messageId: "assistant-question-1",
+                branchSessionId: "branch-1",
+                version: 2,
+                active: true
+              }
+            ]
+          },
+          createdAt: now
+        }
+      ],
+      dialogue: {
+        productScope: "all_angles",
+        phase: "guided_reflection",
+        activeAngle: "thought",
+        questionOpportunityCount: 2,
+        focusOptions: [],
+        completedAngles: ["feeling"],
+        availableAngles: ["thought", "relationship"],
+        closedAngles: ["action"],
+        reopenedAngles: ["relationship"],
+        outcomes: [
+          {
+            angle: "feeling",
+            kind: "insight",
+            statement: "你当时最明显的感受是紧张，也希望团队尽早知情。"
+          }
+        ],
+        checkpoint: null,
+        allowedActions: [
+          "reply",
+          "correct_understanding",
+          "regenerate_response",
+          "switch_response_version",
+          "exit_event"
+        ],
+        progress: [
+          {
+            id: "record",
+            label: "轻量记录",
+            detail: "辨认这件事",
+            status: "complete",
+            percent: 100
+          },
+          {
+            id: "reflect",
+            label: "引导复盘",
+            detail: "选择角度理解",
+            status: "current",
+            percent: 55
+          },
+          {
+            id: "deepen",
+            label: "深入探索",
+            detail: "继续陪伴或收束",
+            status: "upcoming",
+            percent: 0
+          }
+        ]
+      },
+      recovery: {
+        pendingTurn: null
+      },
+      journal: {
+        status: "saved",
+        entryId: "journal-entry-1",
+        eventStatus: "active"
+      }
+    });
+  });
+
   it("服务层工作台在 Batch B 隐藏生成事件日志动作", async () => {
     const workspace = await getEventCenteredInterviewWorkspace("user-1", "root-1");
 
