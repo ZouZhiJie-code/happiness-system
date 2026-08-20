@@ -132,6 +132,38 @@ describe("event-centered AI provider", () => {
     })).rejects.toMatchObject({ code: "EVENT_CENTERED_CANDIDATE_MODEL_MISMATCH" });
   });
 
+  it("完整回应 v1.8 继续使用离线一致的 DeepSeek V4 Pro", async () => {
+    const isolated = provider("complete-response-v1-8");
+    const createProvider = vi.fn(() => isolated);
+
+    const result = await getEventCenteredAIProvider({
+      env: {
+        NODE_ENV: "test",
+        INTERVIEW_EVENT_CENTERED_STRATEGY: "complete_response_v1_8",
+        AI_PROVIDER: "openai",
+        DEEPSEEK_API_KEY: "official-secret",
+        DEEPSEEK_BASE_URL: "https://api.deepseek.com",
+        DEEPSEEK_MODEL: "deepseek-v4-pro",
+        EVENT_CENTERED_GENERATIVE_MODEL: "deepseek-v4-pro"
+      },
+      getFallbackProvider: vi.fn(),
+      createProvider
+    });
+
+    expect(result).toBe(isolated);
+    expect(createProvider).toHaveBeenCalledWith({
+      capability: "chat",
+      apiKey: "official-secret",
+      config: {
+        provider: "openai",
+        config: {
+          model: "deepseek-v4-pro",
+          baseUrl: "https://api.deepseek.com"
+        }
+      }
+    });
+  });
+
   it("清理模型配置两侧空白和引号", () => {
     expect(readEventCenteredGenerativeModel({
       NODE_ENV: "test",

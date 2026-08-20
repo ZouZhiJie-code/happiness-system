@@ -56,8 +56,17 @@ function completeResponseV16Requested(env: NodeJS.ProcessEnv) {
     "complete_response_v1_6";
 }
 
+function completeResponseV18Requested(env: NodeJS.ProcessEnv) {
+  return env.INTERVIEW_EVENT_CENTERED_STRATEGY?.trim().toLowerCase() ===
+    "complete_response_v1_8";
+}
+
+function completeResponseProRequested(env: NodeJS.ProcessEnv) {
+  return completeResponseV16Requested(env) || completeResponseV18Requested(env);
+}
+
 function expectedEventCenteredModel(env: NodeJS.ProcessEnv) {
-  return completeResponseV16Requested(env)
+  return completeResponseProRequested(env)
     ? EVENT_CENTERED_COMPLETE_RESPONSE_MODEL
     : EVENT_CENTERED_CANDIDATE_MODEL;
 }
@@ -65,7 +74,7 @@ function expectedEventCenteredModel(env: NodeJS.ProcessEnv) {
 function candidateRequested(env: NodeJS.ProcessEnv) {
   return getEventCenteredProductScope({
     INTERVIEW_EVENT_CENTERED_SCOPE: env.INTERVIEW_EVENT_CENTERED_SCOPE
-  }) === "thought_only" || completeResponseV16Requested(env) ||
+  }) === "thought_only" || completeResponseProRequested(env) ||
     readEventCenteredGenerativeModel(env) !== null;
 }
 

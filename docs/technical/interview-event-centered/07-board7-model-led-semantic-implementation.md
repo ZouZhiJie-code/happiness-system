@@ -9,7 +9,7 @@
 
 落地验证状态：`隔离 Preview 技术门通过；首条真实完整回应 Codex pass；等待产品负责人真人验收；Production baseline`
 
-Production：`项目主链保持 event_centered + baseline；当前分支隔离 complete_response_v1_6 Preview Ready`
+Production：`项目主链保持 event_centered + baseline；v1.6 Preview 质量 No-Go；当前分支实施 complete_response_v1_8`
 
 工作方法：[生成式访谈 AI 产品工作方法 v1.0](./00-generative-interview-ai-product-working-method.md)（`已冻结`）
 
@@ -29,25 +29,37 @@ Production：`项目主链保持 event_centered + baseline；当前分支隔离 
 
 | 项目 | 当前合同 |
 |---|---|
-| 当前专项 | [v1.6 隔离 Preview 验收](../../plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md) |
+| 当前专项 | [v1.8 明确推进义务](../../plans/2026-08-20-gi088-complete-response-first-v1-8-explicit-progress-obligation.md) |
 | 可见链路 | 一次调用生成一条完整气泡；`deepseek-v4-pro`、Thinking disabled、`1280` Token、45 秒硬门 |
 | 后台链路 | 第二次调用只整理事实与纠正；同模型、Thinking disabled、`1600` Token、20 秒硬门；零可见写权限 |
 | 正式一致性 | 当前策略强制选择 Pro；后台解析使用 v1.7 来源对齐并保存真实原文片段 |
 | 工程门 | 全量 `3666` 条测试、Lint、类型、两套 Prisma、Production build、文档与差异检查通过 |
 | Preview 技术结果 | 首条可见内容 `4026ms` 就绪；后台 `3341ms` 完成且气泡冻结；重复提交复用原结果，新增模型调用 `0` |
-| 当前状态 | `Preview Ready / awaiting_product_acceptance`；可见预算 `2/15`；Production baseline |
+| 当前状态 | v1.6 `Preview quality No-Go`；可见预算 `7/15`、剩余 `8`；v1.8 实施中；Production baseline |
 
 ## 完整回应优先 v1.7 后台来源对齐合同｜2026-08-20
 
 | 项目 | 当前合同 |
 |---|---|
-| 当前专项 | [v1.7 后台来源标点对齐](../../plans/2026-08-20-gi088-complete-response-first-v1-7-background-source-alignment.md) |
+| 当前专项 | [v1.8 明确推进义务](../../plans/2026-08-20-gi088-complete-response-first-v1-8-explicit-progress-obligation.md) |
 | 语义责任 | 模型继续选择事实、摘要、类别与纠正目标；自然度、忠实度和重要性由原文评审 |
 | 来源责任 | 实质字符连续逐字唯一匹配时，程序容忍空白／标点差异并保存用户原文真实片段；其他变化继续拒绝 |
 | 复用范围 | v1.6 前六条实际可见输出冻结；补两条可见输出；八条后台重新调用 |
 | 运行配置 | 可见仍为 `1280` Token／45 秒；后台仍为 `1600` Token／20 秒；Thinking disabled |
 | 实际结果 | 新调用 `10/10`；八条可见与八条后台技术有效；Codex 可见 `6 pass / 2 minor / 0 fail`、后台 `8 pass / 0 minor / 0 fail` |
-| 当前状态 | `awaiting_product_review`；产品裁决、真实 Preview 与发布待验证，Production baseline |
+| 当前状态 | v1.6 Preview 质量 No-Go；v1.8 明确推进义务已确认·实施中，Production baseline |
+
+## 完整回应优先 v1.8 明确推进义务｜2026-08-20
+
+| 项目 | 当前合同 |
+|---|---|
+| 当前专项 | [v1.8 明确推进义务](../../plans/2026-08-20-gi088-complete-response-first-v1-8-explicit-progress-obligation.md) |
+| 触发条件 | 用户明确说继续、深挖、换方向，或点名想讨论的对象／差别 |
+| 模型责任 | 直接兑现本轮动作；上一条未回答问题本轮视为已跳过；选择一个有依据且尚未回答的新层，或给出可纠正理解和低负担入口 |
+| 明确避免 | 重复、改写、缩窄上一问题；询问是否讨论用户已经点明的方向；把未回答的旧选项作为条件继续追问 |
+| 程序责任 | 策略身份、来源、预算、权限、超时、幂等、持久化和写入权；不判断新层是否有价值 |
+| 固定配置 | `deepseek-v4-pro`、Thinking disabled、Temperature `0.2`、`1280` Token、单次可见调用；后台事实独立 |
+| 当前状态 | `已确认·实施中 / 结果待验证` |
 
 ## 完整回应优先 v1.6 新案例稳定性复验合同｜2026-08-20
 

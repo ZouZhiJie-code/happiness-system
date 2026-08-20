@@ -34,6 +34,7 @@ const mocks = vi.hoisted(() => ({
   completeResponseFirstV14Enabled: vi.fn(() => false),
   completeResponseFirstV15Enabled: vi.fn(() => false),
   completeResponseFirstV16Enabled: vi.fn(() => false),
+  completeResponseFirstV18Enabled: vi.fn(() => false),
   thoughtOnly: vi.fn(() => false),
   generateOnce: vi.fn(),
   generateCompleteResponseV12: vi.fn(),
@@ -42,6 +43,7 @@ const mocks = vi.hoisted(() => ({
   generateCompleteResponseV14: vi.fn(),
   generateCompleteResponseV15: vi.fn(),
   generateCompleteResponseV16: vi.fn(),
+  generateCompleteResponseV18: vi.fn(),
   generatePlan: vi.fn(),
   generateVisible: vi.fn(),
   generateThoughtMap: vi.fn(),
@@ -79,7 +81,9 @@ vi.mock("@/features/interview/event-centered/generative-release", () => ({
   isCompleteResponseFirstV15EventCenteredStrategyEnabled:
     mocks.completeResponseFirstV15Enabled,
   isCompleteResponseFirstV16EventCenteredStrategyEnabled:
-    mocks.completeResponseFirstV16Enabled
+    mocks.completeResponseFirstV16Enabled,
+  isCompleteResponseFirstV18EventCenteredStrategyEnabled:
+    mocks.completeResponseFirstV18Enabled
 }));
 
 vi.mock("@/server/repositories/event-centered-interview.repository", () => ({
@@ -144,6 +148,7 @@ vi.mock("@/server/services/interview/event-centered-ai.service", () => ({
   generateEventCenteredCompleteResponseV14AI: mocks.generateCompleteResponseV14,
   generateEventCenteredCompleteResponseV15AI: mocks.generateCompleteResponseV15,
   generateEventCenteredCompleteResponseV16AI: mocks.generateCompleteResponseV16,
+  generateEventCenteredCompleteResponseV18AI: mocks.generateCompleteResponseV18,
   generateEventCenteredThoughtMapUpdateAI: mocks.generateThoughtMap,
   generateEventCenteredThoughtQuestionAI: mocks.generateThoughtQuestion,
   generateEventCenteredTurnOnceAI: mocks.generateOnce,
@@ -607,6 +612,7 @@ beforeEach(() => {
   mocks.completeResponseFirstV14Enabled.mockReturnValue(false);
   mocks.completeResponseFirstV15Enabled.mockReturnValue(false);
   mocks.completeResponseFirstV16Enabled.mockReturnValue(false);
+  mocks.completeResponseFirstV18Enabled.mockReturnValue(false);
   mocks.thoughtOnly.mockReturnValue(false);
   mocks.generateOnce.mockResolvedValue(null);
   mocks.generateCompleteResponseV12.mockResolvedValue(null);
@@ -615,6 +621,7 @@ beforeEach(() => {
   mocks.generateCompleteResponseV14.mockResolvedValue(null);
   mocks.generateCompleteResponseV15.mockResolvedValue(null);
   mocks.generateCompleteResponseV16.mockResolvedValue(null);
+  mocks.generateCompleteResponseV18.mockResolvedValue(null);
   mocks.generatePlan.mockResolvedValue(null);
   mocks.generateVisible.mockResolvedValue(null);
   mocks.generateThoughtMap.mockResolvedValue({
@@ -1622,6 +1629,82 @@ describe("event-centered respond service", () => {
       sessionId: "branch-1"
     });
     expect(mocks.applyRevision).not.toHaveBeenCalled();
+  });
+
+  it("v1.8 使用明确推进义务生成器，并继续创建后台事实任务", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV18Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response =
+      "你想继续往下挖，那我们换到这件事碰到的在意上：公开被问进度时，最刺到你的是哪一部分？";
+    const question = "公开被问进度时，最刺到你的是哪一部分？";
+    mocks.generateCompleteResponseV18.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null,
+        responseText: response
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_8",
+        promptVersion: "v1.8",
+        resolvedPromptHash: "hash-v1.8"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-8-explicit-progress-obligation",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+    mocks.commit.mockResolvedValueOnce({
+      kind: "committed",
+      backgroundFactsTaskTraceId: "background-v1-8"
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV18).toHaveBeenCalledOnce();
+    expect(mocks.generateCompleteResponseV16).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      backgroundFactsTask: {
+        contextSnapshot: {
+          kind: "event_centered_background_facts_v1"
+        }
+      },
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_8",
+          effectiveStrategy: "complete_response_v1_8",
+          generativeArchitecture: "one_call"
+        }
+      }
+    });
+    expect(result.backgroundFactsTask).toEqual({
+      traceId: "background-v1-8",
+      sessionId: "branch-1"
+    });
   });
 
   it("v1.6 纠正回合把事实写入权交给后台任务，旧同步修订不再抢先落库", async () => {

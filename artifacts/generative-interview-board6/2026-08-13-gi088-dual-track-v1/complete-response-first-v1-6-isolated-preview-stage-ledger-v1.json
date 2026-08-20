@@ -3,7 +3,7 @@
   "identity": "2026-08-20.gi088-complete-response-first-v1-6-isolated-preview-v1",
   "frozenExecutionPlanSha256": "288659eec0c5eee00e6d5efffc21cfcac98a06d773163fc3479e1a207a820bf6",
   "finalPlanSha256": "e7222f34063f31ab504d6c519f20ea51f71f7c09a165b77621984567bdc64091",
-  "status": "preview_ready_awaiting_product_acceptance",
+  "status": "preview_quality_no_go_superseded_by_v1_8",
   "deployment": {
     "id": "dpl_D2fEAPidG2tpWGHQBV56ncryxe12",
     "url": "https://xingfuxitong-idch4sa4l-zouzhijies-projects.vercel.app",
@@ -22,9 +22,11 @@
   },
   "budget": {
     "authorizedVisibleCalls": 15,
-    "consumedVisibleCalls": 2,
-    "remainingVisibleCalls": 13,
-    "backgroundCalls": 2,
+    "consumedVisibleCalls": 7,
+    "remainingVisibleCalls": 8,
+    "backgroundCallsReadBack": 2,
+    "additionalBackgroundCallsExpected": 5,
+    "additionalBackgroundReadback": "not_run",
     "duplicateReplayProviderCalls": 0,
     "retries": 0,
     "recovery": 0,
@@ -83,14 +85,26 @@
     "extraTraceAfterReplay": 0,
     "passed": true
   },
+  "representativeQuality": {
+    "evaluatedVisibleTurns": 6,
+    "codexPass": 3,
+    "codexMinor": 2,
+    "codexFail": 1,
+    "explicitDeepenInputSha256": "fd1b3d7165b91eb2e8f151e96df5d3b912cc41379d64761aee442cb25487ae8d",
+    "explicitDeepenOutputSha256": "408b9807e1d292faf5403bd058cf8c0da72db8e83e93dcdc7ba463ef9c668e82",
+    "relationshipInputSha256": "68a4fd2daccdbc34923e2af62acbfffc3ccc11962ce848b35cdfe112afbd2bfe",
+    "relationshipOutputSha256": "5ba2febcda2dbf1685c2113d4e9eff5dbc0d6534c549f8fc854c1bc8a198e368",
+    "confirmedFailure": "explicit_progress_request_repeats_or_reconfirms_existing_target",
+    "productOwnerDecision": "pending"
+  },
   "evidence": {
-    "privateReviewSha256": "5e17b2d707ce050171ae8d744d1af068ebc10ff656475ee339054671549e909b",
+    "privateReviewSha256": "b79d58372e5c1bfcfaaec1e38ac22bb621b099736668a4ea726d8004503842da",
     "publicBodyStored": false,
     "privateMode": "0600"
   },
   "quality": {
     "technicalPreviewGatePassed": true,
-    "codexControlledTurnDecision": "pass",
+    "codexControlledTurnDecision": "fail",
     "productOwnerDecision": "pending",
     "previewGatePassed": false,
     "productionGatePassed": false
@@ -102,8 +116,8 @@
     "production": "event_centered_baseline"
   },
   "next": {
-    "required": "product_owner_real_page_acceptance",
-    "passPath": "production_release_snapshot_backup_switch_online_regression",
-    "stopPoint": "before_production_change"
+    "required": "implement_and_validate_complete_response_v1_8_explicit_progress_obligation",
+    "passPath": "new_isolated_preview_product_acceptance_then_production_release",
+    "stopPoint": "v1_6_preview_quality_no_go_production_unchanged"
   }
 }

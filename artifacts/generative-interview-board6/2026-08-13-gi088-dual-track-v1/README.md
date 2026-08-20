@@ -5,9 +5,9 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-版本：`完整回应优先 v1.6 隔离 Preview Ready`
+版本：`完整回应优先 v1.8 明确推进义务实施中`
 
-状态：`隔离 Preview 技术门通过；首条真实完整回应 Codex pass；重复提交零新增模型调用；等待产品负责人真人验收；Production baseline`
+状态：`v1.6 隔离 Preview 技术门通过、质量 No-Go；明确继续深挖时重复上一问题；v1.8 实施中；Production baseline`
 
 现行职责、单一回答焦点规则和旧身份边界统一读取[板块 7 当前运行合同](../../../docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。本目录中的原始回执继续保存当时请求、失败码和调用事实。
 
@@ -21,9 +21,9 @@
 
 ### 完整回应优先当前任务
 
-- 当前专项：[v1.6 隔离 Preview 验收](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md)
-- 当前状态：部署 Ready；正式链路与离线 Pro 模型、v1.7 来源对齐规则一致；页面、首条回应、后台事实和重复提交技术门通过；产品裁决 pending
-- 验收预算：最多 `15` 次可见回应；已消费 `2`、剩余 `13`；覆盖普通表达、深挖、关系、纠正、停止、连续回合、后台晚到与恢复
+- 当前专项：[v1.8 明确推进义务](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-8-explicit-progress-obligation.md)
+- 当前状态：v1.6 部署与技术门通过；明确继续深挖题 `fail`、关系方向题 `minor`，Preview 质量 No-Go；v1.8 已确认·实施中
+- 验收预算：最多 `15` 次可见回应；已消费 `7`、剩余 `8`；优先回归连续深挖、换方向、关系主题与停止控制
 - 发布边界：Production 继续使用 `event_centered + baseline`
 - [隔离 Preview 验收交接](./complete-response-first-v1-6-isolated-preview-v1-handoff.md)
 - [隔离 Preview 阶段账](./complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)
@@ -76,7 +76,7 @@
 - [v1 公开回执](./complete-response-first-quality-v1-receipt.json)
 - [v1 结果交接](./complete-response-first-quality-v1-handoff.md)
 - [v1 阶段账](./complete-response-first-stage-ledger-v1.json)
-- 发布边界：当前分支隔离 Preview Ready；Production 切换待真人验收，继续保持 `event_centered + baseline`
+- 发布边界：v1.6 Preview 质量 No-Go；v1.8 重新部署并通过真人验收前，Production 继续保持 `event_centered + baseline`
 
 ### 回应优先 v2.9 当前任务
 

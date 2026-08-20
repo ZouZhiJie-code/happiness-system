@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v103",
-  "status": "complete_response_first_v1_6_preview_ready_awaiting_product_acceptance",
-  "currentQueueStage": "complete_response_first_v1_6_isolated_preview_product_acceptance",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v104",
+  "status": "complete_response_first_v1_8_explicit_progress_obligation_implementing",
+  "currentQueueStage": "complete_response_first_v1_8_implementation_before_preview_regression",
   "semanticQualityDecisionPresentation": {
     "status": "product_owner_confirmed",
     "productJudgment": "每个语义质量判断先逐例展示与判断直接相关的用户输入和 AI 实际输出；Codex 只作初评，产品负责人基于原文作最终裁决。",
@@ -426,10 +426,10 @@
     "stopPoint": "product_owner_original_text_review_before_isolated_preview"
   },
   "completeResponseFirstV16IsolatedPreview": {
-    "status": "preview_ready_awaiting_product_acceptance",
-    "confirmedFact": "隔离 Preview 已部署并 Ready。当前分支使用 event_centered + complete_response_v1_6 + deepseek-v4-pro；Production baseline。首条真实完整回应模型耗时 2854ms、可见内容 4026ms 就绪；后台 3341ms 完成 2 条事实与 2 条逐字来源且未改写气泡。同一 clientTurnId 重放复用原 Turn、气泡与 Trace，新增模型调用 0。真人可见预算 2/15。",
-    "productJudgment": "隔离 Preview 已具备真人验收条件；产品负责人在真实页面裁决自然回应、继续／深挖、纠正、停止、连续回合与刷新体验。Production 保持 baseline。",
-    "codexAssessment": "受控真实回合初评 pass；回应忠实承接完成、轻松与再次拖延担忧，并通过询问本次成功条件兑现往下想一层。技术冒烟、后台来源、气泡冻结和重复提交均通过。",
+    "status": "preview_quality_no_go_superseded_by_v1_8",
+    "confirmedFact": "隔离 Preview 已部署并通过技术链路。真人可见预算消费 7/15、剩余 8；已回读后台调用 2，新增五回合后台等待后续统一回读；重复提交新增模型调用 0。明确继续深挖回合几乎逐字重复上一问题；关系表达回合再次询问是否讨论用户已点明的差别。Production baseline。",
+    "productJudgment": "产品负责人继续基于原文裁决；当前停止 v1.6 余下调用，剩余额度保留给 v1.8 修复后回归。Production 保持 baseline。",
+    "codexAssessment": "六个语义回合累计 3 pass / 2 minor / 1 fail。明确继续深挖题 fail，关系方向题 minor；v1.6 Preview 质量门 No-Go。",
     "openHypotheses": [
       "产品负责人连续体验中，完整回应能否持续兑现明确继续、纠正和停止。",
       "刷新、长对话和后台晚到在真人操作中能否保持稳定体验。",
@@ -441,12 +441,14 @@
       "visibleModel": "deepseek-v4-pro",
       "backgroundModel": "deepseek-v4-pro",
       "visibleAcceptanceBudget": 15,
-      "visibleCallsConsumed": 2,
-      "visibleCallsRemaining": 13,
-      "backgroundCalls": 2,
+      "visibleCallsConsumed": 7,
+      "visibleCallsRemaining": 8,
+      "backgroundCallsReadBack": 2,
+      "additionalBackgroundCallsExpected": 5,
+      "additionalBackgroundReadback": "not_run",
       "duplicateReplayProviderCalls": 0,
       "deploymentId": "dpl_D2fEAPidG2tpWGHQBV56ncryxe12",
-      "preview": "ready_awaiting_product_acceptance",
+      "preview": "quality_no_go_superseded",
       "productionStrategy": "event_centered_baseline"
     },
     "evidence": {
@@ -457,7 +459,33 @@
       "previewStageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json",
       "privateReview": "git_ignored_mode_0600"
     },
-    "stopPoint": "product_owner_real_page_acceptance_before_production_change"
+    "stopPoint": "v1_6_quality_no_go_v1_8_uses_remaining_preview_budget"
+  },
+  "completeResponseFirstV18": {
+    "status": "confirmed_implementing_result_pending",
+    "confirmedFact": "v1.6 Preview 的共同失败发生在明确动作请求：继续深挖时重复上一问题，点名讨论差别时再次确认讨论方向。技术、Token、后台和持久化链路继续有效。",
+    "productJudgment": "明确继续、深挖、换方向和点名讨论对象要直接转化为本轮动作；AI 直接推进，避免再次请求用户确认。",
+    "codexAssessment": "首个单因素是把上一条未回答问题标为本轮已跳过，并要求模型选择一个有依据且尚未回答的新层；问题价值仍由原文评审。",
+    "openHypotheses": [
+      "明确推进义务能否同时修复连续深挖和关系方向两个场景。",
+      "模型能否在不增加动机推断和具体体验的情况下选择新层。"
+    ],
+    "execution": {
+      "candidate": "2026-08-20.gi088-complete-response-first-v1-8-explicit-progress-obligation",
+      "strategy": "complete_response_v1_8",
+      "visibleCallsRemaining": 8,
+      "retries": 0,
+      "recoveryCalls": 0,
+      "fallback": 0,
+      "preview": "not_run",
+      "productionStrategy": "event_centered_baseline"
+    },
+    "evidence": {
+      "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-8-explicit-progress-obligation.md",
+      "parentPreviewHandoff": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md",
+      "parentPreviewStageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json"
+    },
+    "stopPoint": "implement_validate_and_deploy_isolated_preview_before_new_model_calls"
   },
   "responseFirstV29": {
     "status": "correction_gate_product_pass_continuation_product_fail_no_go",
@@ -2326,6 +2354,7 @@
     }
   ],
   "currentQueue": [
+    "RF-EXPLICIT-PROGRESS-01",
     "RF-NEW-INFORMATION-TARGET-01",
     "V8R1-CTRL-01",
     "V8R2-TXN-01",
@@ -2343,17 +2372,36 @@
   ],
   "issues": [
     {
+      "issueId": "RF-EXPLICIT-PROGRESS-01",
+      "title": "明确继续或点名方向仍被重新确认",
+      "productOwnerJudgment": "继续、深挖、换方向和点名讨论对象直接形成本轮推进动作；回应执行它，不再要求用户重复确认。",
+      "codexInitialAssessment": "v1.6 Preview 中，连续深挖题重复上一问题并判 fail；关系题再次询问是否讨论用户已点明的差别并判 minor。共同根因跨两个场景成立。",
+      "confirmedRootCause": "当前方法能识别未答层，但把上一条未回答问题继续保留为开放目标，也把用户的明确元动作当作可确认内容；模型选择了低风险的重复或重确认。",
+      "hypotheses": [
+        "将上一问题在明确推进请求下标为本轮已跳过，可以迫使模型选择不同的新层。",
+        "将用户点名方向设为直接执行义务，可以减少元对话并提高推进价值。"
+      ],
+      "priority": "P0",
+      "status": "v1_8_confirmed_implementing",
+      "trace": [
+        "docs/plans/2026-08-20-gi088-complete-response-first-v1-8-explicit-progress-obligation.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json"
+      ],
+      "targetVersion": "2026-08-20.gi088-complete-response-first-v1-8-explicit-progress-obligation"
+    },
+    {
       "issueId": "RF-COMPLETE-OWNER-01",
       "title": "Low 与 High 双可见职责使明确继续请求落为空转",
-      "productOwnerJudgment": "完整可见回应由一次调用独立负责；当前隔离 Preview 已达到 Preview Ready，等待真人验收。",
-      "codexInitialAssessment": "离线新案例零 fail；Preview 首条真实完整回应 pass，后台和重复提交技术门通过，单一可见回应负责人保持稳定。",
+      "productOwnerJudgment": "完整可见回应继续由一次调用独立负责；v1.6 Preview 的推进问题由 v1.8 单因素修复。",
+      "codexInitialAssessment": "单一可见负责人解决了双可见职责冲突；真实 Preview 进一步暴露明确推进动作的执行缺口。",
       "confirmedRootCause": "v2.9 暴露的双可见职责冲突已由完整回应优先架构处理。v1 当前剩余根因收敛为生成正文前没有先选择完整原文尚未回答的新信息目标。",
       "hypotheses": [
         "v1.1 先选择未答新增信息目标后，可以保留完整承接并稳定产生新进展。",
         "现有 one_call 原子提交链路可以继续降低首版生产接入和恢复风险。"
       ],
       "priority": "P0",
-      "status": "complete_response_v1_6_preview_ready_awaiting_product_acceptance",
+      "status": "architecture_retained_v1_8_semantic_fix_in_progress",
       "trace": [
         "docs/plans/2026-08-19-gi088-complete-response-first-architecture-reset.md",
         "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md",
@@ -2365,8 +2413,8 @@
     {
       "issueId": "RF-NEW-INFORMATION-TARGET-01",
       "title": "完整回应生成前未选择未答新增信息目标",
-      "productOwnerJudgment": "离线零 fail 后进入真实页面；当前等待产品负责人按实际输入与输出完成 Preview 验收。",
-      "codexInitialAssessment": "Preview 首条真实回应选择了原文未回答的成功条件作为新目标，初评 pass；跨场景稳定性继续由真人连续体验验证。",
+      "productOwnerJudgment": "未答信息目标继续有效；明确推进动作还需排除上一条已跳过问题和已点名方向的重复确认。",
+      "codexInitialAssessment": "Preview 证明一般未答目标可以工作，明确继续与点名方向仍出现跨场景缺口，由 v1.8 接续。",
       "confirmedRootCause": "两个失败都发生在技术完整、速度通过的正文中，共同指向回应目标选择：模型生成前没有先找出完整上下文中尚未回答、能够带来新进展的信息。",
       "hypotheses": [
         "先选未答信息目标可以同时减少原地复述和过早收束。",
@@ -2374,7 +2422,7 @@
         "最多一处可纠正解释和一个主问题可以控制用户回答负担。"
       ],
       "priority": "P0",
-      "status": "complete_response_v1_6_preview_ready_awaiting_product_acceptance",
+      "status": "partially_resolved_extended_by_rf_explicit_progress_01",
       "trace": [
         "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-receipt.json",
         "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-quality-v1-handoff.md",

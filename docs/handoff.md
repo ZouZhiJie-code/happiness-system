@@ -7,11 +7,13 @@
 
 ## 1. 当前交接结论
 
-GI-088 当前执行[v1.6 隔离 Preview 验收](./plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md)。隔离 Preview 已部署到 <https://xingfuxitong-idch4sa4l-zouzhijies-projects.vercel.app>，部署 `dpl_D2fEAPidG2tpWGHQBV56ncryxe12` 为 Ready。当前分支使用 `event_centered + complete_response_v1_6 + deepseek-v4-pro`，Production 保持 `event_centered + baseline`。
+GI-088 当前执行[v1.8 明确推进义务](./plans/2026-08-20-gi088-complete-response-first-v1-8-explicit-progress-obligation.md)。v1.6 隔离 Preview 已部署并通过技术链路；真实代表性回合发现明确继续深挖时重复上一问题，质量门 No-Go。当前将实现并部署 `complete_response_v1_8`，Production 保持 `event_centered + baseline`。
 
-技术冒烟已经通过。受控真实回合的可见模型耗时 `2854ms`、完整可见回应 `4026ms` 就绪、completion `44/1280`，Codex 初评 `pass`；后台 `3341ms` 完成 2 条事实与 2 条逐字来源，气泡保持冻结。第二个技术回合验证同一 `clientTurnId` 重复提交：首次为 `reserved`，重放为 `existing`，Turn、气泡、Trace 和消息序号相同，数据库 `attemptCount=1`，新增模型调用 `0`。真人可见预算消费 `2/15`、剩余 `13`。公开结果见[Preview 验收交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)与[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)。
+技术冒烟、后台冻结与重复提交均已通过。随后又完成五个真实 Preview 回合：纠正和停止通过；明确继续深挖时，AI 几乎逐字重复上一条“当时回应还是压下去”的问题；关系表达中，用户已经说“想聊这种差别”，AI 又询问是否先聊这种差别。真人可见预算累计 `7/15`、剩余 `8`。公开结果见[Preview 验收交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)与[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)。
 
-当前状态为 `Preview Ready / awaiting_product_acceptance`。产品负责人需要在真实页面裁决自然回应、继续／深挖、纠正、停止／少问、连续回合和刷新体验；通过后进入 Production 发布准备。
+当前状态为 `v1.6 Preview quality No-Go / v1.8 implementing`。v1.8 只增加一个产品方法：用户明确要求继续、深挖、换方向或点名讨论对象时，AI 直接执行；上一条未回答问题在本轮视为已跳过。完成实现与隔离回归后，按原文和实际输出交产品负责人验收。
+
+v1.8 本地工程门已通过：专项 `95/95`、全量 `3673` 条、类型检查、两套 Prisma 和 Production build 均通过；Lint `0` error、`45` 条既有 warning，build 保留 `16` 条既有 warning。当前下一步是提交、推送并部署新的隔离 Preview，真实模型质量保持待验证。
 
 v1.7 已完成新增调用 `10/10`：复用前六条可见回应，补完 `RPR-CF-02`、`RPR-CF-05` 两条可见回应，并重跑八条后台事实。八条可见与八条后台均技术有效，HTTP 200、stop、Thinking 关闭且未截断。
 
