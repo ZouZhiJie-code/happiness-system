@@ -1,5 +1,10 @@
 # Board 8 Preview 与历史裁决资产索引
 
+- 文档职责：历史证据
+- 文档状态：历史证据
+- 最后核验：`2026-08-19`
+- 权威入口：[`生成式访谈重构总 Map`](../../docs/generative-interview-refactor-map.md)
+
 最后更新：`2026-08-06`
 
 状态：`全部为历史 Preview、修复与 No-Go 证据；当前板块 8 继续等待板块 6 和正式 Board 7`

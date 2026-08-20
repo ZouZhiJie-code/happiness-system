@@ -6,6 +6,8 @@
     "dev": "next dev",
     "audit:vercel-env": "node scripts/vercel-env-audit.mjs",
     "build": "next build",
+    "docs:check": "node scripts/check-document-governance.mjs",
+    "docs:inventory": "node scripts/generate-document-governance-inventory.mjs",
     "postinstall": "prisma generate && prisma generate --schema prisma/evaluation/schema.prisma",
     "prisma:gi088:generate": "prisma generate --schema prisma/evaluation/schema.prisma",
     "prisma:gi088:validate": "EVALUATION_DATABASE_URL=postgresql://gi088:gi088@127.0.0.1:5432/gi088?schema=gi088_evaluation_v0 prisma validate --schema prisma/evaluation/schema.prisma",

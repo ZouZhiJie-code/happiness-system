@@ -1,5 +1,10 @@
 # Daily Light Product Context
 
+- 文档职责：稳定合同
+- 文档状态：现役
+- 最后核验：`2026-08-19`
+- 权威入口：[`docs/README.md`](./docs/README.md)
+
 ## Register
 
 首页是品牌宣传页；访谈、日历、分析和设置页是产品工作台。

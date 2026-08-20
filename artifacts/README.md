@@ -1,6 +1,11 @@
 # 评测产物收纳规则
 
-最后更新：`2026-08-13`
+- 文档职责：证据索引
+- 文档状态：现役
+- 最后核验：`2026-08-19`
+- 权威入口：[`docs/README.md`](../docs/README.md)
+
+最后更新：`2026-08-19`
 
 当前状态：`正式资产、历史证据和本地过程文件已分层；GI-088 阶段 C2 technical_blocked：Plus 双 No-Go，Max 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
@@ -26,6 +31,9 @@
 8. 产品负责人最终裁决。
 
 当前入口：
+
+- [Daily Light 五阶段 Production Evidence Hardening 证据索引](./production-evidence-hardening/2026-08-19/README.md)
+- [Daily Light 五阶段问题台账](./production-evidence-hardening/2026-08-19/issue-ledger.md)
 
 - [AI 评测总规范 v0.9 阶段 A 验收记录](./ai-evaluation-governance/2026-08-13-v0.9-stage-a-acceptance.md)
 - [项目级 AI 评测总规范 v1.0](../docs/ai-evaluation-standard.md)

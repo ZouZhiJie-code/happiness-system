@@ -1,11 +1,17 @@
 # Happiness-system-codex AGENTS
 
+- 文档职责：Agent 协作规则
+- 文档状态：现役
+- 最后核验：`2026-08-19`
+- 权威入口：[`docs/README.md`](./docs/README.md)
+
 ## 1. 项目定位与当前边界
 
 Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、事件记录与日记产品。
 
 - 正式域名：`https://dailylight.chat`。
 - 当前 Production 主链：`event_centered + baseline`；`legacy + baseline` 保留为应急回退与历史运行身份。
+- 当前跨模块执行入口为 [`DL-PROD-20260819`](./docs/ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，状态 `已确认·实施中`；数据口径、零模型回归、Golden Set、主链重构和月度洞察评估的结果均保持 `待验证`。
 - GI-088 生成式访谈、独立准入、真人 Preview 和生成式能力发布继续关闭。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
 - `2026-08-13` 阶段 C2 已修复 Judge 运行器并完成全新校准：Plus 普通与思考均 `20/20` 且 No-Go；Max 思考 `15/20` 后因连接与 DNS 故障形成 `technical_blocked`。累计 `64` 次、4 次补跑、0.584052 元，当前无可推荐 Judge；后续 Judge 路线需要新授权。
 - 网页端产品主线：`访谈记录 → 当天时间线事件卡片 → 今日日记`。访谈页负责表达、回应、保存和返回当天；日记页负责生成、查看和更新当天日记。
@@ -51,7 +57,7 @@ Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、�
 
 长期边界：
 
-- 模型调用、Judge、隐藏集读取、真人提交、Preview、Production、数据库迁移和发布分别需要对应授权。
+- 产品负责人确认一个计划后，计划明确列出的只读数据访问、模型调用、Judge、隐藏集读取、真人提交、Preview、Production、提交、推送和部署均视为已授权，可按计划连续执行；计划外扩容、未列明的破坏性操作和产品质量裁决继续使用独立停止门。
 - `.private`、隐藏题正文、真实话题、盲测金标、凭证和可识别个人信息保持 Git 排除。
 - 先验证完整性、来源、状态和技术可靠性，再判断内容质量，最后由真人体验裁决产品价值。
 - 技术失败、质量失败和体验失败分别记账；失败样本保留实际结果，剩余任务按停止规则标为 `not_run`。

@@ -1,10 +1,22 @@
 # Daily Light 文档导航
 
-最后更新：`2026-08-13`
+- 文档职责：知识导航
+- 文档状态：现役
+- 最后核验：`2026-08-19`
+- 权威入口：本文件
+
+最后更新：`2026-08-19`
 
 用途：让新的 AI、开发者或产品协作者在五分钟内找到当前事实、开放问题、实现说明和评测证据。
 
 ## 1. 当前状态
+
+当前执行入口：[DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
+
+- 五阶段生产主线完善已获产品负责人确认并进入实施；当前专项为 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，状态 `已确认·实施中`，结果保持 `待验证`。
+- 新工作线已从最新 `origin/main` 建立，并通过基线提交 `5c36b49` 对齐当前 Production 源码 `ed8c36d`；分叉原因和处理证据见[问题台账 PEH-001](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+- 本轮范围为数据口径 v2、零模型端到端回归、Production 日志 Golden Set v2、主链重构和月度个性化洞察 Go/No-Go。阶段 1、2、4 逐步 Preview／Production；阶段 3 私有评审；阶段 5 保持隔离。
+- GI-088、生成式访谈发布、数据库迁移、月度 AI 洞察 Production 上线和破坏性清理继续使用独立停止门。Production 继续运行 `event_centered + baseline`。
 
 - 全站产品架构已统一为“首页 → 记录 → 日记 → 认识自己”；第二轮视觉基线已验收并恢复，后续字体与色阶增强候选已否决并转入历史证据；基线隔离功能 Preview、真实闭环复验和发布前运行依赖安全验证已经完成。
 - `/insights?section=trends|portrait|memories` 已形成新版「认识自己」候选：趋势与画像只读取新版事件记录和日／周／月记，记忆页显示“即将上线”。

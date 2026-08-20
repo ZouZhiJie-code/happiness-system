@@ -1,5 +1,10 @@
 # GI-088 双轨评测资产｜阶段 B 与 B2 交付
 
+- 文档职责：历史证据
+- 文档状态：历史证据
+- 最后核验：`2026-08-19`
+- 权威入口：[`生成式访谈重构总 Map`](../../../docs/generative-interview-refactor-map.md)
+
 版本：`2026-08-13.gi088-dual-track-stage-b2-v1`
 
 状态：`阶段 C2 technical_blocked；Plus 普通与思考 No-Go，Max 质量结论保留，当前无可推荐 Judge 配置`

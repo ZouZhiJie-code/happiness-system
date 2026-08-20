@@ -1,5 +1,10 @@
 # Vercel Preview / Production Lane
 
+- 文档职责：稳定合同
+- 文档状态：现役
+- 最后核验：`2026-08-19`
+- 权威入口：[`docs/operator-runbook.md`](./operator-runbook.md)
+
 最后更新：`2026-08-12`
 
 ## 当前生产域名
