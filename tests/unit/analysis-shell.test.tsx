@@ -1,6 +1,7 @@
 import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
+import { DimensionInsights } from "@/components/analysis/analysis-insights-section";
 import { AnalysisShell } from "@/components/analysis/analysis-shell";
 import { clearAllAnalysisRecordCache } from "@/features/analysis/analysis-record-cache";
 import type { AnalysisMonthRecord, AnalysisTrendsRangeRecord } from "@/features/analysis/types";
@@ -836,6 +837,30 @@ describe("analysis shell", () => {
       name: "在日历中打开"
     });
     expect(calendarLink).toHaveAttribute("href", expect.stringContaining("/calendar?"));
+  });
+
+  it("keeps the selected insight while the same month refreshes and resets it across months", async () => {
+    const record = buildAnalysisMonthRecord();
+    const { rerender } = render(<DimensionInsights record={record} />);
+    const joyRow = screen.getByTestId("analysis-dimension-row-joy");
+
+    fireEvent.click(within(joyRow).getByRole("button"));
+    expect(await screen.findByTestId("analysis-dimension-panel-joy")).toBeInTheDocument();
+
+    rerender(
+      <DimensionInsights
+        record={{
+          ...record,
+          dimensions: record.dimensions.map((dimension) => ({ ...dimension }))
+        }}
+      />
+    );
+    expect(screen.getByTestId("analysis-dimension-panel-joy")).toBeInTheDocument();
+
+    rerender(<DimensionInsights record={{ ...record, month: "2026-06" }} />);
+    await waitFor(() => {
+      expect(screen.queryByTestId("analysis-dimension-panel-joy")).not.toBeInTheDocument();
+    });
   });
 
   it("fetches month and range records in parallel", async () => {
