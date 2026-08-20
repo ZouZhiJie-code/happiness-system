@@ -9,6 +9,7 @@ const { prisma, tx } = vi.hoisted(() => {
     tx: transactionClient,
     prisma: {
       aICase: { findMany: vi.fn() },
+      aIOptimizationCandidate: { findUnique: vi.fn() },
       aIGenerationTrace: { findMany: vi.fn() },
       $transaction: vi.fn(async (callback: (client: typeof transactionClient) => unknown) => callback(transactionClient))
     }
@@ -18,6 +19,7 @@ const { prisma, tx } = vi.hoisted(() => {
 vi.mock("@/server/db/prisma", () => ({ prisma }));
 
 import {
+  findOptimizationCandidateEvidencePage,
   loadOptimizationEvidence,
   publishOptimizationCandidate,
   reviewOptimizationCandidateStatus,
@@ -62,6 +64,52 @@ describe("AI optimization repository", () => {
         }
       })
     }));
+
+    prisma.aIOptimizationCandidate.findUnique.mockResolvedValue({
+      id: "candidate-published",
+      evidenceTraceIds: ["trace-current", "trace-withdrawn"]
+    });
+    prisma.aIGenerationTrace.findMany
+      .mockResolvedValueOnce([{ id: "trace-current" }])
+      .mockResolvedValueOnce([{ id: "trace-current", userId: "user-current" }]);
+
+    const evidence = await findOptimizationCandidateEvidencePage({
+      candidateId: "candidate-published",
+      page: 1,
+      pageSize: 20
+    });
+
+    expect(evidence).toMatchObject({
+      candidateId: "candidate-published",
+      total: 1,
+      traces: [{ id: "trace-current" }]
+    });
+    expect(prisma.aIGenerationTrace.findMany).toHaveBeenNthCalledWith(2, {
+      where: {
+        id: { in: ["trace-current", "trace-withdrawn"] },
+        user: {
+          is: {
+            aiQualityConsentVersion: "2026-07-19",
+            aiQualityConsentAt: { not: null },
+            aiQualityConsentRevokedAt: null
+          }
+        }
+      },
+      select: { id: true }
+    });
+    expect(prisma.aIGenerationTrace.findMany).toHaveBeenNthCalledWith(3, {
+      where: {
+        id: { in: ["trace-current"] },
+        user: {
+          is: {
+            aiQualityConsentVersion: "2026-07-19",
+            aiQualityConsentAt: { not: null },
+            aiQualityConsentRevokedAt: null
+          }
+        }
+      },
+      include: expect.any(Object)
+    });
   });
 
   it("publishes an approved few-shot candidate, keeps six ranked examples and writes an audit record", async () => {

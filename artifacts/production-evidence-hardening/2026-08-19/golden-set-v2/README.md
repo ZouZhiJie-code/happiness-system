@@ -16,6 +16,7 @@ Golden Set v2 的隐私、评分、阻断、授权、撤回对账和 `10 / 30` �
 - [`evaluation-start-card.md`](./evaluation-start-card.md)：本轮产品决策、数据身份、判尺、职责、隐私、预算和停止点；
 - [`manifest.json`](./manifest.json)：零正文公开清单、合同指纹、计划数量和当前计数；
 - [`production-metadata-inventory.json`](./production-metadata-inventory.json)：`2026-08-20` Production 只读元数据漏斗、模式／复杂链路覆盖、按日小样本抑制后的日期分布与零正文安全回执；
+- [`consent-concurrency-postgres-receipt.json`](./consent-concurrency-postgres-receipt.json)：专用本地 PostgreSQL 两种同意撤回锁顺序、派生证据失效、零模型和临时 Schema 清理回执；
 - [`golden-set-v2-contract.ts`](../../../../src/features/journal-evaluation/golden-set-v2-contract.ts)：纯数据合同与确定性门禁；
 - [`journal-golden-set-v2-authorization.provider.ts`](../../../../src/server/services/journal-evaluation/journal-golden-set-v2-authorization.provider.ts)：受控私有映射的 fail-closed 读取与可注入授权接口；
 - [`initialize-golden-set-v2-private.ts`](../../../../scripts/journal-generation-eval/initialize-golden-set-v2-private.ts)：本地私有目录检查与初始化入口。
@@ -90,4 +91,4 @@ scripts/journal-generation-eval/initialize-golden-set-v2-private.ts --execute
 
 ## 7. 当前停止点
 
-当前安全门已经覆盖随机身份映射、样本级授权与生效时间、并发撤回互斥、完整链路归属复核、归属前零正文、审计后返回、公开按日小样本抑制、私有缓存禁止和统一 `404`。Production 元数据盘点已完成，样本状态为 `insufficient_samples / collection_pending`；通过内部账号自然使用继续累积 `30 / 5 / 5` 覆盖，达到门槛后再进入样本级授权和逐例评审。Production 配置继续保持默认关闭；逐例正文、样本导出和人工裁决均为 `not_run`。本目录当前不支持 Production 批量导出。
+当前安全门已经覆盖随机身份映射、样本级授权与生效时间、并发撤回互斥、完整链路归属复核、归属前零正文、审计后返回、公开按日小样本抑制、私有缓存禁止和统一 `404`。真实 PostgreSQL 双锁序 `2/2` 通过：保存先持共享锁时撤回等待并最终完成；撤回先持排他锁时保存等待后以 `CONSENT_REQUIRED` 关闭。两种顺序都确认反馈、`AICase` 用户信号、再生成点踩、Few-shot 和待发布优化候选撤销或失效，临时 Schema 残留 `0`、模型调用 `0`。Production 元数据盘点状态继续为 `insufficient_samples / collection_pending`；通过内部账号自然使用继续累积 `30 / 5 / 5` 覆盖，达到门槛后再进入样本级授权和逐例评审。Production 配置继续保持默认关闭；逐例正文、样本导出和人工裁决均为 `not_run`。本目录当前不支持 Production 批量导出。

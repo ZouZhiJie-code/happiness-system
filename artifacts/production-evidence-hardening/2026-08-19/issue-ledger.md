@@ -34,8 +34,8 @@
 - 已确认事实：设置页退出请求已统一返回 `participated=false`；原退出清理只撤回反馈并退役 Few-shot，`AICase` 用户信号、回复再生成点踩时间和保存反馈时的并发撤回仍存在残留窗口。
 - 产品判断：Golden Set 只使用当前有效同意且撤回时间为空的记录。
 - Codex 评估：退出事务需要同步清理反馈、案例信号、回复再生成点踩状态和 Few-shot；反馈保存事务需先锁定用户同意行并在同一事务复核，才能关闭“退出后又重新写入反馈”的并发窗口。
-- 待验证假设：真实 PostgreSQL 的锁等待与退出顺序可在隔离临时 Schema 中复现；当前环境未提供安全测试数据库地址。
-- 当前处理状态：本地候选 `7c87119` 已补齐派生证据清理、事务内参数化 `FOR SHARE` 锁和二次同意校验；相关仓储／服务回归通过。真实 PostgreSQL 并发测试为 `not_run`，Production 发布与正文读取继续关闭。
+- 待验证假设：已由专用本地 loopback PostgreSQL 的两种锁顺序 `2/2` 验证；保存先持共享锁和撤回先持排他锁均形成预期等待与最终状态。
+- 当前处理状态：本地候选已补齐派生证据清理、事务内参数化 `FOR SHARE` 锁、二次同意校验、引用撤回 trace 的 draft／approved 优化候选失效，以及历史候选证据正文的当前同意双层筛选。真实 PostgreSQL 结果为 `2/2` 通过，`AIRequestLog=0`、模型调用 `0`、临时 Schema 残留 `0`；Stage 3 定向 `77/77` 与类型、Prisma、文档、Lint、差异门通过。公开回执见 [`consent-concurrency-postgres-receipt.json`](./golden-set-v2/consent-concurrency-postgres-receipt.json)。Production 发布与正文读取继续关闭。
 
 ## PEH-005｜零模型证明不能只依赖 AIRequestLog
 

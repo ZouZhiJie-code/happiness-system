@@ -8,6 +8,9 @@ import {
 } from "@/features/ai-feedback/feedback-config";
 import { prisma } from "@/server/db/prisma";
 
+const CONSENT_WITHDRAWAL_REVIEWED_BY = "system:ai_quality_consent_withdrawal";
+const CONSENT_WITHDRAWAL_REVIEW_REASON = "AI_QUALITY_CONSENT_WITHDRAWN";
+
 export class AIFeedbackRepositoryError extends Error {
   constructor(readonly code: "CONSENT_REQUIRED") {
     super(code);
@@ -84,6 +87,34 @@ async function revokeFeedbackWithinTransaction(
     where: { sourceTraceId: context.traceId, status: { in: ["candidate", "active"] } },
     data: { status: "retired", retiredAt: now }
   });
+  const pendingCandidates = await tx.aIOptimizationCandidate.findMany({
+    where: {
+      evidenceTraceIds: { has: context.traceId },
+      OR: [
+        { status: { in: ["draft", "approved"] } },
+        {
+          status: "rejected",
+          reviewedBy: CONSENT_WITHDRAWAL_REVIEWED_BY,
+          reviewReason: CONSENT_WITHDRAWAL_REVIEW_REASON
+        }
+      ]
+    },
+    select: { id: true, evidenceTraceIds: true }
+  });
+  for (const candidate of pendingCandidates) {
+    await tx.aIOptimizationCandidate.update({
+      where: { id: candidate.id },
+      data: {
+        status: "rejected",
+        evidenceTraceIds: candidate.evidenceTraceIds.filter(
+          (traceId) => traceId !== context.traceId
+        ),
+        reviewedBy: CONSENT_WITHDRAWAL_REVIEWED_BY,
+        reviewedAt: now,
+        reviewReason: CONSENT_WITHDRAWAL_REVIEW_REASON
+      }
+    });
+  }
 
   if (context.evaluationCase) {
     const sourceSignals = context.evaluationCase.sourceSignals.filter(

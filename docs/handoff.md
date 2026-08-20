@@ -29,7 +29,8 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - 独立 worktree：`/Users/zouzhijie/Desktop/Happiness-system-stage3-release-20260820`；分支：`codex/production-evidence-hardening-stage3-release-20260820`；基线：`origin/main@77de8d1`。
 - 提交序列：`34acb1f` 统一退出合同，`1b4820d` 建立 Golden Set v2 fail-closed 基础，`7c87119` 修复并发撤回、派生证据清理、未来授权、归属前零正文和按日小样本抑制。
 - Production 零正文元数据证据显示完整轨迹可入集数 `0`，状态 `insufficient_samples / collection_pending`；内容开关保持关闭，Production 正文读取 `0`、模型调用 `0`。
-- 本地定向回归 `12` 个文件、`77/77` 通过；类型检查、目标 Lint 和差异检查通过。当前没有配置安全的本地 PostgreSQL 测试地址，真实并发撤回测试为 `not_run`。
+- 专用本地 loopback PostgreSQL 真实并发撤回双锁序 `2/2` 通过：save-first 最终撤回完成，withdrawal-first 最终保存以 `CONSENT_REQUIRED` 关闭；反馈、案例用户信号、再生成点踩、Few-shot 和 draft／approved 优化候选均撤销或失效。`AIRequestLog=0`、模型调用 `0`，临时 Schema 已删除且残留 `0`。
+- 最终本地门为 Stage 3 定向 `12` 个文件、`77/77` 通过，类型、Prisma、文档和差异检查通过；全仓 Lint `0 errors / 43` 条既有 warnings，文档检查为 `24` 份核心文档、`846` 个本地链接、`1` 个当前入口。
 - 当前候选未推送、未开 PR、未部署 Preview／Production；真实逐例正文、样本导出、人工评审和产品检查点均为 `not_run`。
 
 阶段 1 Production 证据：

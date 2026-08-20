@@ -66,6 +66,9 @@ describe("Golden Set v2 public assets", () => {
     const inventory = JSON.parse(
       await readFile(resolve(ASSET_ROOT, "production-metadata-inventory.json"), "utf8")
     ) as Record<string, unknown>;
+    const concurrencyReceipt = JSON.parse(
+      await readFile(resolve(ASSET_ROOT, "consent-concurrency-postgres-receipt.json"), "utf8")
+    ) as Record<string, unknown>;
     expect(goldenSetV2PublicMetadataDistributionSchema.safeParse(
       inventory.distribution
     ).success).toBe(true);
@@ -81,7 +84,33 @@ describe("Golden Set v2 public assets", () => {
       publicEvidenceContainsUserContent: false,
       publicEvidenceContainsUserIdentity: false
     });
-    const keys = collectKeys(inventory);
+    expect(concurrencyReceipt).toMatchObject({
+      status: "passed",
+      finalRun: {
+        scenarioCount: 2,
+        passedScenarioCount: 2,
+        failedScenarioCount: 0
+      },
+      finalPrivacyAssertions: {
+        activeFeedbackCount: 0,
+        caseUserSignalCount: 0,
+        downvotedRegenerationCount: 0,
+        activeOrCandidateFewShotCount: 0,
+        pendingOptimizationCandidateCount: 0,
+        withdrawnEvidenceReferencesRemoved: true,
+        consentRevoked: true
+      },
+      cleanup: { schemaDropped: true, residualSchemaCount: 0 },
+      safetyReceipt: {
+        productionContentReadCount: 0,
+        modelCallCount: 0,
+        aiRequestLogCount: 0,
+        publicEvidenceContainsUserContent: false,
+        publicEvidenceContainsUserIdentity: false,
+        credentialRecorded: false
+      }
+    });
+    const keys = collectKeys([inventory, concurrencyReceipt]);
     for (const forbiddenKey of [
       "userId",
       "username",
@@ -90,7 +119,9 @@ describe("Golden Set v2 public assets", () => {
       "entryDate",
       "transcript",
       "content",
-      "rawResponse"
+      "rawResponse",
+      "databaseUrl",
+      "password"
     ]) {
       expect(keys).not.toContain(forbiddenKey);
     }

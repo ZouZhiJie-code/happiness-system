@@ -424,12 +424,37 @@ export async function findOptimizationCandidateEvidencePage(input: {
   });
   if (!candidate) return null;
 
-  const total = candidate.evidenceTraceIds.length;
+  const currentConsentFilter = {
+    user: {
+      is: {
+        aiQualityConsentVersion: CURRENT_PRIVACY_POLICY_VERSION,
+        aiQualityConsentAt: { not: null },
+        aiQualityConsentRevokedAt: null
+      }
+    }
+  } as const;
+  const eligibleTraceRows = candidate.evidenceTraceIds.length
+    ? await prisma.aIGenerationTrace.findMany({
+        where: {
+          id: { in: candidate.evidenceTraceIds },
+          ...currentConsentFilter
+        },
+        select: { id: true }
+      })
+    : [];
+  const eligibleTraceIds = new Set(eligibleTraceRows.map((trace) => trace.id));
+  const orderedEligibleTraceIds = candidate.evidenceTraceIds.filter((traceId) =>
+    eligibleTraceIds.has(traceId)
+  );
+  const total = orderedEligibleTraceIds.length;
   const start = (input.page - 1) * input.pageSize;
-  const traceIds = candidate.evidenceTraceIds.slice(start, start + input.pageSize);
+  const traceIds = orderedEligibleTraceIds.slice(start, start + input.pageSize);
   const traces = traceIds.length
     ? await prisma.aIGenerationTrace.findMany({
-        where: { id: { in: traceIds } },
+        where: {
+          id: { in: traceIds },
+          ...currentConsentFilter
+        },
         include: AI_QUALITY_EVIDENCE_INCLUDE
       })
     : [];

@@ -69,6 +69,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "node scripts/run-playwright-e2e.mjs",
+    "test:stage3:consent-postgres": "node scripts/run-stage3-consent-postgres.mjs",
     "eval:interview-intent": "vite-node -c vitest.config.ts scripts/report-interview-intent-eval.ts",
     "eval:interview-intent:core": "vite-node -c vitest.config.ts scripts/generate-interview-intent-core-review.ts",
     "eval:interview-intent:seed": "vite-node -c vitest.config.ts scripts/report-interview-intent-eval.ts --seed",

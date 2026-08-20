@@ -6,6 +6,7 @@ const { prismaTransaction, tx } = vi.hoisted(() => {
     aIFeedbackRevision: { create: vi.fn() },
     aICase: { upsert: vi.fn(), update: vi.fn() },
     aIFewShotExample: { updateMany: vi.fn() },
+    aIOptimizationCandidate: { findMany: vi.fn(), update: vi.fn() },
     aIResponseRegeneration: { updateMany: vi.fn() },
     user: { findUnique: vi.fn(), update: vi.fn() }
   };
@@ -35,6 +36,7 @@ describe("AI feedback repository", () => {
       aiQualityConsentAt: new Date("2026-08-19T08:00:00.000Z"),
       aiQualityConsentRevokedAt: null
     });
+    tx.aIOptimizationCandidate.findMany.mockResolvedValue([]);
   });
 
   it("appends an immutable revision and marks the exact trace for feedback evaluation", async () => {
@@ -188,6 +190,10 @@ describe("AI feedback repository", () => {
       }
     ]);
     tx.aIFeedback.update.mockResolvedValue({ id: "feedback-1" });
+    tx.aIOptimizationCandidate.findMany.mockResolvedValue([
+      { id: "candidate-draft", evidenceTraceIds: ["trace-1", "trace-2"] },
+      { id: "candidate-approved", evidenceTraceIds: ["trace-1"] }
+    ]);
 
     await recordAIQualityConsentDecision("user-1", false);
 
@@ -198,6 +204,40 @@ describe("AI feedback repository", () => {
     expect(tx.aIResponseRegeneration.updateMany).toHaveBeenCalledWith({
       where: { generatedTraceId: "trace-1" },
       data: { downvotedAt: null }
+    });
+    expect(tx.aIOptimizationCandidate.findMany).toHaveBeenCalledWith({
+      where: {
+        evidenceTraceIds: { has: "trace-1" },
+        OR: [
+          { status: { in: ["draft", "approved"] } },
+          {
+            status: "rejected",
+            reviewedBy: "system:ai_quality_consent_withdrawal",
+            reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
+          }
+        ]
+      },
+      select: { id: true, evidenceTraceIds: true }
+    });
+    expect(tx.aIOptimizationCandidate.update).toHaveBeenNthCalledWith(1, {
+      where: { id: "candidate-draft" },
+      data: {
+        status: "rejected",
+        evidenceTraceIds: ["trace-2"],
+        reviewedBy: "system:ai_quality_consent_withdrawal",
+        reviewedAt: expect.any(Date),
+        reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
+      }
+    });
+    expect(tx.aIOptimizationCandidate.update).toHaveBeenNthCalledWith(2, {
+      where: { id: "candidate-approved" },
+      data: {
+        status: "rejected",
+        evidenceTraceIds: [],
+        reviewedBy: "system:ai_quality_consent_withdrawal",
+        reviewedAt: expect.any(Date),
+        reviewReason: "AI_QUALITY_CONSENT_WITHDRAWN"
+      }
     });
     expect(tx.aICase.update).toHaveBeenCalledWith({
       where: { traceId: "trace-1" },

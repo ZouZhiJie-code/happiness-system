@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0",
+  "gateId": "stage3-ai-quality-consent-postgres-v1",
+  "status": "passed",
+  "executedAt": "2026-08-20",
+  "environment": {
+    "kind": "dedicated_local_loopback_postgresql",
+    "database": "daily_light_e2e_validation_20260819",
+    "pgvectorSchema": "public",
+    "productionDatabaseUsed": false
+  },
+  "preflight": {
+    "noActiveE2EOrProductServer": true,
+    "existingE2ESchemaCount": 0,
+    "existingStage3ConsentSchemaCount": 0,
+    "targetSchemaExisted": false
+  },
+  "setupAttempts": [
+    {
+      "schema": "daily_light_stage3_consent_da9559a29e3b",
+      "status": "test_fixture_rejected_before_concurrency",
+      "reasonCode": "INTERVIEW_SESSION_MODE_DIMENSION_FIXTURE_CONSTRAINT",
+      "schemaDropped": true,
+      "residualSchemaCount": 0,
+      "modelCallCount": 0
+    },
+    {
+      "schema": "daily_light_stage3_consent_3338f103fff4",
+      "status": "test_fixture_rejected_before_concurrency",
+      "reasonCode": "INTERVIEW_SESSION_PROTOCOL_FIXTURE_CONSTRAINT",
+      "schemaDropped": true,
+      "residualSchemaCount": 0,
+      "modelCallCount": 0
+    },
+    {
+      "schema": "daily_light_stage3_consent_874fab294180",
+      "status": "test_harness_rejected_before_lock_observation",
+      "reasonCode": "ADVISORY_LOCK_VOID_DESERIALIZATION",
+      "schemaDropped": true,
+      "residualSchemaCount": 0,
+      "modelCallCount": 0
+    }
+  ],
+  "finalRun": {
+    "schema": "daily_light_stage3_consent_63ebafb0f93f",
+    "migrationsApplied": 45,
+    "testFileCount": 1,
+    "scenarioCount": 2,
+    "passedScenarioCount": 2,
+    "failedScenarioCount": 0,
+    "scenarios": [
+      {
+        "id": "save_shared_lock_then_withdrawal",
+        "saveResult": "completed",
+        "withdrawalResult": "completed_after_wait"
+      },
+      {
+        "id": "withdrawal_exclusive_lock_then_save",
+        "withdrawalResult": "completed",
+        "saveResult": "rejected_consent_required_after_wait"
+      }
+    ]
+  },
+  "finalPrivacyAssertions": {
+    "activeFeedbackCount": 0,
+    "caseUserSignalCount": 0,
+    "downvotedRegenerationCount": 0,
+    "activeOrCandidateFewShotCount": 0,
+    "pendingOptimizationCandidateCount": 0,
+    "withdrawnEvidenceReferencesRemoved": true,
+    "consentRevoked": true
+  },
+  "cleanup": {
+    "schemaDropped": true,
+    "residualSchemaCount": 0,
+    "testTraceCountAfterScenarioCleanup": 0
+  },
+  "safetyReceipt": {
+    "productionContentReadCount": 0,
+    "modelCallCount": 0,
+    "aiRequestLogCount": 0,
+    "prismaSchemaChanged": false,
+    "repositoryMigrationChanged": false,
+    "publicEvidenceContainsUserContent": false,
+    "publicEvidenceContainsUserIdentity": false,
+    "credentialRecorded": false
+  }
+}
