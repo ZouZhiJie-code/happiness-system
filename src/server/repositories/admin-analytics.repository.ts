@@ -1,7 +1,21 @@
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/server/db/prisma";
-import { formatEntryDate, getEntryDateRangeBounds } from "@/features/interview/entry-date";
+import {
+  formatEntryDate,
+  getEntryDateRangeBounds,
+  getTodayEntryDate,
+  isEntryDateString,
+  parseEntryDateInput
+} from "@/features/interview/entry-date";
+import {
+  buildSequentialUniqueUserFunnel,
+  calculateCurrentProductRetention,
+  summarizeCurrentProductQuality,
+  type CurrentProductFunnelPoint,
+  type CurrentProductRetentionEvent
+} from "@/features/admin-analytics/metrics";
+import { buildJournalDailySourceSignature } from "@/features/journal-daily/source-signature";
 import type { InterviewDimension } from "@/types/interview";
 import { findJoyInterviewSessionById } from "@/server/repositories/joy-interview.repository";
 
@@ -256,6 +270,245 @@ export async function getAnalyticsEventCounts(input: { startDate: string; endDat
   }, {});
 }
 
+const CURRENT_PRODUCT_FUNNEL_EVENT_STEPS = {
+  event_centered_entry_opened: "openedDay",
+  event_centered_first_content_submitted: "firstContentSubmitted",
+  event_centered_response_completed: "completeResponseReceived",
+  event_journal_saved: "eventCardSaved"
+} as const;
+
+export async function getCurrentProductFunnelStats(input: { startDate: string; endDate: string }) {
+  const { startAt, endExclusive } = getEntryDateRangeBounds(input.startDate, input.endDate);
+  const [events, savedEventCards, dailyGenerations, dailyEntries] = await Promise.all([
+    prisma.analyticsEvent.findMany({
+      where: {
+        eventName: { in: Object.keys(CURRENT_PRODUCT_FUNNEL_EVENT_STEPS) },
+        userId: { not: null },
+        occurredAt: { gte: startAt, lt: endExclusive }
+      },
+      select: { userId: true, eventName: true, occurredAt: true }
+    }),
+    prisma.journalEventEntry.findMany({
+      where: {
+        savedRevision: { not: null },
+        savedAt: { gte: startAt, lt: endExclusive },
+        event: {
+          status: { not: "abandoned" }
+        }
+      },
+      select: {
+        savedAt: true,
+        event: {
+          select: { userId: true }
+        }
+      }
+    }),
+    prisma.journalDailyEntryGeneration.findMany({
+      where: {
+        kind: "generate",
+        status: "completed",
+        completedAt: { gte: startAt, lt: endExclusive }
+      },
+      select: { userId: true, completedAt: true }
+    }),
+    prisma.journalDailyEntry.findMany({
+      where: {
+        OR: [
+          { createdAt: { gte: startAt, lt: endExclusive } },
+          { savedAt: { gte: startAt, lt: endExclusive } }
+        ]
+      },
+      select: { userId: true, createdAt: true, savedAt: true }
+    })
+  ]);
+
+  const points: CurrentProductFunnelPoint[] = [];
+  for (const event of events) {
+    if (!event.userId) continue;
+    const step = CURRENT_PRODUCT_FUNNEL_EVENT_STEPS[
+      event.eventName as keyof typeof CURRENT_PRODUCT_FUNNEL_EVENT_STEPS
+    ];
+    if (step) points.push({ userId: event.userId, step, occurredAt: event.occurredAt });
+  }
+  points.push(...savedEventCards.flatMap((entry) =>
+    entry.savedAt
+      ? [{
+          userId: entry.event.userId,
+          step: "eventCardSaved" as const,
+          occurredAt: entry.savedAt
+        }]
+      : []
+  ));
+  points.push(...dailyGenerations.flatMap((generation) =>
+    generation.completedAt
+      ? [{
+          userId: generation.userId,
+          step: "dailyJournalGenerated" as const,
+          occurredAt: generation.completedAt
+        }]
+      : []
+  ));
+  for (const entry of dailyEntries) {
+    if (entry.createdAt >= startAt && entry.createdAt < endExclusive) {
+      points.push({
+        userId: entry.userId,
+        step: "dailyJournalGenerated",
+        occurredAt: entry.createdAt
+      });
+    }
+    if (entry.savedAt && entry.savedAt >= startAt && entry.savedAt < endExclusive) {
+      points.push({
+        userId: entry.userId,
+        step: "dailyJournalSaved",
+        occurredAt: entry.savedAt
+      });
+    }
+  }
+
+  return buildSequentialUniqueUserFunnel(points);
+}
+
+function shiftEntryDate(entryDate: string, days: number) {
+  return formatEntryDate(new Date(parseEntryDateInput(entryDate).getTime() + days * 24 * 60 * 60 * 1000));
+}
+
+export async function getCurrentProductOverviewStats(input: { startDate: string; endDate: string }) {
+  const range = getEntryDateRangeBounds(input.startDate, input.endDate);
+  const mruRange = getEntryDateRangeBounds(shiftEntryDate(input.endDate, -6), input.endDate);
+  const [savedCards, savedDailyJournals, recentCards, recentDailyJournals] = await Promise.all([
+    prisma.journalEventEntry.findMany({
+      where: {
+        savedRevision: { not: null },
+        event: {
+          status: { not: "abandoned" },
+          entryDate: { gte: range.startAt, lt: range.endExclusive }
+        }
+      },
+      select: { event: { select: { userId: true } } }
+    }),
+    prisma.journalDailyEntry.findMany({
+      where: {
+        savedRevision: { not: null },
+        entryDate: { gte: range.startAt, lt: range.endExclusive }
+      },
+      select: { userId: true }
+    }),
+    prisma.journalEventEntry.findMany({
+      where: {
+        savedRevision: { not: null },
+        event: {
+          status: { not: "abandoned" },
+          entryDate: { gte: mruRange.startAt, lt: mruRange.endExclusive }
+        }
+      },
+      select: { event: { select: { userId: true } } }
+    }),
+    prisma.journalDailyEntry.findMany({
+      where: {
+        savedRevision: { not: null },
+        entryDate: { gte: mruRange.startAt, lt: mruRange.endExclusive }
+      },
+      select: { userId: true }
+    })
+  ]);
+
+  return {
+    mru7: new Set([
+      ...recentCards.map((entry) => entry.event.userId),
+      ...recentDailyJournals.map((entry) => entry.userId)
+    ]).size,
+    savedEventCardUsers: new Set(savedCards.map((entry) => entry.event.userId)).size,
+    savedEventCardCount: savedCards.length,
+    savedDailyJournalUsers: new Set(savedDailyJournals.map((entry) => entry.userId)).size,
+    savedDailyJournalCount: savedDailyJournals.length
+  };
+}
+
+export async function getJournalDailyStaleStats(input: { startDate: string; endDate: string }) {
+  const { startAt, endExclusive } = getEntryDateRangeBounds(input.startDate, input.endDate);
+  const [dailyEntries, sourceEntries] = await Promise.all([
+    prisma.journalDailyEntry.findMany({
+      where: { entryDate: { gte: startAt, lt: endExclusive } },
+      select: { userId: true, entryDate: true, sourceSignature: true }
+    }),
+    prisma.journalEventEntry.findMany({
+      where: {
+        event: {
+          status: { not: "abandoned" },
+          entryDate: { gte: startAt, lt: endExclusive }
+        }
+      },
+      select: {
+        id: true,
+        contentRevision: true,
+        event: { select: { userId: true, entryDate: true, daySequence: true } }
+      }
+    })
+  ]);
+
+  const sourcesByDay = new Map<string, Array<{
+    entryId: string;
+    daySequence: number;
+    contentRevision: number;
+  }>>();
+  for (const source of sourceEntries) {
+    const key = `${source.event.userId}:${formatEntryDate(source.event.entryDate)}`;
+    const sources = sourcesByDay.get(key) ?? [];
+    sources.push({
+      entryId: source.id,
+      daySequence: source.event.daySequence,
+      contentRevision: source.contentRevision
+    });
+    sourcesByDay.set(key, sources);
+  }
+
+  const staleCount = dailyEntries.filter((entry) => {
+    const key = `${entry.userId}:${formatEntryDate(entry.entryDate)}`;
+    return entry.sourceSignature !== buildJournalDailySourceSignature(sourcesByDay.get(key) ?? []);
+  }).length;
+  return {
+    staleCount,
+    totalCount: dailyEntries.length,
+    staleRate: dailyEntries.length > 0 ? staleCount / dailyEntries.length : 0
+  };
+}
+
+export async function getCurrentProductQualityStats(input: { startDate: string; endDate: string }) {
+  const { startAt, endExclusive } = getEntryDateRangeBounds(input.startDate, input.endDate);
+  const [events, sessions] = await Promise.all([
+    prisma.analyticsEvent.findMany({
+      where: {
+        eventName: {
+          in: [
+            "event_centered_response_completed",
+            "event_centered_turn_fallback",
+            "event_centered_resume_started",
+            "event_centered_resume_completed",
+            "event_centered_resume_failed"
+          ]
+        },
+        occurredAt: { gte: startAt, lt: endExclusive }
+      },
+      select: {
+        id: true,
+        eventName: true,
+        dedupeKey: true,
+        properties: true
+      }
+    }),
+    prisma.interviewSession.findMany({
+      where: {
+        mode: "event_centered",
+        parentSessionId: null,
+        startedAt: { gte: startAt, lt: endExclusive }
+      },
+      select: { id: true, status: true }
+    })
+  ]);
+
+  return summarizeCurrentProductQuality({ events, sessions });
+}
+
 export async function countAnalyticsEvents(input: { startDate: string; endDate: string; eventName: string }) {
   const { startAt, endExclusive } = getEntryDateRangeBounds(input.startDate, input.endDate);
 
@@ -349,104 +602,80 @@ export async function getDimensionSaveStats(input: { startDate: string; endDate:
   }));
 }
 
-export async function getRetentionStats(_input: { startDate: string; endDate: string }) {
-  const { startAt, endExclusive } = getEntryDateRangeBounds(_input.startDate, _input.endDate);
-  const users = await prisma.user.findMany({
-    where: {
-      createdAt: {
-        gte: startAt,
-        lt: endExclusive
+function analyticsEntryDate(properties: Prisma.JsonValue, occurredAt: Date) {
+  if (properties && typeof properties === "object" && !Array.isArray(properties)) {
+    const entryDate = (properties as Record<string, Prisma.JsonValue>)["entryDate"];
+    if (typeof entryDate === "string" && isEntryDateString(entryDate)) {
+      try {
+        parseEntryDateInput(entryDate);
+        return entryDate;
+      } catch {
+        // Historical malformed metadata falls back to the Shanghai occurrence date.
       }
-    },
-    select: {
-      id: true,
-      createdAt: true
     }
-  });
-  const events = await prisma.analyticsEvent.findMany({
-    where: {
-      userId: {
-        in: users.map((user) => user.id)
+  }
+  return formatEntryDate(occurredAt);
+}
+
+export async function getRetentionStats(input: { startDate: string; endDate: string }) {
+  const asOfDate = getTodayEntryDate();
+  const { endExclusive } = getEntryDateRangeBounds(asOfDate);
+  const [events, savedEventCards] = await Promise.all([
+    prisma.analyticsEvent.findMany({
+      where: {
+        eventName: {
+          in: ["event_journal_saved", "event_centered_first_content_submitted"]
+        },
+        userId: { not: null },
+        occurredAt: { lt: endExclusive }
+      },
+      select: {
+        userId: true,
+        eventName: true,
+        occurredAt: true,
+        properties: true
+      },
+      orderBy: { occurredAt: "asc" }
+    }),
+    prisma.journalEventEntry.findMany({
+      where: {
+        savedRevision: { not: null },
+        savedAt: { lt: endExclusive },
+        event: {
+          status: { not: "abandoned" },
+          entryDate: { lt: endExclusive }
+        }
+      },
+      select: {
+        event: {
+          select: {
+            userId: true,
+            entryDate: true
+          }
+        }
       }
-    },
-    select: {
-      userId: true,
-      eventName: true,
-      occurredAt: true
-    },
-    orderBy: {
-      occurredAt: "asc"
-    }
+    })
+  ]);
+
+  const retentionEvents: CurrentProductRetentionEvent[] = events.flatMap((event) => {
+    if (!event.userId) return [];
+    return [{
+      userId: event.userId,
+      kind: event.eventName === "event_journal_saved" ? "save" as const : "content" as const,
+      entryDate: analyticsEntryDate(event.properties, event.occurredAt)
+    }];
   });
+  retentionEvents.push(...savedEventCards.map((entry) => ({
+    userId: entry.event.userId,
+    kind: "save" as const,
+    entryDate: formatEntryDate(entry.event.entryDate)
+  })));
 
-  const eventMap = new Map<string, Array<{ eventName: string; occurredAt: Date }>>();
-  for (const event of events) {
-    if (!event.userId) {
-      continue;
-    }
-
-    const list = eventMap.get(event.userId) ?? [];
-    list.push({
-      eventName: event.eventName,
-      occurredAt: event.occurredAt
-    });
-    eventMap.set(event.userId, list);
-  }
-
-  const withinDays = (from: Date, to: Date, days: number) => to.getTime() - from.getTime() <= days * 24 * 60 * 60 * 1000;
-
-  const metrics = {
-    d1ReturnToRecordRate: 0,
-    d7ReturnToRecordRate: 0,
-    d30ReturnToRecordRate: 0,
-    d7RepeatSaveRate: 0,
-    d30RepeatSaveRate: 0
-  };
-
-  if (!users.length) {
-    return metrics;
-  }
-
-  let d1Count = 0;
-  let d7Count = 0;
-  let d30Count = 0;
-  let d7RepeatSaveCount = 0;
-  let d30RepeatSaveCount = 0;
-
-  for (const user of users) {
-    const userEvents = eventMap.get(user.id) ?? [];
-    const createdAt = user.createdAt;
-    const started = userEvents.find((event) => event.eventName === "interview_session_started");
-    const saved = userEvents.find((event) => event.eventName === "interview_draft_saved");
-
-    if (started && withinDays(createdAt, started.occurredAt, 1)) {
-      d1Count += 1;
-    }
-
-    if (started && withinDays(createdAt, started.occurredAt, 7)) {
-      d7Count += 1;
-    }
-
-    if (started && withinDays(createdAt, started.occurredAt, 30)) {
-      d30Count += 1;
-    }
-
-    if (saved && withinDays(createdAt, saved.occurredAt, 7)) {
-      d7RepeatSaveCount += 1;
-    }
-
-    if (saved && withinDays(createdAt, saved.occurredAt, 30)) {
-      d30RepeatSaveCount += 1;
-    }
-  }
-
-  return {
-    d1ReturnToRecordRate: d1Count / users.length,
-    d7ReturnToRecordRate: d7Count / users.length,
-    d30ReturnToRecordRate: d30Count / users.length,
-    d7RepeatSaveRate: d7RepeatSaveCount / users.length,
-    d30RepeatSaveRate: d30RepeatSaveCount / users.length
-  };
+  return calculateCurrentProductRetention({
+    cohortRange: input,
+    asOfDate,
+    events: retentionEvents
+  });
 }
 
 function deriveAdminAnalyticsFunnelStep(input: {

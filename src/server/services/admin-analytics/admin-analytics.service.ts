@@ -7,17 +7,20 @@ import type {
 } from "@/features/admin-analytics/types";
 import { parseEntryDateInput } from "@/features/interview/entry-date";
 import {
-  countActiveUsersInRange,
   countAnalyticsEvents,
   getAdminAnalyticsDailyJournalDetail as getAdminAnalyticsDailyJournalDetailRecord,
   getAdminAnalyticsEntryDetail as getAdminAnalyticsEntryDetailRecord,
   getAdminAnalyticsSessionDetail as getAdminAnalyticsSessionDetailRecord,
   getAdminAnalyticsUserDetail as getAdminAnalyticsUserDetailRecord,
   getAnalyticsEventCounts,
+  getCurrentProductFunnelStats,
+  getCurrentProductOverviewStats,
+  getCurrentProductQualityStats,
   getDailyJournalSaveStats,
   getDimensionSaveStats,
   getHappinessScoreStats,
   getInterviewDraftSourceStats,
+  getJournalDailyStaleStats,
   getLatestAIRequestStats,
   getRetentionStats,
   getSavedJoyEntryStats,
@@ -49,28 +52,38 @@ export async function getAdminAnalyticsOverview(range: AdminAnalyticsRange): Pro
   assertRange(range);
 
   try {
-    const [mru7, joyEntryStats, dailyJournalStats, happinessScoreStats, aiStats] = await Promise.all([
-      countActiveUsersInRange(range),
+    const [currentStats, joyEntryStats, dailyJournalStats, happinessScoreStats, aiStats] = await Promise.all([
+      getCurrentProductOverviewStats(range),
       getSavedJoyEntryStats(range),
       getDailyJournalSaveStats(range),
       getHappinessScoreStats(range),
       getLatestAIRequestStats(range)
     ]);
 
+    const legacyOverview = {
+      savedJournalUsers: joyEntryStats.userCount,
+      savedJournalCount: joyEntryStats.saveCount,
+      savedDailyJournalUsers: dailyJournalStats.userCount,
+      savedDailyJournalCount: dailyJournalStats.saveCount,
+      happinessScoreUsers: happinessScoreStats.userCount,
+      happinessScoreCount: happinessScoreStats.saveCount
+    };
+
     return {
+      contractVersion: 2,
       range,
       northStar: {
         name: "MRU-7",
-        value: mru7
+        value: currentStats.mru7
       },
-      overview: {
-        savedJournalUsers: joyEntryStats.userCount,
-        savedJournalCount: joyEntryStats.saveCount,
-        savedDailyJournalUsers: dailyJournalStats.userCount,
-        savedDailyJournalCount: dailyJournalStats.saveCount,
-        happinessScoreUsers: happinessScoreStats.userCount,
-        happinessScoreCount: happinessScoreStats.saveCount
+      currentOverview: {
+        savedEventCardUsers: currentStats.savedEventCardUsers,
+        savedEventCardCount: currentStats.savedEventCardCount,
+        savedDailyJournalUsers: currentStats.savedDailyJournalUsers,
+        savedDailyJournalCount: currentStats.savedDailyJournalCount
       },
+      overview: legacyOverview,
+      legacyOverview,
       ai: {
         successRate: aiStats.successRate,
         p50LatencyMs: aiStats.p50LatencyMs,
@@ -90,45 +103,59 @@ export async function getAdminAnalyticsFunnel(range: AdminAnalyticsRange): Promi
   assertRange(range);
 
   try {
-    const counts = await getAnalyticsEventCounts({
-      ...range,
-      eventNames: [
-        "auth_register_succeeded",
-        "auth_login_succeeded",
-        "private_page_viewed",
-        "interview_session_started",
-        "interview_first_user_reply",
-        "interview_draft_generated",
-        "interview_draft_saved",
-        "daily_journal_generated",
-        "daily_journal_saved",
-        "interview_session_paused",
-        "interview_session_reopened",
-        "interview_boundary_insufficient_shown",
-        "interview_dimension_redirect_shown"
-      ]
-    });
+    const [currentProductFunnel, counts] = await Promise.all([
+      getCurrentProductFunnelStats(range),
+      getAnalyticsEventCounts({
+        ...range,
+        eventNames: [
+          "auth_register_succeeded",
+          "auth_login_succeeded",
+          "private_page_viewed",
+          "interview_session_started",
+          "interview_first_user_reply",
+          "interview_draft_generated",
+          "interview_draft_saved",
+          "daily_journal_generated",
+          "daily_journal_saved",
+          "interview_session_paused",
+          "interview_session_reopened",
+          "interview_boundary_insufficient_shown",
+          "interview_dimension_redirect_shown"
+        ]
+      })
+    ]);
+
+    const mainFunnel: AdminAnalyticsFunnelRecord["mainFunnel"] = [
+      { key: "register", count: counts.auth_register_succeeded ?? 0 },
+      { key: "login", count: counts.auth_login_succeeded ?? 0 },
+      { key: "privatePageView", count: counts.private_page_viewed ?? 0 },
+      { key: "sessionStart", count: counts.interview_session_started ?? 0 },
+      { key: "firstReply", count: counts.interview_first_user_reply ?? 0 },
+      { key: "draftGenerated", count: counts.interview_draft_generated ?? 0 },
+      { key: "journalSaved", count: counts.interview_draft_saved ?? 0 }
+    ];
+    const secondaryFunnel: AdminAnalyticsFunnelRecord["secondaryFunnel"] = [
+      { key: "dailyJournalGenerated", count: counts.daily_journal_generated ?? 0 },
+      { key: "dailyJournalSaved", count: counts.daily_journal_saved ?? 0 }
+    ];
+    const qualitySignals: AdminAnalyticsFunnelRecord["qualitySignals"] = {
+      pausedCount: counts.interview_session_paused ?? 0,
+      reopenedCount: counts.interview_session_reopened ?? 0,
+      boundaryInsufficientCount: counts.interview_boundary_insufficient_shown ?? 0,
+      dimensionRedirectCount: counts.interview_dimension_redirect_shown ?? 0
+    };
 
     return {
-      mainFunnel: [
-        { key: "register", count: counts.auth_register_succeeded ?? 0 },
-        { key: "login", count: counts.auth_login_succeeded ?? 0 },
-        { key: "privatePageView", count: counts.private_page_viewed ?? 0 },
-        { key: "sessionStart", count: counts.interview_session_started ?? 0 },
-        { key: "firstReply", count: counts.interview_first_user_reply ?? 0 },
-        { key: "draftGenerated", count: counts.interview_draft_generated ?? 0 },
-        { key: "journalSaved", count: counts.interview_draft_saved ?? 0 }
-      ],
-      secondaryFunnel: [
-        { key: "dailyJournalGenerated", count: counts.daily_journal_generated ?? 0 },
-        { key: "dailyJournalSaved", count: counts.daily_journal_saved ?? 0 }
-      ],
-      qualitySignals: {
-        pausedCount: counts.interview_session_paused ?? 0,
-        reopenedCount: counts.interview_session_reopened ?? 0,
-        boundaryInsufficientCount: counts.interview_boundary_insufficient_shown ?? 0,
-        dimensionRedirectCount: counts.interview_dimension_redirect_shown ?? 0
-      }
+      contractVersion: 2,
+      currentProductFunnel,
+      legacyFunnel: {
+        mainFunnel,
+        secondaryFunnel,
+        qualitySignals
+      },
+      mainFunnel,
+      secondaryFunnel,
+      qualitySignals
     };
   } catch (error) {
     if (error instanceof AdminAnalyticsQueryError) {
@@ -143,7 +170,19 @@ export async function getAdminAnalyticsRetention(range: AdminAnalyticsRange): Pr
   assertRange(range);
 
   try {
-    return await getRetentionStats(range);
+    const result = await getRetentionStats(range);
+
+    return {
+      contractVersion: 2,
+      timezone: "Asia/Shanghai",
+      cohort: {
+        anchor: "first_event_journal_saved",
+        userCount: result.cohortUserCount
+      },
+      retention: result.rates,
+      eligibility: result.eligibility,
+      ...result.rates
+    };
   } catch (error) {
     if (error instanceof AdminAnalyticsQueryError) {
       throw error;
@@ -157,8 +196,18 @@ export async function getAdminAnalyticsQuality(range: AdminAnalyticsRange): Prom
   assertRange(range);
 
   try {
-    const [dimensionSaveBreakdown, firstReplyCount, boundaryInsufficientCount, draftSourceStats, aiStats] =
+    const [
+      currentProductQuality,
+      staleStats,
+      dimensionSaveBreakdown,
+      firstReplyCount,
+      boundaryInsufficientCount,
+      draftSourceStats,
+      aiStats
+    ] =
       await Promise.all([
+        getCurrentProductQualityStats(range),
+        getJournalDailyStaleStats(range),
         getDimensionSaveStats(range),
         countAnalyticsEvents({ ...range, eventName: "interview_first_user_reply" }),
         countAnalyticsEvents({ ...range, eventName: "interview_boundary_insufficient_shown" }),
@@ -166,18 +215,34 @@ export async function getAdminAnalyticsQuality(range: AdminAnalyticsRange): Prom
         getLatestAIRequestStats(range)
       ]);
 
-    return {
+    const draftEditRate =
+      draftSourceStats.totalDraftCount > 0 ? draftSourceStats.editedDraftCount / draftSourceStats.totalDraftCount : 0;
+    const boundaryInsufficientRate = firstReplyCount > 0 ? boundaryInsufficientCount / firstReplyCount : 0;
+    const ai = {
+      successRate: aiStats.successRate,
+      p50LatencyMs: aiStats.p50LatencyMs,
+      p95LatencyMs: aiStats.p95LatencyMs,
+      errorCodeBreakdown: aiStats.errorCodeBreakdown ?? []
+    };
+    const legacyQuality = {
       dimensionSaveBreakdown,
-      draftEditRate:
-        draftSourceStats.totalDraftCount > 0 ? draftSourceStats.editedDraftCount / draftSourceStats.totalDraftCount : 0,
-      boundaryInsufficientRate: firstReplyCount > 0 ? boundaryInsufficientCount / firstReplyCount : 0,
-      staleRate: draftSourceStats.totalDraftCount > 0 ? draftSourceStats.editedDraftCount / draftSourceStats.totalDraftCount : 0,
-      ai: {
-        successRate: aiStats.successRate,
-        p50LatencyMs: aiStats.p50LatencyMs,
-        p95LatencyMs: aiStats.p95LatencyMs,
-        errorCodeBreakdown: aiStats.errorCodeBreakdown ?? []
-      }
+      draftEditRate,
+      boundaryInsufficientRate,
+      ai
+    };
+
+    return {
+      contractVersion: 2,
+      qualitySignals: {
+        ...currentProductQuality,
+        staleRate: staleStats.staleRate
+      },
+      legacyQuality,
+      dimensionSaveBreakdown,
+      draftEditRate,
+      boundaryInsufficientRate,
+      staleRate: staleStats.staleRate,
+      ai
     };
   } catch (error) {
     if (error instanceof AdminAnalyticsQueryError) {

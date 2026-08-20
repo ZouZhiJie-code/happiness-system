@@ -532,6 +532,11 @@ beforeEach(() => {
   mocks.materializeRecordCard.mockResolvedValue({ id: "record-card-1" });
   mocks.getWorkspaceData.mockResolvedValue(workspaceData());
   mocks.reserveAction.mockResolvedValue(reservation());
+  mocks.resume.mockResolvedValue({
+    ...reservation().turn,
+    status: "processing",
+    attemptCount: 2
+  });
   mocks.angleProjection.mockResolvedValue(angleProjection());
   mocks.factProjection.mockResolvedValue(factProjection());
   mocks.workspaceProjections.mockResolvedValue({
@@ -2898,6 +2903,7 @@ describe("event-centered respond service", () => {
         }
       ]
     }));
+    mocks.resume.mockResolvedValue({ ...pending, status: "processing", attemptCount: 2 });
 
     await respondEventCenteredInterview("user-1", {
       action: "resume_turn",
@@ -2910,6 +2916,110 @@ describe("event-centered respond service", () => {
     }));
     expect(mocks.commit.mock.calls.at(-1)?.[0].userTurnId).toBe("turn-1");
     expect(mocks.reserveAction).toHaveBeenCalledTimes(1);
+    expect(mocks.recordAnalytics).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_started",
+      dedupeKey: "event_centered_resume_started:turn-1:2",
+      attemptCount: 2
+    }));
+    expect(mocks.recordAnalytics).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_completed",
+      dedupeKey: "event_centered_resume_completed:turn-1:2",
+      attemptCount: 2
+    }));
+  });
+
+  it("records a failed resume attempt without changing the reliable turn identity", async () => {
+    const pending = {
+      ...reservation().turn,
+      status: "failed" as const,
+      action: "reply" as const,
+      baseBranchSessionId: "branch-1",
+      eventOperationData: null,
+      errorCode: "AI_TEMPORARY_FAILURE",
+      attemptCount: 1
+    };
+    mocks.getWorkspaceData.mockResolvedValue(workspaceData({
+      pendingTurn: pending,
+      messages: [
+        ...workspaceData().messages,
+        {
+          id: "user-message-1",
+          branchSessionId: "branch-1",
+          role: "user",
+          content: pending.rawText,
+          rawText: pending.rawText,
+          sequence: 1,
+          userTurnId: "turn-1",
+          responseGroupId: null,
+          responseVersion: null,
+          createdAt: now
+        }
+      ]
+    }));
+    mocks.resume.mockResolvedValue({ ...pending, status: "processing", attemptCount: 2 });
+    mocks.understand.mockRejectedValueOnce(new Error("AI_TEMPORARY_FAILURE"));
+
+    await expect(respondEventCenteredInterview("user-1", {
+      action: "resume_turn",
+      rootSessionId: "root-1",
+      clientTurnId: "client-1"
+    })).rejects.toThrow("AI_TEMPORARY_FAILURE");
+
+    expect(mocks.recordAnalytics).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_failed",
+      dedupeKey: "event_centered_resume_failed:turn-1:2",
+      attemptCount: 2,
+      errorCode: "AI_TEMPORARY_FAILURE"
+    }));
+  });
+
+  it("records started and failed when reliable-turn resume itself fails", async () => {
+    const pending = {
+      ...reservation().turn,
+      status: "failed" as const,
+      action: "reply" as const,
+      baseBranchSessionId: "branch-1",
+      eventOperationData: null,
+      errorCode: "REQUEST_CANCELED",
+      attemptCount: 1
+    };
+    mocks.getWorkspaceData.mockResolvedValue(workspaceData({
+      pendingTurn: pending,
+      messages: [
+        ...workspaceData().messages,
+        {
+          id: "user-message-1",
+          branchSessionId: "branch-1",
+          role: "user",
+          content: pending.rawText,
+          rawText: pending.rawText,
+          sequence: 1,
+          userTurnId: "turn-1",
+          responseGroupId: null,
+          responseVersion: null,
+          createdAt: now
+        }
+      ]
+    }));
+    mocks.resume.mockRejectedValueOnce(new Error("RESUME_WRITE_FAILED"));
+
+    await expect(respondEventCenteredInterview("user-1", {
+      action: "resume_turn",
+      rootSessionId: "root-1",
+      clientTurnId: "client-1"
+    })).rejects.toThrow("RESUME_WRITE_FAILED");
+
+    expect(mocks.recordAnalytics).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_started",
+      dedupeKey: "event_centered_resume_started:turn-1:2",
+      attemptCount: 2
+    }));
+    expect(mocks.recordAnalytics).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "event_centered_resume_failed",
+      dedupeKey: "event_centered_resume_failed:turn-1:2",
+      attemptCount: 2,
+      errorCode: "RESUME_WRITE_FAILED"
+    }));
   });
 
   it("返回当天会用已保存表达形成确定性事件卡片，不触发 AI", async () => {

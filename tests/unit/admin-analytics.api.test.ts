@@ -58,9 +58,24 @@ describe("admin analytics api", () => {
 
   it("returns overview data for admin requests", async () => {
     mockGetAdminAnalyticsOverview.mockResolvedValue({
+      contractVersion: 2,
       range: { startDate: "2026-05-01", endDate: "2026-05-31" },
       northStar: { name: "MRU-7", value: 12 },
       overview: {
+        savedJournalUsers: 8,
+        savedJournalCount: 15,
+        savedDailyJournalUsers: 5,
+        savedDailyJournalCount: 7,
+        happinessScoreUsers: 9,
+        happinessScoreCount: 18
+      },
+      currentOverview: {
+        savedEventCardUsers: 7,
+        savedEventCardCount: 13,
+        savedDailyJournalUsers: 4,
+        savedDailyJournalCount: 6
+      },
+      legacyOverview: {
         savedJournalUsers: 8,
         savedJournalCount: 15,
         savedDailyJournalUsers: 5,
@@ -84,8 +99,26 @@ describe("admin analytics api", () => {
   });
 
   it("returns funnel, retention, and quality data for admin requests", async () => {
-    mockGetAdminAnalyticsFunnel.mockResolvedValue({ mainFunnel: [], secondaryFunnel: [], qualitySignals: {} });
+    mockGetAdminAnalyticsFunnel.mockResolvedValue({
+      contractVersion: 2,
+      currentProductFunnel: [],
+      legacyFunnel: { mainFunnel: [], secondaryFunnel: [], qualitySignals: {} },
+      mainFunnel: [],
+      secondaryFunnel: [],
+      qualitySignals: {}
+    });
     mockGetAdminAnalyticsRetention.mockResolvedValue({
+      contractVersion: 2,
+      timezone: "Asia/Shanghai",
+      cohort: { anchor: "first_event_journal_saved", userCount: 10 },
+      retention: {
+        d1ReturnToRecordRate: 0.4,
+        d7ReturnToRecordRate: 0.3,
+        d30ReturnToRecordRate: 0.1,
+        d7RepeatSaveRate: 0.25,
+        d30RepeatSaveRate: 0.09
+      },
+      eligibility: { d1EligibleUsers: 10, d7EligibleUsers: 9, d30EligibleUsers: 5 },
       d1ReturnToRecordRate: 0.4,
       d7ReturnToRecordRate: 0.3,
       d30ReturnToRecordRate: 0.1,
@@ -93,11 +126,35 @@ describe("admin analytics api", () => {
       d30RepeatSaveRate: 0.09
     });
     mockGetAdminAnalyticsQuality.mockResolvedValue({
+      contractVersion: 2,
+      qualitySignals: {
+        fallbackRate: 0,
+        abnormalExitRate: 0,
+        resumeSuccessRate: 0,
+        staleRate: 0.05,
+        firstVisibleLatency: { sampleCount: 0, p50Ms: null, p95Ms: null },
+        fullInteractionLatency: { sampleCount: 0, p50Ms: null, p95Ms: null },
+        counts: {
+          completedResponses: 0,
+          fallbackTurns: 0,
+          startedSessions: 0,
+          abandonedSessions: 0,
+          resumeStarted: 0,
+          resumeCompleted: 0,
+          resumeFailed: 0
+        }
+      },
       dimensionSaveBreakdown: [],
       draftEditRate: 0.2,
       boundaryInsufficientRate: 0.1,
       staleRate: 0.05,
-      ai: { successRate: 0.9, p50LatencyMs: 800, p95LatencyMs: 1800, errorCodeBreakdown: [] }
+      ai: { successRate: 0.9, p50LatencyMs: 800, p95LatencyMs: 1800, errorCodeBreakdown: [] },
+      legacyQuality: {
+        dimensionSaveBreakdown: [],
+        draftEditRate: 0.2,
+        boundaryInsufficientRate: 0.1,
+        ai: { successRate: 0.9, p50LatencyMs: 800, p95LatencyMs: 1800, errorCodeBreakdown: [] }
+      }
     });
 
     const funnelResponse = await getFunnelRoute(
@@ -113,6 +170,9 @@ describe("admin analytics api", () => {
     expect(funnelResponse.status).toBe(200);
     expect(retentionResponse.status).toBe(200);
     expect(qualityResponse.status).toBe(200);
+    await expect(funnelResponse.json()).resolves.toMatchObject({ contractVersion: 2 });
+    await expect(retentionResponse.json()).resolves.toMatchObject({ contractVersion: 2 });
+    await expect(qualityResponse.json()).resolves.toMatchObject({ contractVersion: 2 });
   });
 
   it("returns 403 for authenticated non-admin callers", async () => {

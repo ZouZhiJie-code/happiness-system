@@ -10,7 +10,10 @@ export const EVENT_CENTERED_ANALYTICS_EVENTS = [
   "event_journal_generated",
   "event_journal_saved",
   "event_centered_turn_fallback",
-  "event_centered_session_abandoned"
+  "event_centered_session_abandoned",
+  "event_centered_resume_started",
+  "event_centered_resume_completed",
+  "event_centered_resume_failed"
 ] as const;
 
 export type EventCenteredAnalyticsEventName =

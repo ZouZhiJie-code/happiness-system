@@ -477,8 +477,12 @@ function ReviewWorkspace({
   view: AdminAnalyticsView;
   context: SearchContext;
 }) {
-  const mainFunnel = buildStepConversionRows(funnel.mainFunnel);
-  const secondaryFunnel = buildStepConversionRows(funnel.secondaryFunnel);
+  const currentProductFunnel = buildStepConversionRows(funnel.currentProductFunnel);
+  const legacyMainFunnel = buildStepConversionRows(funnel.legacyFunnel.mainFunnel);
+  const legacySecondaryFunnel = buildStepConversionRows(funnel.legacyFunnel.secondaryFunnel).map((step) => ({
+    ...step,
+    label: step.key === "dailyJournalGenerated" ? "生成旧五维完整日志" : "保存旧五维完整日志"
+  }));
 
   return (
     <>
@@ -487,8 +491,8 @@ function ReviewWorkspace({
           <MetricTile label="MRU-7" value={overview.northStar.value} hint="最近 7 天内至少活跃一次的记录用户数" />
           <MetricTile
             label="结果沉淀"
-            value={`${overview.overview.savedJournalCount} / ${overview.overview.savedDailyJournalCount}`}
-            hint={`维度日志 ${overview.overview.savedJournalCount}，完整日志 ${overview.overview.savedDailyJournalCount}`}
+            value={`${overview.currentOverview.savedEventCardCount} / ${overview.currentOverview.savedDailyJournalCount}`}
+            hint={`事件卡 ${overview.currentOverview.savedEventCardCount}，今日日记 ${overview.currentOverview.savedDailyJournalCount}`}
             action={{
               label: "查看已有已保存日志的用户",
               href: buildUserSearchHref({
@@ -502,23 +506,37 @@ function ReviewWorkspace({
               })
             }}
           />
-          <MetricTile label="系统稳定" value={formatPercent(quality.ai.successRate)} hint={`p95 ${formatLatency(quality.ai.p95LatencyMs)}`} />
+          <MetricTile
+            label="完整交互 P95"
+            value={formatLatency(quality.qualitySignals.fullInteractionLatency.p95Ms)}
+            hint={`fallback ${formatPercent(quality.qualitySignals.fallbackRate)}`}
+          />
         </div>
       </SectionCard>
 
-      <SectionCard title="转化路径" description="用同一份数据看主链路和完整日志补充链路，先定位掉点，再决定下一步看哪类人。">
-        <div className="grid gap-x-10 gap-y-6 xl:grid-cols-2">
-          <FunnelStepRows title="主链路" steps={mainFunnel} />
-          <FunnelStepRows title="完整日志补充链路" steps={secondaryFunnel} />
+      <SectionCard title="转化路径" description="当前产品主链按唯一用户和顺序到达计算；历史五维链路独立保留，避免两种体验混合计数。">
+        <FunnelStepRows title="当前产品主链" steps={currentProductFunnel} />
+        <div className="mt-6 border-t border-[var(--line-soft)] pt-5">
+          <DetailDisclosure summary="旧五维历史口径">
+            <div className="grid gap-x-10 gap-y-6 xl:grid-cols-2">
+              <FunnelStepRows title="旧五维主链" steps={legacyMainFunnel} />
+              <FunnelStepRows title="旧五维完整日志" steps={legacySecondaryFunnel} />
+            </div>
+          </DetailDisclosure>
         </div>
       </SectionCard>
 
       <SectionCard title="留存与回访" description="确认用户会不会回来记录，以及回来之后是否还会留下结果。">
         <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-5">
-          <MetricTile label="D1 回访" value={formatPercent(retention.d1ReturnToRecordRate)} />
+          <MetricTile
+            label="D1 回访"
+            value={formatPercent(retention.retention.d1ReturnToRecordRate)}
+            hint={`${retention.eligibility.d1EligibleUsers} 位成熟样本`}
+          />
           <MetricTile
             label="D7 回访"
-            value={formatPercent(retention.d7ReturnToRecordRate)}
+            value={formatPercent(retention.retention.d7ReturnToRecordRate)}
+            hint={`${retention.eligibility.d7EligibleUsers} 位成熟样本`}
             action={{
               label: "查看有回访记录的用户",
               href: buildUserSearchHref({
@@ -532,81 +550,69 @@ function ReviewWorkspace({
               })
             }}
           />
-          <MetricTile label="D30 回访" value={formatPercent(retention.d30ReturnToRecordRate)} />
-          <MetricTile label="D7 再次保存" value={formatPercent(retention.d7RepeatSaveRate)} />
-          <MetricTile label="D30 再次保存" value={formatPercent(retention.d30RepeatSaveRate)} />
+          <MetricTile
+            label="D30 回访"
+            value={formatPercent(retention.retention.d30ReturnToRecordRate)}
+            hint={`${retention.eligibility.d30EligibleUsers} 位成熟样本`}
+          />
+          <MetricTile label="D7 再次保存" value={formatPercent(retention.retention.d7RepeatSaveRate)} />
+          <MetricTile label="D30 再次保存" value={formatPercent(retention.retention.d30RepeatSaveRate)} />
         </div>
+        <p className="mt-4 text-xs leading-6 text-[var(--text-faint)]">
+          首次保存事件卡用户 {retention.cohort.userCount} 位；日期统一按 Asia/Shanghai 归属。
+        </p>
       </SectionCard>
 
-      <SectionCard title="内容与质量" description="把草稿改写、异常边界、时延和错误码放在一起读，更容易判断体验摩擦。">
-        <div className="grid gap-x-10 gap-y-6 lg:grid-cols-2">
-          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-            <MetricTile
-              label="草稿编辑率"
-              value={formatPercent(quality.draftEditRate)}
-              action={{
-                label: "查看高编辑用户",
-                href: buildUserSearchHref({
-                  view,
-                  range,
-                  context,
-                  overrides: {
-                    hasSavedJournal: true,
-                    selectedUserId: null
-                  }
-                })
-              }}
-            />
-            <MetricTile
-              label="boundary insufficient 率"
-              value={formatPercent(quality.boundaryInsufficientRate)}
-              action={{
-                label: "查看相关用户",
-                href: buildUserSearchHref({
-                  view,
-                  range,
-                  context,
-                  overrides: {
-                    hasBoundaryInsufficient: true,
-                    selectedUserId: null
-                  }
-                })
-              }}
-            />
-            <MetricTile
-              label="stale 比例"
-              value={formatPercent(quality.staleRate)}
-              action={{
-                label: "查看待更新用户",
-                href: buildUserSearchHref({
-                  view,
-                  range,
-                  context,
-                  overrides: {
-                    hasSavedJournal: true,
-                    selectedUserId: null
-                  }
-                })
-              }}
-            />
-            <MetricTile label="AI 成功率" value={formatPercent(quality.ai.successRate)} />
-            <MetricTile label="AI p50" value={formatLatency(quality.ai.p50LatencyMs)} />
-            <MetricTile label="AI p95" value={formatLatency(quality.ai.p95LatencyMs)} />
-          </div>
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-sm font-medium text-ink">维度保存分布</h4>
-              <div className="mt-2">
-                <DimensionSaveRows items={quality.dimensionSaveBreakdown} />
+      <SectionCard title="当前产品质量" description="从回应可靠性、失败恢复、日记更新状态和用户等待时间判断主链健康度。">
+        <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricTile label="fallback 率" value={formatPercent(quality.qualitySignals.fallbackRate)} />
+          <MetricTile label="异常退出率" value={formatPercent(quality.qualitySignals.abnormalExitRate)} />
+          <MetricTile
+            label="恢复成功率"
+            value={formatPercent(quality.qualitySignals.resumeSuccessRate)}
+            hint={`${quality.qualitySignals.counts.resumeCompleted} / ${quality.qualitySignals.counts.resumeStarted} 次恢复完成`}
+          />
+          <MetricTile
+            label="需更新日记比例"
+            value={formatPercent(quality.qualitySignals.staleRate)}
+            action={{
+              label: "查看待更新用户",
+              href: buildUserSearchHref({
+                view,
+                range,
+                context,
+                overrides: { hasSavedJournal: true, selectedUserId: null }
+              })
+            }}
+          />
+          <MetricTile
+            label="首段可见 P50"
+            value={formatLatency(quality.qualitySignals.firstVisibleLatency.p50Ms)}
+            hint={`${quality.qualitySignals.firstVisibleLatency.sampleCount} 个样本`}
+          />
+          <MetricTile label="首段可见 P95" value={formatLatency(quality.qualitySignals.firstVisibleLatency.p95Ms)} />
+          <MetricTile
+            label="完整交互 P50"
+            value={formatLatency(quality.qualitySignals.fullInteractionLatency.p50Ms)}
+            hint={`${quality.qualitySignals.fullInteractionLatency.sampleCount} 个样本`}
+          />
+          <MetricTile label="完整交互 P95" value={formatLatency(quality.qualitySignals.fullInteractionLatency.p95Ms)} />
+        </div>
+        <div className="mt-6 border-t border-[var(--line-soft)] pt-5">
+          <DetailDisclosure summary="旧五维质量口径">
+            <div className="grid gap-x-10 gap-y-6 lg:grid-cols-2">
+              <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+                <MetricTile label="草稿编辑率" value={formatPercent(quality.legacyQuality.draftEditRate)} />
+                <MetricTile label="boundary insufficient 率" value={formatPercent(quality.legacyQuality.boundaryInsufficientRate)} />
+                <MetricTile label="AI 成功率" value={formatPercent(quality.legacyQuality.ai.successRate)} />
+                <MetricTile label="AI p95" value={formatLatency(quality.legacyQuality.ai.p95LatencyMs)} />
+              </div>
+              <div className="space-y-6">
+                <DimensionSaveRows items={quality.legacyQuality.dimensionSaveBreakdown} />
+                <ErrorCodeRows items={quality.legacyQuality.ai.errorCodeBreakdown} />
               </div>
             </div>
-            <div>
-              <h4 className="text-sm font-medium text-ink">错误码分布</h4>
-              <div className="mt-2">
-                <ErrorCodeRows items={quality.ai.errorCodeBreakdown} />
-              </div>
-            </div>
-          </div>
+          </DetailDisclosure>
         </div>
       </SectionCard>
     </>
@@ -616,76 +622,56 @@ function ReviewWorkspace({
 function MonitorWorkspace({
   overview,
   funnel,
-  quality,
-  range,
-  view,
-  context
+  quality
 }: {
   overview: AdminAnalyticsOverviewRecord;
   funnel: AdminAnalyticsFunnelRecord;
   quality: AdminAnalyticsQualityRecord;
-  range: {
-    startDate: string;
-    endDate: string;
-  };
-  view: AdminAnalyticsView;
-  context: SearchContext;
 }) {
+  const currentFunnelCount = (key: AdminAnalyticsFunnelRecord["currentProductFunnel"][number]["key"]) =>
+    funnel.currentProductFunnel.find((item) => item.key === key)?.count ?? 0;
+
   return (
     <>
       <SectionCard title="链路健康" description="先判断服务是否稳定、主链路是否持续有人走到关键节点。">
         <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-5">
-          <MetricTile label="AI 成功率" value={formatPercent(quality.ai.successRate)} />
-          <MetricTile label="AI p50" value={formatLatency(quality.ai.p50LatencyMs)} />
-          <MetricTile label="AI p95" value={formatLatency(quality.ai.p95LatencyMs)} />
-          <MetricTile label="开始访谈" value={funnel.mainFunnel.find((item) => item.key === "sessionStart")?.count ?? 0} />
-          <MetricTile label="保存维度日志" value={funnel.mainFunnel.find((item) => item.key === "journalSaved")?.count ?? 0} />
+          <MetricTile label="完整回应" value={currentFunnelCount("completeResponseReceived")} />
+          <MetricTile label="保存事件卡" value={currentFunnelCount("eventCardSaved")} />
+          <MetricTile label="保存今日日记" value={currentFunnelCount("dailyJournalSaved")} />
+          <MetricTile label="fallback 率" value={formatPercent(quality.qualitySignals.fallbackRate)} />
+          <MetricTile label="异常退出率" value={formatPercent(quality.qualitySignals.abnormalExitRate)} />
         </div>
       </SectionCard>
 
-      <SectionCard title="异常信号" description="把暂停、重开、边界不足和跳维提示并列放置，便于快速扫出异常。">
+      <SectionCard title="恢复与时延" description="恢复完成情况和两个用户等待时点集中展示，便于定位中断与响应变慢。">
         <div className="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-4">
-          <MetricTile label="暂停会话" value={funnel.qualitySignals.pausedCount} />
-          <MetricTile label="重开会话" value={funnel.qualitySignals.reopenedCount} />
-          <MetricTile
-            label="boundary insufficient"
-            value={funnel.qualitySignals.boundaryInsufficientCount}
-            action={{
-              label: "查看相关用户",
-              href: buildUserSearchHref({
-                view,
-                range,
-                context,
-                overrides: {
-                  hasBoundaryInsufficient: true,
-                  selectedUserId: null
-                }
-              })
-            }}
-          />
-          <MetricTile label="dimension redirect" value={funnel.qualitySignals.dimensionRedirectCount} />
-        </div>
-        <div className="mt-6">
-          <h4 className="text-sm font-medium text-ink">错误码分布</h4>
-          <div className="mt-2">
-            <ErrorCodeRows items={quality.ai.errorCodeBreakdown} />
-          </div>
+          <MetricTile label="恢复成功率" value={formatPercent(quality.qualitySignals.resumeSuccessRate)} />
+          <MetricTile label="恢复失败" value={quality.qualitySignals.counts.resumeFailed} />
+          <MetricTile label="首段可见 P50 / P95" value={`${formatLatency(quality.qualitySignals.firstVisibleLatency.p50Ms)} / ${formatLatency(quality.qualitySignals.firstVisibleLatency.p95Ms)}`} />
+          <MetricTile label="完整交互 P50 / P95" value={`${formatLatency(quality.qualitySignals.fullInteractionLatency.p50Ms)} / ${formatLatency(quality.qualitySignals.fullInteractionLatency.p95Ms)}`} />
         </div>
       </SectionCard>
 
-      <SectionCard title="质量风险" description="不扩新口径，直接把需要盯的风险项集中展示，再进入候选用户。">
+      <SectionCard title="质量风险" description="当前主链风险优先展示；旧五维观测继续作为独立历史参考。">
         <div className="grid gap-x-10 gap-y-6 lg:grid-cols-2">
           <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-            <MetricTile label="stale rate" value={formatPercent(quality.staleRate)} />
-            <MetricTile label="草稿编辑率" value={formatPercent(quality.draftEditRate)} />
+            <MetricTile label="需更新日记比例" value={formatPercent(quality.qualitySignals.staleRate)} />
+            <MetricTile label="已完成回应" value={quality.qualitySignals.counts.completedResponses} />
             <MetricTile label="MRU-7" value={overview.northStar.value} />
-            <MetricTile label="完整日志保存" value={funnel.secondaryFunnel.find((item) => item.key === "dailyJournalSaved")?.count ?? 0} />
+            <MetricTile label="今日日记保存" value={overview.currentOverview.savedDailyJournalCount} />
           </div>
           <div>
-            <h4 className="text-sm font-medium text-ink">维度保存分布</h4>
-            <div className="mt-2">
-              <DimensionSaveRows items={quality.dimensionSaveBreakdown} />
-            </div>
+            <DetailDisclosure summary="旧五维历史观测">
+              <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+                <MetricTile label="暂停会话" value={funnel.legacyFunnel.qualitySignals.pausedCount} />
+                <MetricTile label="重开会话" value={funnel.legacyFunnel.qualitySignals.reopenedCount} />
+                <MetricTile label="boundary insufficient" value={funnel.legacyFunnel.qualitySignals.boundaryInsufficientCount} />
+                <MetricTile label="dimension redirect" value={funnel.legacyFunnel.qualitySignals.dimensionRedirectCount} />
+              </div>
+              <div className="mt-5">
+                <ErrorCodeRows items={quality.legacyQuality.ai.errorCodeBreakdown} />
+              </div>
+            </DetailDisclosure>
           </div>
         </div>
       </SectionCard>
@@ -1240,9 +1226,6 @@ export function AdminAnalyticsShell({
                 overview={overview}
                 funnel={funnel}
                 quality={quality}
-                range={range}
-                view={view}
-                context={context}
               />
             )}
         </StepBlock>

@@ -84,9 +84,24 @@ describe("admin analytics page", () => {
     });
 
     mockGetAdminAnalyticsOverview.mockResolvedValue({
+      contractVersion: 2,
       range: { startDate: "2026-04-22", endDate: "2026-05-21" },
       northStar: { name: "MRU-7", value: 12 },
+      currentOverview: {
+        savedEventCardUsers: 7,
+        savedEventCardCount: 13,
+        savedDailyJournalUsers: 4,
+        savedDailyJournalCount: 6
+      },
       overview: {
+        savedJournalUsers: 8,
+        savedJournalCount: 15,
+        savedDailyJournalUsers: 5,
+        savedDailyJournalCount: 7,
+        happinessScoreUsers: 9,
+        happinessScoreCount: 18
+      },
+      legacyOverview: {
         savedJournalUsers: 8,
         savedJournalCount: 15,
         savedDailyJournalUsers: 5,
@@ -98,6 +113,15 @@ describe("admin analytics page", () => {
     });
 
     mockGetAdminAnalyticsFunnel.mockResolvedValue({
+      contractVersion: 2,
+      currentProductFunnel: [
+        { key: "openedDay", count: 16 },
+        { key: "firstContentSubmitted", count: 12 },
+        { key: "completeResponseReceived", count: 11 },
+        { key: "eventCardSaved", count: 8 },
+        { key: "dailyJournalGenerated", count: 6 },
+        { key: "dailyJournalSaved", count: 5 }
+      ],
       mainFunnel: [
         { key: "register", count: 20 },
         { key: "login", count: 18 },
@@ -116,10 +140,46 @@ describe("admin analytics page", () => {
         reopenedCount: 1,
         boundaryInsufficientCount: 5,
         dimensionRedirectCount: 2
+      },
+      legacyFunnel: {
+        mainFunnel: [
+          { key: "register", count: 20 },
+          { key: "login", count: 18 },
+          { key: "privatePageView", count: 16 },
+          { key: "sessionStart", count: 12 },
+          { key: "firstReply", count: 9 },
+          { key: "draftGenerated", count: 7 },
+          { key: "journalSaved", count: 5 }
+        ],
+        secondaryFunnel: [
+          { key: "dailyJournalGenerated", count: 4 },
+          { key: "dailyJournalSaved", count: 3 }
+        ],
+        qualitySignals: {
+          pausedCount: 2,
+          reopenedCount: 1,
+          boundaryInsufficientCount: 5,
+          dimensionRedirectCount: 2
+        }
       }
     });
 
     mockGetAdminAnalyticsRetention.mockResolvedValue({
+      contractVersion: 2,
+      timezone: "Asia/Shanghai",
+      cohort: { anchor: "first_event_journal_saved", userCount: 20 },
+      retention: {
+        d1ReturnToRecordRate: 0.42,
+        d7ReturnToRecordRate: 0.35,
+        d30ReturnToRecordRate: 0.12,
+        d7RepeatSaveRate: 0.3,
+        d30RepeatSaveRate: 0.11
+      },
+      eligibility: {
+        d1EligibleUsers: 20,
+        d7EligibleUsers: 18,
+        d30EligibleUsers: 10
+      },
       d1ReturnToRecordRate: 0.42,
       d7ReturnToRecordRate: 0.35,
       d30ReturnToRecordRate: 0.12,
@@ -128,18 +188,50 @@ describe("admin analytics page", () => {
     });
 
     mockGetAdminAnalyticsQuality.mockResolvedValue({
+      contractVersion: 2,
+      qualitySignals: {
+        fallbackRate: 0.1,
+        abnormalExitRate: 0.05,
+        resumeSuccessRate: 0.75,
+        staleRate: 0.25,
+        firstVisibleLatency: { sampleCount: 8, p50Ms: 500, p95Ms: 1200 },
+        fullInteractionLatency: { sampleCount: 8, p50Ms: 900, p95Ms: 1800 },
+        counts: {
+          completedResponses: 10,
+          fallbackTurns: 1,
+          startedSessions: 20,
+          abandonedSessions: 1,
+          resumeStarted: 4,
+          resumeCompleted: 3,
+          resumeFailed: 1
+        }
+      },
       dimensionSaveBreakdown: [
         { dimension: "joy", savedEntryCount: 10 },
         { dimension: "gratitude", savedEntryCount: 6 }
       ],
       draftEditRate: 0.3,
       boundaryInsufficientRate: 0.4,
-      staleRate: 0.3,
+      staleRate: 0.25,
       ai: {
         successRate: 0.88,
         p50LatencyMs: 900,
         p95LatencyMs: 2100,
         errorCodeBreakdown: [{ errorCode: "UPSTREAM_TIMEOUT", count: 2 }]
+      },
+      legacyQuality: {
+        dimensionSaveBreakdown: [
+          { dimension: "joy", savedEntryCount: 10 },
+          { dimension: "gratitude", savedEntryCount: 6 }
+        ],
+        draftEditRate: 0.3,
+        boundaryInsufficientRate: 0.4,
+        ai: {
+          successRate: 0.88,
+          p50LatencyMs: 900,
+          p95LatencyMs: 2100,
+          errorCodeBreakdown: [{ errorCode: "UPSTREAM_TIMEOUT", count: 2 }]
+        }
       }
     });
 
@@ -305,6 +397,10 @@ describe("admin analytics page", () => {
     expect(screen.getByText("2026-04-22 至 2026-05-21")).toBeInTheDocument();
     expect(screen.getByText("当前调查路径")).toBeInTheDocument();
     expect(screen.getByText("第一步：先判断最近发生了什么")).toBeInTheDocument();
+    expect(screen.getByText("当前产品主链")).toBeInTheDocument();
+    expect(screen.getByText("打开当天记录")).toBeInTheDocument();
+    expect(screen.getByText("保存今日日记")).toBeInTheDocument();
+    expect(screen.getByText("旧五维历史口径")).toBeInTheDocument();
     expect(screen.getByText("第二步：先锁定一类人，再看个人")).toBeInTheDocument();
     expect(screen.getByText("先输入用户名或启用一个筛选条件，候选用户才会出现。")).toBeInTheDocument();
 
@@ -327,7 +423,7 @@ describe("admin analytics page", () => {
     );
 
     expect(screen.getByText("链路健康")).toBeInTheDocument();
-    expect(screen.getByText("异常信号")).toBeInTheDocument();
+    expect(screen.getByText("恢复与时延")).toBeInTheDocument();
     expect(screen.getByText("质量风险")).toBeInTheDocument();
     expect(screen.queryByText("留存与回访")).not.toBeInTheDocument();
     expect(screen.getByText("当前视角：监控")).toBeInTheDocument();
