@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v104",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v105",
   "status": "complete_response_first_v1_8_explicit_progress_obligation_implementing",
   "currentQueueStage": "complete_response_first_v1_8_implementation_before_preview_regression",
   "semanticQualityDecisionPresentation": {
@@ -2354,6 +2354,7 @@
     }
   ],
   "currentQueue": [
+    "RF-LOCAL-BOUNDARY-CONTINUE-01",
     "RF-EXPLICIT-PROGRESS-01",
     "RF-NEW-INFORMATION-TARGET-01",
     "V8R1-CTRL-01",
@@ -2372,21 +2373,41 @@
   ],
   "issues": [
     {
+      "issueId": "RF-LOCAL-BOUNDARY-CONTINUE-01",
+      "title": "局部拒答并要求换方向继续被误判为整轮停止",
+      "productOwnerJudgment": "局部拒答限定当前问题；同句明确要求继续或换方向时，系统尊重边界并继续。明确结束本轮时才收束。",
+      "codexInitialAssessment": "v1.8 Preview 的核心深挖链已通过；相邻表达‘这个方向不想回答，换个方向继续聊’被投影为 checkpoint，只复述并保存，构成 fail。",
+      "confirmedRootCause": "旧显式停止规则只命中‘不想回答’，没有处理指代范围和同句正向继续动作；模型输出随后被第一检查点接受。",
+      "hypotheses": [
+        "先移除否定的继续短语，再识别独立正向继续动作，可以区分整轮停止与局部边界。",
+        "把确定性控制范围交给模型后，可以放下当前问题并选择新的有依据方向。"
+      ],
+      "priority": "P0",
+      "status": "v1_9_confirmed_implementing",
+      "trace": [
+        "docs/plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-8-isolated-preview-v1-handoff.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-8-isolated-preview-stage-ledger-v1.json"
+      ],
+      "targetVersion": "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority"
+    },
+    {
       "issueId": "RF-EXPLICIT-PROGRESS-01",
       "title": "明确继续或点名方向仍被重新确认",
       "productOwnerJudgment": "继续、深挖、换方向和点名讨论对象直接形成本轮推进动作；回应执行它，不再要求用户重复确认。",
-      "codexInitialAssessment": "v1.6 Preview 中，连续深挖题重复上一问题并判 fail；关系题再次询问是否讨论用户已点明的差别并判 minor。共同根因跨两个场景成立。",
-      "confirmedRootCause": "当前方法能识别未答层，但把上一条未回答问题继续保留为开放目标，也把用户的明确元动作当作可确认内容；模型选择了低风险的重复或重确认。",
+      "codexInitialAssessment": "v1.6 Preview 中，连续深挖题重复上一问题并判 fail；v1.8 真实连续链已放下旧问题并进入新的关系期待层，初评 pass。",
+      "confirmedRootCause": "v1.6 把上一条未回答问题继续保留为开放目标；v1.8 的明确推进义务已在原失败链完成修复验证。",
       "hypotheses": [
         "将上一问题在明确推进请求下标为本轮已跳过，可以迫使模型选择不同的新层。",
         "将用户点名方向设为直接执行义务，可以减少元对话并提高推进价值。"
       ],
       "priority": "P0",
-      "status": "v1_8_confirmed_implementing",
+      "status": "resolved_in_v1_8_original_failure_chain_preview_pass",
       "trace": [
         "docs/plans/2026-08-20-gi088-complete-response-first-v1-8-explicit-progress-obligation.md",
         "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md",
-        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json"
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-8-isolated-preview-v1-handoff.md"
       ],
       "targetVersion": "2026-08-20.gi088-complete-response-first-v1-8-explicit-progress-obligation"
     },

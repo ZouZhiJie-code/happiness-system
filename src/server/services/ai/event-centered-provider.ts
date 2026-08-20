@@ -61,8 +61,14 @@ function completeResponseV18Requested(env: NodeJS.ProcessEnv) {
     "complete_response_v1_8";
 }
 
+function completeResponseV19Requested(env: NodeJS.ProcessEnv) {
+  return env.INTERVIEW_EVENT_CENTERED_STRATEGY?.trim().toLowerCase() ===
+    "complete_response_v1_9";
+}
+
 function completeResponseProRequested(env: NodeJS.ProcessEnv) {
-  return completeResponseV16Requested(env) || completeResponseV18Requested(env);
+  return completeResponseV16Requested(env) || completeResponseV18Requested(env) ||
+    completeResponseV19Requested(env);
 }
 
 function expectedEventCenteredModel(env: NodeJS.ProcessEnv) {

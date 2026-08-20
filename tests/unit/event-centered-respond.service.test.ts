@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => ({
   completeResponseFirstV15Enabled: vi.fn(() => false),
   completeResponseFirstV16Enabled: vi.fn(() => false),
   completeResponseFirstV18Enabled: vi.fn(() => false),
+  completeResponseFirstV19Enabled: vi.fn(() => false),
   thoughtOnly: vi.fn(() => false),
   generateOnce: vi.fn(),
   generateCompleteResponseV12: vi.fn(),
@@ -44,6 +45,7 @@ const mocks = vi.hoisted(() => ({
   generateCompleteResponseV15: vi.fn(),
   generateCompleteResponseV16: vi.fn(),
   generateCompleteResponseV18: vi.fn(),
+  generateCompleteResponseV19: vi.fn(),
   generatePlan: vi.fn(),
   generateVisible: vi.fn(),
   generateThoughtMap: vi.fn(),
@@ -83,7 +85,9 @@ vi.mock("@/features/interview/event-centered/generative-release", () => ({
   isCompleteResponseFirstV16EventCenteredStrategyEnabled:
     mocks.completeResponseFirstV16Enabled,
   isCompleteResponseFirstV18EventCenteredStrategyEnabled:
-    mocks.completeResponseFirstV18Enabled
+    mocks.completeResponseFirstV18Enabled,
+  isCompleteResponseFirstV19EventCenteredStrategyEnabled:
+    mocks.completeResponseFirstV19Enabled
 }));
 
 vi.mock("@/server/repositories/event-centered-interview.repository", () => ({
@@ -149,6 +153,7 @@ vi.mock("@/server/services/interview/event-centered-ai.service", () => ({
   generateEventCenteredCompleteResponseV15AI: mocks.generateCompleteResponseV15,
   generateEventCenteredCompleteResponseV16AI: mocks.generateCompleteResponseV16,
   generateEventCenteredCompleteResponseV18AI: mocks.generateCompleteResponseV18,
+  generateEventCenteredCompleteResponseV19AI: mocks.generateCompleteResponseV19,
   generateEventCenteredThoughtMapUpdateAI: mocks.generateThoughtMap,
   generateEventCenteredThoughtQuestionAI: mocks.generateThoughtQuestion,
   generateEventCenteredTurnOnceAI: mocks.generateOnce,
@@ -613,6 +618,7 @@ beforeEach(() => {
   mocks.completeResponseFirstV15Enabled.mockReturnValue(false);
   mocks.completeResponseFirstV16Enabled.mockReturnValue(false);
   mocks.completeResponseFirstV18Enabled.mockReturnValue(false);
+  mocks.completeResponseFirstV19Enabled.mockReturnValue(false);
   mocks.thoughtOnly.mockReturnValue(false);
   mocks.generateOnce.mockResolvedValue(null);
   mocks.generateCompleteResponseV12.mockResolvedValue(null);
@@ -622,6 +628,7 @@ beforeEach(() => {
   mocks.generateCompleteResponseV15.mockResolvedValue(null);
   mocks.generateCompleteResponseV16.mockResolvedValue(null);
   mocks.generateCompleteResponseV18.mockResolvedValue(null);
+  mocks.generateCompleteResponseV19.mockResolvedValue(null);
   mocks.generatePlan.mockResolvedValue(null);
   mocks.generateVisible.mockResolvedValue(null);
   mocks.generateThoughtMap.mockResolvedValue({
@@ -1703,6 +1710,81 @@ describe("event-centered respond service", () => {
     });
     expect(result.backgroundFactsTask).toEqual({
       traceId: "background-v1-8",
+      sessionId: "branch-1"
+    });
+  });
+
+  it("v1.9 使用局部边界继续生成器，并继续创建后台事实任务", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV19Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response = "好，我们放下刚才那个方向。你更想聊这次公开质疑对之后合作的影响吗？";
+    const question = "你更想聊这次公开质疑对之后合作的影响吗？";
+    mocks.generateCompleteResponseV19.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null,
+        responseText: response
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_9",
+        promptVersion: "v1.9",
+        resolvedPromptHash: "hash-v1.9"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+    mocks.commit.mockResolvedValueOnce({
+      kind: "committed",
+      backgroundFactsTaskTraceId: "background-v1-9"
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV19).toHaveBeenCalledOnce();
+    expect(mocks.generateCompleteResponseV18).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      backgroundFactsTask: {
+        contextSnapshot: {
+          kind: "event_centered_background_facts_v1"
+        }
+      },
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_9",
+          effectiveStrategy: "complete_response_v1_9",
+          generativeArchitecture: "one_call"
+        }
+      }
+    });
+    expect(result.backgroundFactsTask).toEqual({
+      traceId: "background-v1-9",
       sessionId: "branch-1"
     });
   });

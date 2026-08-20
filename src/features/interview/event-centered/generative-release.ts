@@ -22,6 +22,9 @@ import {
 import {
   EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY
 } from "@/features/interview/event-centered/complete-response-first-v1-8";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_STRATEGY
+} from "@/features/interview/event-centered/complete-response-first-v1-9";
 
 export type EventCenteredStrategyMode =
   | "baseline"
@@ -33,7 +36,8 @@ export type EventCenteredStrategyMode =
   | typeof EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_STRATEGY
   | typeof EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_STRATEGY
   | typeof EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_STRATEGY
-  | typeof EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY;
+  | typeof EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY
+  | typeof EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_STRATEGY;
 
 type EventCenteredStrategyEnvironment = {
   INTERVIEW_EVENT_CENTERED_STRATEGY?: string;
@@ -74,6 +78,9 @@ export function getEventCenteredStrategyMode(
   if (normalized === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY) {
     return EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY;
   }
+  if (normalized === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_STRATEGY) {
+    return EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_STRATEGY;
+  }
   return normalized === "generative" ? "generative" : "baseline";
 }
 
@@ -88,7 +95,8 @@ export function isGenerativeEventCenteredStrategyEnabled(
     mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_4_STRATEGY ||
     mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_5_STRATEGY ||
     mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_STRATEGY ||
-    mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY;
+    mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY ||
+    mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_STRATEGY;
 }
 
 export function isCompleteResponseFirstEventCenteredStrategyEnabled(
@@ -137,4 +145,10 @@ export function isCompleteResponseFirstV18EventCenteredStrategyEnabled(
   mode = getEventCenteredStrategyMode()
 ) {
   return mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY;
+}
+
+export function isCompleteResponseFirstV19EventCenteredStrategyEnabled(
+  mode = getEventCenteredStrategyMode()
+) {
+  return mode === EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_STRATEGY;
 }

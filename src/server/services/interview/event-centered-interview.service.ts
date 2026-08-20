@@ -32,6 +32,7 @@ import {
   isCompleteResponseFirstV15EventCenteredStrategyEnabled,
   isCompleteResponseFirstV16EventCenteredStrategyEnabled,
   isCompleteResponseFirstV18EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV19EventCenteredStrategyEnabled,
   isGenerativeEventCenteredStrategyEnabled
 } from "@/features/interview/event-centered/generative-release";
 import {
@@ -72,6 +73,11 @@ import {
   EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY,
   alignEventCenteredCompleteResponseFirstV18Policy
 } from "@/features/interview/event-centered/complete-response-first-v1-8";
+import {
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_RUNTIME,
+  EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_STRATEGY,
+  alignEventCenteredCompleteResponseFirstV19Policy
+} from "@/features/interview/event-centered/complete-response-first-v1-9";
 import {
   EVENT_CENTERED_ANGLE_CARD_VERSION,
   EVENT_CENTERED_FEW_SHOT_VERSION,
@@ -163,6 +169,7 @@ import {
   generateEventCenteredCompleteResponseV15AI,
   generateEventCenteredCompleteResponseV16AI,
   generateEventCenteredCompleteResponseV18AI,
+  generateEventCenteredCompleteResponseV19AI,
   generateEventCenteredThoughtMapUpdateAI,
   generateEventCenteredThoughtQuestionAI,
   generateEventCenteredTurnOnceAI,
@@ -2068,11 +2075,13 @@ export async function respondEventCenteredInterview(
       isCompleteResponseFirstV16EventCenteredStrategyEnabled();
     const completeResponseFirstV18Enabled =
       isCompleteResponseFirstV18EventCenteredStrategyEnabled();
+    const completeResponseFirstV19Enabled =
+      isCompleteResponseFirstV19EventCenteredStrategyEnabled();
     const completeResponseFirstMinimalEnabled =
       completeResponseFirstV12Enabled || completeResponseFirstV121Enabled ||
       completeResponseFirstV13Enabled || completeResponseFirstV14Enabled ||
       completeResponseFirstV15Enabled || completeResponseFirstV16Enabled ||
-      completeResponseFirstV18Enabled;
+      completeResponseFirstV18Enabled || completeResponseFirstV19Enabled;
     const completeResponseFirstEnabled =
       completeResponseFirstV11Enabled || completeResponseFirstMinimalEnabled;
     const thoughtControl = thoughtOnly
@@ -2152,6 +2161,8 @@ export async function respondEventCenteredInterview(
       ? "baseline"
       : deterministicUnableAnswerHandling
         ? "baseline"
+      : completeResponseFirstV19Enabled
+        ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_STRATEGY
       : completeResponseFirstV18Enabled
         ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY
       : completeResponseFirstV16Enabled
@@ -2268,7 +2279,9 @@ export async function respondEventCenteredInterview(
       ...(completeResponseFirstEnabled
         ? {
             maxTokens: completeResponseFirstMinimalEnabled
-              ? completeResponseFirstV18Enabled
+              ? completeResponseFirstV19Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_RUNTIME.maxTokens
+              : completeResponseFirstV18Enabled
                 ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_RUNTIME.maxTokens
               : completeResponseFirstV16Enabled
                 ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME.maxTokens
@@ -2283,7 +2296,9 @@ export async function respondEventCenteredInterview(
                   : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.maxTokens
               : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.maxTokens,
             maxAttempts: completeResponseFirstMinimalEnabled
-              ? completeResponseFirstV18Enabled
+              ? completeResponseFirstV19Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_RUNTIME.maxAttempts
+              : completeResponseFirstV18Enabled
                 ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_RUNTIME.maxAttempts
               : completeResponseFirstV16Enabled
                 ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME.maxAttempts
@@ -2298,7 +2313,9 @@ export async function respondEventCenteredInterview(
                   : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_2_RUNTIME.maxAttempts
               : EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_1_RUNTIME.maxAttempts,
             timeoutMs: completeResponseFirstMinimalEnabled
-              ? completeResponseFirstV18Enabled
+              ? completeResponseFirstV19Enabled
+                ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_RUNTIME.timeoutMs
+              : completeResponseFirstV18Enabled
                 ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_RUNTIME.timeoutMs
               : completeResponseFirstV16Enabled
                 ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_6_RUNTIME.timeoutMs
@@ -2416,7 +2433,9 @@ export async function respondEventCenteredInterview(
         };
       } else if (generativeArchitecture === "one_call") {
         const modelStartedAt = Date.now();
-        generativeResult = completeResponseFirstV18Enabled
+        generativeResult = completeResponseFirstV19Enabled
+          ? await generateEventCenteredCompleteResponseV19AI(generativeInput)
+          : completeResponseFirstV18Enabled
           ? await generateEventCenteredCompleteResponseV18AI(generativeInput)
           : completeResponseFirstV16Enabled
           ? await generateEventCenteredCompleteResponseV16AI(generativeInput)
@@ -2494,6 +2513,8 @@ export async function respondEventCenteredInterview(
         ? "baseline"
       : generativeRuntimeFallback
         ? "baseline"
+        : completeResponseFirstV19Enabled
+          ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_9_STRATEGY
         : completeResponseFirstV18Enabled
           ? EVENT_CENTERED_COMPLETE_RESPONSE_FIRST_V1_8_STRATEGY
         : completeResponseFirstV16Enabled
@@ -2545,7 +2566,8 @@ export async function respondEventCenteredInterview(
     }
     const generativeTurn = generativeResult?.turn ?? null;
     const completeResponseBackgroundFactsOwner = Boolean(
-      (completeResponseFirstV16Enabled || completeResponseFirstV18Enabled) &&
+      (completeResponseFirstV16Enabled || completeResponseFirstV18Enabled ||
+        completeResponseFirstV19Enabled) &&
       generativeTurn &&
       !generativeRuntimeFallback
     );
@@ -2831,7 +2853,18 @@ export async function respondEventCenteredInterview(
           understanding: decision,
           bareAngleChange
         });
-    const policy = completeResponseFirstV18Enabled &&
+    const policy = completeResponseFirstV19Enabled &&
+      effectiveGenerativeTurn &&
+      generativeResult?.completeResponseText
+      ? alignEventCenteredCompleteResponseFirstV19Policy({
+          state,
+          action: effectiveRequest.action,
+          turn: effectiveGenerativeTurn,
+          response: generativeResult.completeResponseText,
+          generationInput: generativeInput,
+          basePolicy
+        })
+      : completeResponseFirstV18Enabled &&
       effectiveGenerativeTurn &&
       generativeResult?.completeResponseText
       ? alignEventCenteredCompleteResponseFirstV18Policy({

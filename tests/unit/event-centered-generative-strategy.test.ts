@@ -22,6 +22,7 @@ import {
   isCompleteResponseFirstV15EventCenteredStrategyEnabled,
   isCompleteResponseFirstV16EventCenteredStrategyEnabled,
   isCompleteResponseFirstV18EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV19EventCenteredStrategyEnabled,
   isGenerativeEventCenteredStrategyEnabled
 } from "@/features/interview/event-centered/generative-release";
 
@@ -85,6 +86,16 @@ describe("event-centered generative strategy assets", () => {
     expect(isGenerativeEventCenteredStrategyEnabled(mode)).toBe(true);
     expect(isCompleteResponseFirstV18EventCenteredStrategyEnabled(mode)).toBe(true);
     expect(isCompleteResponseFirstV16EventCenteredStrategyEnabled(mode)).toBe(false);
+  });
+
+  it("v1.9 局部边界继续优先级只在显式隔离策略下开启", () => {
+    const mode = getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "complete_response_v1_9"
+    });
+    expect(mode).toBe("complete_response_v1_9");
+    expect(isGenerativeEventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV19EventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV18EventCenteredStrategyEnabled(mode)).toBe(false);
   });
 
   it("每个角度与模式注入 ask、用户成果、AI 综合和典型失败四个真实质量示例", () => {

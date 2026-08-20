@@ -9,7 +9,7 @@
 
 落地验证状态：`隔离 Preview 技术门通过；首条真实完整回应 Codex pass；等待产品负责人真人验收；Production baseline`
 
-Production：`项目主链保持 event_centered + baseline；v1.6 Preview 质量 No-Go；当前分支实施 complete_response_v1_8`
+Production：`项目主链保持 event_centered + baseline；v1.8 Preview 质量 No-Go；当前分支实施 complete_response_v1_9`
 
 工作方法：[生成式访谈 AI 产品工作方法 v1.0](./00-generative-interview-ai-product-working-method.md)（`已冻结`）
 
@@ -29,25 +29,25 @@ Production：`项目主链保持 event_centered + baseline；v1.6 Preview 质量
 
 | 项目 | 当前合同 |
 |---|---|
-| 当前专项 | [v1.8 明确推进义务](../../plans/2026-08-20-gi088-complete-response-first-v1-8-explicit-progress-obligation.md) |
+| 当前专项 | [v1.9 局部边界与继续优先级](../../plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md) |
 | 可见链路 | 一次调用生成一条完整气泡；`deepseek-v4-pro`、Thinking disabled、`1280` Token、45 秒硬门 |
 | 后台链路 | 第二次调用只整理事实与纠正；同模型、Thinking disabled、`1600` Token、20 秒硬门；零可见写权限 |
 | 正式一致性 | 当前策略强制选择 Pro；后台解析使用 v1.7 来源对齐并保存真实原文片段 |
 | 工程门 | 全量 `3666` 条测试、Lint、类型、两套 Prisma、Production build、文档与差异检查通过 |
 | Preview 技术结果 | 首条可见内容 `4026ms` 就绪；后台 `3341ms` 完成且气泡冻结；重复提交复用原结果，新增模型调用 `0` |
-| 当前状态 | v1.6 `Preview quality No-Go`；可见预算 `7/15`、剩余 `8`；v1.8 实施中；Production baseline |
+| 当前状态 | v1.8 `Preview quality No-Go`；可见预算 `11/15`、剩余 `4`；v1.9 实施中；Production baseline |
 
 ## 完整回应优先 v1.7 后台来源对齐合同｜2026-08-20
 
 | 项目 | 当前合同 |
 |---|---|
-| 当前专项 | [v1.8 明确推进义务](../../plans/2026-08-20-gi088-complete-response-first-v1-8-explicit-progress-obligation.md) |
+| 当前专项 | [v1.9 局部边界与继续优先级](../../plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md) |
 | 语义责任 | 模型继续选择事实、摘要、类别与纠正目标；自然度、忠实度和重要性由原文评审 |
 | 来源责任 | 实质字符连续逐字唯一匹配时，程序容忍空白／标点差异并保存用户原文真实片段；其他变化继续拒绝 |
 | 复用范围 | v1.6 前六条实际可见输出冻结；补两条可见输出；八条后台重新调用 |
 | 运行配置 | 可见仍为 `1280` Token／45 秒；后台仍为 `1600` Token／20 秒；Thinking disabled |
 | 实际结果 | 新调用 `10/10`；八条可见与八条后台技术有效；Codex 可见 `6 pass / 2 minor / 0 fail`、后台 `8 pass / 0 minor / 0 fail` |
-| 当前状态 | v1.6 Preview 质量 No-Go；v1.8 明确推进义务已确认·实施中，Production baseline |
+| 当前状态 | v1.8 Preview 质量 No-Go；v1.9 局部边界与继续优先级已确认·实施中，Production baseline |
 
 ## 完整回应优先 v1.8 明确推进义务｜2026-08-20
 

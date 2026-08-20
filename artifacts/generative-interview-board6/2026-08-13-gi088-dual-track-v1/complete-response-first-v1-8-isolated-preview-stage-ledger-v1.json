@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-8-isolated-preview-v1",
+  "status": "preview_quality_no_go_superseded_by_v1_9",
+  "deployment": {
+    "id": "dpl_AnbbXcx2qMZe4b59tB1wsbUdqTi9",
+    "url": "https://xingfuxitong-py0olalvu-zouzhijies-projects.vercel.app",
+    "target": "preview",
+    "status": "ready",
+    "branch": "codex/gi088-response-first-v2-20260816",
+    "gitCommitSha": "50607a726584d953543dc4321d5c99bfcb9ecd8f"
+  },
+  "runtime": {
+    "mode": "event_centered",
+    "strategy": "complete_response_v1_8",
+    "visibleModel": "deepseek-v4-pro",
+    "productionStrategy": "event_centered_baseline"
+  },
+  "budget": {
+    "authorizedVisibleCalls": 15,
+    "previouslyConsumedVisibleCalls": 7,
+    "consumedThisRun": 4,
+    "familyConsumedVisibleCalls": 11,
+    "remainingVisibleCalls": 4,
+    "retries": 0,
+    "recovery": 0,
+    "fallback": 0,
+    "backgroundCallsExpected": 4,
+    "backgroundCallsReadBack": 0,
+    "backgroundReadback": "not_run"
+  },
+  "quality": {
+    "evaluatedVisibleTurns": 4,
+    "codexPass": 3,
+    "codexMinor": 0,
+    "codexFail": 1,
+    "productOwnerDecision": "pending",
+    "previewGatePassed": false,
+    "productionGatePassed": false
+  },
+  "confirmedFailure": {
+    "case": "local_boundary_with_explicit_redirect",
+    "inputSha256": "ae69eab588b3387bba8a658117222aeb6af730eee576929985d2a73482ac27aa",
+    "outputSha256": "c809e94dd6745b2d72b61b60e95e7a66e1376730cb5476ff3909d607ca490936",
+    "responseKind": "checkpoint",
+    "finalPhase": "checkpoint_one",
+    "codexDecision": "fail",
+    "rootCause": "local_answer_refusal_was_classified_as_global_stop_despite_explicit_continue_redirect"
+  },
+  "evidence": {
+    "privateReviewSha256": "2c2b8304d1910fd01ce6840aeb1460d418921ef2ac87452b46ba7cfac90d7dd3",
+    "publicBodyStored": false,
+    "privateMode": "0600"
+  },
+  "release": {
+    "commit": "50607a726584d953543dc4321d5c99bfcb9ecd8f",
+    "push": "completed",
+    "previewDeploy": "ready_quality_no_go",
+    "production": "event_centered_baseline"
+  },
+  "next": {
+    "required": "implement_and_validate_complete_response_v1_9_local_boundary_continue_priority",
+    "stopPoint": "v1_8_preview_quality_no_go_production_unchanged"
+  }
+}
