@@ -8,6 +8,11 @@ import {
 } from "@/app/admin/journal-evaluation/record-rewrite-v3-loader";
 import type { JournalRecordRewriteReviewForm } from "@/components/journal-evaluation/types";
 import { runGi088RecordCardRewriteV3 } from "../../scripts/journal-generation-eval/run-gi088-record-card-rewrite-v3";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_EXTENSION_SOURCE_PACKAGE = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/imported-manifest.json"
+);
 
 const directories: string[] = [];
 const completeForm: JournalRecordRewriteReviewForm = {
@@ -57,7 +62,7 @@ afterEach(async () => {
   ));
 });
 
-describe("新版记录卡评审服务", () => {
+describe.skipIf(!HAS_EXTENSION_SOURCE_PACKAGE)("新版记录卡评审服务", () => {
   it("并排返回旧卡、新卡和已有反馈，并恢复服务端草稿", async () => {
     await fixture();
     const reviewer = `rewrite-reviewer-${Date.now()}`;

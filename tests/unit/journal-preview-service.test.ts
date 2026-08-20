@@ -3,8 +3,14 @@ import { describe, expect, it } from "vitest";
 import {
   createJournalPreviewService
 } from "@/server/services/journal-preview/service";
+import { hasLocalPrivatePackage } from "../helpers/local-private-assets";
 
-describe("Daily Light journal fixed Preview service", () => {
+const HAS_JOURNAL_PREVIEW_PACKAGE = hasLocalPrivatePackage({
+  root: "artifacts/journal-generation-evaluation/.private/formal/record-card-v3-daily",
+  directoryPrefix: "gi088-record-card-v3-daily-regression-"
+});
+
+describe.skipIf(!HAS_JOURNAL_PREVIEW_PACKAGE)("Daily Light journal fixed Preview service", () => {
   it("loads exactly six sealed cases without model calls", async () => {
     const service = createJournalPreviewService({
       id: () => "preview-session-1",

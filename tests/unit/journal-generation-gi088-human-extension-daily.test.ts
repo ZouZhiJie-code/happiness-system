@@ -8,6 +8,11 @@ import {
   loadCommittedGi088ExtensionDailyRound
 } from "../../scripts/journal-generation-eval/run-gi088-human-extension-daily";
 import { createJournalExtensionFixture } from "./journal-evaluation-extension-fixture";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_EXTENSION_SOURCE_PACKAGE = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/imported-manifest.json"
+);
 
 const cleanupDirectories: string[] = [];
 
@@ -17,7 +22,9 @@ afterEach(async () => {
   ));
 });
 
-describe("GI-088 六条确认记录卡到 Prompt v3 今日日记", () => {
+describe.skipIf(!HAS_EXTENSION_SOURCE_PACKAGE)(
+  "GI-088 六条确认记录卡到 Prompt v3 今日日记",
+  () => {
   it("确认原稿保留真实提问语境，编辑确认稿会让隐藏语境退出", async () => {
     const fixture = await createJournalExtensionFixture();
     cleanupDirectories.push(fixture.recordResult.outputDirectory);
@@ -81,4 +88,5 @@ describe("GI-088 六条确认记录卡到 Prompt v3 今日日记", () => {
     cleanupDirectories.splice(0);
     await fixture.cleanup();
   });
-});
+  }
+);

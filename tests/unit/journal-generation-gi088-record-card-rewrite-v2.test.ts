@@ -15,6 +15,11 @@ import {
   loadCommittedGi088RecordCardRewriteV2,
   runGi088RecordCardRewriteV2
 } from "../../scripts/journal-generation-eval/run-gi088-record-card-rewrite-v2";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_EXTENSION_SOURCE_PACKAGE = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/imported-manifest.json"
+);
 
 const cleanup: string[] = [];
 
@@ -52,7 +57,7 @@ function validCandidate(material: ReturnType<typeof buildGi088RecordCardWritingM
   };
 }
 
-describe("GI-088 记录卡 Prompt v2", () => {
+describe.skipIf(!HAS_EXTENSION_SOURCE_PACKAGE)("GI-088 记录卡 Prompt v2", () => {
   it("在一次调用中先整理材料单元，再写成单事件短文", async () => {
     const source = (await loadGi088HumanExtensionSources()).sources[0];
     const material = buildGi088RecordCardWritingMaterial(source);

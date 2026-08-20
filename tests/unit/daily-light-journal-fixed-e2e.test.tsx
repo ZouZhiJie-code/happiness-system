@@ -5,6 +5,12 @@ import {
   createJournalPreviewService
 } from "@/server/services/journal-preview/service";
 import type { JournalPreviewCaseId } from "@/server/services/journal-preview/contract";
+import { hasLocalPrivatePackage } from "../helpers/local-private-assets";
+
+const HAS_JOURNAL_PREVIEW_PACKAGE = hasLocalPrivatePackage({
+  root: "artifacts/journal-generation-evaluation/.private/formal/record-card-v3-daily",
+  directoryPrefix: "gi088-record-card-v3-daily-regression-"
+});
 
 function json(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
@@ -16,7 +22,9 @@ function json(payload: unknown, status = 200) {
   });
 }
 
-describe("Daily Light fixed-six UI and real adapter closure", () => {
+describe.skipIf(!HAS_JOURNAL_PREVIEW_PACKAGE)(
+  "Daily Light fixed-six UI and real adapter closure",
+  () => {
   beforeEach(() => {
     window.sessionStorage.clear();
   });
@@ -180,4 +188,5 @@ describe("Daily Light fixed-six UI and real adapter closure", () => {
     expect(screen.queryByText(/我的人工补充会被保留。/)).not.toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalledWith(expect.stringContaining("event-centered/journal/generate"), expect.anything());
   }, 15_000);
-});
+  }
+);

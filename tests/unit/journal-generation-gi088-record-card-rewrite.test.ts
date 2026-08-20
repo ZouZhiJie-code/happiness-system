@@ -11,6 +11,11 @@ import {
   loadCommittedGi088RecordCardRewrite,
   runGi088RecordCardRewrite
 } from "../../scripts/journal-generation-eval/run-gi088-record-card-rewrite";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_EXTENSION_SOURCE_PACKAGE = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/imported-manifest.json"
+);
 
 const cleanup: string[] = [];
 
@@ -20,7 +25,7 @@ afterEach(async () => {
   ));
 });
 
-describe("GI-088 新版记录卡整改轮", () => {
+describe.skipIf(!HAS_EXTENSION_SOURCE_PACKAGE)("GI-088 新版记录卡整改轮", () => {
   it("把提问降为隐藏语境，并按未否定规则保留当前有效认识", async () => {
     const bundle = await loadGi088HumanExtensionSources();
     const source = bundle.sources[0];

@@ -18,6 +18,12 @@ import {
   parseGi088FlashDailyRevisionArgs,
   runGi088FlashDailyRevision
 } from "../../scripts/journal-generation-eval/run-gi088-flash-daily-revision";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_FLASH_DAILY_REVISION_PARENT = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/formal/continuations/daily-completion-d95507a6"
+);
+const privateAssetIt = HAS_FLASH_DAILY_REVISION_PARENT ? it : it.skip;
 
 function runId(label: string) {
   return `test-${label}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -96,7 +102,7 @@ describe("GI-088 Flash 今日日记二轮", () => {
     ]));
   });
 
-  it("模拟回归只调用 Flash 的三条 daily_journal，正常总调用固定为三次", async () => {
+  privateAssetIt("模拟回归只调用 Flash 的三条 daily_journal，正常总调用固定为三次", async () => {
     const id = runId("nominal");
     written.push(resolve(
       process.cwd(),
@@ -143,7 +149,7 @@ describe("GI-088 Flash 今日日记二轮", () => {
     expect(result.package.cases.every((item) => item.record_card_sha256.length === 64)).toBe(true);
   });
 
-  it("质量失败保留首个响应且不触发模型重写", async () => {
+  privateAssetIt("质量失败保留首个响应且不触发模型重写", async () => {
     const id = runId("quality");
     written.push(resolve(
       process.cwd(),
@@ -178,7 +184,7 @@ describe("GI-088 Flash 今日日记二轮", () => {
     )).toBe(true);
   });
 
-  it("每条技术失败最多重试一次，三条累计调用不会超过六次", async () => {
+  privateAssetIt("每条技术失败最多重试一次，三条累计调用不会超过六次", async () => {
     const id = runId("retry");
     written.push(resolve(
       process.cwd(),

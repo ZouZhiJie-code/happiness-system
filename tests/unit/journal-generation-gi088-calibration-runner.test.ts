@@ -31,11 +31,15 @@ import {
   runGi088CalibrationCli,
   validateGi088CalibrationModels
 } from "../../scripts/journal-generation-eval/run-gi088-calibration";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
 
 const PROJECT_ROOT = process.cwd();
 const PRIVATE_FORMAL_ROOT = resolve(
   PROJECT_ROOT,
   "artifacts/journal-generation-evaluation/.private/formal"
+);
+const HAS_CALIBRATION_SOURCES = hasLocalPrivateAssets(
+  ...GI088_JOURNAL_CALIBRATION_CASES.map((item) => item.sourcePath)
 );
 const CODE_SNAPSHOT: Gi088CalibrationCodeSnapshot = {
   git_head: "a".repeat(40),
@@ -229,7 +233,7 @@ async function historicalBlockLimitParent(sources: LoadedGi088CalibrationCase[])
   return { historicalPackage, historicalIdentityMap, targets };
 }
 
-describe("GI-088 日记生成首轮校准 runner", () => {
+describe.skipIf(!HAS_CALIBRATION_SOURCES)("GI-088 日记生成首轮校准 runner", () => {
   let sources: LoadedGi088CalibrationCase[];
   const temporaryDirectories: string[] = [];
 

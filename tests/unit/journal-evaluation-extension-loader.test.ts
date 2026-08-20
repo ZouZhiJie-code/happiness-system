@@ -15,6 +15,11 @@ import type { JournalRound2Scores } from "@/components/journal-evaluation/types"
 import { sha256Canonical } from "../../scripts/journal-generation-eval/gi088-calibration-contract";
 import { loadGi088ExtensionConfirmations } from "../../scripts/journal-generation-eval/gi088-human-extension-confirmations";
 import { createJournalExtensionFixture } from "./journal-evaluation-extension-fixture";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_EXTENSION_SOURCE_PACKAGE = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/imported-manifest.json"
+);
 
 const fixtures: Array<Awaited<ReturnType<typeof createJournalExtensionFixture>>> = [];
 
@@ -55,7 +60,7 @@ afterEach(async () => {
   await Promise.all(fixtures.splice(0).map((fixture) => fixture.cleanup()));
 });
 
-describe("六条真人轨迹扩展评审服务", () => {
+describe.skipIf(!HAS_EXTENSION_SOURCE_PACKAGE)("六条真人轨迹扩展评审服务", () => {
   it("评审页只读取与当前原始记录卡包完全绑定的封存准入续包", async () => {
     const first = await setupFixture({ withRecordConfirmations: false });
     const second = await setupFixture({ withRecordConfirmations: false });

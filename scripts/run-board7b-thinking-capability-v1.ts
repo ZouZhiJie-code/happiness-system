@@ -76,6 +76,7 @@ const EXECUTION_SOURCE_PATHS = [
   "node_modules/vite/package.json",
   "node_modules/zod/package.json"
 ] as const;
+const OPTIONAL_PACKAGE_MANAGER_METADATA = "node_modules/.modules.yaml";
 
 const fingerprintSchema = z.string().regex(/^[a-f0-9]{64}$/u);
 const fingerprintFields = {
@@ -238,10 +239,31 @@ async function createExecutionFingerprint(input: {
   evaluationPolicyFingerprint: string;
 }) {
   const sources = await Promise.all(
-    EXECUTION_SOURCE_PATHS.map(async (path) => ({
-      path,
-      sha256: sha256(await readFile(resolve(input.workspaceRoot, path), "utf8"))
-    }))
+    EXECUTION_SOURCE_PATHS.map(async (path) => {
+      try {
+        return {
+          path,
+          sha256: sha256(
+            await readFile(resolve(input.workspaceRoot, path), "utf8")
+          )
+        };
+      } catch (error) {
+        if (
+          path === OPTIONAL_PACKAGE_MANAGER_METADATA &&
+          error &&
+          typeof error === "object" &&
+          "code" in error &&
+          error.code === "ENOENT"
+        ) {
+          return {
+            path,
+            sha256: null,
+            availability: "unavailable_in_current_package_manager" as const
+          };
+        }
+        throw error;
+      }
+    })
   );
   return sha256(
     JSON.stringify({

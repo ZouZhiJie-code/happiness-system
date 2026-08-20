@@ -5,10 +5,15 @@ import {
   loadGoldenEightReplacementCards
 } from "@/app/admin/journal-evaluation/golden-eight-replacements";
 import { loadGoldenEightReview } from "@/app/admin/journal-evaluation/golden-eight-loader";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_GOLDEN_EIGHT_SOURCE = hasLocalPrivateAssets(
+  "artifacts/local-runtime/generative-interview-board7/2026-08-09-gi088-human-eval-v1/gi088-human-eval-v1-readonly-db-snapshot.json"
+);
 
 afterEach(() => vi.unstubAllEnvs());
 
-describe("Golden 8 replacement materials", () => {
+describe.skipIf(!HAS_GOLDEN_EIGHT_SOURCE)("Golden 8 replacement materials", () => {
   it("loads exactly the eight selected replacement targets in stable order", async () => {
     const cards = await loadGoldenEightReplacementCards();
 

@@ -41,6 +41,12 @@ import {
   JOURNAL_DAILY_WRITER_PROMPT_V3_VERSION,
   JOURNAL_DAILY_WRITER_SYSTEM_PROMPT_V3_HASH
 } from "../../src/server/services/journal-daily-entry/prompt";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_FLASH_DAILY_CONTEXT_V3_PARENT = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/formal/rounds/flash-daily-prompt-v2-c747dc76"
+);
+const privateAssetIt = HAS_FLASH_DAILY_CONTEXT_V3_PARENT ? it : it.skip;
 
 function runId(label: string) {
   return `test-${label}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -110,7 +116,7 @@ describe("GI-088 Flash 今日日记语境 v3 独立轮", () => {
       .toThrow(/RUNTIME_CONTRACT_MISMATCH/u);
   });
 
-  it("锁定父轮四哈希，并校验 manifest 对 attempt ledger 与 run lock 的传递绑定", async () => {
+  privateAssetIt("锁定父轮四哈希，并校验 manifest 对 attempt ledger 与 run lock 的传递绑定", async () => {
     const parentRoot = resolve(
       process.cwd(),
       "artifacts/journal-generation-evaluation/.private/formal/rounds/flash-daily-prompt-v2-c747dc76"
@@ -349,7 +355,7 @@ describe("GI-088 Flash 今日日记语境 v3 独立轮", () => {
     )).resolves.toEqual(recoverable);
   });
 
-  it("runner 会在任何模型调用前拒绝与运行模式不一致的 Provider", async () => {
+  privateAssetIt("runner 会在任何模型调用前拒绝与运行模式不一致的 Provider", async () => {
     const id = runId("provider-identity");
     const directory = resolve(
       process.cwd(),
@@ -522,7 +528,7 @@ describe("GI-088 Flash 今日日记语境 v3 独立轮", () => {
     expect(assessed.diagnostics).toContain("SOURCE_RECORD_VERBATIM_COPY");
   });
 
-  it("模拟回归只调用 Flash 的三条 daily_journal，正常总调用固定为三次", async () => {
+  privateAssetIt("模拟回归只调用 Flash 的三条 daily_journal，正常总调用固定为三次", async () => {
     const id = runId("nominal");
     written.push(resolve(
       process.cwd(),
@@ -669,7 +675,7 @@ describe("GI-088 Flash 今日日记语境 v3 独立轮", () => {
     expect(ledgerEvents.every((event) => event.provider_adapter === "mock-flash-v3")).toBe(true);
   });
 
-  it("真实来源中的旧认识复活时，runCase 会通过失效语义摘要拦截", async () => {
+  privateAssetIt("真实来源中的旧认识复活时，runCase 会通过失效语义摘要拦截", async () => {
     const id = runId("invalidation");
     written.push(resolve(
       process.cwd(),
@@ -723,7 +729,7 @@ describe("GI-088 Flash 今日日记语境 v3 独立轮", () => {
     }
   });
 
-  it("reasoningPresent 为 false 但 reasoning token 为正数时仍拦截 Thinking 漂移", async () => {
+  privateAssetIt("reasoningPresent 为 false 但 reasoning token 为正数时仍拦截 Thinking 漂移", async () => {
     const id = runId("reasoning-tokens");
     written.push(resolve(
       process.cwd(),
@@ -762,7 +768,7 @@ describe("GI-088 Flash 今日日记语境 v3 独立轮", () => {
     )).toBe(true);
   });
 
-  it("模型成功后的本地完成账本写入失败会终止整轮，且不会重试模型", async () => {
+  privateAssetIt("模型成功后的本地完成账本写入失败会终止整轮，且不会重试模型", async () => {
     const id = runId("ledger-failure");
     const directory = resolve(
       process.cwd(),
@@ -804,7 +810,7 @@ describe("GI-088 Flash 今日日记语境 v3 独立轮", () => {
     expect(lock).toMatchObject({ status: "failed", observed_model_calls: 1 });
   });
 
-  it("调用预约账本写入失败时保持零调用，并禁止触发模型", async () => {
+  privateAssetIt("调用预约账本写入失败时保持零调用，并禁止触发模型", async () => {
     const id = runId("reservation-failure");
     const directory = resolve(
       process.cwd(),
@@ -838,7 +844,7 @@ describe("GI-088 Flash 今日日记语境 v3 独立轮", () => {
     expect(lock).toMatchObject({ status: "failed", observed_model_calls: 0 });
   });
 
-  it("质量失败保留首个响应且不触发模型重写", async () => {
+  privateAssetIt("质量失败保留首个响应且不触发模型重写", async () => {
     const id = runId("quality");
     written.push(resolve(
       process.cwd(),
@@ -874,7 +880,7 @@ describe("GI-088 Flash 今日日记语境 v3 独立轮", () => {
     )).toBe(true);
   });
 
-  it("每条技术失败最多重试一次，三条累计调用不会超过六次", async () => {
+  privateAssetIt("每条技术失败最多重试一次，三条累计调用不会超过六次", async () => {
     const id = runId("retry");
     written.push(resolve(
       process.cwd(),

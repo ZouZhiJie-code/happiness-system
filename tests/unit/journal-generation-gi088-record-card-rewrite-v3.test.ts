@@ -14,6 +14,11 @@ import {
   loadCommittedGi088RecordCardRewriteV3,
   runGi088RecordCardRewriteV3
 } from "../../scripts/journal-generation-eval/run-gi088-record-card-rewrite-v3";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_EXTENSION_SOURCE_PACKAGE = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/imported-manifest.json"
+);
 
 const cleanup: string[] = [];
 
@@ -51,7 +56,7 @@ function validCandidate(material: ReturnType<typeof buildGi088RecordCardWritingM
   };
 }
 
-describe("GI-088 记录卡 Prompt v3", () => {
+describe.skipIf(!HAS_EXTENSION_SOURCE_PACKAGE)("GI-088 记录卡 Prompt v3", () => {
   it("零调用回放 v7r4 A1 时允许纯互动排除单元并恢复可读卡片", async () => {
     const source = (await loadGi088HumanExtensionSources()).sources.find(
       (item) => item.selection.caseId === "private:sg-gi088-v7r4-pro:A1:high"

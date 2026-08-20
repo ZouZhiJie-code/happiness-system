@@ -7,6 +7,11 @@ vi.mock("@/server/services/auth/admin-access", async (importOriginal) => {
 
 import { GET, POST } from "@/app/admin/journal-evaluation/extension/route";
 import { createJournalExtensionFixture } from "./journal-evaluation-extension-fixture";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_EXTENSION_SOURCE_PACKAGE = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/imported-manifest.json"
+);
 
 const fixtures: Array<Awaited<ReturnType<typeof createJournalExtensionFixture>>> = [];
 
@@ -47,7 +52,7 @@ afterEach(async () => {
   await Promise.all(fixtures.splice(0).map((fixture) => fixture.cleanup()));
 });
 
-describe("六条真人扩展本地评审接口", () => {
+describe.skipIf(!HAS_EXTENSION_SOURCE_PACKAGE)("六条真人扩展本地评审接口", () => {
   it("本地管理员可以保存并回读，未知动作和过期页面会被拒绝", async () => {
     await setupFixture();
     const listResponse = await GET(new Request("http://127.0.0.1/admin/journal-evaluation/extension"));

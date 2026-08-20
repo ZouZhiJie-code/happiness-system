@@ -25,6 +25,11 @@ import {
   runGi088HumanExtensionRecordReviewAdmission
 } from "../../scripts/journal-generation-eval/run-gi088-human-extension-record-review-admission";
 import { createJournalExtensionFixture } from "./journal-evaluation-extension-fixture";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
+
+const HAS_EXTENSION_SOURCE_PACKAGE = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/imported-manifest.json"
+);
 
 const cleanupDirectories: string[] = [];
 
@@ -60,7 +65,7 @@ afterEach(async () => {
   ));
 });
 
-describe("GI-088 剩余六条真人轨迹扩展", () => {
+describe.skipIf(!HAS_EXTENSION_SOURCE_PACKAGE)("GI-088 剩余六条真人轨迹扩展", () => {
   it("精确选择六条剩余轨迹，并排除三条已完成案例", async () => {
     expect(GI088_HUMAN_EXTENSION_CASES.map((item) => item.caseId)).toEqual([
       "private:sg-gi088-v6-single-focus:A1:high",

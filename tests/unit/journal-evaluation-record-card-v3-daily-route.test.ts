@@ -9,6 +9,7 @@ vi.mock("@/server/services/auth/admin-access", async (importOriginal) => {
 });
 
 import { GET, POST } from "@/app/admin/journal-evaluation/record-card-v3-daily/route";
+import { hasLocalPrivateAssets } from "../helpers/local-private-assets";
 
 const sourceDirectory = resolve(
   process.cwd(),
@@ -17,6 +18,9 @@ const sourceDirectory = resolve(
 const testDirectory = resolve(
   process.cwd(),
   "artifacts/journal-generation-evaluation/.private/record-card-v3-daily-route-test"
+);
+const HAS_RECORD_CARD_V3_DAILY_PACKAGE = hasLocalPrivateAssets(
+  "artifacts/journal-generation-evaluation/.private/formal/record-card-v3-daily/gi088-record-card-v3-daily-regression-ef57db76"
 );
 
 function request(path: string, init?: RequestInit) {
@@ -46,7 +50,9 @@ afterEach(async () => {
   await rm(testDirectory, { recursive: true, force: true });
 });
 
-describe("记录卡 v3 → 今日日记回归评审接口", () => {
+describe.skipIf(!HAS_RECORD_CARD_V3_DAILY_PACKAGE)(
+  "记录卡 v3 → 今日日记回归评审接口",
+  () => {
   it("只展示六条日记，首评前隐藏程序检查，并能保存草稿后恢复", async () => {
     await setup();
     const listResponse = await GET(request("/admin/journal-evaluation/record-card-v3-daily"));
@@ -143,4 +149,5 @@ describe("记录卡 v3 → 今日日记回归评审接口", () => {
     }));
     expect(stale.status).toBe(409);
   });
-});
+  }
+);
