@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "evaluationId": "DL-MONTHLY-INSIGHT-V1-20260819",
+  "candidateId": "monthly-insight-v1",
+  "status": "prepared_zero_calls",
+  "modelCalls": 0,
+  "syntheticCases": 6,
+  "privateRealMonths": 0,
+  "currentDecision": "pending_runtime_and_private_dataset_gates",
+  "productionIntegration": "closed",
+  "hashes": {
+    "promptSha256": "549876d0bbe3b99c66fb8a0f56316e402ab36bcb41af4f8a25019f9b796dc4eb",
+    "skillSha256": "bac24df61b7cb276de9a781c6fa8e332d76b4b18f6c902c8f9b0529b6d638536",
+    "contractSha256": "6cb4788d6163ae210f2dcb8d4d8149c9817f6a000684cbc5e394cf948c9fedf6",
+    "syntheticDatasetSha256": "0ce58d62178c363d44a8569f115fe26d055834a8ed1de903c1c836d5257be605",
+    "inputProjectionSha256": "2bba73dbce7bb7e7674cbf753dce3ba6f02dcc1024885d15da890bc268a82c0d",
+    "currentProductLoaderSha256": "e312f626cbec82993707aaaaa4ee26da2a0c16d33ab1b085861578479d6f577b",
+    "runnerSha256": "d87e46ffe1a104b200bb84f72cbe084f05f5ef09c269252bfc9efab6828e91a7"
+  }
+}

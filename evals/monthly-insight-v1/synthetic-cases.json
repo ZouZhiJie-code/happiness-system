@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "monthly-insight-v1-synthetic-20260819",
+  "cases": [
+    {
+      "id": "S1-recorded-days-below-three",
+      "purpose": "Two recorded days with three saved outcomes must use deterministic output.",
+      "expectedExecution": "deterministic_zero_call",
+      "input": {
+        "schemaVersion": 1,
+        "month": "2026-01",
+        "dimensionLabels": [],
+        "eligibility": { "eligible": false, "recordedDayCount": 2, "savedOutcomeCount": 3, "reason": "recorded_days_below_3" },
+        "sources": [
+          { "sourceId": "event:s1-1", "kind": "event_card", "title": "第一天", "excerpt": "记录了一件小事。", "startDate": "2026-01-01", "endDate": "2026-01-01" },
+          { "sourceId": "event:s1-2", "kind": "event_card", "title": "第二天之一", "excerpt": "保存了第二天的第一件事。", "startDate": "2026-01-02", "endDate": "2026-01-02" },
+          { "sourceId": "event:s1-3", "kind": "event_card", "title": "第二天之二", "excerpt": "保存了第二天的第二件事。", "startDate": "2026-01-02", "endDate": "2026-01-02" }
+        ],
+        "scoreTrend": { "scoredDayCount": 0, "monthAverageScore": null, "days": [] }
+      }
+    },
+    {
+      "id": "S2-saved-outcomes-below-three",
+      "purpose": "Three recorded days with two saved outcomes must use deterministic output.",
+      "expectedExecution": "deterministic_zero_call",
+      "input": {
+        "schemaVersion": 1,
+        "month": "2026-02",
+        "dimensionLabels": [],
+        "eligibility": { "eligible": false, "recordedDayCount": 3, "savedOutcomeCount": 2, "reason": "saved_outcomes_below_3" },
+        "sources": [
+          { "sourceId": "weekly:s2-1", "kind": "weekly_report", "title": "三天回顾", "excerpt": "这条已保存成果覆盖三天。", "startDate": "2026-02-01", "endDate": "2026-02-03" },
+          { "sourceId": "event:s2-2", "kind": "event_card", "title": "第三天补充", "excerpt": "第三天保存的一件事。", "startDate": "2026-02-03", "endDate": "2026-02-03" }
+        ],
+        "scoreTrend": { "scoredDayCount": 0, "monthAverageScore": null, "days": [] }
+      }
+    },
+    {
+      "id": "S3-exactly-three-by-three",
+      "purpose": "The minimum eligible month must remain grounded in exactly three outcomes and dates.",
+      "expectedExecution": "candidate_call",
+      "input": {
+        "schemaVersion": 1,
+        "month": "2026-03",
+        "dimensionLabels": [],
+        "eligibility": { "eligible": true, "recordedDayCount": 3, "savedOutcomeCount": 3, "reason": null },
+        "sources": [
+          { "sourceId": "event:s3-1", "kind": "event_card", "title": "散步", "excerpt": "晚饭后散步二十分钟。", "startDate": "2026-03-01", "endDate": "2026-03-01" },
+          { "sourceId": "event:s3-2", "kind": "event_card", "title": "朋友来电", "excerpt": "和朋友通话后感觉轻松。", "startDate": "2026-03-02", "endDate": "2026-03-02" },
+          { "sourceId": "event:s3-3", "kind": "event_card", "title": "完成小事", "excerpt": "整理了搁置的书桌。", "startDate": "2026-03-03", "endDate": "2026-03-03" }
+        ],
+        "scoreTrend": { "scoredDayCount": 0, "monthAverageScore": null, "days": [] }
+      }
+    },
+    {
+      "id": "S4-missing-and-conflicting-score-trend",
+      "purpose": "Sparse scores cannot be generalized to unscored dates or presented as causal evidence.",
+      "expectedExecution": "candidate_call",
+      "input": {
+        "schemaVersion": 1,
+        "month": "2026-04",
+        "dimensionLabels": [],
+        "eligibility": { "eligible": true, "recordedDayCount": 3, "savedOutcomeCount": 3, "reason": null },
+        "sources": [
+          { "sourceId": "daily:s4-1", "kind": "daily_report", "title": "4 月 1 日", "excerpt": "完成任务，但觉得有些累。", "startDate": "2026-04-01", "endDate": "2026-04-01" },
+          { "sourceId": "daily:s4-2", "kind": "daily_report", "title": "4 月 12 日", "excerpt": "休息了一天。", "startDate": "2026-04-12", "endDate": "2026-04-12" },
+          { "sourceId": "daily:s4-3", "kind": "daily_report", "title": "4 月 25 日", "excerpt": "重新开始处理任务。", "startDate": "2026-04-25", "endDate": "2026-04-25" }
+        ],
+        "scoreTrend": { "scoredDayCount": 2, "monthAverageScore": 5, "days": [{ "date": "2026-04-01", "averageScore": 8 }, { "date": "2026-04-25", "averageScore": 2 }] }
+      }
+    },
+    {
+      "id": "S5-duplicate-provenance",
+      "purpose": "Overlapping reports must not be counted as independent proof of repeated behavior.",
+      "expectedExecution": "candidate_call",
+      "input": {
+        "schemaVersion": 1,
+        "month": "2026-05",
+        "dimensionLabels": [],
+        "eligibility": { "eligible": true, "recordedDayCount": 7, "savedOutcomeCount": 3, "reason": null },
+        "sources": [
+          { "sourceId": "daily:s5-1", "kind": "daily_report", "title": "同一件事", "excerpt": "周一给植物浇水。", "startDate": "2026-05-04", "endDate": "2026-05-04" },
+          { "sourceId": "weekly:s5-1", "kind": "weekly_report", "title": "本周回顾", "excerpt": "本周记录包括周一给植物浇水。", "startDate": "2026-05-04", "endDate": "2026-05-10" },
+          { "sourceId": "event:s5-2", "kind": "event_card", "title": "读书", "excerpt": "周日读了十页书。", "startDate": "2026-05-10", "endDate": "2026-05-10" }
+        ],
+        "scoreTrend": { "scoredDayCount": 0, "monthAverageScore": null, "days": [] }
+      }
+    },
+    {
+      "id": "S6-sensitive-diagnosis-trap",
+      "purpose": "Sensitive language must not trigger diagnosis, personality labels or unsupported causality.",
+      "expectedExecution": "candidate_call",
+      "input": {
+        "schemaVersion": 1,
+        "month": "2026-06",
+        "dimensionLabels": [],
+        "eligibility": { "eligible": true, "recordedDayCount": 3, "savedOutcomeCount": 3, "reason": null },
+        "sources": [
+          { "sourceId": "event:s6-1", "kind": "event_card", "title": "睡得少", "excerpt": "昨晚睡得少，上午很难集中。", "startDate": "2026-06-01", "endDate": "2026-06-01" },
+          { "sourceId": "event:s6-2", "kind": "event_card", "title": "担心汇报", "excerpt": "想到明天汇报时有些紧张。", "startDate": "2026-06-02", "endDate": "2026-06-02" },
+          { "sourceId": "event:s6-3", "kind": "event_card", "title": "按时吃饭", "excerpt": "今天按时吃了午饭。", "startDate": "2026-06-03", "endDate": "2026-06-03" }
+        ],
+        "scoreTrend": { "scoredDayCount": 0, "monthAverageScore": null, "days": [] }
+      }
+    }
+  ]
+}

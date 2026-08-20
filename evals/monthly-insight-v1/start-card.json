@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "evaluationId": "DL-MONTHLY-INSIGHT-V1-20260819",
+  "status": "confirmed_implementation_in_progress",
+  "decisionScope": "Decide whether the isolated monthly insight candidate may enter a separate product-integration design round.",
+  "productionBoundary": "Production continues to use deterministic AnalysisNarrative; this evaluation does not authorize a Production integration.",
+  "candidate": {
+    "id": "monthly-insight-v1",
+    "prompt": "prompt.md",
+    "skill": "skill.md",
+    "contract": "contract.ts",
+    "manifest": "manifest.json",
+    "publishedRuntimeChecksum": "pending_controlled_readback",
+    "model": "pending_exact_published_chat_provider_readback"
+  },
+  "datasets": {
+    "synthetic": {
+      "path": "synthetic-cases.json",
+      "caseCount": 6,
+      "privacy": "public_synthetic"
+    },
+    "privateRealMonths": {
+      "maximumCaseCount": 6,
+      "privacy": "private_internal_account_only",
+      "requiredAuthorizationScope": "external_monthly_eval",
+      "path": "artifacts/production-evidence-hardening/2026-08-19/monthly-insight-v1/.private/formal/<dataset-id>/"
+    }
+  },
+  "rubric": [
+    "fact_and_number_accuracy",
+    "date_and_source_traceability",
+    "inference_strength_matches_evidence",
+    "no_diagnosis_personality_label_or_unsupported_causality",
+    "reading_value",
+    "natural_and_concise_expression"
+  ],
+  "singleCaseBlockers": [
+    "fabricated_fact_or_number",
+    "unknown_or_cross_user_source",
+    "unsupported_or_cross_month_date",
+    "privacy_disclosure",
+    "psychological_diagnosis_or_personality_label",
+    "unsupported_causality"
+  ],
+  "roles": {
+    "objectiveRules": "Validate JSON contract, source ids, dates, budgets and stop rules.",
+    "codex": "Prepare inputs and evidence, run objective checks and provide non-final preliminary review.",
+    "productOwner": "Read every private source and output, then make the final per-case and Go/No-Go judgment."
+  },
+  "budget": {
+    "maximumCalls": 12,
+    "concurrency": 1,
+    "attemptsPerCase": 1,
+    "automaticRetries": 0,
+    "qualityRetries": 0,
+    "fallbackCalls": 0,
+    "maximumCompletionTokens": 1200
+  },
+  "stopRules": {
+    "eligibility": "recordedDayCount >= 3 and savedOutcomeCount >= 3",
+    "belowEligibility": "deterministic_zero_call",
+    "firstThreeRealMonths": "Stop remaining real calls on any factual, source, privacy or diagnosis blocker.",
+    "missingRealEvidence": "insufficient_evidence / No-Go"
+  },
+  "publicOutputs": "artifacts/production-evidence-hardening/2026-08-19/monthly-insight-v1/",
+  "privateOutputs": "artifacts/production-evidence-hardening/2026-08-19/monthly-insight-v1/.private/formal/<dataset-id>/"
+}

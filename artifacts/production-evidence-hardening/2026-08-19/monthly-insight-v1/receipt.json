@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "evaluationId": "DL-MONTHLY-INSIGHT-V1-20260819",
+  "status": "prepared_zero_calls",
+  "productionNarrative": "deterministic_unchanged",
+  "synthetic": {
+    "planned": 6,
+    "zeroCallCases": 2,
+    "candidateCallCases": 4,
+    "executed": 0
+  },
+  "privateRealMonths": {
+    "authorized": 0,
+    "executed": 0,
+    "maximum": 6
+  },
+  "calls": {
+    "consumed": 0,
+    "maximum": 12,
+    "retry": 0,
+    "concurrency": 1,
+    "maximumCompletionTokens": 1200
+  },
+  "decision": "pending_gates",
+  "candidateManifest": "evals/monthly-insight-v1/manifest.json"
+}
