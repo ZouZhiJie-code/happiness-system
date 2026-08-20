@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "2.0",
+  "datasetId": "2026-08-19.production-journal-golden-set-v2-candidate-pool-v1",
+  "status": "foundation_ready",
+  "privacyClassification": "public_deidentified_receipts_only",
+  "contract": {
+    "version": "2.0",
+    "path": "src/features/journal-evaluation/golden-set-v2-contract.ts",
+    "sha256": "9a60d501ad5d5569382fbdda51fb35eba9bf2f49e333c3dbca272a8f3c24865d"
+  },
+  "expectedCaseCount": 30,
+  "minimumCoverage": {
+    "capture": 5,
+    "chat": 5,
+    "specialBehavior": 5
+  },
+  "counts": {
+    "candidates": 0,
+    "reviewed": 0,
+    "golden": 0,
+    "withdrawn": 0,
+    "blockers": 0
+  },
+  "scoreScale": [2, 1, 0, "N/A"],
+  "dimensions": [
+    "factual_fidelity",
+    "important_content_coverage",
+    "source_and_date_boundary",
+    "structure_and_readability",
+    "user_voice_preservation",
+    "update_and_manual_edit_protection"
+  ],
+  "singleCaseBlockers": [
+    "fabricated_fact",
+    "cross_user_contamination",
+    "cross_date_contamination",
+    "privacy_leak",
+    "manual_edit_overwrite"
+  ],
+  "cases": [],
+  "rawContentIncluded": false,
+  "productionContentReadCount": 0,
+  "modelCallCount": 0
+}
