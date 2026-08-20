@@ -2,7 +2,9 @@ import React from "react";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 
 import { SiteHeader } from "@/components/shared/site-header";
+import { authLocalUserIdStorageKey } from "@/features/auth/auth-local";
 import { getTodayEntryDate } from "@/features/interview/entry-date";
+import { interviewSessionStorageKey } from "@/features/interview/dimensions";
 import { renderWithCalendarChrome } from "../helpers/render-with-calendar-chrome";
 
 const { mockPathname, mockRouterReplace, mockSearchParams } = vi.hoisted(() => ({
@@ -60,6 +62,7 @@ describe("site header journal toolbar", () => {
       mode: null
     };
     resizeObserverState.instances = [];
+    window.localStorage.clear();
     document.documentElement.style.removeProperty("--site-header-viewport-offset");
   });
 
@@ -123,6 +126,27 @@ describe("site header journal toolbar", () => {
 
     expect(await screen.findByTestId("account-menu-error")).toHaveTextContent("退出失败，请稍后再试");
     expect(global.fetch).toHaveBeenCalledWith("/api/auth/logout", { method: "POST" });
+  });
+
+  it("clears local interview state and uses the Next router after logout", async () => {
+    window.localStorage.setItem(authLocalUserIdStorageKey, "user-1");
+    window.localStorage.setItem(
+      `${interviewSessionStorageKey}::user-1`,
+      JSON.stringify({ joy: { sessionId: "session-joy" } })
+    );
+    global.fetch = vi.fn(async () => new Response(null, { status: 204 })) as typeof fetch;
+
+    renderWithCalendarChrome(<SiteHeader />);
+    fireEvent.click(screen.getByRole("button", { name: "打开账户菜单" }));
+    const menu = await screen.findByRole("menu");
+
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "退出登录" }));
+
+    await waitFor(() => {
+      expect(mockRouterReplace).toHaveBeenCalledWith("/");
+    });
+    expect(window.localStorage.getItem(authLocalUserIdStorageKey)).toBeNull();
+    expect(window.localStorage.getItem(`${interviewSessionStorageKey}::user-1`)).toBeNull();
   });
 
   it("keeps public authentication actions separate from product navigation", () => {

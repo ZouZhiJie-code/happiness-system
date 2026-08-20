@@ -179,6 +179,7 @@ function DailyJournalPromptDialog({
       return;
     }
 
+    const returnFocusElement = returnFocusRef.current;
     dialogRef.current?.focus({ preventScroll: true });
 
     function getFocusableElements() {
@@ -238,7 +239,7 @@ function DailyJournalPromptDialog({
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      returnFocusRef.current?.focus({ preventScroll: true });
+      returnFocusElement?.focus({ preventScroll: true });
     };
   }, [open, returnFocusRef]);
 

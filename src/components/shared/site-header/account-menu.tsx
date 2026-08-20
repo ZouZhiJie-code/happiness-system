@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu } from "@base-ui/react/menu";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AppToast } from "@/components/ui/app-toast";
@@ -45,6 +46,7 @@ function clearInterviewClientState() {
 const ACCOUNT_ROUTES = ["/settings", "/legal/privacy", "/legal/terms"] as const;
 
 export function AccountMenu({ pathname }: { pathname: string }) {
+  const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const active = ACCOUNT_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
@@ -64,7 +66,7 @@ export function AccountMenu({ pathname }: { pathname: string }) {
       if (!response.ok) throw new Error("退出失败，请稍后再试");
 
       clearInterviewClientState();
-      window.location.assign("/");
+      router.replace("/");
     } catch (logoutError) {
       setError(logoutError instanceof Error ? logoutError.message : "退出失败，请稍后再试");
       setLoggingOut(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import type { AnalysisDimensionEvidenceExcerpt, AnalysisDimensionInsightCard, AnalysisMonthRecord } from "@/features/analysis/types";
@@ -132,9 +132,13 @@ function DimensionEvidencePreview({
 }
 
 export function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
-  const orderedDimensions = interviewDimensions
-    .map((dimension) => record.dimensions.find((item) => item.dimension === dimension))
-    .filter((item): item is AnalysisDimensionInsightCard => Boolean(item));
+  const orderedDimensions = useMemo(
+    () =>
+      interviewDimensions
+        .map((dimension) => record.dimensions.find((item) => item.dimension === dimension))
+        .filter((item): item is AnalysisDimensionInsightCard => Boolean(item)),
+    [record.dimensions]
+  );
   const [expandedDimension, setExpandedDimension] = useState<InterviewDimension | null>(() =>
     resolveInitialExpandedDimension(orderedDimensions)
   );
@@ -143,7 +147,7 @@ export function DimensionInsights({ record }: { record: AnalysisMonthRecord }) {
   useEffect(() => {
     setExpandedDimension(resolveInitialExpandedDimension(orderedDimensions));
     setActiveEvidenceId(null);
-  }, [record.month]);
+  }, [orderedDimensions, record.month]);
 
   const toggleDimension = (dimensionKey: InterviewDimension) => {
     setExpandedDimension((current) => {
