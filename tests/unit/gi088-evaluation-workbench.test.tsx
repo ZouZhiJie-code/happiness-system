@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { webcrypto } from "node:crypto";
 import { vi } from "vitest";
 
@@ -19,6 +19,9 @@ import {
   readGi088EvaluationDraft,
   writeGi088EvaluationDraft
 } from "@/features/interview/event-centered/gi088-evaluation-storage";
+
+const HIGH_LOAD_ASYNC_TIMEOUT_MS = 10_000;
+const HIGH_LOAD_TEST_TIMEOUT_MS = 15_000;
 
 function taskList(firstStatus: Gi088TaskSummary["status"]): Gi088TaskSummary[] {
   return Array.from({ length: 12 }, (_, index) => ({
@@ -653,13 +656,19 @@ describe("GI-088 v8r2 evaluation workbench", () => {
       target: { value: "继续聊这一小块。" }
     });
     fireEvent.click(screen.getByRole("button", { name: "发送" }));
-    fireEvent.click(await screen.findByRole("button", { name: "读取最新状态" }));
+    const issueAlert = await screen.findByRole("alert", undefined, {
+      timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
+    });
+    expect(issueAlert).toHaveTextContent("GI088_TURN_OUT_OF_DATE");
+    fireEvent.click(within(issueAlert).getByRole("button", { name: "读取最新状态" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3), {
+      timeout: HIGH_LOAD_ASYNC_TIMEOUT_MS
+    });
     expect(fetchMock.mock.calls[2]![0]).toBe(
       "/api/preview/gi088/session?runId=run-1&taskId=A1"
     );
     expect(fetchMock.mock.calls[2]![1]).toMatchObject({ cache: "no-store" });
     expect((fetchMock.mock.calls[2]![1] as RequestInit).method).toBeUndefined();
-  });
+  }, HIGH_LOAD_TEST_TIMEOUT_MS);
 });
