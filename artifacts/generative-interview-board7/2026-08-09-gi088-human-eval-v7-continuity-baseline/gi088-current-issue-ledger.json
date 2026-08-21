@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v110",
-  "status": "complete_response_first_v1_9_release_runner_ready_waiting_product_owner",
-  "currentQueueStage": "complete_response_first_v1_9_product_review_before_candidate_deploy",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v111",
+  "status": "complete_response_first_v1_9_product_pass_candidate_deploy_in_progress",
+  "currentQueueStage": "complete_response_first_v1_9_candidate_deploy_and_smoke",
   "semanticQualityDecisionPresentation": {
     "status": "product_owner_confirmed",
     "productJudgment": "每个语义质量判断先逐例展示与判断直接相关的用户输入和 AI 实际输出；Codex 只作初评，产品负责人基于原文作最终裁决。",
@@ -488,12 +488,11 @@
     "stopPoint": "implement_validate_and_deploy_isolated_preview_before_new_model_calls"
   },
   "completeResponseFirstV19": {
-    "status": "preview_codex_pass_release_runner_ready_waiting_product_owner",
+    "status": "preview_product_four_pass_candidate_deploy_in_progress",
     "confirmedFact": "v1.9 隔离 Preview 四轮连续链完成，Codex 初评 4/4 pass；中位 10633.5ms、最长 11505ms，单例 15 秒门通过、6 秒理想目标未达到。当前 Production 部署、event_centered + baseline、数据库备份和回退路径均已核对，Production 尚未改变。",
-    "productJudgment": "产品负责人仍需依据四轮完整原文与实际 AI 输出作最终裁决；裁决通过后由发布工具执行候选部署、后台回读、正式切流与线上回归。",
+    "productJudgment": "产品负责人依据四轮完整原文与实际 AI 输出全部裁决 pass；当前执行候选部署与后台回读，候选实际输出继续由产品负责人裁决。",
     "codexAssessment": "普通表达、纠正、明确深挖、局部拒答＋换方向继续均初评 pass；当前用发布状态机固定产品门、后台门、临时数据清理和回退顺序，约 10.6 秒中位等待继续独立记为发布风险。",
     "openHypotheses": [
-      "产品负责人是否接受四轮实际回应并授权 Production 切换。",
       "Production 直连冒烟和正式域名回归能否保持与隔离 Preview 一致的语义、状态和等待体验。",
       "候选部署与真实后台 Trace 能否通过新的发布状态机完成。"
     ],
@@ -508,7 +507,7 @@
       "fallback": 0,
       "productionCurrentDeploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
       "productionStrategy": "event_centered_baseline",
-      "productionChange": "not_run"
+      "productionChange": "candidate_deploy_in_progress_formal_domain_unchanged"
     },
     "readiness": {
       "productionReadback": "completed",
@@ -532,9 +531,10 @@
       "v19RelatedTests": "101/101",
       "fullTests": "3694_passed_10_skipped",
       "missingProductReviewGate": "passed_before_deployment_credentials_and_network_writes",
-      "productionMutation": "not_run"
+      "previewProductReview": "four_of_four_pass_hash_bound",
+      "productionMutation": "candidate_deploy_in_progress_formal_domain_unchanged"
     },
-    "stopPoint": "wait_for_product_owner_preview_verdict_then_execute_candidate_deploy_smoke_promote_and_online_regression"
+    "stopPoint": "complete_candidate_deploy_and_smoke_then_wait_for_hash_bound_candidate_output_verdict_before_promotion"
   },
   "responseFirstV29": {
     "status": "correction_gate_product_pass_continuation_product_fail_no_go",

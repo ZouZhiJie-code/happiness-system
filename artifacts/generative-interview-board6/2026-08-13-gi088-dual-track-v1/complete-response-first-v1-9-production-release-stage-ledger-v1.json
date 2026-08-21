@@ -2,8 +2,8 @@
   "schemaVersion": "1.0",
   "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1",
   "planFingerprint": "1edd95dfa7be436f241bdbd576b2b6f316e7d9bee494f28f4028b18c9515fd4f",
-  "status": "release_runner_ready_waiting_product_owner",
-  "productOwnerPreviewVerdict": "pending",
+  "status": "product_owner_preview_pass_candidate_deploy_in_progress",
+  "productOwnerPreviewVerdict": "pass",
   "localValidation": {
     "releaseRunnerTests": "11/11",
     "v19RelatedTests": "101/101",
@@ -33,8 +33,8 @@
   },
   "stages": {
     "prepare": "passed",
-    "previewProductReview": "pending",
-    "candidateDeploy": "not_run",
+    "previewProductReview": "pass",
+    "candidateDeploy": "in_progress",
     "candidateSmoke": "not_run",
     "candidateProductReview": "not_run",
     "promotion": "not_run",
@@ -42,5 +42,5 @@
     "rollback": "not_needed"
   },
   "publicSensitiveContentStored": false,
-  "nextStopPoint": "product_owner_preview_verdict"
+  "nextStopPoint": "candidate_smoke_product_verdict"
 }

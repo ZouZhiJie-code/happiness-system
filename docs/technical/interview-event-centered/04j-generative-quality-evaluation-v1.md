@@ -9,17 +9,17 @@
 
 置信度：`高`
 
-落地验证状态：`v1.9 隔离 Preview Codex 4/4 pass；Production 发布状态机本地门禁通过；等待产品负责人真人验收；Production baseline`
+落地验证状态：`v1.9 隔离 Preview 产品裁决 4/4 pass；Production 候选部署实施中；正式域名 baseline`
 
 ## 完整回应优先 v1.9 Production 发布门｜2026-08-20
 
 | 项目 | 当前事实 |
 |---|---|
-| 产品证据 | 隔离 Preview 四轮连续链 Codex `4/4 pass`；产品负责人裁决 pending |
+| 产品证据 | 隔离 Preview 四轮连续链 Codex 初评与产品负责人裁决均为 `4/4 pass` |
 | 工程证据 | 发布工具专项 `11/11`、v1.9 相关 `101/101`、全量 `3694` 条测试通过；类型、Lint、两套 Prisma 与 Production build 通过 |
 | 前置门 | 四轮产品裁决必须绑定实际输入／输出哈希；缺失时在部署凭据和网络写操作前停止 |
 | 正式切流门 | 候选可见回应产品 pass、后台 Trace 完成、临时数据清理完成 |
-| 当前状态 | `awaiting_product_review`；Production `event_centered + baseline` |
+| 当前状态 | `已确认·实施中 / candidate_deploy`；正式域名 `event_centered + baseline` |
 | 当前专项 | [v1.9 Production 发布工具](../../plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner.md) |
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
