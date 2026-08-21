@@ -1,6 +1,6 @@
 {
   "cardVersion": 1,
-  "status": "authorized_in_progress",
+  "status": "candidate_pass_ready_for_promotion",
   "recordedAt": "2026-08-21T12:14:57Z",
   "supersedesAttempt": 1,
   "authorization": {
@@ -64,10 +64,10 @@
     "failureAction": "promote the retained rollback deployment and verify canonical recovery"
   },
   "result": {
-    "candidateSmoke": "pending",
-    "cleanup": "pending",
+    "candidateSmoke": "pass",
+    "cleanup": "passed_all_zero",
     "promotion": "pending",
     "canonicalVerification": "pending",
-    "verdict": "pending"
+    "verdict": "candidate_pass_ready_for_promotion"
   }
 }

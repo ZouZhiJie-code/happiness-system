@@ -1,0 +1,88 @@
+{
+  "receiptVersion": 1,
+  "status": "candidate_pass_ready_for_promotion",
+  "recordedAt": "2026-08-21T12:19:54Z",
+  "candidate": {
+    "deployment": "dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW",
+    "sourceCommit": "e3284b5127232dfdb8535a74b52187f33118cfdb",
+    "status": "Ready",
+    "domainPromoted": false,
+    "runtimeIdentity": {
+      "mode": "event_centered",
+      "strategy": "complete_response_v1_9",
+      "model": "deepseek-v4-pro"
+    }
+  },
+  "candidateSmoke": {
+    "dataset": "production-lineage-production-smoke-synthetic-v2",
+    "registerHttpStatus": 200,
+    "sessionStartHttpStatus": 200,
+    "visible": {
+      "httpStatus": 200,
+      "elapsedMs": 12826,
+      "outputOrigin": "llm",
+      "userMessagesForTurn": 1,
+      "assistantMessagesForTurn": 1,
+      "assistantCharacterLength": 71,
+      "assistantSha256": "9734e47201f7054081165e0ae94de83b4daa0ffbdd7968dcb908c3d16e56ac57",
+      "providerDispatches": 1,
+      "provider": "openai",
+      "providerLatencyMs": 2194,
+      "retryCount": 0,
+      "aiRequestLogRows": 0
+    },
+    "background": {
+      "status": "completed",
+      "invocationCount": 1,
+      "retryCount": 0,
+      "provider": "openai",
+      "model": "deepseek-v4-pro",
+      "promptKey": "interview.event_centered.complete_response_background_facts_v1",
+      "promptVersion": "2026-08-20.gi088-complete-response-first-v1-6-background-facts-prompt-v1",
+      "latencyMs": 3183,
+      "writtenFactCount": 2,
+      "effectiveFactCount": 2
+    },
+    "modelBudget": {
+      "observedActualModelCalls": 2,
+      "maximumActualModelCalls": 2,
+      "modelRetries": 0,
+      "databaseReadRetries": 0,
+      "budgetExceeded": false
+    },
+    "codexReview": {
+      "verdict": "pass",
+      "reason": "The response acknowledged the stated relief and asked one focused, natural question about when that relief became noticeable."
+    },
+    "deploymentLogs": {
+      "requestCount": 3,
+      "http200Count": 3,
+      "warningCount": 0,
+      "errorCount": 0,
+      "fatalCount": 0,
+      "http5xxCount": 0
+    },
+    "cleanup": {
+      "deletedUsers": 1,
+      "remainingUsers": 0,
+      "remainingSessions": 0,
+      "remainingMessages": 0,
+      "remainingTraces": 0,
+      "passed": true
+    },
+    "verdict": "pass"
+  },
+  "productionBoundary": {
+    "activeDeploymentBeforePromotion": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "rollbackDeployment": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "promotion": "pending",
+    "formalDomainUnchangedAtReceipt": true
+  },
+  "privacy": {
+    "rawUserInputPublished": false,
+    "rawModelOutputPublished": false,
+    "userIdsPublished": false,
+    "sessionIdsPublished": false,
+    "credentialsPublished": false
+  }
+}
