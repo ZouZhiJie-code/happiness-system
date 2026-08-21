@@ -221,8 +221,8 @@
 - 已确认事实：第二批实现提交 `61dd4cf`、P1 修复提交 `03b8501` 与发布前文档提交 `7976c1c` 基于最新 main merge `d98c915`，只包含事件中心工作区组件、状态 Hook、可靠回合恢复 Hook、工作区单元合同 `4` 个代码／测试文件和 `6` 份发布文档；旧发布线文档提交已退出重放，主线 `PEH-032` 完整保留。Prisma、依赖、CI、E2E 基础设施、日记和画像文件的第二批差异均为 `0`。最终文档 head `5d07f27` 的 push run `32432781058` 全绿；PR run `32432784604` 只有工作区单元测试出现时序失败，其他 `373` 个测试文件和零模型 E2E 通过，详见 `PEH-037`。
 - 产品判断：本批只降低事件中心前端维护风险并保持用户可见行为与恢复合同兼容。完整本地门通过后可以推送并创建 PR；合并、Production 发布与 `PEH-033` 日记 P1 修复继续保持独立停止点。
 - Codex 评估：工作区状态、请求、outbox 和可靠恢复职责拆出后，现有 Stage 2 地址等待、接口分流、幂等 ID、结构化错误、焦点恢复和内部导航合同继续由定向、压力、全量和浏览器四层回归保护。独立审查发现并关闭的草稿／新 outbox 清理问题由 `PEH-035` 承担。
-- 待验证假设：测试时序修复和本次公开回执形成新的最终 head 后，push 与 PR 两套 CI 可全绿，并形成精确对应的 Ready Preview。
-- 当前处理状态：`source head passed / final docs head test timing failure / local test repair passed / final remote gates pending / Preview Ready / controlled smoke partially passed / Production blocked`。本地修复后全量 `374` 个文件、`3307 passed / 95 skipped / 0 failed`，类型、目标 Lint、build `77/77`、双 Prisma 通过；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 的模型违规 `0`，临时 Schema `daily_light_e2e_mt2aakyi_d5ba631f9e` 已删除且残留 `0`。PR #47 source head `7976c1c` 的两套远程门与 Preview Ready 证据继续有效；最终文档 head `5d07f27` 的远程分歧和本地修复见 `PEH-037`。PR 保持未合并，Production 保持 blocked。
+- 待验证假设：最终证据头只改变治理文档，可继续通过 push 与 PR 两套 CI 并精确对应 Ready Preview；通过后进入 source main 合并门。
+- 当前处理状态：`final code head remote gates passed / final evidence head pending / source merge ready after evidence gate / controlled smoke partially passed / Production blocked`。本地修复后全量 `374` 个文件、`3307 passed / 95 skipped / 0 failed`，类型、目标 Lint、build `77/77`、双 Prisma 通过；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 的模型违规 `0`，临时 Schema `daily_light_e2e_mt2aakyi_d5ba631f9e` 已删除且残留 `0`。PR #47 head `246a101` 的 push run `32437800917` 与 pull request run `32437803182` 均 attempt 1 全绿、重跑 `0`；两套 E2E 均 `11/11`、`AIRequestLog=0`、Trace `12`，Schema 分别 `daily_light_e2e_mt2ap5oi_0959f97481` 与 `daily_light_e2e_mt2ap7w8_5ca3f4b896`，均已删除。Preview `dpl_HsTBC5gTizMr1sGaqENSTACPMy4T` Ready。PR 保持未合并，Production 保持 blocked。
 
 ## PEH-035｜accepted 回合清理误删下一草稿与新 outbox
 
@@ -245,5 +245,5 @@
 - 已确认事实：PR #47 最终文档 head `5d07f27` 的 push run `32432781058` 全绿，test 与 E2E 均通过；同 head 的 PR run `32432784604` 中 E2E 通过，常规测试仅 `tests/unit/event-centered-interview-workspace.test.tsx` 的“过期动作发送前阻止”用例失败：按钮已渲染，会话列表同步尚未完成，按钮保持 `disabled`；测试提前点击后未打开菜单，`menuitem` 在 `3050ms` 后超时。该 PR run 其余 `373` 个文件、`3306` 条用例通过，`17` 个文件／`95` 条用例按既有条件跳过。
 - 产品判断：本项按测试 P2 处理，产品行为 `P0=0 / P1=0`。列表同步期间按钮保持不可用符合现有用户保护；最终远程门通过前 PR 继续保持未合并，Production 保持 blocked。
 - Codex 评估：受控延迟会话列表响应稳定复现了竞态。修复只改测试：用 deferred 响应固定列表未完成窗口，先确认按钮 `disabled`，再释放列表响应并等待按钮 `enabled`，最后执行菜单动作。该合同同时验证交互保护和测试的正确时序。
-- 待验证假设：携带该单测修复和公开回执的最终 head 可通过 push 与 PR 两套 CI，并继续精确对应 Ready Preview。
-- 当前处理状态：`local test repair complete / final remote gates pending / Production blocked`。目标用例与受控压力通过；全量 `374` 个文件、`3307 passed / 95 skipped / 0 failed`，类型、目标 Lint、build `77/77`、双 Prisma 通过；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 的模型违规 `0`，临时 Schema `daily_light_e2e_mt2aakyi_d5ba631f9e` 已删除且残留 `0`。本地测试修复和本轮文档保持未提交、未推送，最终远程门保持 pending。
+- 待验证假设：关闭。相同产品代码下，纯测试修复可稳定观察按钮由不可用转为可用，并保留菜单动作阻断与零请求合同。
+- 当前处理状态：已解决。提交 `3478ddb` 的目标用例、受控延迟、并发压力、乱序、整文件和全量门通过；head `246a101` 的 push run `32437800917` 与 PR run `32437803182` 均 attempt 1 全绿，零重跑。两套零模型 E2E 均 `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 已删除；Preview `dpl_HsTBC5gTizMr1sGaqENSTACPMy4T` Ready。产品结论保持 `P0=0 / P1=0`，测试 P2 已关闭；Production 继续受 `PEH-033` 阻断。
