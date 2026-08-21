@@ -7,7 +7,7 @@
 
 最后更新：`2026-08-21`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 已合入 main，P0=0／P1=0／P2=3，完整轨迹 0/30、样本收集 pending；月度洞察为 No-Go／insufficient_evidence；GI-088 v1.9 已独立发布 Production，单一发布血缘候选产品 pass、source-main 合并已授权、Production 发布 pending，详见 PEH-043～044`
+当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 已合入 main，P0=0／P1=0／P2=3，完整轨迹 0/30、样本收集 pending；月度洞察为 No-Go／insufficient_evidence；GI-088 v1.9 已独立发布 Production，单一发布血缘已合入 main 0f483567 且 main CI 通过、Production 发布 pending，详见 PEH-043～044`
 
 ## 1. 为什么需要这份规则
 

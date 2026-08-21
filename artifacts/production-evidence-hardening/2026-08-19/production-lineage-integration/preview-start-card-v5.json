@@ -162,9 +162,12 @@
       "productionWrites": 0,
       "productionDeployments": 0
     },
-    "verdict": "preview_pass_source_main_merge_authorized_production_pending",
+    "verdict": "preview_pass_source_main_merged_main_ci_passed_production_pending",
     "productOwnerVerdict": "pass",
     "productOwnerVerdictRecordedAt": "2026-08-21",
-    "sourceMainMergeAuthorized": true
+    "sourceMainMergeAuthorized": true,
+    "sourceMainMergeCommit": "0f483567e9b3fbd42bf768fc3accaf26ab15055f",
+    "sourceMainCiRun": 32467211291,
+    "sourceMainCiConclusion": "success"
   }
 }
