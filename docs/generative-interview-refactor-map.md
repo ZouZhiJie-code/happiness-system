@@ -26,7 +26,7 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 | 当前预算 | 家族可见调用 `15/15`，剩余 `0`；重试、恢复、回退保持 `0` |
 | 验证门 | 局部边界继续、明确停止和关系表达全 pass；整体零 fail、最多一项 minor；单例 ≤15s |
 | 停止点 | 核心控制场景 fail 立即停止；产品负责人验收前 Production baseline |
-| 发布准备 | 当前部署和策略已回读；数据库备份与恢复清单验证完成；回退目标已冻结；Production 变更 `not_run` |
+| 发布准备 | 当前部署和策略已回读；数据库备份与恢复清单验证完成；回退目标已冻结；新 Production 目标部署接管域名前增加后台 Trace 数据库回读硬门；Production 变更 `not_run` |
 | 当前状态 | `Preview 已完成 / Codex 4/4 pass / 发布准备完成 / 产品裁决 pending` |
 | 公开证据 | [Preview 结果](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-isolated-preview-v1-handoff.md)、[Production 发布准备](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-production-readiness-v1-handoff.md) |
 

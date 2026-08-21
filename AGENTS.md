@@ -19,7 +19,7 @@ Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、�
 - `2026-08-20` v1.6 持久后台任务已完成工程接入：可见回应与任务原子提交、调用前记账、结果先保存后顺序写入、恢复零重复调用、迟到失权和失败后续行均有自动验证；最新全量 `3666` 条通过，类型、Lint、两套 Prisma 与 Production build 通过。正式链路已与离线 Pro 模型和 v1.7 来源对齐规则保持一致。
 - `2026-08-20` v1.7 新案例稳定性续跑已完成新增调用 `10/10`：八条可见回应和八条后台事实均技术有效，未截断；可见中位 `3273.5ms`、最长 `4916ms`，后台中位 `6429ms`、最长 `13363ms`。Codex 初评可见 `6 pass / 2 minor / 0 fail`、后台 `8 pass / 0 minor / 0 fail`。
 - `2026-08-20` v1.9 隔离 Preview 消费剩余 `4` 次，家族累计 `15/15`：普通表达、纠正、明确深挖和局部拒答＋换方向继续均由 Codex 初评 `pass`；最终保持可继续输入，未进入检查点。中位 `10633.5ms`、最大 `11505ms`，单例 15 秒门通过，6 秒理想目标未达到。产品裁决 `pending`，Production 保持 `event_centered + baseline`。
-- `2026-08-20` v1.9 Production 发布准备已完成：当前 Production 部署与 `event_centered + baseline` 已回读，数据库 custom dump 已备份并通过 `pg_restore --list`，回退目标和 CLI 路径已核对。发布继续停在产品负责人四轮原文裁决前，Production 未发生变更。
+- `2026-08-20` v1.9 Production 发布准备已完成：当前 Production 部署与 `event_centered + baseline` 已回读，数据库 custom dump 已备份并通过 `pg_restore --list`，回退目标和 CLI 路径已核对。历史 Preview 后台任务因部署数据库快照无法从当前环境重建而保持 `inconclusive`；新 Production 目标部署接管域名前必须完成可见回应＋后台 Trace 数据库回读硬门。发布继续停在产品负责人四轮原文裁决前，Production 未发生变更。
 - 网页端产品主线：`访谈记录 → 当天时间线事件卡片 → 今日日记`。访谈页负责表达、回应、保存和返回当天；日记页负责生成、查看和更新当天日记。
 - 五个维度为 `joy / fulfillment / reflection / improvement / gratitude`。理论与完成规则由 [`docs/theory/`](./docs/theory/) 承担。
 - 历史候选、测试数字和部署记录只承担各自时期的证据职责，不能自动转化为当前产品结论或发布授权。

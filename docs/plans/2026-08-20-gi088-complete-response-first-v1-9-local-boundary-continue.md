@@ -57,4 +57,4 @@ v1.8 已在真实 Preview 中修复“跳过上一题后继续深挖”：AI 放
 
 最终隔离 Preview 已完成四轮真实连续链，Codex 初评 `4 pass / 0 minor / 0 fail`；最终状态保持 `event_recording`，没有进入检查点。可见预算累计 `15/15`。单例 `≤15s` 通过，中位 `10633.5ms` 未达到 `≤6s` 理想目标。当前等待产品负责人依据完整原文与输出裁决，Production 保持 baseline。
 
-Production 发布准备已在产品裁决前完成：当前部署和 `event_centered + baseline` 已回读；Production 数据库 custom dump 已生成并通过恢复清单验证；回退目标与命令已冻结。发布会先构建不接管域名的新 Production 目标部署，直连冒烟通过后才切换正式域名。当前 Production 环境、部署、域名和数据库内容均未改变，公开证据见[发布准备交接](../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-production-readiness-v1-handoff.md)。
+Production 发布准备已在产品裁决前完成：当前部署和 `event_centered + baseline` 已回读；Production 数据库 custom dump 已生成并通过恢复清单验证；回退目标与命令已冻结。历史 Preview 部署仍可读取本次会话，但当前环境数据库无法重建该历史部署的后台任务；新 Production 目标部署接管域名前必须完成一条可见回应、后台事实任务和数据库 Trace 回读。当前 Production 环境、部署、域名和数据库内容均未改变，公开证据见[发布准备交接](../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-production-readiness-v1-handoff.md)。

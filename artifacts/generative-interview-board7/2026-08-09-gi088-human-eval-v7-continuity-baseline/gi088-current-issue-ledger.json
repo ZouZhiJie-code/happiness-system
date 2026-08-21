@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v107",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v108",
   "status": "complete_response_first_v1_9_release_ready_waiting_product_owner",
   "currentQueueStage": "complete_response_first_v1_9_product_review_before_production_release",
   "semanticQualityDecisionPresentation": {
@@ -2393,6 +2393,7 @@
     }
   ],
   "currentQueue": [
+    "RF-V19-BACKGROUND-READBACK-01",
     "RF-LOCAL-BOUNDARY-CONTINUE-01",
     "RF-EXPLICIT-PROGRESS-01",
     "RF-NEW-INFORMATION-TARGET-01",
@@ -2411,6 +2412,25 @@
     "V6-QD-01"
   ],
   "issues": [
+    {
+      "issueId": "RF-V19-BACKGROUND-READBACK-01",
+      "title": "历史 v1.9 Preview 后台任务无法从当前环境数据库复现回读",
+      "productOwnerJudgment": "产品语义验收继续依据四轮原文；正式域名切换前增加新 Production 目标部署的可见回应、后台任务和数据库 Trace 联合硬门。",
+      "codexInitialAssessment": "原 Preview 部署仍以 HTTP 200 返回九条消息和可继续状态；当前可拉取的 Preview 与 Production 数据库均找不到该历史会话，因此四条历史后台任务不能形成新的通过结论。",
+      "confirmedRootCause": "当前只确认不可变部署可读会话与当前环境数据库缺少会话同时成立；部署是否使用一次性数据库覆盖仍为待验证假设。",
+      "hypotheses": [
+        "原 Preview CLI 部署可能使用了部署级数据库快照或一次性运行覆盖，当前 env pull 无法重建该连接。",
+        "新 Production 目标部署使用当前 Production 数据库后，可在域名切换前直接回读后台 Trace 并关闭这一证据缺口。"
+      ],
+      "priority": "P0",
+      "status": "historical_readback_inconclusive_pre_promotion_background_gate_required",
+      "trace": [
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-isolated-preview-stage-ledger-v1.json",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-production-readiness-v1-handoff.md",
+        "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-production-readiness-stage-ledger-v1.json"
+      ],
+      "targetVersion": "2026-08-20.gi088-complete-response-first-v1-9-production-readiness-v1"
+    },
     {
       "issueId": "RF-LOCAL-BOUNDARY-CONTINUE-01",
       "title": "局部拒答并要求换方向继续被误判为整轮停止",

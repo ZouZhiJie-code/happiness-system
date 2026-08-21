@@ -23,11 +23,13 @@ v1.9 隔离 Preview 四轮连续链已经完成，Codex 初评 `4/4 pass`，产�
 | 备份 | PostgreSQL custom dump，`1451891` bytes，SHA-256 `02f4c070714ecee041421540696330aa0aedc83ebeb07ddaa769c64b37c49260` |
 | 备份验证 | `pg_restore --list` 通过；私有文件权限 `0600` |
 | 回退目标 | 当前 Production 部署 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` |
-| 发布状态 | `ready_waiting_product_owner_preview_verdict`；Production 变更 `not_run` |
+| 历史后台回读 | 原 Preview 部署仍可读取九条消息与可继续状态；当前可拉取的 Preview／Production 数据库均找不到该历史会话，四条历史后台任务保持 `inconclusive` |
+| 发布新增硬门 | 新 Production 目标部署接管域名前，必须完成一条可见回应＋后台任务，并从 Production 数据库确认后台 Trace 已完成、来源有效、重试为零 |
+| 发布状态 | `ready_with_pre_promotion_background_gate_waiting_product_owner_preview_verdict`；Production 变更 `not_run` |
 
 ## 已核对的发布与回退路径
 
-产品负责人裁决通过后，先把 Production 策略更新为 `complete_response_v1_9`，再使用 `--skip-domain` 构建新的 Production 目标部署。直连地址冒烟通过后才把正式域名切到新部署，随后执行线上回归。
+产品负责人裁决通过后，先把 Production 策略更新为 `complete_response_v1_9`，再使用 `--skip-domain` 构建新的 Production 目标部署。直连地址需要完成可见回应和后台事实任务；Production 数据库回读确认后台 Trace 已完成、来源有效且重试为零后，才把正式域名切到新部署，随后执行线上回归。
 
 若构建、冒烟或线上回归失败，先把 Production 策略恢复为 `baseline`，再使用 Vercel 回退命令恢复到 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`，最后回读域名和策略。
 
@@ -40,5 +42,5 @@ v1.9 隔离 Preview 四轮连续链已经完成，Codex 初评 `4/4 pass`，产�
 - [v1.9 Preview 验收交接](./complete-response-first-v1-9-isolated-preview-v1-handoff.md)
 - [v1.9 Preview 阶段账](./complete-response-first-v1-9-isolated-preview-stage-ledger-v1.json)
 - [Production 发布准备阶段账](./complete-response-first-v1-9-production-readiness-stage-ledger-v1.json)
-- 私有发布准备：`.private/complete-response-first-v1-9-production-release/readiness.json`，权限 `0600`，SHA-256 `a9c6f3712b12f911a52f60a60fc6786a6c21eed550dbd39bf120347d66c250c2`
+- 私有发布准备：`.private/complete-response-first-v1-9-production-release/readiness.json`，权限 `0600`，SHA-256 `ec024a4191ead80873ebd2ca94e5d28a2ba7c9dd65375bcae7320980ab2edf8c`
 - 私有数据库备份：`.private/complete-response-first-v1-9-production-release/production-before-v1-9-20260820.dump`，权限 `0600`，SHA-256 `02f4c070714ecee041421540696330aa0aedc83ebeb07ddaa769c64b37c49260`

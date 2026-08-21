@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-readiness-v1",
-  "status": "ready_waiting_product_owner_preview_verdict",
+  "status": "ready_with_pre_promotion_background_gate_waiting_product_owner_preview_verdict",
   "productOwnerDecision": "pending",
   "production": {
     "domain": "https://dailylight.chat",
@@ -26,6 +26,8 @@
     "databaseBackupRestoreList": "verified",
     "rollbackCliContract": "verified",
     "releaseCliContract": "verified",
+    "historicalPreviewBackgroundReadback": "inconclusive",
+    "prePromotionBackgroundGate": "required",
     "productionDeployment": "not_run",
     "productionOnlineRegression": "not_run"
   },
@@ -51,14 +53,21 @@
     "singleCase15sGatePassed": true,
     "idealMedian6sGatePassed": false
   },
+  "backgroundReadback": {
+    "historicalPreviewExpectedTasks": 4,
+    "immutableDeploymentSessionReadback": "http_200_message_count_9_event_recording",
+    "currentEnvironmentDatabaseSessionFound": false,
+    "historicalBackgroundVerdict": "inconclusive",
+    "releaseRequirement": "new_production_target_visible_and_background_smoke_with_database_trace_before_domain_promotion"
+  },
   "evidence": {
-    "privateReadinessSha256": "a9c6f3712b12f911a52f60a60fc6786a6c21eed550dbd39bf120347d66c250c2",
+    "privateReadinessSha256": "ec024a4191ead80873ebd2ca94e5d28a2ba7c9dd65375bcae7320980ab2edf8c",
     "privateBackupSha256": "02f4c070714ecee041421540696330aa0aedc83ebeb07ddaa769c64b37c49260",
     "publicSensitiveContentStored": false
   },
   "next": {
     "required": "product_owner_verdict_on_four_exact_preview_turns",
-    "passPath": "update_production_strategy_build_skip_domain_smoke_promote_online_regression",
+    "passPath": "update_production_strategy_build_skip_domain_visible_and_background_smoke_database_readback_promote_online_regression",
     "stopPoint": "production_unchanged_until_product_owner_pass"
   }
 }
