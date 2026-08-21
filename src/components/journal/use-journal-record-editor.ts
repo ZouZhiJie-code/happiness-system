@@ -6,11 +6,11 @@ import type { JournalDailyJournalView, JournalDailySourceEntry } from "@/types/j
 
 import {
   fetchJournalRecordOriginal,
-  replaceJournalSourceEntry,
   saveJournalRecord,
   updateJournalRecord,
   type JournalClientRequestContext
 } from "./journal-client";
+import { mergeJournalRecordResponse } from "./journal-day-view-merge";
 import type {
   JournalDayAutosaveStatus,
   JournalDayOriginalState,
@@ -97,7 +97,7 @@ export function useJournalRecordEditor({
         || latestView.entryDate !== currentView.entryDate
         || !latestView.savedSources.some((item) => item.entryId === source.entryId)
       ) return;
-      commitView(replaceJournalSourceEntry(latestView, source.entryId, {
+      commitView(mergeJournalRecordResponse(latestView, source.entryId, {
         title: updated.title,
         content: updated.content,
         contentRevision: updated.contentRevision,
@@ -149,7 +149,7 @@ export function useJournalRecordEditor({
         || latestView.entryDate !== currentView.entryDate
         || !latestView.savedSources.some((item) => item.entryId === currentSource.entryId)
       ) return;
-      commitView(replaceJournalSourceEntry(latestView, currentSource.entryId, {
+      commitView(mergeJournalRecordResponse(latestView, currentSource.entryId, {
         title: saved.title,
         content: saved.content,
         contentRevision: saved.contentRevision,

@@ -1,7 +1,6 @@
 import type {
   JournalDailyEntryRecord,
-  JournalDailyJournalView,
-  JournalDailySourceEntry
+  JournalDailyJournalView
 } from "@/types/journal-daily-entry";
 import type { JournalEventEntryRecord } from "@/types/journal-event-entry";
 
@@ -161,18 +160,4 @@ export async function fetchJournalRecordOriginal(
     .map((message) => message.content.trim())
     .filter(Boolean)
     .join("\n\n");
-}
-
-export function replaceJournalSourceEntry(
-  view: JournalDailyJournalView,
-  entryId: string,
-  nextEntry: Pick<JournalDailySourceEntry, "title" | "content" | "contentRevision" | "updatedAt">
-    & Partial<Pick<JournalDailySourceEntry, "savedRevision" | "savedAt">>
-): JournalDailyJournalView {
-  return {
-    ...view,
-    savedSources: view.savedSources.map((source) =>
-      source.entryId === entryId ? { ...source, ...nextEntry } : source
-    )
-  };
 }

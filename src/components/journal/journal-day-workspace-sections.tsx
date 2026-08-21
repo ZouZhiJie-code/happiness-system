@@ -186,8 +186,9 @@ export function RecordTimelineCard({
               <input
                 value={editDraft.title}
                 maxLength={16}
+                disabled={busy}
                 onChange={(event) => onChangeEdit({ ...editDraft, title: event.target.value })}
-                className="mt-1.5 w-full rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--header-surface-strong)] px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:border-[var(--line-strong)] focus:ring-2 focus:ring-[var(--amber-soft)]"
+                className="mt-1.5 w-full rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--header-surface-strong)] px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:border-[var(--line-strong)] focus:ring-2 focus:ring-[var(--amber-soft)] disabled:cursor-wait disabled:opacity-70"
               />
             </label>
             <label className="block">
@@ -196,8 +197,9 @@ export function RecordTimelineCard({
                 value={editDraft.content}
                 maxLength={5000}
                 rows={6}
+                disabled={busy}
                 onChange={(event) => onChangeEdit({ ...editDraft, content: event.target.value })}
-                className="mt-1.5 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--header-surface-strong)] px-3 py-2 text-sm leading-7 text-[var(--text-main)] outline-none focus:border-[var(--line-strong)] focus:ring-2 focus:ring-[var(--amber-soft)]"
+                className="mt-1.5 w-full resize-y rounded-[var(--radius-control)] border border-[var(--line-soft)] bg-[var(--header-surface-strong)] px-3 py-2 text-sm leading-7 text-[var(--text-main)] outline-none focus:border-[var(--line-strong)] focus:ring-2 focus:ring-[var(--amber-soft)] disabled:cursor-wait disabled:opacity-70"
               />
             </label>
             {!editDraft.content.trim() ? (

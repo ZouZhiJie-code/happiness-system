@@ -10,6 +10,7 @@ import {
   updateJournalDailyEntry,
   type JournalClientRequestContext
 } from "./journal-client";
+import { mergeJournalDailyResponse } from "./journal-day-view-merge";
 import type {
   JournalDayAutosaveStatus,
   JournalDayEditDraft
@@ -76,14 +77,7 @@ export function useJournalDailyEditor({
         || latestView.entryDate !== currentView.entryDate
         || latestView.entry?.id !== updated.id
       ) return;
-      const sourceChanged = updated.sourceSignature !== latestView.sourceSignature;
-      const remainsStale = sourceChanged || latestView.freshness === "stale";
-      commitView({
-        ...latestView,
-        entry: updated,
-        freshness: remainsStale ? "stale" : updated.status,
-        displayStatus: remainsStale ? "stale" : "draft"
-      });
+      commitView(mergeJournalDailyResponse(latestView, updated));
       setAutosaveStatus("saved");
     })();
     autosavePromiseRef.current = request;
@@ -123,14 +117,7 @@ export function useJournalDailyEditor({
       }, requestContext);
       const latestView = viewRef.current;
       if (!latestView || latestView.entryDate !== entryDate || latestView.entry?.id !== saved.id) return;
-      const sourceChanged = saved.sourceSignature !== latestView.sourceSignature;
-      const remainsStale = sourceChanged || latestView.freshness === "stale";
-      commitView({
-        ...latestView,
-        entry: saved,
-        freshness: remainsStale ? "stale" : "saved",
-        displayStatus: remainsStale ? "stale" : "saved"
-      });
+      commitView(mergeJournalDailyResponse(latestView, saved));
       setAutosaveStatus("idle");
       setEdit(null);
     } catch {
