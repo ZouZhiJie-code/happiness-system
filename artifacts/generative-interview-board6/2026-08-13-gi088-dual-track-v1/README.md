@@ -5,9 +5,9 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-版本：`完整回应优先 v1.9 隔离 Preview 产品通过与 Production 发布工具 v1.3`
+版本：`完整回应优先 v1.9 隔离 Preview 产品通过与 Production 发布工具 v1.4`
 
-状态：`v1.9 四轮连续链产品裁决 4/4 pass；发布工具 v1.2 模型环境 No-Go；临时数据已清理；v1.3 实施中；正式域名 baseline`
+状态：`v1.9 四轮连续链产品裁决 4/4 pass；发布工具 v1.3 运行回读 No-Go；临时数据已清理；v1.4 实施中；正式域名 baseline`
 
 现行职责、单一回答焦点规则和旧身份边界统一读取[板块 7 当前运行合同](../../../docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。本目录中的原始回执继续保存当时请求、失败码和调用事实。
 
@@ -21,8 +21,8 @@
 
 ### 完整回应优先当前任务
 
-- 当前专项：[v1.9 Production 发布工具 v1.3](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-3.md)
-- 当前状态：v1.9 普通表达、纠正、明确深挖、局部拒答＋换方向继续均由 Codex 初评与产品负责人裁决为 `pass`；发布工具 v1.3 实施中
+- 当前专项：[v1.9 Production 发布工具 v1.4](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-4.md)
+- 当前状态：v1.9 普通表达、纠正、明确深挖、局部拒答＋换方向继续均由 Codex 初评与产品负责人裁决为 `pass`；发布工具 v1.4 实施中
 - 验收预算：最多 `15` 次可见回应，已消费 `15`、剩余 `0`；重试、恢复、回退均为 `0`
 - 发布准备：当前部署与策略已回读；数据库备份、恢复清单和回退路径已验证
 - 发布边界：正式域名继续使用 baseline；候选冒烟与候选产品裁决通过后才切流

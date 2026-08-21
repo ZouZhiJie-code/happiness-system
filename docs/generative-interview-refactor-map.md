@@ -7,15 +7,26 @@
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 complete_response_v1_9 Preview 产品 4/4 pass；发布工具 v1.2 模型环境 No-Go；v1.3 模型环境合同实施中；正式域名 baseline`
+当前讨论位置：`GI-088 complete_response_v1_9 Preview 产品 4/4 pass；发布工具 v1.3 运行身份回读 No-Go；v1.4 主机合同实施中；正式域名 baseline`
 
-下一建议板块：`创建同时使用 complete_response_v1_9 与 deepseek-v4-pro 的新候选；完成可见回应、后台 Trace 与候选实际输出裁决`
+下一建议板块：`复用 v1.3 Ready 候选，以候选主机核对运行身份；完成可见回应、后台 Trace 与候选实际输出裁决`
 
-当前专项：[完整回应优先 v1.9 Production 发布工具 v1.3](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-3.md)
+当前专项：[完整回应优先 v1.9 Production 发布工具 v1.4](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-4.md)
 
 Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 
-本次同步范围：`v1.9 Preview 产品裁决 4/4 pass；v1.2 候选模型环境不一致、临时数据已自动清理；v1.3 实施中`
+本次同步范围：`v1.9 Preview 产品裁决 4/4 pass；v1.3 候选 Ready、运行身份可选字段门失败、临时数据已自动清理；v1.4 实施中`
+
+## 2026-08-20｜GI-088 v1.9 Production 发布工具 v1.4 实施卡
+
+| 项目 | 当前事实 |
+|---|---|
+| 当前专项 | [v1.9 Production 发布工具 v1.4](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-4.md) |
+| 父结果 | v1.3 新候选 Ready；运行回读依赖可选 `VERCEL_DEPLOYMENT_ID` 而误停，生成未运行，临时用户自动清理 |
+| 唯一变化 | 以回读 `requestHost` 核对候选身份；继续硬核对 v1.9 策略与 Pro 模型 |
+| 候选复用 | 应用代码无变化时复用 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` |
+| 当前状态 | `已确认·实施中 / 结果待验证` |
+| 停止点 | 完成真实可见、后台、清理与候选产品裁决后才允许切流 |
 
 ## 2026-08-20｜GI-088 v1.9 Production 发布工具 v1.3 实施卡
 

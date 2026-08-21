@@ -11,13 +11,13 @@
 
 | 主题 | 当前入口 | 证据职责 |
 |---|---|---|
-| GI-088 生成式访谈 | [当前评测资产入口](./generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md) | v1.9 Preview 产品 4/4 pass；发布工具 v1.2 模型环境 No-Go、v1.3 实施中；正式域名 baseline |
+| GI-088 生成式访谈 | [当前评测资产入口](./generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md) | v1.9 Preview 产品 4/4 pass；发布工具 v1.3 运行回读 No-Go、v1.4 实施中；正式域名 baseline |
 | AI 评测治理 | [AI 评测总规范](../docs/ai-evaluation-standard.md)与[阶段 A 验收记录](./ai-evaluation-governance/2026-08-13-v0.9-stage-a-acceptance.md) | 项目级启动门、身份、预算、隐私和职责 |
 | 日志生成质量 | [日志生成评测入口](./journal-generation-evaluation/README.md) | 真人轨迹、记录卡、今日日记与独立准入准备 |
 | 网页端产品验收 | [第二轮产品验收证据](./daily-light-visual-review/2026-08-13-second-round-closeout/README.md) | 当前 Production 的上游视觉与交互验收基线 |
 | Production 发布 | [2026-08-13 Production 发布证据](./daily-light-visual-review/2026-08-13-production-release/README.md) | deployment、迁移、正式域名、回退和线上验收 |
 
-当前正式域名使用 `event_centered + baseline`；GI-088 v1.9 已完成隔离 Preview、产品验收和发布准备。发布工具 v1.2 已修复数据库合同，候选因模型环境不一致形成技术 No-Go；临时数据已清理，v1.3 实施中。
+当前正式域名使用 `event_centered + baseline`；GI-088 v1.9 已完成隔离 Preview、产品验收和发布准备。发布工具 v1.3 候选 Ready，运行身份回读因可选字段形成技术 No-Go；临时数据已清理，v1.4 实施中。
 
 ## 2. 历史证据入口
 

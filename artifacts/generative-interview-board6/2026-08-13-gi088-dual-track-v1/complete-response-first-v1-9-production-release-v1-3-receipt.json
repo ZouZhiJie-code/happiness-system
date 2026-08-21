@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-3-model-environment-contract",
-  "status": "product_owner_preview_pass_ready_for_candidate_deploy",
+  "status": "candidate_smoke_failed",
   "planFingerprint": "7989aa80384854bff7c0f0ee7ceb5a921c1a0feeff1566d975a4a18f1111a8c8",
   "productOwnerPreviewVerdict": "pass",
   "baseline": {
@@ -9,12 +9,20 @@
     "strategy": "baseline",
     "domain": "https://dailylight.chat"
   },
-  "candidate": null,
+  "candidate": {
+    "deploymentId": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "deploymentUrl": "https://xingfuxitong-n89wbs5qq-zouzhijies-projects.vercel.app",
+    "ready": true,
+    "sourceCommit": "d8dfae7bb05987f906d6917ed0e7343829136c2f"
+  },
   "smoke": null,
   "promotion": null,
   "onlineRegression": null,
   "rollback": null,
-  "error": null,
-  "updatedAt": "2026-08-21T02:58:45.568Z",
+  "error": {
+    "code": "GI088_V19_RELEASE_CANDIDATE_RUNTIME_MODEL_MISMATCH",
+    "detailHash": "dd92c4e02fc97e712f7bc36fd4eebf27c5aaa911fa6ce0ba9a0d553a6fde122a"
+  },
+  "updatedAt": "2026-08-21T03:02:02.179Z",
   "publicSensitiveContentStored": false
 }

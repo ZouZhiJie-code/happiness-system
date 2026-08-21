@@ -7,7 +7,7 @@
 
 产品决策状态：`当前运行合同 v1 已确认；继承 GI-067 / GI-068～080 冻结结论；GI-081～088 的旧候选、结果和运行身份只承担历史证据职责`
 
-落地验证状态：`v1.9 Preview 产品 4/4 pass；发布工具 v1.2 模型环境 No-Go；v1.3 实施中；正式域名 baseline`
+落地验证状态：`v1.9 Preview 产品 4/4 pass；发布工具 v1.3 运行回读 No-Go；v1.4 实施中；正式域名 baseline`
 
 Production：`正式域名保持 event_centered + baseline；v1.9 Preview 产品裁决 4/4 pass；v1.2 临时数据已清理；v1.3 模型环境合同实施中`
 
@@ -29,13 +29,13 @@ Production：`正式域名保持 event_centered + baseline；v1.9 Preview 产品
 
 | 项目 | 当前合同 |
 |---|---|
-| 当前专项 | [v1.9 Production 发布工具 v1.3](../../plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-3.md) |
+| 当前专项 | [v1.9 Production 发布工具 v1.4](../../plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-4.md) |
 | 可见链路 | 一次调用生成一条完整气泡；`deepseek-v4-pro`、Thinking disabled、`1280` Token、45 秒硬门 |
 | 后台链路 | 第二次调用只整理事实与纠正；同模型、Thinking disabled、`1600` Token、20 秒硬门；零可见写权限 |
 | 正式一致性 | 当前策略强制选择 Pro；后台解析使用 v1.7 来源对齐并保存真实原文片段 |
 | 工程门 | 发布工具 `11/11`、v1.9 相关 `101/101`、全量 `3694` 条测试、Lint、类型、两套 Prisma、Production build、文档与差异检查通过 |
 | Preview 技术结果 | 首条可见内容 `4026ms` 就绪；后台 `3341ms` 完成且气泡冻结；重复提交复用原结果，新增模型调用 `0` |
-| 当前状态 | v1.9 Preview 产品裁决 `4/4 pass`；v1.2 候选模型环境技术 No-Go；v1.3 实施中；正式域名 baseline |
+| 当前状态 | v1.9 Preview 产品裁决 `4/4 pass`；v1.3 运行回读技术 No-Go；v1.4 实施中；正式域名 baseline |
 
 ## 完整回应优先 v1.7 后台来源对齐合同｜2026-08-20
 
