@@ -1,7 +1,7 @@
 # 当前阶段 Handoff
 
 - 文档职责：当前执行交接
-- 文档状态：已确认·实施中
+- 文档状态：待验证
 - 最后核验：`2026-08-21`
 - 权威入口：[`DL-PROD-20260819`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
@@ -9,7 +9,7 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布并保留为回退基线，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`；阶段 4 第三批已由 PR #48 合入 main `dedf094`，独立终审 `P0=0 / P1=0 / P2=1`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。当前从 main `624b403` 建立单一发布血缘集成候选，迁入 Production 已验证的 GI-088 v1.9 可见回应、后台任务和 Pro 模型合同，并保留阶段 1～4 的完整成果；本地、Preview 与发布结果均为 `待验证`，详见 `PEH-044`。正式 Production 继续使用 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、`event_centered + complete_response_v1_9 + deepseek-v4-pro`。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布并保留为回退基线；阶段 2～4 已合入 main；阶段 3 结论 `P0=0 / P1=0 / P2=3`；阶段 4 独立终审 `P0=0 / P1=0 / P2=1`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。当前单一发布血缘候选基于 main `624b403`，已迁入 GI-088 v1.9 可见回应、后台任务和 Pro 模型合同并保留阶段 1～4 成果；本地、双 CI 与独立 Preview 均通过。同一失败回合恢复成功，新增用户消息 `0`，可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`，Codex 原文初评 `pass`。产品负责人裁决、source-main 合并与 Production 发布保持 pending，详见 `PEH-044`。正式 Production 继续使用 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、`event_centered + complete_response_v1_9 + deepseek-v4-pro`。
 
 当前工作线事实：
 
@@ -28,6 +28,10 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - 当前正式 deployment：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`（READY／PROMOTED，GI-088 v1.9）；阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 保留为回退目标
 - 回退 deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY）
 - Production 模式：`event_centered + complete_response_v1_9`；模型 `deepseek-v4-pro`
+- 单一血缘运行时代码节点：`e869cf1`；PR #51 Preview 证据节点：`c4617ec`
+- PR #51 `c4617ec` 的 push run `32458151031` 与 pull request run `32458153627` 均 attempt 1 全绿；Preview `dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ` Ready
+- Preview 同一失败回合恢复成功：新增用户消息 `0`，SSE `200`／`13992ms`，最终用户消息 `1`、AI 回应 `1`、pending turn 清空；可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`，后台任务 completed，Codex 原文初评 `pass`
+- 下一门：产品负责人原文裁决、source-main 合并裁决与独立 Production 发布授权；Production 保持当前 deployment
 
 阶段 4 第一批本地发布线事实：
 

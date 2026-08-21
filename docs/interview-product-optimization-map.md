@@ -1,15 +1,15 @@
 # 幸福日志访谈产品优化地图
 
 - 文档职责：总 Map
-- 文档状态：已确认·实施中
+- 文档状态：待验证
 - 最后核验：`2026-08-21`
 - 权威入口：[`DL-PROD-20260819`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
 最后更新：`2026-08-21`
 
-文档状态：`生效中；五阶段生产主线完善已确认·实施中；Production 使用 event_centered + complete_response_v1_9`
+文档状态：`生效中；五阶段生产主线候选待产品裁决；Production 使用 event_centered + complete_response_v1_9`
 
-当前讨论位置：`DL-PROD-20260819｜单一发布血缘候选已从 main 624b403 建立；GI-088 v1.9 与阶段 1～4 集成实施中、结果待验证；阶段 5 No-Go / insufficient_evidence`
+当前讨论位置：`DL-PROD-20260819｜单一发布血缘候选本地、双 CI 与 Preview 已通过；产品负责人裁决、source-main 合并和 Production 发布 pending；阶段 5 No-Go / insufficient_evidence`
 
 落地验证状态：`总规范 v1.0 与阶段 B2 资产已冻结；阶段 C 保留 19 次技术阻断历史，阶段 C2 的 Plus 普通／思考均 20/20 且 No-Go，Max 思考 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
@@ -17,9 +17,9 @@
 
 当前跨模块专项：[`Daily Light 五阶段生产主线完善`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-当前停止点：单一发布血缘候选先完成本地差异审计、生成式访谈合同、后台任务恢复、阶段 1～4 回归、零模型 E2E 与 Preview，再进入发布裁决；任何用户可见回应退化、后台任务重复或丢失、权限／同意边界回归、日记内容丢失、模型边界泄漏或数据库结构变化都会立即暂停。正式 Production 继续运行 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；阶段 1 `dpl_DCGY...` 继续作为回退目标，详见 `PEH-043`～`PEH-044`。阶段 3 正文开关继续关闭，阶段 5 维持 No-Go 候选隔离。数据库迁移、月度洞察上线和破坏性清理继续使用独立停止门。
+当前停止点：单一发布血缘候选已完成本地差异审计、生成式合同、后台任务恢复、阶段 1～4 回归、零模型 E2E 与 Preview；下一门为产品负责人原文裁决、source-main 合并裁决与独立 Production 发布授权。正式 Production 继续运行 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；阶段 1 `dpl_DCGY...` 继续作为回退目标，详见 `PEH-043`～`PEH-044`。阶段 3 正文开关继续关闭，阶段 5 维持 No-Go 候选隔离。
 
-网页端实现同步：管理分析合同 v2 已于 `2026-08-20` 发布 Production，阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已通过正式域名核心 smoke并保留为回退目标；阶段 2～4 的 source-main 工程成果已进入 main。当前正式域名运行 GI-088 v1.9 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，策略为 `event_centered + complete_response_v1_9`，模型为 `deepseek-v4-pro`。管理员成功读取保持 pending；Stage 4 Production 集成等待两条血缘统一。
+网页端实现同步：阶段 2～4 的 source-main 工程成果已进入 main；单一血缘候选已在独立 Preview 验证 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，同一失败回合恢复后可见回应与后台事实任务各调用 `1` 次。当前正式域名继续运行 GI-088 v1.9 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，阶段 1 deployment 保留为回退目标；Production 发布等待独立裁决。
 
 当前专项进度源：[`生成式访谈重构总 Map（Batch B 专项）`](./generative-interview-refactor-map.md)
 
