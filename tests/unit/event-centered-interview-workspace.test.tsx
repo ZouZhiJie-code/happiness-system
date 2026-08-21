@@ -927,18 +927,26 @@ describe("EventCenteredInterviewWorkspace", () => {
       }],
       dialogue: { ...buildWorkspace().dialogue, allowedActions: ["reply"] }
     });
+    let resolveSessionList!: (response: Response) => void;
+    const sessionListResponse = new Promise<Response>((resolve) => {
+      resolveSessionList = resolve;
+    });
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url === "/api/interview/event-centered/session/root-1") return jsonResponse(staleWorkspace);
       if (url === "/api/interview/event-centered/sessions?limit=30") {
-        return jsonResponse(buildSessionList([buildListItem()]));
+        return sessionListResponse;
       }
       throw new Error(`Unexpected request: ${url}`);
     });
     global.fetch = fetchMock as typeof fetch;
 
     render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
-    fireEvent.click(await screen.findByRole("button", { name: "重新生成" }));
+    const regenerateButton = await screen.findByRole("button", { name: "重新生成" });
+    expect(regenerateButton).toBeDisabled();
+    resolveSessionList(jsonResponse(buildSessionList([buildListItem()])));
+    await waitFor(() => expect(regenerateButton).toBeEnabled());
+    fireEvent.click(regenerateButton);
     fireEvent.click(await screen.findByRole("menuitem", { name: /更简单一点/u }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("这个操作已经不适用于当前记录。");
