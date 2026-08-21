@@ -27,6 +27,7 @@
 - 临时账号已按用户 ID 级联清理，用户、会话、消息与 Trace 残留均为 `0`；候选日志 `3×200`，warning／error／fatal／5xx 均为 `0`。本轮预算按零重试封存，不追加提交。
 - 正式域名仍指向 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，首页与登录 `200`、匿名管理接口 `401`、匿名 session 接口 `200`；正式切流、线上回归与回退均为 `not_run`。
 - 启动卡见[统一血缘 Production 发布启动卡](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-start-card.json)，首次回执见[Production 发布尝试 1 回执](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-attempt-1-receipt.json)。下一步需要产品负责人为同一候选追加一次全新验收额度，上限 `2` 次模型调用、重试 `0`。
+- 产品负责人已回复“继续，直到完成任务”，同一 Ready 候选的第二次验收已获授权并进入实施。新增预算为可见回应与后台任务各 `1` 次、总模型调用上限 `2`、模型重试 `0`；数据库只读回读允许最多 `3` 次连接重试且不触发模型。证据在清理前封存，通过后提升同一 deployment，并以正式域名指向同一 deployment、零模型公共路由和日志完成线上验证；第二次启动卡见 [`production-release-attempt-2-start-card.json`](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-attempt-2-start-card.json)。
 
 当前 Production 事实：
 

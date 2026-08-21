@@ -32,7 +32,7 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - PR #51 `c4617ec` 的 push run `32458151031` 与 pull request run `32458153627` 均 attempt 1 全绿；Preview `dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ` Ready
 - Preview 同一失败回合恢复成功：新增用户消息 `0`，SSE `200`／`13992ms`，最终用户消息 `1`、AI 回应 `1`、pending turn 清空；可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`，后台任务 completed，Codex 原文初评 `pass`
 - PR #51 已合入 main `0f483567`；唯一 main CI run `32467211291` attempt 1 全绿，重跑 `0`
-- 当前门：为同一 Ready 候选追加一次全新验收额度，最多可见回应与后台任务各 `1` 次、重试 `0`；授权前 deployment 保持不变
+- 当前门：同一 Ready 候选第二次验收已授权并实施中，最多可见回应与后台任务各 `1` 次、模型重试 `0`；硬门通过后提升同一 deployment，并执行零模型正式域名路由与日志验证
 
 阶段 4 第一批本地发布线事实：
 

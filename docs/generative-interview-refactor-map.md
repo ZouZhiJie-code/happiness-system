@@ -11,9 +11,9 @@
 
 当前板块：`板块 8｜GI-088 v1.9 Production 已发布；跨线 source-main 集成已完成`
 
-当前讨论位置：`统一血缘 Production 候选已 Ready；首次验收 Trace 回读 technical_blocked；正式域名保持原 deployment`
+当前讨论位置：`统一血缘 Production 候选已 Ready；第二次验收已获授权并实施中；正式域名切流 pending`
 
-下一建议板块：`如需继续，为同一候选授权一次全新验收额度，最多 2 次模型调用、零重试`
+下一建议板块：`完成同一候选的第二次验收，硬门通过后连续提升并验证正式域名`
 
 Production 状态：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p；event_centered + complete_response_v1_9；deepseek-v4-pro`
 
