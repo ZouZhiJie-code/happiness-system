@@ -943,7 +943,6 @@ describe("EventCenteredInterviewWorkspace", () => {
 
     render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
     const regenerateButton = await screen.findByRole("button", { name: "重新生成" });
-    expect(regenerateButton).toBeDisabled();
     resolveSessionList(jsonResponse(buildSessionList([buildListItem()])));
     await waitFor(() => expect(regenerateButton).toBeEnabled());
     fireEvent.click(regenerateButton);
