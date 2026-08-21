@@ -2,17 +2,21 @@
 
 - 文档职责：稳定合同
 - 文档状态：现役
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-21`
 - 权威入口：[`docs/operator-runbook.md`](./operator-runbook.md)
 
-最后更新：`2026-08-12`
+最后更新：`2026-08-21`
 
 ## 当前生产域名
 
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容访问域名：`https://www.dailylight.chat`
+- 当前正式 deployment：`dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW`，状态 Ready，源码 main `e3284b5127232dfdb8535a74b52187f33118cfdb`；两个正式域名均精确指向该 deployment。
+- 当前运行身份：`event_centered + complete_response_v1_9 + deepseek-v4-pro`。统一血缘候选第二次验收、正式切流与线上零模型回归于 `2026-08-21` 通过；提升后新增模型调用 `0`，回退未触发。
+- 即时回退 deployment：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`（Ready）；更深回退 deployment：`dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（Ready）。
+- 发布证据见 [`production-release-final-receipt.json`](../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-final-receipt.json)，过程裁决见 `PEH-043`～`PEH-045`。
 - `dlight.cc.cd` 已从 Vercel production aliases 中移除并正式废弃。
-- 事件中心候选 Provider 合同为 DeepSeek 官方 API 的 OpenAI 兼容接口，运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结，板块 6 继续资产化评测。GI-088 v0～v8r1 保留各自的失败、恢复、平台、状态和真人证据；v8 以 `1/4 early_stopped` 获产品通过，v8r1 A1 确认控制意图误停的单例阻断并进入历史只读。v8r2 使用官方 V4 Pro 与 Thinking high，P0／P1、八项开门差额、最终初始化幂等、不可变版本和全绿静态门已收口；当前 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 已 `READY`，Vercel Linux 远程生成两套 Prisma Client 后，登录存储与 error logs 验收通过；新 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 为 `running 0/12 / gate=pending / high_only / high / calls=0`，等待 12 项真人验收。质量与发布未裁决，约 `200` 轮以上容量优化继续排除。Ark 变量和适配器只承担历史兼容。Production 继续保持 `legacy + baseline`。
+- `2026-08-10` 历史快照：事件中心候选 Provider 合同为 DeepSeek 官方 API 的 OpenAI 兼容接口，运行时 Provider 为 `openai`，默认地址为 `https://api.deepseek.com`。`GI-067 / GI-068～080` 与方法 `v1.0` 已冻结，板块 6 继续资产化评测。GI-088 v0～v8r1 保留各自的失败、恢复、平台、状态和真人证据；v8 以 `1/4 early_stopped` 获产品通过，v8r1 A1 确认控制意图误停的单例阻断并进入历史只读。v8r2 使用官方 V4 Pro 与 Thinking high，P0／P1、八项开门差额、最终初始化幂等、不可变版本和全绿静态门已收口；当时 Preview deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 为 `READY`，run `b816d468-e3c3-4459-a822-04f95b1e78cd` 保持其历史身份。Ark 变量和适配器只承担历史兼容。
 - `2026-07-21` 历史生产 deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`，production alias 指向 `https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`。
 - `2026-07-21` 访谈意图识别已使用`enforce`全量发布；`dailylight.chat`与`www.dailylight.chat`均指向当前版本，上一正式版本`dpl_7jpZCQTZukzFY8XMVD6wcsQScxrc`保留为即时回退入口。
 - `2026-07-21` 已完成按意图重新生成的 production 发布；`20260720210000_add_interview_intent_assessment` 与 `20260720223000_add_interview_response_regeneration` 已应用，生产数据库当前有 30 条 migration。

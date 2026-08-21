@@ -1,0 +1,73 @@
+{
+  "cardVersion": 1,
+  "status": "completed",
+  "recordedAt": "2026-08-21T12:14:57Z",
+  "supersedesAttempt": 1,
+  "authorization": {
+    "productOwnerMessage": "继续，直到完成任务",
+    "meaning": "Authorize one fresh controlled smoke on the same Ready candidate and continue the release if every hard gate passes."
+  },
+  "candidate": {
+    "deployment": "dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW",
+    "sourceCommit": "e3284b5127232dfdb8535a74b52187f33118cfdb",
+    "statusBefore": "Ready",
+    "domainPromotedBefore": false,
+    "expectedMode": "event_centered",
+    "expectedStrategy": "complete_response_v1_9",
+    "expectedModel": "deepseek-v4-pro"
+  },
+  "productionBefore": {
+    "formalDomain": "https://dailylight.chat",
+    "deployment": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "status": "Ready",
+    "rollbackDeployment": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5"
+  },
+  "dataset": {
+    "identity": "production-lineage-production-smoke-synthetic-v2",
+    "source": "controlled synthetic daily-life event",
+    "privacy": "public_synthetic_no_personal_data",
+    "rawInputStorage": "ephemeral_private_runtime_only"
+  },
+  "budget": {
+    "candidateVisibleResponseProviderDispatches": 1,
+    "candidateBackgroundTaskCalls": 1,
+    "maximumActualModelCalls": 2,
+    "modelRetries": 0,
+    "databaseReadRetries": 3,
+    "databaseReadRetriesAffectModelBudget": false,
+    "postPromotionModelCalls": 0
+  },
+  "execution": [
+    "pull Production environment into an exact temporary file and verify mode, strategy, model, and database availability without publishing secret values",
+    "register one synthetic temporary user and run one candidate turn",
+    "seal visible and background exact-session evidence before cleanup",
+    "delete the temporary user and verify user, session, message, and Trace counts are all zero",
+    "promote the exact same candidate deployment",
+    "verify the canonical domain resolves to the same deployment and run zero-model canonical route and log checks"
+  ],
+  "promotionGate": {
+    "requires": [
+      "one user message and one assistant message",
+      "visible response HTTP 200 with no SSE error",
+      "visible Trace completed with LLM origin",
+      "background Trace completed and applied",
+      "one visible Provider dispatch and one background Provider dispatch",
+      "no retry and no budget overflow",
+      "temporary data cleanup all zero",
+      "Codex content review pass or minor"
+    ],
+    "failureAction": "stop before promotion"
+  },
+  "onlineVerification": {
+    "method": "same-deployment identity plus canonical domain inspect, zero-model public route checks, and post-promotion logs",
+    "directAdditionalModelCalls": 0,
+    "failureAction": "promote the retained rollback deployment and verify canonical recovery"
+  },
+  "result": {
+    "candidateSmoke": "pass",
+    "cleanup": "passed_all_zero",
+    "promotion": "passed",
+    "canonicalVerification": "passed_zero_model_same_deployment",
+    "verdict": "pass_live_verified"
+  }
+}

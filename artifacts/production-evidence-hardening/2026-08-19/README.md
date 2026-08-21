@@ -9,13 +9,13 @@
 
 | 资产 | 状态 | 说明 |
 |---|---|---|
-| [问题台账](./issue-ledger.md) | 待验证 | 记录事实、产品判断、Codex 评估、假设和处理状态 |
-| Production 发布血缘 | 阶段 1 基线已封存·当前 GI-088 v1.9 | 阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 保留为回退目标；当前正式域名运行 GI-088 v1.9 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，策略 `complete_response_v1_9`、模型 `deepseek-v4-pro`。Stage 4 尚未部署，跨分支对账见 `PEH-043` |
-| [单一发布血缘集成](./production-lineage-integration/README.md) | 已完成·Production pending | PR #51 已合入 main `0f483567`；main CI run `32467211291` attempt 1 全绿，产品负责人裁决 `pass`；Production 保持 `dpl_B9P...` |
-| [数据口径 v2 证据](./analytics-contract-v2/README.md) | 阶段 1 发布证据已封存·当前 Production 版本复验 pending | 已封存阶段 1 CI、Preview、只读数据库对账、正式域名核心 smoke 和线上日志；当前 GI-088 Production 源提交不包含该 main 节点，整合后重新验收 |
-| [零模型 E2E 证据](./e2e-zero-model/README.md) | 已合入 main·统一血缘 main CI 全绿·Production 发布 pending | PR #41 合入 `77de8d1`；PR #43 热修合入 `795417d`；统一血缘 PR #51 合入 `0f483567`，main CI 全绿。当前 Production 仍为 GI-088 v1.9 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` |
+| [问题台账](./issue-ledger.md) | 现役 | 记录事实、产品判断、Codex 评估、假设和处理状态；统一血缘发布由 `PEH-043`～`PEH-045` 闭环 |
+| Production 发布血缘 | 统一血缘已发布·线上验证通过 | 当前正式 deployment `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW` 运行 `complete_response_v1_9 + deepseek-v4-pro`，源码 main `e3284b5`；上一正式与阶段 1 deployment 分别保留为即时和更深回退 |
+| [单一发布血缘集成](./production-lineage-integration/README.md) | 已完成·Production live verified | PR #51 合入统一血缘，PR #52 封存 source-main；Production 第二次候选验收、正式切流和线上零模型回归均通过 |
+| [数据口径 v2 证据](./analytics-contract-v2/README.md) | 阶段 1 证据已封存·统一血缘已发布 | 阶段 1 数据口径随统一血缘源码进入 Production；本轮候选与线上身份验证通过，既有数据口径证据继续承担专项职责 |
+| [零模型 E2E 证据](./e2e-zero-model/README.md) | 已合入 main·统一血缘已发布 | PR #41 合入 `77de8d1`；PR #43 热修合入 `795417d`；统一血缘 PR #51 合入 `0f483567`，main CI 与 Production 线上零模型回归均通过 |
 | [Golden Set v2](./golden-set-v2/README.md) | 已合入 main·收集 pending | PR #44 已合入 main `ef7bf94`；`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，正文开关保持关闭，Production 正文读取 `0`、模型调用 `0` |
-| [主链重构证据](./stage4-journal/README.md) | 第三批与治理收口已合入 main·Preview smoke blocked·Production 血缘整合 blocked | PR #48 已合入 main `dedf094`，PR #49 治理收口已合入 main `8f7ae40`，独立终审 `P0=0 / P1=0 / P2=1`。当前 Production 为独立 GI-088 v1.9 deployment；Stage 4 尚未上线，发布前先完成两条血缘整合，详见 `PEH-033`～`PEH-043` |
+| [主链重构证据](./stage4-journal/README.md) | 第三批与治理收口已合入 main·统一血缘已发布 | PR #48 合入 main `dedf094`，PR #49 治理收口合入 main `8f7ae40`，独立终审 `P0=0 / P1=0 / P2=1`；Stage 4 工程成果已随统一血缘进入 Production，详见 `PEH-033`～`PEH-045` |
 | [月度洞察 Go/No-Go](./monthly-insight-v1/README.md) | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；真实用户月 `0`、模型调用 `0`，Production 继续使用确定性 `AnalysisNarrative` |
 
 ## 隐私边界

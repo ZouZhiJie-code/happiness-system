@@ -303,3 +303,11 @@
 - Codex 评估：主线定向集成能把变更收敛到真实运行所需的策略、后台任务、Provider 合同和专项测试，避免旧分支历史代码反向覆盖近期可靠性与隐私修复。共享服务需要逐段适配 Stage 4 拆分后的职责，并用生成式合同、真实 PostgreSQL、零模型 E2E 和 Preview 双主链验证共同证明兼容。新候选使用新的提交身份、输入哈希和运行回执；旧运行器保持不可改写，新 Preview／发布检查在本地门通过后按本候选重新生成，避免沿用旧候选授权。
 - 待验证假设：统一血缘进入 Production 后，线上用户体验、后台任务、六步漏斗与日记内容保护继续满足已通过的 Preview 和 source-main 合同；该假设只在获得独立 Production 授权后验证。
 - 当前处理状态：`source-main merged / main CI passed / Production pending`。候选分支 `codex/production-lineage-integration-20260821`，基线 `origin/main@624b403`，运行时代码节点 `e869cf1`；生成式专项 `325/325`、真实 PostgreSQL `3/3`、全量 `3401/3401`、build `77/77`、零模型 E2E `11/11` 均通过。最终证据 head `fb0bb9d` 的 push run `32466648835` 与 PR run `32466651862` 均 attempt 1 全绿，Vercel Preview Ready。PR #51 已合入 main `0f483567e9b3fbd42bf768fc3accaf26ab15055f`；唯一 main run `32467211291` 在 attempt 1 通过：`387` 个测试文件、`3401` 条用例、build `77/77`、Lint `0 error / 33 warning`，零模型 E2E `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 已删除。产品负责人裁决 `pass`。正式域名回读仍为 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、Ready，Production 读、写、部署保持 `0`；发布等待独立授权。
+
+## PEH-045｜统一血缘 Production 发布授权与执行
+
+- 已确认事实：PR #51 已将单一发布血缘合入 main，PR #52 已将 source-main 收口文档合入 main `e3284b5127232dfdb8535a74b52187f33118cfdb`；对应 main CI run `32468682590` attempt 1 成功。`2026-08-21` 发布前只读回读确认正式域名仍指向 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，状态 Ready。
+- 产品判断：产品负责人已明确回复“同意，继续”，授权最新 main 进入 Production，并授权候选冒烟、正式切流、线上回归、后台 Trace 核验和证据封存。现役产品策略与模型保持 `event_centered + complete_response_v1_9 + deepseek-v4-pro`。
+- Codex 评估：使用独立候选部署先验证源码与运行身份，再用一条合成低敏回合验证可见回应与后台事实任务；最多两次实际模型调用、重试 `0`。候选通过后才切流，线上异常按 active deployment 和阶段 1 回退目标执行恢复。数据库迁移、环境变量修改、月度 AI 洞察上线、Production 用户正文抽样与破坏性清理均排除。
+- 待验证假设：本轮假设已由同一 Ready 候选的第二次精确 Trace 回读、正式域名同 deployment 身份与线上零模型日志验证覆盖。后续真实用户体验与自然样本质量继续由独立观察任务承担。
+- 当前处理状态：`Production released / live verified / cleanup pass`。同一候选第二次验收完整通过：注册、会话创建和回应流均为 `200`；可见回应 `12826ms`，Provider 一次成功、重试 `0`；后台事实一次成功、重试 `0`，写入与有效事实均为 `2`。实际模型调用 `2/2`，数据库只读重试 `0`。Codex 内容初评 `pass`。临时用户级联清理后用户、会话、消息与 Trace 全为 `0`；候选日志 `3×200`，warning／error／fatal／5xx 均为 `0`。同一 deployment `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW` 已提升，两个正式域名均精确指向该 deployment；线上零模型路由共 `7` 条请求，`5×200 + 2×401`，warning／error／fatal／5xx 均为 `0`，提升后新增模型调用 `0`，回退未触发。上一正式 `dpl_B9P...` 与阶段 1 `dpl_DCGY...` 均保持 Ready。
