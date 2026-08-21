@@ -9,7 +9,7 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第一批后端纯拆分已由 PR #45 合入 main `548fda5`，画像测试夹具热修 PR #46 已合入 main `d98c915` 且 main CI 全绿；第二批前端 PR #47 head `246a101` 两套 CI attempt 1 全绿、Preview Ready，受控 smoke 通过至登录态列表 HTTP `200`，菜单测试观察竞态已关闭，等待最终证据头确认后合入 source main；既有日记 `stale` 刷新竞态登记为 Production P1，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第一批后端纯拆分已由 PR #45 合入 main `548fda5`，画像测试夹具热修 PR #46 已合入 main `d98c915` 且 main CI 全绿；第二批前端 PR #47 head `246a101` 两套 CI 全绿，证据 head `d4c1a07` 的 PR 单测暴露过强初始状态断言，本地二次收敛与全量通过，最终远程门 pending；既有日记 `stale` 刷新竞态登记为 Production P1，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
@@ -45,8 +45,9 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - 受控 smoke 单次通过匿名保护 `401`、固定账号登录 `200`、登录态 `200` 和事件中心列表 HTTP `200`；验收脚本误把真实 `items` 合同按 `sessions` 解析后停止，session start `not_run`、重试 `0`。账号创建、权限变更、模型端点请求与 Production 请求均为 `0`；详见 `PEH-036`。
 - 最终文档 head `5d07f27` 的 push run `32432781058` 全绿；PR run `32432784604` 仅工作区菜单阻断用例在按钮仍不可用时提前点击并超时。受控延迟确认产品保护符合合同，纯测试修复固定“先不可用、列表完成后可用、再执行菜单并阻断请求”的顺序；本地全量 `3307` 条和零模型 E2E `11/11` 通过，详见 `PEH-037`。
 - 修复提交 `3478ddb` 后，PR #47 head `246a101` 的 push run `32437800917` 与 pull request run `32437803182` 均 attempt 1 全绿、重跑 `0`；两套常规门均为 `3307 passed / 95 skipped`，两套零模型 E2E 均 `11/11`、`AIRequestLog=0`、Trace `12` 且临时 Schema 已删除。Preview `dpl_HsTBC5gTizMr1sGaqENSTACPMy4T` Ready；菜单测试 P2 已关闭，产品结论保持 `P0=0 / P1=0`。
+- 证据 head `d4c1a07` 的 push run `32438718418` attempt 1 全绿；PR run `32438721390` 只在“按钮必须先不可用”的测试断言失败，实际按钮已恢复可用。二次修复移除初始状态前提，保留等待列表完成、按钮可用、菜单动作阻断与零请求合同；目标并发 `24/24`、乱序 `6/6`、整文件 `18/18`、全量 `3307/3307` 通过，最终远程门 pending。
 - 已确认日记 `stale` 刷新竞态存在于第一批 main 基线，前端 `4` 文件引入数为 `0`。该问题定为 Production P1，源码 main 工程门可以继续，前端 Production 保持 blocked；完整归因见 `PEH-033`。
-- 修复归属第三批日记工作区候选 `bf45`，完成门包含延迟 `GET` 与保存交错单元合同、零模型 E2E 全套连续 `3` 轮。第二批下一门为最终证据头远程确认与 source main 合并，保持不发布 Production，也不重跑本轮 smoke。发布门见 `PEH-034`、`PEH-037`。
+- 修复归属第三批日记工作区候选 `bf45`，完成门包含延迟 `GET` 与保存交错单元合同、零模型 E2E 全套连续 `3` 轮。第二批下一门为二次测试修复新 head 的两套首轮 CI 与 Preview Ready；通过后进入 source main 合并，保持不发布 Production，也不重跑本轮 smoke。发布门见 `PEH-034`、`PEH-037`。
 
 阶段 3 本地候选事实：
 
