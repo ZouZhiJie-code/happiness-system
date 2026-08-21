@@ -190,7 +190,7 @@
 - 产品判断：第一批以降低主链维护风险、保持用户可见行为和所有公开合同兼容为目标；并发恢复尝试次数作为继承债务显式封存，本批保持现状。
 - Codex 评估：成功工作区 JSON、并发恢复结果、单卡与幂等行为已有单元、真实 PostgreSQL、全量回归和零模型 E2E 四层保护。后续若调整恢复计数，需要单独定义用户价值、数据库语义、指标基线和回退门。
 - 待验证假设：当前纯拆分在远程 CI 与隔离 Preview 中继续保持 API、SSE、错误码、事件顺序、幂等键和数据库结果兼容；Stage 2 阻断解除并完成 Production 发布后，至少 24 小时／20 次内部有效回应的观察门可支持线上判断。
-- 当前处理状态：本地门已通过；PR #45 初始 head `0a1471d` 的 push／PR CI 均 attempt 1 全绿、远程零模型 E2E 均 `11/11`，Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` Ready。本次公开回执提交后的最终 head 远程门待验证，PR 合并与 Production 保持 pending／blocked；正式域名继续运行阶段 1 deployment。回退方式为撤销第一批三个纯拆分／合同提交。
+- 当前处理状态：本地门与 PR 工程门已通过；第一批最终 head `382457b` 已由 PR #45 合入 main merge `548fda5`。合并后的画像测试夹具时间竞争已由 `PEH-032` 闭环；Preview 产品 smoke 继续保持 `transport_blocked`。Production 保持 blocked，正式域名继续运行阶段 1 deployment。回退方式为撤销第一批三个纯拆分／合同提交。
 
 ## PEH-031｜Stage 4 第一批 Preview smoke 受 TLS 传输阻断
 
@@ -206,4 +206,44 @@
 - 产品判断：本项归入测试隔离与确定性问题，Stage 4 后端产品行为、画像产品逻辑和缓存合同保持原值；Production 继续使用阶段 1 deployment，Stage 4 Production 继续关闭。
 - Codex 评估：旧夹具在循环中为每条事实调用实时 `new Date()`，产品逻辑再按 `updatedAt` 选择最近事实；高负载下循环跨越毫秒边界会使 `fact 1` 或 `fact 2` 成为真实最新项。精确用例单跑、完整文件和随机顺序可通过，并发进程压力可稳定暴露同类漂移；仓储与 Prisma 均为模块 mock，当前证据不支持缓存未清理或全局状态污染归因。
 - 待验证假设：只把测试夹具的 `createdAt / updatedAt` 固定为 `fact 0` 最新的确定性顺序，即可消除调度敏感性，同时继续验证产品按时间选择最新事实的既有合同。
-- 当前处理状态：最小修复仅修改 `tests/unit/portrait-synthesis.service.test.ts`，产品源码、Schema、依赖和 CI 配置变更均为 `0`。修复后精确用例与完整文件通过，随机顺序 `50/50`、并发进程 `32/32`、全量 `3301` 条通过；类型、Lint `0 errors / 43 inherited warnings`、build `77/77`、零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 与临时 Schema 删除通过。独立热修 PR、远程双 CI 与合并后 main CI 待验证，全部保持零重跑停止门。
+- 当前处理状态：已解决。最小修复仅修改 `tests/unit/portrait-synthesis.service.test.ts`，产品源码、Schema、依赖和 CI 配置变更均为 `0`。修复后精确用例与完整文件通过，随机顺序 `50/50`、并发进程 `32/32`、全量 `3301` 条通过；类型、Lint `0 errors / 43 inherited warnings`、build `77/77`、零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 与临时 Schema 删除通过。PR #46 已合入 main merge `d98c915`；合并后 main CI run `32365805590` attempt 1 全绿，零模型 E2E `11/11`、模型调用 `0`。
+
+## PEH-033｜事件卡保存后的日记 stale 刷新竞态
+
+- 已确认事实：Stage 4 第二批旧基线的首轮全套零模型 E2E 为 `10/11`；事件卡内容已经保存并展示，今日日记仍显示“已保存”，预期的“需更新／更新日记”未出现。该单例隔离复跑 `1/1`，随后两轮全套连续 `11/11`。独立归因确认同一竞态已经存在于第一批 main 基线；第二批差异严格为事件中心访谈 `4` 个前端文件，与日记读取、保存和来源签名代码交集为 `0`。
+- 产品判断：该问题定为 Production P1。第二批源码工程门可以继续，前端 Production 完成状态保持关闭；日记来源变化后，用户必须稳定看到“需更新”并能在更新时保留手工修改。
+- Codex 评估：日记页面的异步当天读取可能晚于事件卡保存返回，并用较旧状态覆盖保存后的新状态。修复归属第三批日记工作区候选 `bf45`，由当天数据状态拆分统一处理读取与保存的先后权；第二批保持日记代码改动为 `0`。
+- 待验证假设：增加延迟 `GET /api/journal/day` 与事件卡保存响应交错的单元合同后，可以稳定阻止旧读取覆盖新保存状态；修复后零模型 E2E 全套连续 `3` 轮均能通过日记生成、编辑、保存、需更新和人工修改保护。
+- 当前处理状态：`Production P1 / frontend source-main allowed / Production blocked`。第二批发布门如实记录所有 E2E 结果；第三批完成交错单元合同、全量门与 E2E 连续三轮前，阶段 4 Production 保持 blocked。
+
+## PEH-034｜Stage 4 第二批前端发布门
+
+- 已确认事实：第二批实现提交 `61dd4cf`、P1 修复提交 `03b8501` 与发布前文档提交 `7976c1c` 基于最新 main merge `d98c915`，只包含事件中心工作区组件、状态 Hook、可靠回合恢复 Hook、工作区单元合同 `4` 个代码／测试文件和 `6` 份发布文档；旧发布线文档提交已退出重放，主线 `PEH-032` 完整保留。Prisma、依赖、CI、E2E 基础设施、日记和画像文件的第二批差异均为 `0`。最终文档 head `5d07f27` 的 push run `32432781058` 全绿；PR run `32432784604` 只有工作区单元测试出现时序失败，其他 `373` 个测试文件和零模型 E2E 通过，详见 `PEH-037`。
+- 产品判断：本批只降低事件中心前端维护风险并保持用户可见行为与恢复合同兼容。完整本地门通过后可以推送并创建 PR；合并、Production 发布与 `PEH-033` 日记 P1 修复继续保持独立停止点。
+- Codex 评估：工作区状态、请求、outbox 和可靠恢复职责拆出后，现有 Stage 2 地址等待、接口分流、幂等 ID、结构化错误、焦点恢复和内部导航合同继续由定向、压力、全量和浏览器四层回归保护。独立审查发现并关闭的草稿／新 outbox 清理问题由 `PEH-035` 承担。
+- 待验证假设：移除“按钮必须先不可用”的过强前提后，测试仍会在会话列表完成后等待按钮可用，并稳定验证菜单动作阻断与零请求；携带修复和证据的新 head 可通过两套首轮 CI。
+- 当前处理状态：`second local test refinement passed / final remote gates pending / controlled smoke partially passed / Production blocked`。证据 head `d4c1a07` 的 push run `32438718418` attempt 1 全绿；PR run `32438721390` 仅因测试预期按钮先 `disabled`、实际已 `enabled` 而失败，其他 `3306` 条通过。两套零模型 E2E 均 `11/11`、`AIRequestLog=0`、Trace `12`，Schema `daily_light_e2e_mt2b8gw6_08a428a4fc` 与 `daily_light_e2e_mt2b8eij_3cdaca768e` 均已删除；Preview `dpl_BU2mW83NBHGtrgKXvS9h6g2KDeEm` Ready。二次修复移除初始可用状态假设，保留受控列表完成、等待可用、菜单阻断与零请求合同；目标并发 `24/24`、乱序 `6/6`、整文件 `18/18`、全量 `3307 passed / 95 skipped / 0 failed`、类型与目标 Lint 通过。PR 保持未合并，Production 保持 blocked。
+
+## PEH-035｜accepted 回合清理误删下一草稿与新 outbox
+
+- 已确认事实：独立审查发现，accepted outbox A 对应用户消息后来在同分支服务端可见时，新状态 Hook 会清掉用户在恢复读取失败后输入的下一草稿 B；即使 B 与 A 原话完全相同，它仍是新的用户输入。旧 A effect 还会无条件删除同分支持久层 outbox，使已经写入的新 outbox B 丢失。
+- 产品判断：该问题按本批 P1 处理，提交与推送在修复和独立复核前暂停。用户在可靠保存后的任何新草稿与新轮次都必须继续保留；A 服务端可见只授权清理 A 自己的 outbox。
+- Codex 评估：发送 A 时 composer 已在等待请求前同步清空，accepted-visible cleanup 只承担 outbox 收束。修复将 composer draft 完全移出该清理路径，并让内存与持久层都按 expected `clientTurnId` 条件清除 outbox；持久层不可用时保持内存可用和用户草稿安全。
+- 待验证假设：真实组件链路 A accepted → 恢复 GET 失败 → 用户输入与 A 同文的 B → 同分支重挂看到 A，可稳定清 A outbox并保留 B；旧 A 清理遇到新 outbox B 或 `SecurityError` 时不造成新数据丢失。
+- 当前处理状态：已解决。提交 `03b8501` 增加同文草稿重挂、outbox CAS 与 `SecurityError` 三项合同；独立单文件复跑 `18/18`，复核结论 `P0=0 / P1=0 / P2=0`。后续定向 `45/45`、压力 `90/90`、全量 `3307 passed / 95 skipped / 0 failed`、类型、Lint、build、双 Prisma 与零模型 E2E `11/11` 全部通过；模型调用 `0`，临时 Schema 残留 `0`。
+
+## PEH-036｜第二批 Preview 列表 smoke 解析口径不一致
+
+- 已确认事实：PR #47 source head `7976c1c` 对应 Preview `dpl_FCiuGt6fnLt9hUm5uWnNHwcvWqHd` 为 Ready。受控 smoke 每步只请求一次：匿名列表返回 `401 AUTHENTICATION_REQUIRED`；固定账号登录返回 `200` 并建立 cookie；登录态返回 `200` 且固定账号匹配；事件中心列表返回 HTTP `200`。验收脚本把接口真实 `{ items, unfinishedCount, unfinishedLimit, nextCursor }` 合同按 `{ sessions: [...] }` 解析，将列表步骤标为失败并立即停止；最小 session start 为 `not_run`。
+- 产品判断：本项归入验收脚本口径问题，不形成 Preview 产品失败结论。HTTP `200` 证明登录态列表请求到达应用并成功响应；内容形状本轮未保存为运行回执，不能扩大声明为完整列表字段验收。
+- Codex 评估：仓储、路由和前端现役合同均使用 `items`，本批代码没有改变列表响应结构。后续 smoke 脚本应先复用正式 schema 或现役类型，再读取 `items`；修复与重跑进入独立候选，避免改变本轮单步一次、零重试证据身份。
+- 待验证假设：将 smoke 解析器对齐 `items` 后，同一固定账号可以继续完成列表内容校验与幂等 session start；该假设本轮保持 `not_run`。
+- 当前处理状态：`acceptance_parser_mismatch / product response HTTP 200 / retry 0 / session start not_run`。账号创建 `0`、权限变更 `0`、模型端点请求 `0`、Production 请求 `0`；本轮无 TLS 阻断。按停止门不再请求 Preview，PR 保持未合并，Production 保持 blocked。
+
+## PEH-037｜最终文档 head 暴露菜单用例时序竞态
+
+- 已确认事实：PR #47 最终文档 head `5d07f27` 的 push run `32432781058` 全绿，test 与 E2E 均通过；同 head 的 PR run `32432784604` 中 E2E 通过，常规测试仅 `tests/unit/event-centered-interview-workspace.test.tsx` 的“过期动作发送前阻止”用例失败：按钮已渲染，会话列表同步尚未完成，按钮保持 `disabled`；测试提前点击后未打开菜单，`menuitem` 在 `3050ms` 后超时。该 PR run 其余 `373` 个文件、`3306` 条用例通过，`17` 个文件／`95` 条用例按既有条件跳过。
+- 产品判断：本项按测试 P2 处理，产品行为 `P0=0 / P1=0`。列表同步期间按钮保持不可用符合现有用户保护；最终远程门通过前 PR 继续保持未合并，Production 保持 blocked。
+- Codex 评估：受控延迟会话列表响应稳定复现了竞态。修复只改测试：用 deferred 响应固定列表未完成窗口，先确认按钮 `disabled`，再释放列表响应并等待按钮 `enabled`，最后执行菜单动作。该合同同时验证交互保护和测试的正确时序。
+- 待验证假设：按钮出现时可以处于不可用或已经可用；测试只锁定“点击前最终可用”及后续菜单／阻断结果，即可覆盖用户合同并消除两侧调度竞态。
+- 当前处理状态：`second local refinement complete / remote pending`。提交 `3478ddb` 首轮远程门通过后，证据 head `d4c1a07` 的 PR 流水线暴露初始 `disabled` 断言过强；二次修复保留 deferred 列表响应，释放后只等待按钮 `enabled`，随后验证菜单、结构化提示和零 `/respond/stream` 请求。目标并发 `24/24`、乱序 `6/6`、整文件 `18/18` 与全量 `3307/3307` 通过；产品结论保持 `P0=0 / P1=0`，最终测试 P2 结论等待新 head 远程门。

@@ -5,7 +5,17 @@ import {
   buildEventCenteredWorkspaceHref,
   EventCenteredInterviewWorkspace
 } from "@/components/interview/event-centered/event-centered-interview-workspace";
-import type { EventCenteredWorkspaceSession } from "@/types/event-centered-dialogue";
+import { useEventCenteredWorkspaceState } from "@/components/interview/event-centered/use-event-centered-workspace-state";
+import {
+  readEventCenteredComposerDraft,
+  readEventCenteredWorkspaceOutbox,
+  writeEventCenteredWorkspaceOutbox,
+  type EventCenteredWorkspaceOutboxRecord
+} from "@/features/interview/event-centered/workspace-storage";
+import type {
+  EventCenteredRespondRequest,
+  EventCenteredWorkspaceSession
+} from "@/types/event-centered-dialogue";
 import type {
   EventCenteredSessionListItem,
   EventCenteredSessionListView
@@ -118,6 +128,21 @@ function sseResponse(events: Array<{ event: string; data: unknown }>) {
     status: 200,
     headers: { "Content-Type": "text/event-stream" }
   });
+}
+
+function WorkspaceStateHarness({ workspace }: { workspace: EventCenteredWorkspaceSession }) {
+  const { draft, outbox, handleComposerDraftChange } = useEventCenteredWorkspaceState(workspace);
+  return (
+    <>
+      <label htmlFor="workspace-state-draft">测试草稿</label>
+      <textarea
+        id="workspace-state-draft"
+        value={draft}
+        onChange={(event) => handleComposerDraftChange(event.currentTarget.value)}
+      />
+      <output data-testid="workspace-state-outbox">{outbox?.status ?? "none"}</output>
+    </>
+  );
 }
 
 describe("EventCenteredInterviewWorkspace", () => {
@@ -360,6 +385,406 @@ describe("EventCenteredInterviewWorkspace", () => {
     expect(screen.getAllByText(userMessage.rawText)).toHaveLength(1);
   });
 
+  it("keeps composer drafts scoped to the active response branch", async () => {
+    const branchOne = buildWorkspace({
+      dialogue: {
+        ...buildWorkspace().dialogue,
+        allowedActions: ["reply", "switch_response_version"]
+      },
+      messages: [{
+        ...buildWorkspace().messages[0],
+        responseVersion: {
+          groupId: "group-1",
+          version: 1,
+          versionCount: 2,
+          canRegenerate: true,
+          canSwitch: true,
+          versions: [
+            { messageId: "assistant-1", branchSessionId: "branch-1", version: 1, active: true },
+            { messageId: "assistant-2", branchSessionId: "branch-2", version: 2, active: false }
+          ]
+        }
+      }]
+    });
+    const branchTwo = buildWorkspace({
+      activeBranchSessionId: "branch-2",
+      branchStateId: "state-2",
+      dialogue: {
+        ...buildWorkspace().dialogue,
+        allowedActions: ["reply", "switch_response_version"]
+      },
+      messages: [{
+        ...buildWorkspace().messages[0],
+        id: "assistant-2",
+        responseVersion: {
+          groupId: "group-1",
+          version: 2,
+          versionCount: 2,
+          canRegenerate: true,
+          canSwitch: true,
+          versions: [
+            { messageId: "assistant-1", branchSessionId: "branch-1", version: 1, active: false },
+            { messageId: "assistant-2", branchSessionId: "branch-2", version: 2, active: true }
+          ]
+        }
+      }]
+    });
+    const respondBodies: EventCenteredRespondRequest[] = [];
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/session/root-1") return jsonResponse(branchOne);
+      if (url === "/api/interview/event-centered/sessions?limit=30") {
+        return jsonResponse(buildSessionList([buildListItem()]));
+      }
+      if (url === "/api/interview/event-centered/session/respond/stream") {
+        const request = JSON.parse(String(init?.body)) as EventCenteredRespondRequest;
+        respondBodies.push(request);
+        const nextWorkspace = request.action === "switch_response_version" &&
+          request.targetBranchSessionId === "branch-2"
+          ? branchTwo
+          : branchOne;
+        return sseResponse([{ event: "session", data: { session: nextWorkspace } }]);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
+    const input = await screen.findByLabelText("输入当前事件");
+    fireEvent.change(input, { target: { value: "第一版分支草稿" } });
+    fireEvent.click(screen.getByRole("button", { name: "查看下一个回复版本" }));
+
+    await waitFor(() => expect(input).toHaveValue(""));
+    fireEvent.change(input, { target: { value: "第二版分支草稿" } });
+    fireEvent.click(screen.getByRole("button", { name: "查看上一个回复版本" }));
+
+    await waitFor(() => expect(input).toHaveValue("第一版分支草稿"));
+    expect(respondBodies).toHaveLength(2);
+    expect(respondBodies.map((request) => request.baseBranchSessionId)).toEqual(["branch-1", "branch-2"]);
+  });
+
+  it("reuses the same client turn id when a failed outbox is submitted again", async () => {
+    const initial = buildWorkspace();
+    const respondBodies: EventCenteredRespondRequest[] = [];
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/session/root-1") return jsonResponse(initial);
+      if (url === "/api/interview/event-centered/sessions?limit=30") {
+        return jsonResponse(buildSessionList([buildListItem()]));
+      }
+      if (url === "/api/interview/event-centered/session/respond/stream") {
+        const request = JSON.parse(String(init?.body)) as EventCenteredRespondRequest;
+        respondBodies.push(request);
+        if (respondBodies.length === 1) {
+          return jsonResponse({
+            issue: {
+              code: "EVENT_CENTERED_TRANSIENT_PROVIDER_FAILURE",
+              title: "回复暂时中断",
+              message: "原话还在，可以重试。",
+              retryable: true,
+              action: "refresh"
+            }
+          }, 503);
+        }
+        const nextWorkspace = buildWorkspace({
+          latestMessageSequence: 3,
+          messages: [
+            ...initial.messages,
+            {
+              id: "user-retried",
+              role: "user",
+              content: request.rawText ?? "",
+              rawText: request.rawText ?? "",
+              sequence: 3,
+              userTurnId: "turn-retried",
+              clientTurnId: request.clientTurnId,
+              assistantPayload: null,
+              responseVersion: null,
+              createdAt: "2026-07-22T08:01:00.000Z"
+            }
+          ]
+        });
+        return sseResponse([{ event: "session", data: { session: nextWorkspace } }]);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
+    const input = await screen.findByLabelText("输入当前事件");
+    fireEvent.change(input, { target: { value: "这次重试请沿用同一轮次" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("原话还在，可以重试。");
+    await waitFor(() => expect(input).toHaveValue("这次重试请沿用同一轮次"));
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    await waitFor(() => expect(respondBodies).toHaveLength(2));
+    expect(respondBodies[1]?.clientTurnId).toBe(respondBodies[0]?.clientTurnId);
+  });
+
+  it("clears an accepted outbox after the user turn is visible on the server", async () => {
+    const initial = buildWorkspace();
+    let workspaceReads = 0;
+    let acceptedClientTurnId = "";
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/session/root-1") {
+        workspaceReads += 1;
+        if (workspaceReads === 1) return jsonResponse(initial);
+        return jsonResponse(buildWorkspace({
+          latestMessageSequence: 3,
+          messages: [
+            ...initial.messages,
+            {
+              id: "user-visible",
+              role: "user",
+              content: "服务端已经收到了这句话",
+              rawText: "服务端已经收到了这句话",
+              sequence: 3,
+              userTurnId: "turn-visible",
+              clientTurnId: acceptedClientTurnId,
+              assistantPayload: null,
+              responseVersion: null,
+              createdAt: "2026-07-22T08:01:00.000Z"
+            }
+          ]
+        }));
+      }
+      if (url === "/api/interview/event-centered/sessions?limit=30") {
+        return jsonResponse(buildSessionList([buildListItem()]));
+      }
+      if (url === "/api/interview/event-centered/session/respond/stream") {
+        const request = JSON.parse(String(init?.body)) as EventCenteredRespondRequest;
+        acceptedClientTurnId = request.clientTurnId;
+        return sseResponse([
+          { event: "turn", data: { clientTurnId: request.clientTurnId } },
+          {
+            event: "error",
+            data: {
+              issue: {
+                code: "EVENT_CENTERED_TRANSIENT_PROVIDER_FAILURE",
+                title: "回复暂时中断",
+                message: "原话已经保存。",
+                retryable: true,
+                action: "refresh"
+              }
+            }
+          }
+        ]);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
+    const input = await screen.findByLabelText("输入当前事件");
+    fireEvent.change(input, { target: { value: "服务端已经收到了这句话" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    expect(await screen.findAllByText("服务端已经收到了这句话")).toHaveLength(1);
+    await waitFor(() => expect(workspaceReads).toBe(2));
+    await waitFor(() => expect(window.sessionStorage.length).toBe(0));
+  });
+
+  it("preserves an identical next draft after accepted recovery fails and a reload sees the turn", async () => {
+    const scope = { rootSessionId: "root-1", branchSessionId: "branch-1" };
+    const initial = buildWorkspace();
+    const repeatedRawText = "下一条也想输入完全相同的原话";
+    let acceptedClientTurnId = "";
+    let workspaceReads = 0;
+    let reloading = false;
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/session/root-1") {
+        workspaceReads += 1;
+        if (!reloading && workspaceReads === 1) return jsonResponse(initial);
+        if (!reloading) throw new TypeError("recovery GET failed");
+        return jsonResponse(buildWorkspace({
+          latestMessageSequence: 3,
+          messages: [
+            ...initial.messages,
+            {
+              id: "user-visible-after-reload",
+              role: "user",
+              content: repeatedRawText,
+              rawText: repeatedRawText,
+              sequence: 3,
+              userTurnId: "turn-visible-after-reload",
+              clientTurnId: acceptedClientTurnId,
+              assistantPayload: null,
+              responseVersion: null,
+              createdAt: "2026-07-22T08:02:00.000Z"
+            }
+          ]
+        }));
+      }
+      if (url === "/api/interview/event-centered/sessions?limit=30") {
+        return jsonResponse(buildSessionList([buildListItem()]));
+      }
+      if (url === "/api/interview/event-centered/session/respond/stream") {
+        const request = JSON.parse(String(init?.body)) as EventCenteredRespondRequest;
+        acceptedClientTurnId = request.clientTurnId;
+        return sseResponse([
+          { event: "turn", data: { clientTurnId: request.clientTurnId } },
+          {
+            event: "error",
+            data: {
+              issue: {
+                code: "EVENT_CENTERED_TRANSIENT_PROVIDER_FAILURE",
+                title: "回复暂时中断",
+                message: "原话已经保存。",
+                retryable: true,
+                action: "refresh"
+              }
+            }
+          }
+        ]);
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    }) as typeof fetch;
+
+    const firstMount = render(
+      <EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />
+    );
+    const input = await screen.findByLabelText("输入当前事件");
+    fireEvent.change(input, { target: { value: repeatedRawText } });
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    expect(await screen.findByText("这段话已保存，回复还没完成")).toBeVisible();
+    await waitFor(() => expect(readEventCenteredWorkspaceOutbox(scope)?.status).toBe("accepted"));
+    expect(input).toHaveValue("");
+    fireEvent.change(input, { target: { value: repeatedRawText } });
+    expect(readEventCenteredComposerDraft(scope)).toBe(repeatedRawText);
+
+    firstMount.unmount();
+    reloading = true;
+    render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
+
+    const restoredInput = await screen.findByLabelText("输入当前事件");
+    await waitFor(() => expect(readEventCenteredWorkspaceOutbox(scope)).toBeNull());
+    expect(restoredInput).toHaveValue(repeatedRawText);
+    expect(readEventCenteredComposerDraft(scope)).toBe(repeatedRawText);
+  });
+
+  it("does not let stale accepted-turn cleanup remove a newer same-branch outbox", async () => {
+    const scope = { rootSessionId: "root-1", branchSessionId: "branch-1" };
+    const acceptedRawText = "已经服务端可见的 A";
+    const acceptedRequest: EventCenteredRespondRequest = {
+      action: "reply",
+      rootSessionId: "root-1",
+      baseBranchSessionId: "branch-1",
+      baseMessageSequence: 2,
+      clientTurnId: "client-turn-accepted-a",
+      rawText: acceptedRawText,
+      inputMode: "text"
+    };
+    writeEventCenteredWorkspaceOutbox(scope, {
+      request: acceptedRequest,
+      status: "accepted",
+      createdAt: "2026-07-22T08:01:00.000Z"
+    });
+    const visibleWorkspace = buildWorkspace({
+      latestMessageSequence: 3,
+      messages: [
+        ...buildWorkspace().messages,
+        {
+          id: "user-visible-a",
+          role: "user",
+          content: acceptedRawText,
+          rawText: acceptedRawText,
+          sequence: 3,
+          userTurnId: "turn-visible-a",
+          clientTurnId: acceptedRequest.clientTurnId,
+          assistantPayload: null,
+          responseVersion: null,
+          createdAt: "2026-07-22T08:02:00.000Z"
+        }
+      ]
+    });
+    const nextOutbox: EventCenteredWorkspaceOutboxRecord = {
+      request: {
+        ...acceptedRequest,
+        baseMessageSequence: 3,
+        clientTurnId: "client-turn-new-b",
+        rawText: "仍需恢复的 B"
+      },
+      status: "submitting",
+      createdAt: "2026-07-22T08:03:00.000Z"
+    };
+
+    const firstMount = render(<WorkspaceStateHarness workspace={buildWorkspace()} />);
+    await waitFor(() => expect(screen.getByTestId("workspace-state-outbox")).toHaveTextContent("accepted"));
+    writeEventCenteredWorkspaceOutbox(scope, nextOutbox);
+    firstMount.rerender(<WorkspaceStateHarness workspace={visibleWorkspace} />);
+
+    await waitFor(() => expect(screen.getByTestId("workspace-state-outbox")).toHaveTextContent("none"));
+    expect(readEventCenteredWorkspaceOutbox(scope)).toEqual(nextOutbox);
+
+    firstMount.unmount();
+    render(<WorkspaceStateHarness workspace={visibleWorkspace} />);
+    await waitFor(() => expect(screen.getByTestId("workspace-state-outbox")).toHaveTextContent("submitting"));
+    expect(readEventCenteredWorkspaceOutbox(scope)).toEqual(nextOutbox);
+  });
+
+  it("keeps the next draft in memory when accepted-outbox storage cleanup raises SecurityError", async () => {
+    const scope = { rootSessionId: "root-1", branchSessionId: "branch-1" };
+    const acceptedRawText = "存储受限前已提交的原话";
+    const request: EventCenteredRespondRequest = {
+      action: "reply",
+      rootSessionId: "root-1",
+      baseBranchSessionId: "branch-1",
+      baseMessageSequence: 2,
+      clientTurnId: "client-turn-storage-blocked",
+      rawText: acceptedRawText,
+      inputMode: "text"
+    };
+    writeEventCenteredWorkspaceOutbox(scope, {
+      request,
+      status: "accepted",
+      createdAt: "2026-07-22T08:01:00.000Z"
+    });
+
+    const originalRemoveItem = Storage.prototype.removeItem;
+    const removeItemSpy = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (
+      this: Storage,
+      key: string
+    ) {
+      if (String(key).includes("hs-event-centered-turn-outbox")) {
+        throw new DOMException("Storage access blocked", "SecurityError");
+      }
+      return originalRemoveItem.call(this, key);
+    });
+    try {
+      const { rerender } = render(<WorkspaceStateHarness workspace={buildWorkspace()} />);
+      const input = await screen.findByLabelText("测试草稿");
+      await waitFor(() => expect(input).toHaveValue(""));
+      fireEvent.change(input, { target: { value: "存储受限时也要保留的新草稿" } });
+
+      rerender(<WorkspaceStateHarness workspace={buildWorkspace({
+        latestMessageSequence: 3,
+        messages: [
+          ...buildWorkspace().messages,
+          {
+            id: "user-visible-storage-blocked",
+            role: "user",
+            content: acceptedRawText,
+            rawText: acceptedRawText,
+            sequence: 3,
+            userTurnId: "turn-visible-storage-blocked",
+            clientTurnId: request.clientTurnId,
+            assistantPayload: null,
+            responseVersion: null,
+            createdAt: "2026-07-22T08:02:00.000Z"
+          }
+        ]
+      })} />);
+
+      await waitFor(() => expect(screen.getByTestId("workspace-state-outbox")).toHaveTextContent("none"));
+      expect(input).toHaveValue("存储受限时也要保留的新草稿");
+      expect(readEventCenteredComposerDraft(scope)).toBe("存储受限时也要保留的新草稿");
+    } finally {
+      removeItemSpy.mockRestore();
+    }
+  });
+
   it("keeps new record focusable and shows a top toast when two unfinished records already exist", async () => {
     const list = buildSessionList([
       buildListItem(),
@@ -502,18 +927,25 @@ describe("EventCenteredInterviewWorkspace", () => {
       }],
       dialogue: { ...buildWorkspace().dialogue, allowedActions: ["reply"] }
     });
+    let resolveSessionList!: (response: Response) => void;
+    const sessionListResponse = new Promise<Response>((resolve) => {
+      resolveSessionList = resolve;
+    });
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url === "/api/interview/event-centered/session/root-1") return jsonResponse(staleWorkspace);
       if (url === "/api/interview/event-centered/sessions?limit=30") {
-        return jsonResponse(buildSessionList([buildListItem()]));
+        return sessionListResponse;
       }
       throw new Error(`Unexpected request: ${url}`);
     });
     global.fetch = fetchMock as typeof fetch;
 
     render(<EventCenteredInterviewWorkspace entryDate="2026-07-22" initialSessionId="root-1" />);
-    fireEvent.click(await screen.findByRole("button", { name: "重新生成" }));
+    const regenerateButton = await screen.findByRole("button", { name: "重新生成" });
+    resolveSessionList(jsonResponse(buildSessionList([buildListItem()])));
+    await waitFor(() => expect(regenerateButton).toBeEnabled());
+    fireEvent.click(regenerateButton);
     fireEvent.click(await screen.findByRole("menuitem", { name: /更简单一点/u }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("这个操作已经不适用于当前记录。");
