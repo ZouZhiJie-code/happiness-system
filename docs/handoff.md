@@ -7,13 +7,13 @@
 
 ## 1. 当前交接结论
 
-GI-088 当前执行[v1.9 Production 发布工具 v1.2](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-2.md)。隔离 Preview 四轮连续链已完成，Codex 初评与产品负责人裁决均为 `4/4 pass`；局部拒答＋换方向继续保持对话并进入新焦点。
+GI-088 当前执行[v1.9 Production 发布工具 v1.3](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-3.md)。隔离 Preview 四轮连续链已完成，Codex 初评与产品负责人裁决均为 `4/4 pass`；局部拒答＋换方向继续保持对话并进入新焦点。
 
-发布工具 v1 的 CLI JSON 解析问题已由 v1.1 修复，新候选 `dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH` Ready。候选冒烟注册和会话创建成功，随后本地 psql 回读合同失败；临时账号已精确删除，账号、会话、消息和 Trace 均回读为 0。v1.2 只修复 DIRECT_URL、标准输入变量替换和删除后独立确认，并在应用代码无变化的前提下复用该候选。
+发布工具 v1 的 CLI JSON 解析问题已由 v1.1 修复，v1.2 又修复数据库回读与清理合同。复用父候选执行真实冒烟时，服务因候选要求 `deepseek-v4-pro`、部署环境实际使用 `deepseek-v4-flash` 而主动拒绝可见生成；临时账号已自动清理，正式域名保持 baseline。v1.3 只补齐策略与模型环境同步切换和回退。
 
 技术冒烟、后台冻结与重复提交均已通过。随后又完成五个真实 Preview 回合：纠正和停止通过；明确继续深挖时，AI 几乎逐字重复上一条“当时回应还是压下去”的问题；关系表达中，用户已经说“想聊这种差别”，AI 又询问是否先聊这种差别。真人可见预算累计 `7/15`、剩余 `8`。公开结果见[Preview 验收交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)与[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)。
 
-当前状态为 `v1.9 Preview product 4/4 pass / release runner v1.2 implementation`。v1.9 只调整用户控制范围：局部拒答同时带有继续或换方向时继续对话；明确整轮停止时收住。四轮原文与输出已逐例交付，产品负责人全部裁决 `pass`，私有裁决与四轮输入／输出哈希绑定。
+当前状态为 `v1.9 Preview product 4/4 pass / release runner v1.3 implementation`。v1.9 只调整用户控制范围：局部拒答同时带有继续或换方向时继续对话；明确整轮停止时收住。四轮原文与输出已逐例交付，产品负责人全部裁决 `pass`，私有裁决与四轮输入／输出哈希绑定。
 
 v1.9 当前专项 `101/101`、发布工具 `11/11`、全量 `460` 个测试文件／`3694` 条测试通过，另有 `2` 个文件／`10` 条测试按既定条件跳过；类型检查、Lint、两套 Prisma 与 Production build 通过。Preview 四轮中位 `10633.5ms`、最大 `11505ms`，家族可见预算 `15/15`。
 

@@ -19,11 +19,13 @@ import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const GI088_V19_RELEASE_IDENTITY =
-  "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-2-psql-contract";
+  "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-3-model-environment-contract";
 export const GI088_V19_CANDIDATE_VERSION =
   "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority";
 export const GI088_V19_STRATEGY = "complete_response_v1_9";
 export const GI088_V19_BASELINE_STRATEGY = "baseline";
+export const GI088_V19_CANDIDATE_MODEL = "deepseek-v4-pro";
+export const GI088_V19_BASELINE_MODEL = "deepseek-v4-flash";
 export const GI088_V19_BASELINE_DEPLOYMENT = "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5";
 export const GI088_V19_PRODUCTION_DOMAIN = "https://dailylight.chat";
 export const GI088_V19_CANDIDATE_COMMIT = "82214e5";
@@ -35,7 +37,7 @@ const ARTIFACT_RELATIVE_ROOT =
 const READINESS_PRIVATE_RELATIVE_ROOT =
   `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release`;
 const PRIVATE_RELATIVE_ROOT =
-  `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release-v1-2-psql-contract`;
+  `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release-v1-3-model-environment-contract`;
 const PARENT_V11_CANDIDATE_ID = "dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH";
 const PARENT_V11_CANDIDATE_URL =
   "https://xingfuxitong-dyfj5qu4h-zouzhijies-projects.vercel.app";
@@ -61,7 +63,7 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
     privateRoot,
     plan: resolve(
       root,
-      "docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-2.md"
+      "docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-3.md"
     ),
     runner: resolve(root, "scripts/run-gi088-v1-9-production-release.mjs"),
     candidateRuntime: resolve(
@@ -79,6 +81,14 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
     backgroundService: resolve(
       root,
       "src/server/services/interview/event-centered-background-facts.service.ts"
+    ),
+    providerContract: resolve(
+      root,
+      "src/server/services/ai/event-centered-provider.ts"
+    ),
+    runtimeReadbackRoute: resolve(
+      root,
+      "src/app/api/debug/runtime-env/route.ts"
     ),
     schema: resolve(root, "prisma/schema.prisma"),
     previewStageLedger: resolve(
@@ -115,6 +125,14 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
       artifactRoot,
       ".private/complete-response-first-v1-9-production-release-v1-1-cli-json-shape/manual-cleanup-evidence.json"
     ),
+    parentV12Receipt: resolve(
+      artifactRoot,
+      "complete-response-first-v1-9-production-release-v1-2-receipt.json"
+    ),
+    parentV12StageLedger: resolve(
+      artifactRoot,
+      "complete-response-first-v1-9-production-release-stage-ledger-v1-2.json"
+    ),
     state: resolve(privateRoot, "release-state.json"),
     previewReviewTemplate: resolve(privateRoot, "product-owner-preview-review.template.json"),
     previewReview: resolve(privateRoot, "product-owner-preview-review.json"),
@@ -123,7 +141,7 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
     lock: resolve(privateRoot, "release.lock"),
     publicReceipt: resolve(
       artifactRoot,
-      "complete-response-first-v1-9-production-release-v1-2-receipt.json"
+      "complete-response-first-v1-9-production-release-v1-3-receipt.json"
     )
   };
 }
@@ -302,6 +320,32 @@ export function validateGi088V19ParentV11Failure(paths) {
   };
 }
 
+export function validateGi088V19ParentV12Failure(paths) {
+  const receipt = readJson(paths.parentV12Receipt);
+  const stage = readJson(paths.parentV12StageLedger);
+  if (
+    receipt.identity !==
+      "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-2-psql-contract" ||
+    receipt.status !== "candidate_smoke_failed" ||
+    receipt.productOwnerPreviewVerdict !== "pass" ||
+    receipt.error?.code !== "GI088_V19_RELEASE_VISIBLE_STREAM_FAILED" ||
+    receipt.candidate?.ready !== true ||
+    receipt.candidate?.deploymentId !== PARENT_V11_CANDIDATE_ID ||
+    stage.status !== "candidate_model_environment_no_go_superseded_by_v1_3" ||
+    stage.smoke?.errorCode !== "EVENT_CENTERED_CANDIDATE_MODEL_MISMATCH" ||
+    stage.smoke?.temporaryUserDeleted !== true ||
+    stage.candidate?.domainPromoted !== false
+  ) {
+    throw new Error("GI088_V19_RELEASE_PARENT_V12_EVIDENCE_INVALID");
+  }
+  return {
+    identity: receipt.identity,
+    receiptSha256: sha256File(paths.parentV12Receipt),
+    stageLedgerSha256: sha256File(paths.parentV12StageLedger),
+    failureCode: stage.smoke.errorCode
+  };
+}
+
 function sourceFiles(paths) {
   return {
     plan: paths.plan,
@@ -310,6 +354,8 @@ function sourceFiles(paths) {
     releaseSelector: paths.releaseSelector,
     visibleService: paths.visibleService,
     backgroundService: paths.backgroundService,
+    providerContract: paths.providerContract,
+    runtimeReadbackRoute: paths.runtimeReadbackRoute,
     schema: paths.schema,
     previewStageLedger: paths.previewStageLedger,
     previewPrivateReview: paths.previewPrivateReview,
@@ -320,7 +366,9 @@ function sourceFiles(paths) {
     parentV1StageLedger: paths.parentV1StageLedger,
     parentV11Receipt: paths.parentV11Receipt,
     parentV11StageLedger: paths.parentV11StageLedger,
-    parentV11ManualCleanup: paths.parentV11ManualCleanup
+    parentV11ManualCleanup: paths.parentV11ManualCleanup,
+    parentV12Receipt: paths.parentV12Receipt,
+    parentV12StageLedger: paths.parentV12StageLedger
   };
 }
 
@@ -446,6 +494,18 @@ export function buildGi088V19VercelArgs(command, value = null) {
     return [
       "env", "update", "INTERVIEW_EVENT_CENTERED_STRATEGY", "production",
       "--value", GI088_V19_BASELINE_STRATEGY, "--yes"
+    ];
+  }
+  if (command === "set-candidate-model") {
+    return [
+      "env", "update", "DEEPSEEK_MODEL", "production",
+      "--value", GI088_V19_CANDIDATE_MODEL, "--yes"
+    ];
+  }
+  if (command === "set-baseline-model") {
+    return [
+      "env", "update", "DEEPSEEK_MODEL", "production",
+      "--value", GI088_V19_BASELINE_MODEL, "--yes"
     ];
   }
   if (command === "deploy-candidate") {
@@ -705,22 +765,28 @@ function pullProductionEnvironment(paths, exec) {
       databaseUrl: parseDotenvValue(text, "DATABASE_URL"),
       directUrl: parseDotenvValue(text, "DIRECT_URL"),
       mode: parseDotenvValue(text, "INTERVIEW_EVENT_CENTERED_MODE"),
-      strategy: parseDotenvValue(text, "INTERVIEW_EVENT_CENTERED_STRATEGY")
+      strategy: parseDotenvValue(text, "INTERVIEW_EVENT_CENTERED_STRATEGY"),
+      model: parseDotenvValue(text, "DEEPSEEK_MODEL"),
+      runtimeReadbackToken: parseDotenvValue(text, "RUNTIME_ENV_READBACK_TOKEN")
     };
   } finally {
     rmSync(tempRoot, { recursive: true, force: true });
   }
 }
 
-function productionDatabaseUrl(paths, exec, expectedStrategy) {
+function productionDatabaseUrl(paths, exec, expectedStrategy, expectedModel) {
   const environment = pullProductionEnvironment(paths, exec);
   if (
     environment.mode !== "event_centered" ||
-    environment.strategy !== expectedStrategy
+    environment.strategy !== expectedStrategy ||
+    environment.model !== expectedModel
   ) {
     throw new Error("GI088_V19_RELEASE_PRODUCTION_ENVIRONMENT_MISMATCH");
   }
-  return normalizeGi088V19PsqlUrl(environment.directUrl);
+  return {
+    databaseUrl: normalizeGi088V19PsqlUrl(environment.directUrl),
+    runtimeReadbackToken: environment.runtimeReadbackToken
+  };
 }
 
 export function normalizeGi088V19PsqlUrl(value) {
@@ -796,6 +862,9 @@ function vercelCurl(exec, paths, deploymentUrl, path, request = {}) {
   const args = ["curl", path, "--deployment", deploymentUrl, "--yes", "--", "-i"];
   if (request.method && request.method !== "GET") args.push("--request", request.method);
   if (request.cookie) args.push("--header", `cookie: ${request.cookie}`);
+  for (const [name, value] of Object.entries(request.headers ?? {})) {
+    args.push("--header", `${name}: ${value}`);
+  }
   if (request.body !== undefined) {
     args.push("--header", "content-type: application/json", "--data", JSON.stringify(request.body));
   }
@@ -822,7 +891,16 @@ function vercelCurl(exec, paths, deploymentUrl, path, request = {}) {
   };
 }
 
-function directVisibleTurn({ exec, paths, deploymentUrl, label, input, onRegistered }) {
+function directVisibleTurn({
+  exec,
+  paths,
+  deploymentUrl,
+  deploymentId,
+  label,
+  input,
+  runtimeReadbackToken,
+  onRegistered
+}) {
   const suffix = randomBytes(6).toString("hex");
   const username = `gi088rel_${label}_${suffix}`.slice(0, 24);
   const password = `R_${randomBytes(18).toString("base64url")}!`;
@@ -839,6 +917,19 @@ function directVisibleTurn({ exec, paths, deploymentUrl, label, input, onRegiste
   });
   const cookie = String(register.headers["set-cookie"] ?? "").split(";", 1)[0];
   if (!cookie) throw new Error("GI088_V19_RELEASE_COOKIE_MISSING");
+  const runtime = vercelCurl(exec, paths, deploymentUrl, "/api/debug/runtime-env", {
+    cookie,
+    headers: { "x-runtime-readback-token": runtimeReadbackToken }
+  });
+  if (
+    runtime.status !== 200 ||
+    runtime.json?.env?.VERCEL_DEPLOYMENT_ID !== deploymentId ||
+    runtime.json?.eventCentered?.mode !== "event_centered" ||
+    runtime.json?.eventCentered?.strategy !== GI088_V19_STRATEGY ||
+    runtime.json?.eventCentered?.model !== GI088_V19_CANDIDATE_MODEL
+  ) {
+    throw new Error("GI088_V19_RELEASE_CANDIDATE_RUNTIME_MODEL_MISMATCH");
+  }
   const start = vercelCurl(exec, paths, deploymentUrl, "/api/interview/event-centered/session/start", {
     method: "POST",
     cookie,
@@ -928,6 +1019,7 @@ function verifyLocalReleaseInputs(paths, state) {
   const readiness = buildGi088V19ReadinessEvidence(paths);
   const parentV1 = validateGi088V19ParentReleaseFailure(paths);
   const parentV11 = validateGi088V19ParentV11Failure(paths);
+  const parentV12 = validateGi088V19ParentV12Failure(paths);
   if (
     previewEvidence.privateReviewSha256 !== state.previewEvidence.privateReviewSha256 ||
     readiness.privateReadinessSha256 !== state.readiness.privateReadinessSha256 ||
@@ -935,11 +1027,13 @@ function verifyLocalReleaseInputs(paths, state) {
     parentV1.stageLedgerSha256 !== state.parentV1.stageLedgerSha256 ||
     parentV11.receiptSha256 !== state.parentV11.receiptSha256 ||
     parentV11.stageLedgerSha256 !== state.parentV11.stageLedgerSha256 ||
-    parentV11.manualCleanupSha256 !== state.parentV11.manualCleanupSha256
+    parentV11.manualCleanupSha256 !== state.parentV11.manualCleanupSha256 ||
+    parentV12.receiptSha256 !== state.parentV12.receiptSha256 ||
+    parentV12.stageLedgerSha256 !== state.parentV12.stageLedgerSha256
   ) {
     throw new Error("GI088_V19_RELEASE_EVIDENCE_DRIFT");
   }
-  return { previewEvidence, readiness, parentV1, parentV11 };
+  return { previewEvidence, readiness, parentV1, parentV11, parentV12 };
 }
 
 function assertGitReady(paths, exec, { allowPublicReceipt = false } = {}) {
@@ -1000,6 +1094,7 @@ export async function prepareGi088V19Release({ repoRoot = process.cwd(), now = n
   const readiness = buildGi088V19ReadinessEvidence(paths);
   const parentV1 = validateGi088V19ParentReleaseFailure(paths);
   const parentV11 = validateGi088V19ParentV11Failure(paths);
+  const parentV12 = validateGi088V19ParentV12Failure(paths);
   const sourceHashes = calculateGi088V19SourceHashes(paths);
   const planFingerprint = calculateGi088V19PlanFingerprint(sourceHashes);
   const state = {
@@ -1012,6 +1107,7 @@ export async function prepareGi088V19Release({ repoRoot = process.cwd(), now = n
     readiness,
     parentV1,
     parentV11,
+    parentV12,
     productOwnerPreviewVerdict: "pending",
     baseline: {
       deploymentId: GI088_V19_BASELINE_DEPLOYMENT,
@@ -1099,11 +1195,16 @@ async function deployCandidate({ paths, state, exec, now }) {
     const currentEnvironment = pullProductionEnvironment(paths, exec);
     if (
       currentEnvironment.mode !== "event_centered" ||
-      currentEnvironment.strategy !== GI088_V19_BASELINE_STRATEGY
+      currentEnvironment.strategy !== GI088_V19_BASELINE_STRATEGY ||
+      currentEnvironment.model !== GI088_V19_BASELINE_MODEL
     ) {
       throw new Error("GI088_V19_RELEASE_PRODUCTION_BASELINE_DRIFT");
     }
     exec("vercel", buildGi088V19VercelArgs("set-candidate-strategy"), {
+      cwd: paths.root,
+      env: process.env
+    });
+    exec("vercel", buildGi088V19VercelArgs("set-candidate-model"), {
       cwd: paths.root,
       env: process.env
     });
@@ -1145,6 +1246,10 @@ async function deployCandidate({ paths, state, exec, now }) {
     if (strategyChanged) {
       try {
         exec("vercel", buildGi088V19VercelArgs("set-baseline-strategy"), {
+          cwd: paths.root,
+          env: process.env
+        });
+        exec("vercel", buildGi088V19VercelArgs("set-baseline-model"), {
           cwd: paths.root,
           env: process.env
         });
@@ -1220,7 +1325,8 @@ async function adoptParentCandidate({ paths, state, exec, now }) {
     const environment = pullProductionEnvironment(paths, exec);
     if (
       environment.mode !== "event_centered" ||
-      environment.strategy !== GI088_V19_STRATEGY
+      environment.strategy !== GI088_V19_STRATEGY ||
+      environment.model !== GI088_V19_CANDIDATE_MODEL
     ) {
       throw new Error("GI088_V19_RELEASE_PRODUCTION_ENVIRONMENT_MISMATCH");
     }
@@ -1261,16 +1367,28 @@ async function runDirectSmoke({ paths, state, exec, now, label = "candidate", in
   state.updatedAt = now.toISOString();
   writeState(paths, state);
   let databaseUrl = null;
+  let runtimeReadbackToken = null;
   let registered = null;
   let turn = null;
   try {
-    databaseUrl = productionDatabaseUrl(paths, exec, GI088_V19_STRATEGY);
+    const production = productionDatabaseUrl(
+      paths,
+      exec,
+      GI088_V19_STRATEGY,
+      GI088_V19_CANDIDATE_MODEL
+    );
+    databaseUrl = production.databaseUrl;
+    runtimeReadbackToken = production.runtimeReadbackToken;
     turn = directVisibleTurn({
       exec,
       paths,
       deploymentUrl,
+      deploymentId: label === "candidate"
+        ? state.candidate.deploymentId
+        : state.promotion.deploymentId,
       label,
       input,
+      runtimeReadbackToken,
       onRegistered: (identity) => {
         registered = identity;
         state.temporaryUser = {
@@ -1359,8 +1477,13 @@ async function cleanupTemporaryReleaseUser({ paths, state, exec, now }) {
   state.updatedAt = now.toISOString();
   writeState(paths, state);
   try {
-    const databaseUrl = productionDatabaseUrl(paths, exec, GI088_V19_STRATEGY);
-    deleteTemporaryUser(exec, databaseUrl, state.temporaryUser.userId);
+    const production = productionDatabaseUrl(
+      paths,
+      exec,
+      GI088_V19_STRATEGY,
+      GI088_V19_CANDIDATE_MODEL
+    );
+    deleteTemporaryUser(exec, production.databaseUrl, state.temporaryUser.userId);
     state.temporaryUser = null;
     state.status = "temporary_user_cleanup_completed_release_stopped_for_review";
     state.error = null;
@@ -1435,6 +1558,10 @@ async function rollbackRelease({ paths, state, exec, now, reason = "manual" }) {
       cwd: paths.root,
       env: process.env
     });
+    exec("vercel", buildGi088V19VercelArgs("set-baseline-model"), {
+      cwd: paths.root,
+      env: process.env
+    });
     exec("vercel", buildGi088V19VercelArgs("rollback", GI088_V19_BASELINE_DEPLOYMENT), {
       cwd: paths.root,
       env: process.env
@@ -1453,7 +1580,8 @@ async function rollbackRelease({ paths, state, exec, now, reason = "manual" }) {
     const environment = pullProductionEnvironment(paths, exec);
     if (
       environment.mode !== "event_centered" ||
-      environment.strategy !== GI088_V19_BASELINE_STRATEGY
+      environment.strategy !== GI088_V19_BASELINE_STRATEGY ||
+      environment.model !== GI088_V19_BASELINE_MODEL
     ) {
       throw new Error("GI088_V19_RELEASE_ROLLBACK_ENVIRONMENT_MISMATCH");
     }

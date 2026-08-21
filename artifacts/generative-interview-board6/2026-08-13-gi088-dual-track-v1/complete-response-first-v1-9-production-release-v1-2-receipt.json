@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-2-psql-contract",
+  "status": "candidate_smoke_failed",
+  "planFingerprint": "78608f78a5ecabc8efafa83f8382d6bacf45bc7aa867775cb6934fff0d2dceba",
+  "productOwnerPreviewVerdict": "pass",
+  "baseline": {
+    "deploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "strategy": "baseline",
+    "domain": "https://dailylight.chat"
+  },
+  "candidate": {
+    "deploymentId": "dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH",
+    "deploymentUrl": "https://xingfuxitong-dyfj5qu4h-zouzhijies-projects.vercel.app",
+    "ready": true,
+    "sourceCommit": "c0cb06e9f7dc3d1746a77865091b00c6aa2ffb4e"
+  },
+  "smoke": null,
+  "promotion": null,
+  "onlineRegression": null,
+  "rollback": null,
+  "error": {
+    "code": "GI088_V19_RELEASE_VISIBLE_STREAM_FAILED",
+    "detailHash": "643b3618608a39ca33b3aa456645e9e49dcff0e5439b548314072c0a55373352"
+  },
+  "updatedAt": "2026-08-21T02:39:42.377Z",
+  "publicSensitiveContentStored": false
+}

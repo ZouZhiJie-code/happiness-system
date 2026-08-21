@@ -9,7 +9,7 @@
 
 置信度：`高`
 
-落地验证状态：`v1.9 Preview 产品 4/4 pass；发布工具 v1.1 psql 合同 No-Go；v1.2 实施中；正式域名 baseline`
+落地验证状态：`v1.9 Preview 产品 4/4 pass；发布工具 v1.2 模型环境 No-Go；v1.3 实施中；正式域名 baseline`
 
 ## 完整回应优先 v1.9 Production 发布门｜2026-08-20
 
@@ -20,8 +20,8 @@
 | 前置门 | 四轮产品裁决必须绑定实际输入／输出哈希；缺失时在部署凭据和网络写操作前停止 |
 | 正式切流门 | 候选可见回应产品 pass、后台 Trace 完成、临时数据清理完成 |
 | v1.1 结果 | 候选 `dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH` Ready；数据库回读因 psql 调用合同失败；临时数据独立回读全部归零 |
-| 当前状态 | `已确认·实施中 / release_runner_v1_2`；正式域名 `event_centered + baseline` |
-| 当前专项 | [v1.9 Production 发布工具 v1.2](../../plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-2.md) |
+| 当前状态 | `已确认·实施中 / release_runner_v1_3`；正式域名 `event_centered + baseline` |
+| 当前专项 | [v1.9 Production 发布工具 v1.3](../../plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-3.md) |
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 

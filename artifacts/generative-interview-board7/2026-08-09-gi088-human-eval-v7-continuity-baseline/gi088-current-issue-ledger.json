@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v113",
-  "status": "complete_response_first_v1_9_release_runner_v1_2_implementation",
-  "currentQueueStage": "complete_response_first_v1_9_psql_contract_single_factor_fix",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v114",
+  "status": "complete_response_first_v1_9_release_runner_v1_3_implementation",
+  "currentQueueStage": "complete_response_first_v1_9_model_environment_contract_single_factor_fix",
   "semanticQualityDecisionPresentation": {
     "status": "product_owner_confirmed",
     "productJudgment": "每个语义质量判断先逐例展示与判断直接相关的用户输入和 AI 实际输出；Codex 只作初评，产品负责人基于原文作最终裁决。",
@@ -488,13 +488,13 @@
     "stopPoint": "implement_validate_and_deploy_isolated_preview_before_new_model_calls"
   },
   "completeResponseFirstV19": {
-    "status": "preview_product_four_pass_release_runner_v1_1_no_go_v1_2_in_progress",
-    "confirmedFact": "v1.9 隔离 Preview 四轮连续链完成，Codex 初评 4/4 pass；中位 10633.5ms、最长 11505ms，单例 15 秒门通过、6 秒理想目标未达到。当前 Production 部署、event_centered + baseline、数据库备份和回退路径均已核对，Production 尚未改变。",
+    "status": "preview_product_four_pass_release_runner_v1_2_model_no_go_v1_3_in_progress",
+    "confirmedFact": "v1.9 隔离 Preview 四轮连续链完成，Codex 初评与产品负责人裁决均为 4/4 pass。v1.2 已修复数据库合同；真实候选冒烟因部署模型为 deepseek-v4-flash、候选要求 deepseek-v4-pro 而在可见生成前停止，临时用户已自动清理。正式域名继续使用 event_centered + baseline。",
     "productJudgment": "产品负责人依据四轮完整原文与实际 AI 输出全部裁决 pass；当前执行候选部署与后台回读，候选实际输出继续由产品负责人裁决。",
     "codexAssessment": "普通表达、纠正、明确深挖、局部拒答＋换方向继续均初评 pass；当前用发布状态机固定产品门、后台门、临时数据清理和回退顺序，约 10.6 秒中位等待继续独立记为发布风险。",
     "openHypotheses": [
-      "Production 直连冒烟和正式域名回归能否保持与隔离 Preview 一致的语义、状态和等待体验。",
-      "候选部署与真实后台 Trace 能否通过新的发布状态机完成。"
+      "同时冻结 complete_response_v1_9 与 deepseek-v4-pro 的新候选能否通过可见生成与后台 Trace。",
+      "Production 直连冒烟和正式域名回归能否保持与隔离 Preview 一致的语义、状态和等待体验。"
     ],
     "execution": {
       "candidate": "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority",
@@ -532,16 +532,18 @@
       "fullTests": "3694_passed_10_skipped",
       "missingProductReviewGate": "passed_before_deployment_credentials_and_network_writes",
       "previewProductReview": "four_of_four_pass_hash_bound",
-      "productionMutation": "candidate_created_unpromoted_baseline_restored",
+      "productionMutation": "formal_domain_unchanged_baseline",
       "v1Failure": "GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING",
       "observedDeploymentId": "dpl_8tTNtvoemDhstcPqaLu1g3q3gvWU",
       "v1_1Plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-1.md",
       "v1_1CandidateDeploymentId": "dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH",
       "v1_1Failure": "psql_connection_and_variable_contract",
-      "temporaryDataCleanup": "verified_user_session_message_trace_all_zero",
-      "v1_2Plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-2.md"
+      "v1_2Plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-2.md",
+      "v1_2Failure": "EVENT_CENTERED_CANDIDATE_MODEL_MISMATCH",
+      "temporaryDataCleanup": "verified_automatic_cleanup",
+      "v1_3Plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-3.md"
     },
-    "stopPoint": "implement_v1_2_psql_contract_adopt_ready_candidate_and_run_hash_bound_smoke"
+    "stopPoint": "deploy_new_candidate_with_strategy_and_model_contract_then_run_hash_bound_smoke"
   },
   "responseFirstV29": {
     "status": "correction_gate_product_pass_continuation_product_fail_no_go",

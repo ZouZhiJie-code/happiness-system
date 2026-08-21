@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   GI088_V19_BASELINE_DEPLOYMENT,
+  GI088_V19_BASELINE_MODEL,
   GI088_V19_BASELINE_STRATEGY,
+  GI088_V19_CANDIDATE_MODEL,
   GI088_V19_CANDIDATE_VERSION,
   GI088_V19_PRODUCTION_DOMAIN,
   GI088_V19_RELEASE_IDENTITY,
@@ -29,6 +31,7 @@ import {
   validateGi088V19BackgroundTrace,
   validateGi088V19ParentReleaseFailure,
   validateGi088V19ParentV11Failure,
+  validateGi088V19ParentV12Failure,
   validateGi088V19ProductReview,
   validateGi088V19SmokeReview
 // @ts-expect-error The executable is intentionally plain Node ESM; Vitest exercises its public exports directly.
@@ -103,6 +106,7 @@ describe("GI-088 v1.9 production release gate", () => {
     const readiness = buildGi088V19ReadinessEvidence(paths);
     const parentV1 = validateGi088V19ParentReleaseFailure(paths);
     const parentV11 = validateGi088V19ParentV11Failure(paths);
+    const parentV12 = validateGi088V19ParentV12Failure(paths);
 
     expect(preview.identity).toBe(
       "2026-08-20.gi088-complete-response-first-v1-9-isolated-preview-v1"
@@ -126,6 +130,11 @@ describe("GI-088 v1.9 production release gate", () => {
         "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-1-cli-json-shape",
       candidateDeploymentId: "dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH",
       candidateSourceCommit: "c0cb06e9f7dc3d1746a77865091b00c6aa2ffb4e"
+    });
+    expect(parentV12).toMatchObject({
+      identity:
+        "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-2-psql-contract",
+      failureCode: "EVENT_CENTERED_CANDIDATE_MODEL_MISMATCH"
     });
   });
 
@@ -262,6 +271,9 @@ describe("GI-088 v1.9 production release gate", () => {
       "--yes",
       "--format=json"
     ]);
+    expect(buildGi088V19VercelArgs("set-candidate-model")).toContain(
+      GI088_V19_CANDIDATE_MODEL
+    );
   });
 
   it("freezes baseline recovery commands", () => {
@@ -273,6 +285,9 @@ describe("GI-088 v1.9 production release gate", () => {
       GI088_V19_BASELINE_DEPLOYMENT,
       "--yes"
     ]);
+    expect(buildGi088V19VercelArgs("set-baseline-model")).toContain(
+      GI088_V19_BASELINE_MODEL
+    );
   });
 
   it("requires one completed and applied background task with zero retry", () => {

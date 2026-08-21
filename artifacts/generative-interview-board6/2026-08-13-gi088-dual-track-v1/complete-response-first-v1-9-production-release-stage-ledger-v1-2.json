@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-2-psql-contract",
+  "status": "candidate_model_environment_no_go_superseded_by_v1_3",
+  "productOwnerPreviewVerdict": "pass",
+  "baseline": {
+    "deploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "strategy": "baseline",
+    "domainPromoted": false
+  },
+  "candidate": {
+    "deploymentId": "dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH",
+    "ready": true,
+    "domainPromoted": false,
+    "sourceCommit": "c0cb06e9f7dc3d1746a77865091b00c6aa2ffb4e"
+  },
+  "smoke": {
+    "visibleTechnicalPassed": false,
+    "background": "not_run",
+    "productSemanticReview": "not_run",
+    "temporaryUserDeleted": true,
+    "errorCode": "EVENT_CENTERED_CANDIDATE_MODEL_MISMATCH"
+  },
+  "confirmedRootCause": "candidate_required_deepseek_v4_pro_but_deployment_environment_used_deepseek_v4_flash",
+  "receiptSha256": "9d5a75044e5d3ac9d4c2a1276b2c997e31487b2ea762a60794499b5fcdcef490",
+  "publicSensitiveContentStored": false,
+  "nextIdentity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-3-model-environment-contract"
+}
