@@ -27,8 +27,25 @@ const mocks = vi.hoisted(() => ({
   markFailed: vi.fn(),
   resume: vi.fn(),
   generativeEnabled: vi.fn(() => false),
+  completeResponseFirstEnabled: vi.fn(() => false),
+  completeResponseFirstV12Enabled: vi.fn(() => false),
+  completeResponseFirstV121Enabled: vi.fn(() => false),
+  completeResponseFirstV13Enabled: vi.fn(() => false),
+  completeResponseFirstV14Enabled: vi.fn(() => false),
+  completeResponseFirstV15Enabled: vi.fn(() => false),
+  completeResponseFirstV16Enabled: vi.fn(() => false),
+  completeResponseFirstV18Enabled: vi.fn(() => false),
+  completeResponseFirstV19Enabled: vi.fn(() => false),
   thoughtOnly: vi.fn(() => false),
   generateOnce: vi.fn(),
+  generateCompleteResponseV12: vi.fn(),
+  generateCompleteResponseV121: vi.fn(),
+  generateCompleteResponseV13: vi.fn(),
+  generateCompleteResponseV14: vi.fn(),
+  generateCompleteResponseV15: vi.fn(),
+  generateCompleteResponseV16: vi.fn(),
+  generateCompleteResponseV18: vi.fn(),
+  generateCompleteResponseV19: vi.fn(),
   generatePlan: vi.fn(),
   generateVisible: vi.fn(),
   generateThoughtMap: vi.fn(),
@@ -51,9 +68,33 @@ vi.mock("@/features/interview/event-centered-release", () => ({
   isEventCenteredThoughtOnlyScope: mocks.thoughtOnly
 }));
 
-vi.mock("@/features/interview/event-centered/generative-release", () => ({
-  isGenerativeEventCenteredStrategyEnabled: mocks.generativeEnabled
-}));
+vi.mock("@/features/interview/event-centered/generative-release", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("@/features/interview/event-centered/generative-release")
+  >();
+  return {
+    ...actual,
+    isGenerativeEventCenteredStrategyEnabled: mocks.generativeEnabled,
+    isCompleteResponseFirstEventCenteredStrategyEnabled:
+      mocks.completeResponseFirstEnabled,
+    isCompleteResponseFirstV12EventCenteredStrategyEnabled:
+      mocks.completeResponseFirstV12Enabled,
+    isCompleteResponseFirstV121EventCenteredStrategyEnabled:
+      mocks.completeResponseFirstV121Enabled,
+    isCompleteResponseFirstV13EventCenteredStrategyEnabled:
+      mocks.completeResponseFirstV13Enabled,
+    isCompleteResponseFirstV14EventCenteredStrategyEnabled:
+      mocks.completeResponseFirstV14Enabled,
+    isCompleteResponseFirstV15EventCenteredStrategyEnabled:
+      mocks.completeResponseFirstV15Enabled,
+    isCompleteResponseFirstV16EventCenteredStrategyEnabled:
+      mocks.completeResponseFirstV16Enabled,
+    isCompleteResponseFirstV18EventCenteredStrategyEnabled:
+      mocks.completeResponseFirstV18Enabled,
+    isCompleteResponseFirstV19EventCenteredStrategyEnabled:
+      mocks.completeResponseFirstV19Enabled
+  };
+});
 
 vi.mock("@/server/repositories/event-centered-interview.repository", () => ({
   abandonJournalEvent: mocks.abandon,
@@ -113,6 +154,14 @@ vi.mock("@/server/services/interview/event-centered-ai.service", () => ({
   generateEventCenteredGenerativeVisibleTurnAI: mocks.generateVisible,
   generateEventCenteredThoughtMapUpdateAI: mocks.generateThoughtMap,
   generateEventCenteredThoughtQuestionAI: mocks.generateThoughtQuestion,
+  generateEventCenteredCompleteResponseV12AI: mocks.generateCompleteResponseV12,
+  generateEventCenteredCompleteResponseV121AI: mocks.generateCompleteResponseV121,
+  generateEventCenteredCompleteResponseV13AI: mocks.generateCompleteResponseV13,
+  generateEventCenteredCompleteResponseV14AI: mocks.generateCompleteResponseV14,
+  generateEventCenteredCompleteResponseV15AI: mocks.generateCompleteResponseV15,
+  generateEventCenteredCompleteResponseV16AI: mocks.generateCompleteResponseV16,
+  generateEventCenteredCompleteResponseV18AI: mocks.generateCompleteResponseV18,
+  generateEventCenteredCompleteResponseV19AI: mocks.generateCompleteResponseV19,
   generateEventCenteredTurnOnceAI: mocks.generateOnce,
   extractEventCenteredPersonalReactionFact: mocks.extractReaction,
   isBareEventCenteredAngleChange: mocks.bareAngleChange,
@@ -363,6 +412,64 @@ function completedGenerativeTurn() {
   };
 }
 
+function askingGenerativeTurn() {
+  return {
+    understanding: {
+      eventBoundary: "current_event" as const,
+      coreEventIdentifiable: true,
+      answerStatus: "answered" as const,
+      factDeltas: [],
+      correctionOrBoundary: null,
+      tentativeInterpretation: null,
+      eventOptions: []
+    },
+    semanticPlan: {
+      action: "ask" as const,
+      activeAngle: "feeling" as const,
+      outcomeAssessment: {
+        state: "needs_more" as const,
+        origin: null,
+        basis: "当前仍需分清两种感受各自出现的时刻",
+        supportEvidenceRefs: ["fact-1"],
+        missingUnderstanding: "两种感受先后出现的具体时刻"
+      },
+      evidenceRefs: ["fact-1"],
+      insightKind: null,
+      selectedTargetId: "feeling_timing",
+      expectedUnderstandingDelta: "分清紧张和期待分别在什么时刻出现",
+      tentativeInterpretation: null,
+      stopReason: null,
+      cognitiveAction: "differentiate" as const,
+      microgoalDelta: null,
+      realizationContract: {
+        responseCore: "分清紧张和期待出现的时刻",
+        summaryAnchors: []
+      }
+    },
+    visibleTurn: {
+      thinkingSummary: "听起来紧张和期待是同时混在一起的，我们可以先分清它们出现的时刻。",
+      responseKind: "question" as const,
+      question: "听到名字的那一刻，哪一种感觉先冒出来？",
+      insight: null,
+      honestLimit: null
+    },
+    decision: {
+      turnAction: "ask" as const,
+      cognitiveAction: "differentiate" as const,
+      selectedTarget: "feeling_timing",
+      evidenceRefs: ["fact-1"],
+      microgoalDelta: null,
+      expectedValue: "分清紧张和期待分别在什么时刻出现",
+      stopReason: null,
+      outcomeCandidate: null
+    },
+    reply: {
+      naturalUnderstanding: "听起来紧张和期待是同时混在一起的，我们可以先分清它们出现的时刻。",
+      question: "听到名字的那一刻，哪一种感觉先冒出来？"
+    }
+  };
+}
+
 function semanticPlanArtifact() {
   const turn = completedGenerativeTurn();
   return {
@@ -509,8 +616,25 @@ function visibleStageResult(input: { turn?: ReturnType<typeof completedGenerativ
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.generativeEnabled.mockReturnValue(false);
+  mocks.completeResponseFirstEnabled.mockReturnValue(false);
+  mocks.completeResponseFirstV12Enabled.mockReturnValue(false);
+  mocks.completeResponseFirstV121Enabled.mockReturnValue(false);
+  mocks.completeResponseFirstV13Enabled.mockReturnValue(false);
+  mocks.completeResponseFirstV14Enabled.mockReturnValue(false);
+  mocks.completeResponseFirstV15Enabled.mockReturnValue(false);
+  mocks.completeResponseFirstV16Enabled.mockReturnValue(false);
+  mocks.completeResponseFirstV18Enabled.mockReturnValue(false);
+  mocks.completeResponseFirstV19Enabled.mockReturnValue(false);
   mocks.thoughtOnly.mockReturnValue(false);
   mocks.generateOnce.mockResolvedValue(null);
+  mocks.generateCompleteResponseV12.mockResolvedValue(null);
+  mocks.generateCompleteResponseV121.mockResolvedValue(null);
+  mocks.generateCompleteResponseV13.mockResolvedValue(null);
+  mocks.generateCompleteResponseV14.mockResolvedValue(null);
+  mocks.generateCompleteResponseV15.mockResolvedValue(null);
+  mocks.generateCompleteResponseV16.mockResolvedValue(null);
+  mocks.generateCompleteResponseV18.mockResolvedValue(null);
+  mocks.generateCompleteResponseV19.mockResolvedValue(null);
   mocks.generatePlan.mockResolvedValue(null);
   mocks.generateVisible.mockResolvedValue(null);
   mocks.generateThoughtMap.mockResolvedValue({
@@ -1045,6 +1169,695 @@ describe("event-centered respond service", () => {
           generativeDecision: {
             turnAction: "complete"
           }
+        }
+      }
+    });
+  });
+
+  it("完整回应隔离策略默认使用 one_call 并只发送一个可见气泡", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstEnabled.mockReturnValue(true);
+    mocks.generateOnce.mockResolvedValue({
+      turn: askingGenerativeTurn(),
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.generative_turn",
+        promptVersion: "v1.1",
+        resolvedPromptHash: "hash-v1.1"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion: "2026-08-20.gi088-complete-response-first-v1-1-production-contract-v1",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call"
+    });
+    const deltas: Array<[string, string]> = [];
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest(), {
+      onDelta: (target, value) => {
+        deltas.push([target, value]);
+      }
+    });
+
+    expect(mocks.generateOnce).toHaveBeenCalledOnce();
+    expect(mocks.generatePlan).not.toHaveBeenCalled();
+    expect(mocks.generateVisible).not.toHaveBeenCalled();
+    expect(mocks.generateOnce).toHaveBeenCalledWith(expect.objectContaining({
+      completeResponseFirst: true,
+      maxTokens: 1280,
+      maxAttempts: 1,
+      timeoutMs: 45_000
+    }));
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse:
+        "听起来紧张和期待是同时混在一起的，我们可以先分清它们出现的时刻。\n\n" +
+        "听到名字的那一刻，哪一种感觉先冒出来？",
+      presentation: "visible"
+    });
+    expect(deltas).toEqual([
+      ["summary", ""],
+      ["response",
+        "听起来紧张和期待是同时混在一起的，我们可以先分清它们出现的时刻。\n\n" +
+        "听到名字的那一刻，哪一种感觉先冒出来？"]
+    ]);
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      snapshotData: {
+        strategyMode: "generative",
+        strategyVersion:
+          "2026-08-20.gi088-complete-response-first-v1-1-production-contract-v1"
+      },
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_1",
+          effectiveStrategy: "generative",
+          generativeArchitecture: "one_call"
+        }
+      }
+    });
+  });
+
+  it("v1.2 使用最小结构生成器，并把完整正文原样写入一个气泡", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV12Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response =
+      "这次可以往结果出现之前看一步。还没看到结果时，你会不会已经开始衡量自己？";
+    const question = "还没看到结果时，你会不会已经开始衡量自己？";
+    mocks.generateCompleteResponseV12.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_2",
+        promptVersion: "v1.2",
+        resolvedPromptHash: "hash-v1.2"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-2-minimal-envelope",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV12).toHaveBeenCalledOnce();
+    expect(mocks.generateOnce).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_2",
+          effectiveStrategy: "complete_response_v1_2",
+          generativeArchitecture: "one_call"
+        },
+        finalOutput: {
+          completeResponseEnvelope: {
+            interaction: { kind: "ask", question }
+          }
+        }
+      }
+    });
+  });
+
+  it("v1.2.1 使用无 Provider JSON 模式的生成器，并保持单气泡原子提交", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV121Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response = "这次可以换到结果出现之前看。还没看到结果时，你也会默默衡量自己吗？";
+    const question = "还没看到结果时，你也会默默衡量自己吗？";
+    mocks.generateCompleteResponseV121.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_2_1",
+        promptVersion: "v1.2",
+        resolvedPromptHash: "hash-v1.2.1"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV121).toHaveBeenCalledOnce();
+    expect(mocks.generateCompleteResponseV12).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_2_1",
+          effectiveStrategy: "complete_response_v1_2_1",
+          generativeArchitecture: "one_call"
+        }
+      }
+    });
+  });
+
+  it("v1.3 使用纯文本生成器，并把完整回应原样写入一个气泡", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV13Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response = "你已经把比较这件事说清楚了。没有具体结果时，你也会默默衡量自己吗？";
+    const question = "没有具体结果时，你也会默默衡量自己吗？";
+    mocks.generateCompleteResponseV13.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null,
+        responseText: response
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_3",
+        promptVersion: "v1.3",
+        resolvedPromptHash: "hash-v1.3"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV13).toHaveBeenCalledOnce();
+    expect(mocks.generateCompleteResponseV121).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_3",
+          effectiveStrategy: "complete_response_v1_3",
+          generativeArchitecture: "one_call"
+        }
+      }
+    });
+  });
+
+  it("v1.4 使用有依据的意图生成器，并把连续问句保存在同一气泡", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV14Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response =
+      "我先接住你现在的在意。你更想从哪一层继续？是它什么时候出现，还是它会怎样影响你？";
+    const question =
+      "你更想从哪一层继续？是它什么时候出现，还是它会怎样影响你？";
+    mocks.generateCompleteResponseV14.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null,
+        responseText: response
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_4",
+        promptVersion: "v1.4",
+        resolvedPromptHash: "hash-v1.4"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV14).toHaveBeenCalledOnce();
+    expect(mocks.generateCompleteResponseV13).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_4",
+          effectiveStrategy: "complete_response_v1_4",
+          generativeArchitecture: "one_call"
+        }
+      }
+    });
+  });
+
+  it("v1.5 使用语义层覆盖生成器，并把完整回应保存在同一气泡", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV15Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response =
+      "你已经说清了当下的愤慨。继续往下看时，这种比较会怎样影响你之后做题或学习的选择？";
+    const question =
+      "继续往下看时，这种比较会怎样影响你之后做题或学习的选择？";
+    mocks.generateCompleteResponseV15.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null,
+        responseText: response
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_5",
+        promptVersion: "v1.5",
+        resolvedPromptHash: "hash-v1.5"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-5-semantic-layer-coverage",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV15).toHaveBeenCalledOnce();
+    expect(mocks.generateCompleteResponseV14).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_5",
+          effectiveStrategy: "complete_response_v1_5",
+          generativeArchitecture: "one_call"
+        }
+      }
+    });
+  });
+
+  it("v1.6 使用对比式覆盖生成器，并把完整回应保存在同一气泡", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV16Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response =
+      "这份落差和自我怀疑你已经说清了。你最希望这段关系发生哪个具体变化，才会让你感到被重视？";
+    const question =
+      "你最希望这段关系发生哪个具体变化，才会让你感到被重视？";
+    mocks.generateCompleteResponseV16.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null,
+        responseText: response
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_6",
+        promptVersion: "v1.6",
+        resolvedPromptHash: "hash-v1.6"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+    mocks.commit.mockResolvedValueOnce({
+      kind: "committed",
+      backgroundFactsTaskTraceId: "background-1"
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV16).toHaveBeenCalledOnce();
+    expect(mocks.generateCompleteResponseV15).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      facts: [],
+      pendingClaim: null,
+      backgroundFactsTask: {
+        contextSnapshot: {
+          kind: "event_centered_background_facts_v1",
+          sourceTurnId: "turn-1",
+          sourceUserMessageId: "user-message-1"
+        }
+      },
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_6",
+          effectiveStrategy: "complete_response_v1_6",
+          generativeArchitecture: "one_call"
+        }
+      }
+    });
+    expect(result.backgroundFactsTask).toEqual({
+      traceId: "background-1",
+      sessionId: "branch-1"
+    });
+    expect(mocks.applyRevision).not.toHaveBeenCalled();
+  });
+
+  it("v1.8 使用明确推进义务生成器，并继续创建后台事实任务", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV18Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response =
+      "你想继续往下挖，那我们换到这件事碰到的在意上：公开被问进度时，最刺到你的是哪一部分？";
+    const question = "公开被问进度时，最刺到你的是哪一部分？";
+    mocks.generateCompleteResponseV18.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null,
+        responseText: response
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_8",
+        promptVersion: "v1.8",
+        resolvedPromptHash: "hash-v1.8"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-8-explicit-progress-obligation",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+    mocks.commit.mockResolvedValueOnce({
+      kind: "committed",
+      backgroundFactsTaskTraceId: "background-v1-8"
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV18).toHaveBeenCalledOnce();
+    expect(mocks.generateCompleteResponseV16).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      backgroundFactsTask: {
+        contextSnapshot: {
+          kind: "event_centered_background_facts_v1"
+        }
+      },
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_8",
+          effectiveStrategy: "complete_response_v1_8",
+          generativeArchitecture: "one_call"
+        }
+      }
+    });
+    expect(result.backgroundFactsTask).toEqual({
+      traceId: "background-v1-8",
+      sessionId: "branch-1"
+    });
+  });
+
+  it("v1.9 使用局部边界继续生成器，并继续创建后台事实任务", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact()]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV19Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response = "好，我们放下刚才那个方向。你更想聊这次公开质疑对之后合作的影响吗？";
+    const question = "你更想聊这次公开质疑对之后合作的影响吗？";
+    mocks.generateCompleteResponseV19.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [{
+        stage: "question",
+        provider: "test",
+        success: true,
+        latencyMs: 20,
+        errorCode: null,
+        responseText: response
+      }],
+      promptLineage: [{
+        promptKey: "interview.event_centered.complete_response_first_v1_9",
+        promptVersion: "v1.9",
+        resolvedPromptHash: "hash-v1.9"
+      }],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question },
+        facts: [],
+        correction: { kind: "none", supersededAssistantMessageId: null }
+      }
+    });
+    mocks.commit.mockResolvedValueOnce({
+      kind: "committed",
+      backgroundFactsTaskTraceId: "background-v1-9"
+    });
+
+    const result = await respondEventCenteredInterview("user-1", replyRequest());
+
+    expect(mocks.generateCompleteResponseV19).toHaveBeenCalledOnce();
+    expect(mocks.generateCompleteResponseV18).not.toHaveBeenCalled();
+    expect(result.assistantPayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: response,
+      presentation: "visible"
+    });
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      backgroundFactsTask: {
+        contextSnapshot: {
+          kind: "event_centered_background_facts_v1"
+        }
+      },
+      trace: {
+        contextSnapshot: {
+          requestedStrategy: "complete_response_v1_9",
+          effectiveStrategy: "complete_response_v1_9",
+          generativeArchitecture: "one_call"
+        }
+      }
+    });
+    expect(result.backgroundFactsTask).toEqual({
+      traceId: "background-v1-9",
+      sessionId: "branch-1"
+    });
+  });
+
+  it("v1.6 纠正回合把事实写入权交给后台任务，旧同步修订不再抢先落库", async () => {
+    mocks.getWorkspaceData.mockResolvedValue(formalWorkspaceData());
+    mocks.reserveAction.mockResolvedValue(reservation({
+      turn: {
+        ...reservation().turn,
+        rawText: "我纠正一下，其实我还是很在意比较。"
+      }
+    }));
+    mocks.factProjection.mockResolvedValue(factProjection([persistedFact({
+      id: "fact-old",
+      statement: "用户已经不在意比较",
+      kind: "stated_interpretation"
+    })]));
+    mocks.generativeEnabled.mockReturnValue(true);
+    mocks.completeResponseFirstV16Enabled.mockReturnValue(true);
+    const turn = askingGenerativeTurn();
+    const response = "明白，你其实仍然很在意比较。接下来更想从哪一层继续看？";
+    mocks.generateCompleteResponseV16.mockResolvedValue({
+      turn,
+      semanticArtifact: null,
+      outputOrigin: "llm",
+      attempts: [],
+      promptLineage: [],
+      validationIssues: [],
+      qualityDiagnostics: [],
+      strategyVersion:
+        "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage",
+      angleCardVersion: "1.0.0",
+      fewShotVersion: "1.0.0",
+      fewShotIds: [],
+      architecture: "one_call",
+      completeResponseText: response,
+      completeResponseEnvelope: {
+        response,
+        interaction: { kind: "ask", question: "接下来更想从哪一层继续看？" },
+        facts: [],
+        correction: {
+          kind: "correction",
+          supersededAssistantMessageId: "opening-1"
+        }
+      }
+    });
+
+    await respondEventCenteredInterview("user-1", replyRequest({
+      action: "correct_understanding",
+      targetMessageId: "opening-1",
+      rawText: "我纠正一下，其实我还是很在意比较。"
+    }));
+
+    expect(mocks.applyRevision).not.toHaveBeenCalled();
+    expect(mocks.confirm).not.toHaveBeenCalled();
+    expect(mocks.commit.mock.calls[0]?.[0]).toMatchObject({
+      facts: [],
+      pendingClaim: null,
+      backgroundFactsTask: {
+        contextSnapshot: {
+          explicitCorrectionTargetAssistantMessageId: "opening-1",
+          sourceUserMessageId: "user-message-1"
         }
       }
     });

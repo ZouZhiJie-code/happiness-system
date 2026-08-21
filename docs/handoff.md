@@ -9,12 +9,13 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布并保留为回退基线，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，Preview 核心主链通过至“需更新”；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第三批已由 PR #48 合入 main `dedf094`，独立终审 `P0=0 / P1=0 / P2=1`，Preview 产品 smoke 受验收工具配置阻断；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。独立 GI-088 v1.9 发布线已完成正式切流与线上回归，当前 Production 为 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、`event_centered + complete_response_v1_9 + deepseek-v4-pro`；Stage 4 尚未进入 Production，下一门为两条发布血缘整合，详见 `PEH-043`。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布并保留为回退基线；阶段 2～4 已合入 main；阶段 3 结论 `P0=0 / P1=0 / P2=3`；阶段 4 独立终审 `P0=0 / P1=0 / P2=1`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。当前单一发布血缘候选基于 main `624b403`，已迁入 GI-088 v1.9 可见回应、后台任务和 Pro 模型合同并保留阶段 1～4 成果；本地、双 CI 与独立 Preview 均通过。同一失败回合恢复成功，新增用户消息 `0`，可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`；Codex 与产品负责人均裁决 `pass`，产品负责人已授权合并 PR #51。source-main 合并后的 main CI 为当前验证门，Production 发布保持 pending，详见 `PEH-044`。正式 Production 继续使用 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、`event_centered + complete_response_v1_9 + deepseek-v4-pro`。
 
 当前工作线事实：
 
-- 当前本地候选分支：`codex/production-evidence-hardening-production-reconcile-20260821`
-- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-stage4-journal-release-20260820`
+- 当前本地候选分支：`codex/production-lineage-integration-20260821`
+- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-production-lineage-integration-20260821`
+- 当前候选基线：`origin/main@624b403b81a7b4774cf8617973a5663ccf16cea0`
 - 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
 - Stage 4 第三批代码已由 PR #48 合入 `dedf094`，治理收口由 PR #49 合入 `8f7ae40`
 - 当前 Production 源提交：`d8dfae7`（GI-088 v1.9）；阶段 1 发布头 `a86a4ba` 保留回退证据
@@ -27,6 +28,10 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - 当前正式 deployment：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`（READY／PROMOTED，GI-088 v1.9）；阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 保留为回退目标
 - 回退 deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY）
 - Production 模式：`event_centered + complete_response_v1_9`；模型 `deepseek-v4-pro`
+- 单一血缘运行时代码节点：`e869cf1`；PR #51 Preview 证据节点：`c4617ec`
+- PR #51 `c4617ec` 的 push run `32458151031` 与 pull request run `32458153627` 均 attempt 1 全绿；Preview `dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ` Ready
+- Preview 同一失败回合恢复成功：新增用户消息 `0`，SSE `200`／`13992ms`，最终用户消息 `1`、AI 回应 `1`、pending turn 清空；可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`，后台任务 completed，Codex 原文初评 `pass`
+- 下一门：合并 PR #51 并核对唯一 main CI；Production 保持当前 deployment，发布等待独立授权
 
 阶段 4 第一批本地发布线事实：
 

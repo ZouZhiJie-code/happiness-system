@@ -1,0 +1,96 @@
+{
+  "receiptVersion": 1,
+  "status": "preview_pass_source_main_merge_authorized_production_pending",
+  "recordedAt": "2026-08-21",
+  "candidate": {
+    "branch": "codex/production-lineage-integration-20260821",
+    "commit": "c4617ec182a882e3743d219d1dd1575dbd9ff776",
+    "pullRequest": 51,
+    "pushRun": 32458151031,
+    "pullRequestRun": 32458153627,
+    "ciAttempts": 1,
+    "ciReruns": 0,
+    "deployment": "dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ",
+    "deploymentUrl": "https://xingfuxitong-nws9zbhlw-zouzhijies-projects.vercel.app",
+    "deploymentTarget": "preview",
+    "deploymentStatus": "Ready"
+  },
+  "runtimeIdentity": {
+    "mode": "event_centered",
+    "strategy": "complete_response_v1_9",
+    "sharedModel": "deepseek-v4-pro",
+    "candidateModel": "deepseek-v4-pro",
+    "readbackHttpStatus": 200
+  },
+  "controlledRecovery": {
+    "source": "one previously saved failed synthetic turn",
+    "sameClientTurnId": true,
+    "newUserMessages": 0,
+    "attemptCountBefore": 1,
+    "attemptCountAfter": 2,
+    "turnStatusAfter": "completed",
+    "userMessagesForTurn": 1,
+    "assistantMessagesForTurn": 1,
+    "pendingTurnAfter": false,
+    "streamHttpStatus": 200,
+    "streamLatencyMs": 13992,
+    "structuredErrorCount": 0,
+    "sessionReceived": true,
+    "assistantCharacterLength": 71,
+    "assistantSha256": "c65a62afe60524f206a71512ac4b36766665dd4f952040a0079715307cbab8d5"
+  },
+  "exactSessionReadOnlyAudit": {
+    "visibleResponse": {
+      "traceStatus": "completed",
+      "outputOrigin": "llm",
+      "providerDispatches": 1,
+      "provider": "openai",
+      "configuredModel": "deepseek-v4-pro",
+      "providerLatencyMs": 2005,
+      "promptKey": "interview.event_centered.complete_response_first_v1_9",
+      "promptVersion": "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-prompt-v1",
+      "aiRequestLogRows": 0,
+      "countSource": "generation trace pipeline decision"
+    },
+    "backgroundFacts": {
+      "traceStatus": "completed",
+      "outputOrigin": "llm",
+      "providerDispatches": 1,
+      "provider": "openai",
+      "model": "deepseek-v4-pro",
+      "providerLatencyMs": 3792,
+      "promptKey": "interview.event_centered.complete_response_background_facts_v1",
+      "promptVersion": "2026-08-20.gi088-complete-response-first-v1-6-background-facts-prompt-v1",
+      "aiRequestLogRows": 1,
+      "factEvidenceCount": 2,
+      "effectiveFactCount": 2
+    },
+    "observedActualModelCalls": 2,
+    "maximumActualModelCalls": 2,
+    "budgetExceeded": false,
+    "transactionReadOnly": true
+  },
+  "review": {
+    "codexLabel": "pass",
+    "productOwnerVerdict": "pass",
+    "productOwnerVerdictRecordedAt": "2026-08-21",
+    "sourceMainMergeAuthorized": true,
+    "productionReleaseVerdict": "pending"
+  },
+  "privacy": {
+    "rawUserInputPublished": false,
+    "rawModelOutputPublished": false,
+    "sessionIdsPublished": false,
+    "credentialsPublished": false,
+    "ephemeralBranchReadbackTokenRemoved": true,
+    "ephemeralPrivateFilesRemoved": true
+  },
+  "productionBoundary": {
+    "currentDeployment": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "rollbackDeployment": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "reads": 0,
+    "writes": 0,
+    "deployments": 0,
+    "unchanged": true
+  }
+}

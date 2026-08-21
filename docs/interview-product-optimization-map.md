@@ -7,9 +7,9 @@
 
 最后更新：`2026-08-21`
 
-文档状态：`生效中；五阶段生产主线完善已确认·实施中；Production 使用 event_centered + complete_response_v1_9`
+文档状态：`生效中；五阶段生产主线候选产品 pass、source-main 合并已授权；Production 使用 event_centered + complete_response_v1_9`
 
-当前讨论位置：`DL-PROD-20260819｜阶段 1 管理员成功读取 pending；阶段 2 热修复远程门与 main CI 全绿、Preview 通过至需更新；阶段 3 已合入 main、收集 pending；阶段 4 第三批已合入 main、Preview smoke blocked、Production 血缘整合 blocked；阶段 5 No-Go / insufficient_evidence`
+当前讨论位置：`DL-PROD-20260819｜单一发布血缘候选本地、双 CI 与 Preview 已通过；产品负责人 pass 并授权合并 PR #51，Production 发布 pending；阶段 5 No-Go / insufficient_evidence`
 
 落地验证状态：`总规范 v1.0 与阶段 B2 资产已冻结；阶段 C 保留 19 次技术阻断历史，阶段 C2 的 Plus 普通／思考均 20/20 且 No-Go，Max 思考 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
@@ -17,9 +17,9 @@
 
 当前跨模块专项：[`Daily Light 五阶段生产主线完善`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-当前停止点：阶段 1 管理员成功读取等待白名单内既有内部管理员合法登录态；阶段 2 Preview 已通过编辑、保存和需更新，浏览器续跑等待稳定网络／线路；凭证轮换见 `PEH-029`。阶段 3 已合入 main，`P0=0 / P1=0 / P2=3`，正文开关继续关闭，完整轨迹 `0/30`，等待自然样本与样本级授权。阶段 4 第三批已由 PR #48 合入 main `dedf094`，治理收口由 PR #49 合入 main `8f7ae40`，当前可达 P1 已关闭、未来来源删除 P2 见 `PEH-041`；Preview 产品 smoke 见 `PEH-042`。正式 Production 已由独立 GI-088 v1.9 发布线切换至 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；Stage 4 尚未进入 Production，后续发布先整合 main 与 GI-088 Production 血缘，见 `PEH-043`。阶段 5 维持 No-Go 候选隔离。数据库迁移、月度洞察上线和破坏性清理继续使用独立停止门。
+当前停止点：单一发布血缘候选已完成本地差异审计、生成式合同、后台任务恢复、阶段 1～4 回归、零模型 E2E 与 Preview，产品负责人已裁决 `pass` 并授权合并 PR #51；下一门为唯一 main CI。正式 Production 继续运行 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；阶段 1 `dpl_DCGY...` 继续作为回退目标，详见 `PEH-043`～`PEH-044`。Production 发布继续使用独立停止门。
 
-网页端实现同步：管理分析合同 v2 已于 `2026-08-20` 发布 Production，阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已通过正式域名核心 smoke并保留为回退目标；阶段 2～4 的 source-main 工程成果已进入 main。当前正式域名运行 GI-088 v1.9 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，策略为 `event_centered + complete_response_v1_9`，模型为 `deepseek-v4-pro`。管理员成功读取保持 pending；Stage 4 Production 集成等待两条血缘统一。
+网页端实现同步：阶段 2～4 的 source-main 工程成果已进入 main；单一血缘候选已在独立 Preview 验证 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，同一失败回合恢复后可见回应与后台事实任务各调用 `1` 次。当前正式域名继续运行 GI-088 v1.9 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，阶段 1 deployment 保留为回退目标；Production 发布等待独立裁决。
 
 当前专项进度源：[`生成式访谈重构总 Map（Batch B 专项）`](./generative-interview-refactor-map.md)
 

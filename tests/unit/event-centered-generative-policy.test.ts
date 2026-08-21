@@ -454,6 +454,11 @@ describe("event-centered generative state adapter", () => {
       turn
     });
     const payload = createGenerativeEventCenteredPayload({ turn, policy: result });
+    const completeResponsePayload = createGenerativeEventCenteredPayload({
+      turn,
+      policy: result,
+      completeResponseFirst: true
+    });
 
     expect(result.nextState.phase).toBe("checkpoint_two");
     expect(result.nextState.currentQuestion).toBeNull();
@@ -465,6 +470,40 @@ describe("event-centered generative state adapter", () => {
       checkpoint: { kind: "second" },
       presentation: "hidden"
     });
+    expect(completeResponsePayload).toMatchObject({
+      naturalUnderstanding: "",
+      naturalResponse: "原先混在一起的紧张和期待，现在已经能够分开看见。",
+      checkpoint: { kind: "second" },
+      presentation: "visible"
+    });
+  });
+
+  it("完整回应策略把自然承接和主问题合成一个可见气泡", () => {
+    const state = createInitialEventCenteredDialogueState();
+    state.phase = "checkpoint_one";
+    const turn = askingTurn();
+    const result = applyGenerativeEventCenteredTurnPolicy({
+      state,
+      action: "select_exploration_angle",
+      selectedAngle: "feeling",
+      rawText: "",
+      turn,
+      strategyVersion: "complete-response-v1.1"
+    });
+
+    const payload = createGenerativeEventCenteredPayload({
+      turn,
+      policy: result,
+      completeResponseFirst: true
+    });
+
+    expect(result.nextState.strategyVersion).toBe("complete-response-v1.1");
+    expect(payload.naturalUnderstanding).toBe("");
+    expect(payload.naturalResponse).toBe(
+      "你同时提到紧张和期待，我想继续区分它们各自出现的时刻。\n\n" +
+      "听到名字时，紧张和期待哪一种先冒出来？"
+    );
+    expect(payload.presentation).toBe("visible");
   });
 
   it("深入聊聊暂停时保存微目标并展示本段认识", () => {

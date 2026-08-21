@@ -105,7 +105,10 @@ export function getEventCenteredUnderstandingCommitFingerprint(
                   }
                 : resolution
             )
-          )
+          ),
+          backgroundFactsTask: input.backgroundFactsTask
+            ? { contextSnapshot: input.backgroundFactsTask.contextSnapshot }
+            : null
         })
       )
     )
@@ -485,7 +488,7 @@ async function readExistingCommitResult(
     throw new Error("EVENT_TURN_IDEMPOTENCY_STATE_MISSING");
   }
 
-  const [facts, claim, angleOutcomes, reopenedResolutions] = await Promise.all([
+  const [facts, claim, angleOutcomes, reopenedResolutions, backgroundFactsTask] = await Promise.all([
     database.journalEventFact.findMany({
       where: {
         eventId: input.eventId,
@@ -508,6 +511,16 @@ async function readExistingCommitResult(
         repair: { eventId: input.eventId }
       },
       select: { repair: { select: { angle: true } } }
+    }),
+    database.aIGenerationTrace.findUnique({
+      where: {
+        artifactType_artifactId_artifactVersion: {
+          artifactType: "interview_turn",
+          artifactId: assistantMessage.id,
+          artifactVersion: 2
+        }
+      },
+      select: { id: true }
     })
   ]);
 
@@ -518,6 +531,7 @@ async function readExistingCommitResult(
     userTurnId: input.userTurnId,
     assistantMessageId: assistantMessage.id,
     generationTraceId: assistantMessage.generationTraceId,
+    backgroundFactsTaskTraceId: backgroundFactsTask?.id ?? null,
     factIds: facts.map((fact) => fact.id),
     pendingUnderstandingClaimId: claim?.id ?? null,
     angleOutcomeIds: angleOutcomes.map((outcome) => outcome.id),
@@ -685,6 +699,9 @@ export async function commitEventCenteredTurnUnderstanding(
 
     const assistantMessageId = input.assistantMessage.id ?? randomUUID();
     const generationTraceId = input.trace.id ?? randomUUID();
+    const backgroundFactsTaskTraceId = input.backgroundFactsTask
+      ? input.backgroundFactsTask.id ?? randomUUID()
+      : null;
     const pendingUnderstandingClaimId = input.pendingClaim ? randomUUID() : null;
     const createdFactIds: string[] = [];
 
@@ -780,6 +797,35 @@ export async function commitEventCenteredTurnUnderstanding(
         sequence: userMessage.sequence + 1
       }
     });
+    if (input.backgroundFactsTask && backgroundFactsTaskTraceId) {
+      await database.aIGenerationTrace.create({
+        data: {
+          id: backgroundFactsTaskTraceId,
+          requestId: input.trace.requestId ?? null,
+          userId: input.userId,
+          sessionId: input.activeBranchSessionId,
+          journalEventId: input.eventId,
+          dimension: null,
+          artifactType: "interview_turn",
+          artifactId: assistantMessageId,
+          artifactVersion: 2,
+          triggerMessageId: userMessage.id,
+          status: "pending",
+          outputOrigin: null,
+          contextSnapshot: toJsonValue({
+            ...input.backgroundFactsTask.contextSnapshot,
+            visibleGenerationTraceId: generationTraceId
+          }),
+          finalOutput: Prisma.JsonNull,
+          pipelineDecisions: toJsonValue([{
+            kind: "event_centered_background_facts_scheduled",
+            visibleGenerationTraceId: generationTraceId,
+            assistantMessageId,
+            userTurnId: input.userTurnId
+          }])
+        }
+      });
+    }
 
     const shouldCommitAngleResults = Boolean(
       input.angleOutcome ||
@@ -909,6 +955,7 @@ export async function commitEventCenteredTurnUnderstanding(
       userTurnId: input.userTurnId,
       assistantMessageId,
       generationTraceId,
+      backgroundFactsTaskTraceId,
       factIds: createdFactIds,
       pendingUnderstandingClaimId,
       angleOutcomeIds: angleResult.angleOutcomeIds,

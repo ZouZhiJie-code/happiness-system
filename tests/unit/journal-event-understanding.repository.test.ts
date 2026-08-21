@@ -737,6 +737,7 @@ describe("journal event facts and understanding", () => {
       userTurnId: "turn-1",
       assistantMessageId: "assistant-1",
       generationTraceId: "trace-1",
+      backgroundFactsTaskTraceId: null,
       factIds: ["fact-1"],
       pendingUnderstandingClaimId: "claim-1",
       angleOutcomeIds: [],

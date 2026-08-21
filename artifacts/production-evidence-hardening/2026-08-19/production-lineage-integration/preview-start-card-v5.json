@@ -1,0 +1,170 @@
+{
+  "cardVersion": 5,
+  "status": "completed_pass",
+  "supersedes": "preview-start-card-v4.json",
+  "decision": "Confirm that the fully aligned single-lineage Preview can recover the already saved failed turn under the current Production GI-088 v1.9 visible-response and background-task contract without duplicating the user message.",
+  "candidate": {
+    "branch": "codex/production-lineage-integration-20260821",
+    "commit": "c4617ec182a882e3743d219d1dd1575dbd9ff776",
+    "pullRequest": 51,
+    "pushRun": 32458151031,
+    "pullRequestRun": 32458153627,
+    "ciAttempts": 1,
+    "ciReruns": 0,
+    "deployment": "dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ",
+    "deploymentUrl": "https://xingfuxitong-nws9zbhlw-zouzhijies-projects.vercel.app",
+    "target": "preview",
+    "expectedMode": "event_centered",
+    "expectedStrategy": "complete_response_v1_9",
+    "expectedModel": "deepseek-v4-pro",
+    "expectedCandidateModel": "deepseek-v4-pro",
+    "readbackToken": "ephemeral_branch_scoped_private_no_newline"
+  },
+  "dataset": {
+    "identity": "production-lineage-preview-synthetic-v1",
+    "source": "controlled synthetic daily-life event",
+    "privacy": "public_synthetic_no_personal_data",
+    "recordMode": "chat",
+    "inputSha256": "938e28d341e3a05d0de74e0a13d8b8c712a3b4431a5b31b5296500dbbfefcb6e",
+    "rawInputStorage": "ephemeral_private_runtime_only",
+    "recoverySource": "preview-start-card-v4 saved failed turn"
+  },
+  "roles": {
+    "objectiveChecks": "Verify exact deployment and four model-related environment values, read the saved failed turn, resume it with the same clientTurnId, receive one valid SSE complete response, preserve one user message, and verify the background-task handoff with exact-session read-only evidence.",
+    "codexReview": "Assess only the recovered controlled response against the current v1.9 response-first contract and report pass, minor, or fail with evidence boundaries.",
+    "productOwner": "Retains final experience and Production release authority."
+  },
+  "budget": {
+    "visibleResponseProviderDispatches": 1,
+    "backgroundTaskCalls": 1,
+    "maximumActualModelCalls": 2,
+    "retries": 0,
+    "newUserMessages": 0
+  },
+  "publicEvidence": {
+    "rawUserInput": false,
+    "rawModelOutput": false,
+    "credentials": false,
+    "cookies": false,
+    "sessionIds": false,
+    "allowed": [
+      "deployment identity",
+      "runtime identity",
+      "HTTP and SSE contract status",
+      "latency",
+      "exact-session model-call counts",
+      "message counts and hashes",
+      "Codex label",
+      "stop reason"
+    ]
+  },
+  "stopPoints": [
+    "deployment identity mismatch",
+    "transport failure before the application response",
+    "runtime mode, strategy, shared model, or candidate model mismatch",
+    "saved failed turn cannot be read or has duplicated user text",
+    "invalid SSE or structured application error",
+    "missing visible complete response or background-task handoff",
+    "call budget exceeded",
+    "any Stage 1-4 protected boundary regression"
+  ],
+  "productionBoundary": {
+    "productionDeploymentUnchanged": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "rollbackDeploymentUnchanged": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "productionReads": 0,
+    "productionWrites": 0,
+    "productionDeployments": 0
+  },
+  "result": {
+    "startedAt": "2026-08-21T07:28:57Z",
+    "completedAt": "2026-08-21T07:29:17.134Z",
+    "runtimeReadback": {
+      "httpStatus": 200,
+      "mode": "event_centered",
+      "strategy": "complete_response_v1_9",
+      "sharedModel": "deepseek-v4-pro",
+      "candidateModel": "deepseek-v4-pro"
+    },
+    "recovery": {
+      "sameClientTurnId": true,
+      "attemptCountBefore": 1,
+      "attemptCountAfter": 2,
+      "statusAfter": "completed",
+      "errorCodeAfter": null,
+      "newUserMessages": 0,
+      "userMessagesForTurn": 1,
+      "assistantMessagesForTurn": 1,
+      "pendingTurnAfter": false
+    },
+    "stream": {
+      "httpStatus": 200,
+      "latencyMs": 13992,
+      "turnFrames": 1,
+      "phaseFrames": 4,
+      "deltaFrames": 2,
+      "sessionFrames": 1,
+      "structuredErrors": 0,
+      "sessionReceived": true,
+      "sessionStatus": "active",
+      "eventStatus": "active",
+      "dialoguePhase": "event_recording",
+      "assistantCharacterLength": 71,
+      "assistantSha256": "c65a62afe60524f206a71512ac4b36766665dd4f952040a0079715307cbab8d5",
+      "deltaMatchesCommittedAssistant": true
+    },
+    "exactSessionReadOnlyAudit": {
+      "visibleResponse": {
+        "traceStatus": "completed",
+        "outputOrigin": "llm",
+        "providerDispatches": 1,
+        "provider": "openai",
+        "configuredModel": "deepseek-v4-pro",
+        "promptKey": "interview.event_centered.complete_response_first_v1_9",
+        "promptVersion": "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-prompt-v1",
+        "providerLatencyMs": 2005,
+        "aiRequestLogRows": 0
+      },
+      "backgroundFacts": {
+        "traceStatus": "completed",
+        "outputOrigin": "llm",
+        "providerDispatches": 1,
+        "provider": "openai",
+        "model": "deepseek-v4-pro",
+        "promptKey": "interview.event_centered.complete_response_background_facts_v1",
+        "promptVersion": "2026-08-20.gi088-complete-response-first-v1-6-background-facts-prompt-v1",
+        "providerLatencyMs": 3792,
+        "aiRequestLogRows": 1,
+        "factEvidenceCount": 2,
+        "effectiveFactCount": 2
+      },
+      "maximumActualModelCalls": 2,
+      "observedActualModelCalls": 2,
+      "budgetExceeded": false,
+      "transactionReadOnly": true,
+      "productionReads": 0
+    },
+    "codexReview": {
+      "label": "pass",
+      "reason": "The response acknowledged the user's stated relief and accomplishment, then asked one relevant and natural follow-up without duplicating the saved user message."
+    },
+    "privacy": {
+      "rawInputPublished": false,
+      "rawOutputPublished": false,
+      "sessionIdsPublished": false,
+      "credentialsPublished": false,
+      "ephemeralReadbackTokenRemoved": true,
+      "ephemeralPrivateFilesRemoved": true
+    },
+    "productionBoundary": {
+      "productionDeploymentUnchanged": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+      "rollbackDeploymentUnchanged": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+      "productionReads": 0,
+      "productionWrites": 0,
+      "productionDeployments": 0
+    },
+    "verdict": "preview_pass_source_main_merge_authorized_production_pending",
+    "productOwnerVerdict": "pass",
+    "productOwnerVerdictRecordedAt": "2026-08-21",
+    "sourceMainMergeAuthorized": true
+  }
+}

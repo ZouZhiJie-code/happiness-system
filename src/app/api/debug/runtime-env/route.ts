@@ -54,6 +54,11 @@ export async function GET(request: Request) {
     return NextResponse.json({
       requestHost: new URL(request.url).host,
       env,
+      eventCentered: {
+        mode: readEnvValue("INTERVIEW_EVENT_CENTERED_MODE"),
+        strategy: readEnvValue("INTERVIEW_EVENT_CENTERED_STRATEGY"),
+        model: readEnvValue("DEEPSEEK_MODEL")
+      },
       resolved: {
         deploymentUrl: toHttpsUrl(env.VERCEL_URL),
         branchUrl: toHttpsUrl(env.VERCEL_BRANCH_URL),

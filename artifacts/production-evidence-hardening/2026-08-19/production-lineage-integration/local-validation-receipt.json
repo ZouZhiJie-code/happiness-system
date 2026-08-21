@@ -1,0 +1,99 @@
+{
+  "receiptVersion": 1,
+  "status": "local_gates_passed_preview_pending",
+  "candidate": {
+    "branch": "codex/production-lineage-integration-20260821",
+    "baseCommit": "624b403b81a7b4774cf8617973a5663ccf16cea0",
+    "productionSourceCommit": "d8dfae7bb05987f906d6917ed0e7343829136c2f",
+    "runtimeCommit": "e869cf194b34de598be3ba3f9ccefc9f85cfadb1",
+    "runtimeTree": "6df878127e2b694bd660c55da3fac34f463bb892"
+  },
+  "productBoundary": {
+    "strategy": "event_centered + complete_response_v1_9 + deepseek-v4-pro",
+    "productionDeploymentUnchanged": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "rollbackDeploymentUnchanged": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "productionReads": 0,
+    "actualModelCalls": 0,
+    "databaseMigrationsAdded": 0,
+    "environmentChanges": 0
+  },
+  "verification": {
+    "targeted": {
+      "filesPassed": 22,
+      "testsPassed": 325,
+      "testsSkippedPrivate": 1,
+      "testsFailed": 0
+    },
+    "postgres": {
+      "testsPassed": 3,
+      "testsFailed": 0,
+      "contracts": [
+        "record_journal_closure",
+        "concurrent_reliable_turn_recovery",
+        "saved_background_result_replay_without_provider_dispatch"
+      ],
+      "providerDispatchCountOnReplay": 0,
+      "aiRequestLogCount": 0,
+      "testUserResidual": 0,
+      "activeConnectionResidual": 0
+    },
+    "fullTest": {
+      "filesPassed": 387,
+      "filesSkipped": 17,
+      "testsPassed": 3401,
+      "testsSkipped": 97,
+      "testsFailed": 0
+    },
+    "typecheck": "passed",
+    "lint": {
+      "errors": 0,
+      "inheritedWarnings": 33
+    },
+    "build": {
+      "status": "passed",
+      "routes": "77/77",
+      "inheritedTracingWarnings": 16
+    },
+    "prisma": {
+      "productionSchema": "valid",
+      "evaluationSchema": "valid",
+      "schemaDiff": 0,
+      "lockfileDiff": 0
+    },
+    "docs": {
+      "status": "passed",
+      "coreDocuments": 24,
+      "localLinks": 850,
+      "currentEntries": 1
+    },
+    "zeroModelE2E": {
+      "status": "passed",
+      "tests": "11/11",
+      "viewports": [
+        "1440x900",
+        "1024x768"
+      ],
+      "aiRequestLogCount": 0,
+      "traceCount": 12,
+      "modelViolations": 0,
+      "schema": "daily_light_e2e_mt2ke70o_f8c7ae472a",
+      "schemaDropped": true,
+      "schemaResidual": 0
+    }
+  },
+  "diagnostics": [
+    {
+      "kind": "test_contract_alignment",
+      "initialFailure": "Batch B expected the historical multi-question draft signal after Production v1.9 moved runtime quality ownership to the semantic complete-response contract.",
+      "resolution": "Keep the signal in Batch B raw-model evidence while preserving the v1.9 runtime contract.",
+      "finalVerification": "118/118 targeted and 3401/3401 full-suite tests passed."
+    },
+    {
+      "kind": "postgres_test_assertion_alignment",
+      "initialFailure": "The new baseline integration assertion expected a null optional field while the public result omits it.",
+      "resolution": "Align the assertion with the public result shape.",
+      "finalVerification": "3/3 PostgreSQL tests passed with zero residual data."
+    }
+  ],
+  "nextGate": "push_pr_ci_and_preview_validation"
+}

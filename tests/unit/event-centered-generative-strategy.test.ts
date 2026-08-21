@@ -14,10 +14,90 @@ import {
 import { GENERATIVE_MVP_SMOKE_CASES } from "@/features/interview/event-centered/generative-quality-calibration";
 import {
   getEventCenteredStrategyMode,
+  isCompleteResponseFirstEventCenteredStrategyEnabled,
+  isCompleteResponseFirstV121EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV12EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV13EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV14EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV15EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV16EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV18EventCenteredStrategyEnabled,
+  isCompleteResponseFirstV19EventCenteredStrategyEnabled,
   isGenerativeEventCenteredStrategyEnabled
 } from "@/features/interview/event-centered/generative-release";
 
 describe("event-centered generative strategy assets", () => {
+  it("v1.2.1 只在显式隔离策略下开启", () => {
+    const mode = getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "complete_response_v1_2_1"
+    });
+    expect(mode).toBe("complete_response_v1_2_1");
+    expect(isGenerativeEventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV121EventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV12EventCenteredStrategyEnabled(mode)).toBe(false);
+    expect(isCompleteResponseFirstEventCenteredStrategyEnabled(mode)).toBe(false);
+  });
+
+  it("v1.3 纯文本负责人只在显式隔离策略下开启", () => {
+    const mode = getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "complete_response_v1_3"
+    });
+    expect(mode).toBe("complete_response_v1_3");
+    expect(isGenerativeEventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV13EventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV121EventCenteredStrategyEnabled(mode)).toBe(false);
+  });
+
+  it("v1.4 有依据的意图负责人只在显式隔离策略下开启", () => {
+    const mode = getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "complete_response_v1_4"
+    });
+    expect(mode).toBe("complete_response_v1_4");
+    expect(isGenerativeEventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV14EventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV13EventCenteredStrategyEnabled(mode)).toBe(false);
+  });
+
+  it("v1.5 语义层覆盖只在显式隔离策略下开启", () => {
+    const mode = getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "complete_response_v1_5"
+    });
+    expect(mode).toBe("complete_response_v1_5");
+    expect(isGenerativeEventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV15EventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV14EventCenteredStrategyEnabled(mode)).toBe(false);
+  });
+
+  it("v1.6 对比式覆盖只在显式隔离策略下开启", () => {
+    const mode = getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "complete_response_v1_6"
+    });
+    expect(mode).toBe("complete_response_v1_6");
+    expect(isGenerativeEventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV16EventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV15EventCenteredStrategyEnabled(mode)).toBe(false);
+  });
+
+  it("v1.8 明确推进义务只在显式隔离策略下开启", () => {
+    const mode = getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "complete_response_v1_8"
+    });
+    expect(mode).toBe("complete_response_v1_8");
+    expect(isGenerativeEventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV18EventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV16EventCenteredStrategyEnabled(mode)).toBe(false);
+  });
+
+  it("v1.9 局部边界继续优先级只在显式隔离策略下开启", () => {
+    const mode = getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "complete_response_v1_9"
+    });
+    expect(mode).toBe("complete_response_v1_9");
+    expect(isGenerativeEventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV19EventCenteredStrategyEnabled(mode)).toBe(true);
+    expect(isCompleteResponseFirstV18EventCenteredStrategyEnabled(mode)).toBe(false);
+  });
+
   it("每个角度与模式注入 ask、用户成果、AI 综合和典型失败四个真实质量示例", () => {
     expect(EVENT_CENTERED_FEW_SHOT_EXAMPLES).toHaveLength(32);
     for (const angle of ["feeling", "thought", "relationship", "action"] as const) {
@@ -150,10 +230,24 @@ describe("event-centered generative strategy assets", () => {
     expect(getEventCenteredGenerativeMode("event_recording")).toBeNull();
   });
 
-  it("策略开关默认 baseline，只有显式 generative 才打开", () => {
+  it("策略开关默认 baseline，并区分历史 generative 与完整回应隔离策略", () => {
     expect(getEventCenteredStrategyMode({})).toBe("baseline");
     expect(getEventCenteredStrategyMode({ INTERVIEW_EVENT_CENTERED_STRATEGY: "GENERATIVE" }))
       .toBe("generative");
+    expect(getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "COMPLETE_RESPONSE_V1_1"
+    })).toBe("complete_response_v1_1");
+    expect(getEventCenteredStrategyMode({
+      INTERVIEW_EVENT_CENTERED_STRATEGY: "COMPLETE_RESPONSE_V1_2"
+    })).toBe("complete_response_v1_2");
     expect(isGenerativeEventCenteredStrategyEnabled("generative")).toBe(true);
+    expect(isGenerativeEventCenteredStrategyEnabled("complete_response_v1_1")).toBe(true);
+    expect(isGenerativeEventCenteredStrategyEnabled("complete_response_v1_2")).toBe(true);
+    expect(isCompleteResponseFirstEventCenteredStrategyEnabled("complete_response_v1_1"))
+      .toBe(true);
+    expect(isCompleteResponseFirstEventCenteredStrategyEnabled("generative"))
+      .toBe(false);
+    expect(isCompleteResponseFirstV12EventCenteredStrategyEnabled("complete_response_v1_2"))
+      .toBe(true);
   });
 });

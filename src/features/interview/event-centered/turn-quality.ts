@@ -182,23 +182,9 @@ function normalizeBoundaryText(value: string) {
     .trim();
 }
 
-/**
- * 问题前缀只是对上一轮原话的回扣，不承载新的提问目标。
- * 用户原话里可能本身含有“怎么／什么”，计数时跳过这段引用，避免把
- * 一个清楚的问题误判成两个问题。
- */
+/** 问题前缀只承担原话回扣，具体焦点识别跳过这段引用。 */
 function questionWithoutEventAnchor(value: string | null | undefined) {
   return value?.trim().replace(/你提到[“"][^”"]+[”"][。.]?\s*/gu, "") ?? "";
-}
-
-function hasOneQuestionTarget(currentQuestionText: string | null | undefined) {
-  const question = questionWithoutEventAnchor(currentQuestionText);
-  if (!question) return false;
-  if ((question.match(/[？?]/gu) ?? []).length > 1) return false;
-  if (/(?:更接近|比较像|是哪种).{0,20}(?:还是|或者|或).{0,20}/u.test(question)) return false;
-  const interrogatives = question.match(/什么|哪(?:个|种|一|句|条|部分|一步|两边)|怎么|怎样|是否|几(?:个|次|种)/gu) ?? [];
-  if (interrogatives.length > 1) return false;
-  return !/(?:感受|情绪|念头|想法|回应|动作|条件).{0,8}(?:或|还是|以及|和).{0,8}(?:感受|情绪|念头|想法|回应|动作|条件)/u.test(question);
 }
 
 function questionAngleFromTarget(
@@ -218,8 +204,8 @@ function questionAngleFromTarget(
 }
 
 /**
- * 关系与行动角度已有公共焦点识别协议。边界承接复用同一份识别结果，
- * 让在线访谈、换问法与评测对“用户正在回答什么”保持同一口径。
+ * 关系与行动的粗目标包含多个展示子焦点。这里只用已保存角度和稳定词义映射
+ * 选择承接文案；识别不唯一时回退到粗目标，不按问号数量阻断或猜测焦点。
  */
 function inferBoundaryResponseQuestionFocus(input: {
   currentQuestionText?: string | null;
@@ -227,20 +213,11 @@ function inferBoundaryResponseQuestionFocus(input: {
 }): EventCenteredResponseQuestionFocus | null {
   const currentQuestionText = questionWithoutEventAnchor(input.currentQuestionText);
   const targetAngle = questionAngleFromTarget(input.currentQuestionTarget);
-  if (targetAngle) {
-    return inferSingleEventCenteredQuestionFocus({
-      angle: targetAngle,
-      text: currentQuestionText
-    });
-  }
-
-  const candidates = (["relationship", "action"] as const)
-    .map((angle) => inferSingleEventCenteredQuestionFocus({
-      angle,
-      text: currentQuestionText
-    }))
-    .filter((focus): focus is EventCenteredResponseQuestionFocus => focus !== null);
-  return candidates.length === 1 ? candidates[0] : null;
+  if (!targetAngle || !currentQuestionText) return null;
+  return inferSingleEventCenteredQuestionFocus({
+    angle: targetAngle,
+    text: currentQuestionText
+  });
 }
 
 function boundaryContextFromResponseQuestionFocus(
@@ -270,14 +247,14 @@ function boundaryQuestionContext(input: {
   currentQuestionText?: string | null;
   currentQuestionTarget?: string | null;
 }): EventCenteredBoundaryQuestionContext | null {
-  if (!hasOneQuestionTarget(input.currentQuestionText)) return null;
-  const text = input.currentQuestionText ?? "";
-
   const responseQuestionFocus = inferBoundaryResponseQuestionFocus(input);
   if (responseQuestionFocus) {
     return boundaryContextFromResponseQuestionFocus(responseQuestionFocus);
   }
 
+  // 旧会话可能只有可见问题、还没有结构化目标。此映射只细化承接文案，
+  // 不决定动作、不阻断输出；命中多个子焦点时仍由上方唯一焦点识别回退。
+  const text = input.currentQuestionText ?? "";
   if (/(?:具体时刻|哪个时刻|瞬间|哪一下|发生了什么|想留下)/u.test(text)) return "event_moment";
   if (/(?:感受|情绪|身体.{0,6}(?:感觉|反应))/u.test(text)) return "feeling";
   if (/(?:念头|想法|脑子里|怎么想)/u.test(text)) return "thought";
@@ -287,6 +264,7 @@ function boundaryQuestionContext(input: {
   if (/(?:目标|想推进|想完成)/u.test(text)) return "action_goal";
   if (/(?:选择|决定|实际做)/u.test(text)) return "action_choice";
 
+  // 结构化目标承担兜底。多个问句只要共享同一目标，仍能得到稳定承接。
   switch (input.currentQuestionTarget) {
     case "light_event_anchor":
     case "event_anchor":
@@ -409,8 +387,9 @@ const BOUNDARY_CONTEXT_COPY: Record<
 };
 
 /**
- * 短边界优先带回它所回应的唯一问题目标。上下文缺失或同时包含多个问题时，
- * 保持通用承接，避免系统替用户猜测“没有／不知道”具体否定了什么。
+ * 短边界优先带回产品状态中已经保存的语义目标。关系与行动的粗目标可用
+ * 稳定词义映射细化展示；旧会话的可见问题仅用于选择承接文案。问号数量
+ * 不参与拦截或焦点判断。
  */
 export function getEventCenteredTextBoundaryUnderstanding(input: {
   rawText: string;
@@ -610,6 +589,8 @@ export function runEventCenteredTurnQualityGate(input: {
   adviceRequested: boolean;
   pendingHypothesisStatement: string | null;
   firstCheckpointUnderstanding?: string | null;
+  /** v1.2 的完整正文已经通过最小合同校验；checkpoint 只承担状态职责。 */
+  singleBubbleCompleteResponse?: boolean;
 }) {
   if (input.payload.presentation === "hidden") {
     return { passed: true, safetyBlockers: [], qualityIssues: [] };
@@ -627,7 +608,6 @@ export function runEventCenteredTurnQualityGate(input: {
   const understandingQuestionCount = (input.payload.naturalUnderstanding.match(/[？?]/gu) ?? []).length;
   const questionCount = (input.payload.naturalResponse.match(/[？?]/gu) ?? []).length;
   if (understandingQuestionCount > 0) qualityIssues.push("natural_understanding_question");
-  if (understandingQuestionCount + questionCount > 1) qualityIssues.push("multiple_question_targets");
   if (input.payload.checkpoint && questionCount > 0) qualityIssues.push("checkpoint_question_overreach");
   const isPaperSelection = input.payload.responseKind === "clarification" &&
     input.payload.questionSpec?.surfaceLevel === "low_pressure_choice";
@@ -640,9 +620,9 @@ export function runEventCenteredTurnQualityGate(input: {
   if (
     input.payload.checkpoint?.kind === "first" &&
     (
-      input.payload.naturalUnderstanding !== (
+      (!input.singleBubbleCompleteResponse && input.payload.naturalUnderstanding !== (
         input.firstCheckpointUnderstanding ?? EVENT_CENTERED_FIRST_CHECKPOINT_UNDERSTANDING
-      ) ||
+      )) ||
       input.payload.questionSpec !== null ||
       questionCount > 0
     )
@@ -650,6 +630,7 @@ export function runEventCenteredTurnQualityGate(input: {
     qualityIssues.push("first_checkpoint_overreach");
   }
   if (
+    !input.singleBubbleCompleteResponse &&
     input.payload.checkpoint?.kind === "first" &&
     normalize(input.payload.naturalUnderstanding) === normalize(input.payload.naturalResponse)
   ) {

@@ -18,6 +18,12 @@ import {
   createSemanticPlanArtifactHash,
   EVENT_CENTERED_GENERATIVE_SEMANTIC_PLAN_ARTIFACT_VERSION,
   EVENT_CENTERED_GENERATIVE_SEMANTIC_PLAN_PROMPT_VERSION,
+  generateEventCenteredCompleteResponseV121AI,
+  generateEventCenteredCompleteResponseV12AI,
+  generateEventCenteredCompleteResponseV13AI,
+  generateEventCenteredCompleteResponseV14AI,
+  generateEventCenteredCompleteResponseV15AI,
+  generateEventCenteredCompleteResponseV16AI,
   generateEventCenteredGenerativeSemanticPlanAI,
   generateEventCenteredGenerativeTurnAI,
   generateEventCenteredGenerativeVisibleTurnAI,
@@ -25,6 +31,7 @@ import {
   generateEventCenteredTurnOnceAI
 } from "@/server/services/interview/event-centered-ai.service";
 import { createInitialThoughtProtocol } from "@/features/interview/event-centered/thought-judgment-map";
+import type { AICompletionParams } from "@/server/services/ai/ai-provider";
 import type { JournalEventFactRecord } from "@/types/journal-event-understanding";
 
 describe("GI-066 判断地图来源局部修复", () => {
@@ -638,6 +645,301 @@ describe("event-centered generative architecture", () => {
     );
   });
 
+  it("完整回应隔离策略固定快速参数，并把最近八轮交给同一次生成", async () => {
+    mocks.completeStructuredOutput.mockResolvedValue(completeTurn());
+    const recentTurns = Array.from({ length: 10 }, (_, index) => ({
+      user: `完整回应历史用户-${index}`,
+      assistantUnderstanding: `完整回应历史承接-${index}`,
+      assistantQuestion: `完整回应历史问题-${index}`
+    }));
+
+    const result = await generateEventCenteredTurnOnceAI(baseInput({
+      completeResponseFirst: true,
+      recentTurns,
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000
+    }));
+
+    expect(result.architecture).toBe("one_call");
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-1-production-contract-v1"
+    );
+    expect(mocks.completeStructuredOutput).toHaveBeenCalledOnce();
+    expect(mocks.completeStructuredOutput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        temperature: 0.2,
+        maxAttempts: 1,
+        maxTokens: 1_280,
+        timeoutMs: 45_000,
+        thinking: "disabled",
+        responseFormat: "json_object"
+      })
+    );
+    const serializedPrompt = mocks.completeStructuredOutput.mock.calls[0]?.[0].messages
+      .map((message: { content: string }) => message.content)
+      .join("\n");
+    expect(serializedPrompt).toContain("【完整回应优先 v1.1】");
+    expect(serializedPrompt).toContain('"visibleResponseMode":"complete_response_v1_1"');
+    expect(serializedPrompt).not.toContain("完整回应历史用户-0");
+    expect(serializedPrompt).not.toContain("完整回应历史用户-1");
+    expect(serializedPrompt).toContain("完整回应历史用户-2");
+    expect(serializedPrompt).toContain("完整回应历史用户-9");
+  });
+
+  it("v1.2 只请求最小结构，并原样保留完整可见正文", async () => {
+    mocks.completeStructuredOutput.mockResolvedValue({
+      response: "这次可以往结果出现之前看一步。还没看到结果时，你会不会已经开始衡量自己？",
+      interaction: {
+        kind: "ask",
+        question: "还没看到结果时，你会不会已经开始衡量自己？"
+      },
+      facts: [{
+        statement: "用户仍然很在意比较",
+        quote: "还是很在意比较",
+        kind: "stated_interpretation"
+      }],
+      correction: {
+        kind: "none",
+        supersededAssistantMessageId: null
+      }
+    });
+
+    const result = await generateEventCenteredCompleteResponseV12AI(baseInput({
+      rawText: "其实我还是很在意比较，继续和我深挖一下。",
+      recentTurns: [{
+        user: "其实我还是很在意比较。",
+        assistantUnderstanding: "",
+        assistantQuestion: null,
+        assistantResponse: "我明白了，你仍然很在意比较。",
+        assistantMessageId: "assistant-1"
+      }],
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test" }
+    }));
+
+    expect(result.validationIssues).toEqual([]);
+    expect(result.completeResponseText).toBe(
+      "这次可以往结果出现之前看一步。还没看到结果时，你会不会已经开始衡量自己？"
+    );
+    expect(result.turn?.reply.question).toBe(
+      "还没看到结果时，你会不会已经开始衡量自己？"
+    );
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-2-minimal-envelope"
+    );
+    expect(mocks.completeStructuredOutput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maxTokens: 1_280,
+        maxAttempts: 1,
+        timeoutMs: 45_000,
+        temperature: 0.2,
+        responseFormat: "json_object",
+        thinking: "disabled"
+      })
+    );
+    const prompt = mocks.completeStructuredOutput.mock.calls[0]?.[0].messages
+      .map((message: { content: string }) => message.content)
+      .join("\n");
+    expect(prompt).toContain("我明白了，你仍然很在意比较。");
+    expect(prompt).not.toContain('"semanticPlan"');
+  });
+
+  it("v1.2.1 保持同一最小结构，并省略 Provider JSON 模式", async () => {
+    mocks.completeStructuredOutput.mockResolvedValue({
+      response: "我们可以从还没出现具体结果时开始看。你平时也会默默衡量自己吗？",
+      interaction: {
+        kind: "ask",
+        question: "你平时也会默默衡量自己吗？"
+      },
+      facts: [],
+      correction: {
+        kind: "none",
+        supersededAssistantMessageId: null
+      }
+    });
+
+    const result = await generateEventCenteredCompleteResponseV121AI(baseInput({
+      rawText: "继续和我聊聊吧，帮我深挖一下。",
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test" }
+    }));
+
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-2-1-json-mode-off"
+    );
+    const request = mocks.completeStructuredOutput.mock.calls[0]?.[0];
+    expect(request).toEqual(expect.objectContaining({
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      temperature: 0.2,
+      thinking: "disabled"
+    }));
+    expect("responseFormat" in request).toBe(false);
+  });
+
+  it("v1.3 直接请求纯文本，并原样投影为完整可见回应", async () => {
+    const response = "你已经把比较这件事说清楚了。没有具体结果时，你也会默默衡量自己吗？";
+    const complete = vi.fn(async (request: AICompletionParams) => {
+      void request;
+      return {
+        content: response,
+        latencyMs: 2_100,
+        provider: "test",
+        tokenUsage: {
+          promptTokens: 800,
+          completionTokens: 50,
+          totalTokens: 850
+        }
+      };
+    });
+
+    const result = await generateEventCenteredCompleteResponseV13AI(baseInput({
+      rawText: "继续和我聊聊吧，帮我深挖一下。",
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test", complete }
+    }));
+
+    expect(result.validationIssues).toEqual([]);
+    expect(result.completeResponseText).toBe(response);
+    expect(result.turn?.reply.question).toBe(
+      "没有具体结果时，你也会默默衡量自己吗？"
+    );
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-3-visible-text-owner"
+    );
+    expect(complete).toHaveBeenCalledWith(expect.objectContaining({
+      temperature: 0.2,
+      maxTokens: 1_280,
+      timeoutMs: 45_000,
+      thinking: "disabled"
+    }));
+    const request = complete.mock.calls[0]?.[0];
+    expect(Object.prototype.hasOwnProperty.call(request, "responseFormat")).toBe(false);
+    expect(result.attempts[0]?.responseText).toBe(response);
+  });
+
+  it("v1.4 保留同焦点连续问句，并省略结构化输出参数", async () => {
+    const response =
+      "我先接住你现在的在意。你更想从哪一层继续？是它什么时候出现，还是它会怎样影响你？";
+    const complete = vi.fn(async (request: AICompletionParams) => {
+      void request;
+      return {
+        content: response,
+        latencyMs: 2_000,
+        provider: "test",
+        tokenUsage: {
+          promptTokens: 800,
+          completionTokens: 50,
+          totalTokens: 850
+        }
+      };
+    });
+
+    const result = await generateEventCenteredCompleteResponseV14AI(baseInput({
+      rawText: "继续和我聊聊吧，帮我深挖一下。",
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test", complete }
+    }));
+
+    expect(result.validationIssues).toEqual([]);
+    expect(result.completeResponseText).toBe(response);
+    expect(result.turn?.reply.question).toBe(
+      "你更想从哪一层继续？是它什么时候出现，还是它会怎样影响你？"
+    );
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-4-grounded-intent-owner"
+    );
+    const request = complete.mock.calls[0]?.[0];
+    expect(Object.prototype.hasOwnProperty.call(request, "responseFormat")).toBe(false);
+  });
+
+  it("v1.5 使用语义层覆盖提示并保持纯文本单次请求", async () => {
+    const response =
+      "你已经说清了当下的愤慨。继续往下看时，这种比较会怎样影响你之后做题或学习的选择？";
+    const complete = vi.fn(async (request: AICompletionParams) => {
+      void request;
+      return {
+        content: response,
+        latencyMs: 2_000,
+        provider: "test",
+        tokenUsage: {
+          promptTokens: 800,
+          completionTokens: 45,
+          totalTokens: 845
+        }
+      };
+    });
+
+    const result = await generateEventCenteredCompleteResponseV15AI(baseInput({
+      rawText: "继续和我聊聊吧，帮我深挖一下。",
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test", complete }
+    }));
+
+    expect(result.validationIssues).toEqual([]);
+    expect(result.completeResponseText).toBe(response);
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-5-semantic-layer-coverage"
+    );
+    const prompt = complete.mock.calls[0]?.[0].messages
+      .map((message) => message.content)
+      .join("\n");
+    expect(prompt).toContain("信息层覆盖");
+    expect(prompt).toContain("不能算新增信息");
+    const request = complete.mock.calls[0]?.[0];
+    expect(Object.prototype.hasOwnProperty.call(request, "responseFormat")).toBe(false);
+  });
+
+  it("v1.6 注入跨场景对比例子并保持纯文本单次请求", async () => {
+    const response =
+      "这份落差和自我怀疑你已经说清了。你最希望这段关系发生哪个具体变化，才会让你感到被重视？";
+    const complete = vi.fn(async (request: AICompletionParams) => {
+      void request;
+      return {
+        content: response,
+        latencyMs: 2_000,
+        provider: "test",
+        tokenUsage: {
+          promptTokens: 900,
+          completionTokens: 45,
+          totalTokens: 945
+        }
+      };
+    });
+
+    const result = await generateEventCenteredCompleteResponseV16AI(baseInput({
+      rawText: "我有很大的落差，也觉得自己不被重视。",
+      maxTokens: 1_280,
+      maxAttempts: 1,
+      timeoutMs: 45_000,
+      provider: { name: "test", complete }
+    }));
+
+    expect(result.validationIssues).toEqual([]);
+    expect(result.strategyVersion).toBe(
+      "2026-08-20.gi088-complete-response-first-v1-6-contrastive-coverage"
+    );
+    const prompt = complete.mock.calls[0]?.[0].messages
+      .map((message) => message.content)
+      .join("\n");
+    expect(prompt).toContain("对比例子一");
+    expect(prompt).toContain("同层换词");
+    const request = complete.mock.calls[0]?.[0];
+    expect(Object.prototype.hasOwnProperty.call(request, "responseFormat")).toBe(false);
+  });
+
   it("唯一分流顺序先判断用户成果和 AI 综合，再考虑继续提问", async () => {
     mocks.completeStructuredOutput.mockResolvedValue(completeTurn());
 
@@ -825,12 +1127,12 @@ describe("event-centered generative architecture", () => {
     expect(result.validationIssues).toContain("understanding_contains_question");
   });
 
-  it("正式问题包含多个问句时继续阻断，摘要恢复不会掩盖多问", async () => {
+  it("正式问题包含多个相关问句时由同一语义目标放行", async () => {
     const generated = askTurn();
-    generated.visibleTurn.thinkingSummary =
-      "客户接受了方案？一个标点错误仍把整份成果压了下去。";
     generated.visibleTurn.question =
       "那个标点错误为什么足以否定整份方案？它代表哪个标准？";
+    generated.semanticPlan.realizationContract.responseCore =
+      "那个标点错误为什么足以否定整份方案，它代表哪个标准";
     mocks.completeStructuredOutput.mockResolvedValue(generated);
 
     const result = await generateEventCenteredTurnOnceAI(baseInput({
@@ -844,8 +1146,9 @@ describe("event-centered generative architecture", () => {
       }
     }));
 
-    expect(result.turn).toBeNull();
-    expect(result.validationIssues).toContain("ask_requires_single_question");
+    expect(result.validationIssues).toEqual([]);
+    expect(result.turn?.visibleTurn.question)
+      .toBe("那个标点错误为什么足以否定整份方案？它代表哪个标准？");
   });
 
   it("思路提前回答正式问题时作废首轮，并使用第二次完整尝试", async () => {
@@ -912,8 +1215,11 @@ describe("event-centered generative architecture", () => {
   });
 
   it("普通硬错误作废首轮并使用通用约束完成第二次尝试", async () => {
-    const invalid = askTurn();
-    invalid.visibleTurn.question = "那个标点为什么影响整体？它代表哪个标准？";
+    const invalidBase = askTurn();
+    const invalid = {
+      ...invalidBase,
+      visibleTurn: { ...invalidBase.visibleTurn, question: null }
+    };
     const valid = askTurn();
     const attempt = (attemptNumber: number) => ({
       stage: "question" as const,
@@ -944,11 +1250,11 @@ describe("event-centered generative architecture", () => {
     expect(result.attempts[0]).toMatchObject({
       success: false,
       errorCode: "OUTPUT_VALIDATION_FAILED",
-      errorMessage: expect.stringContaining("ask_requires_single_question")
+      errorMessage: expect.stringContaining("ask_requires_question")
     });
     const retryPrompt = mocks.completeStructuredOutput.mock.calls[1]?.[0].messages[0].content;
     expect(retryPrompt).toContain("违反客观输出约束");
-    expect(retryPrompt).toContain("ask_requires_single_question");
+    expect(retryPrompt).toContain("ask_requires_question");
   });
 
   it("保存的 thought 冒烟输出由冻结证据建立来源锚点，思路层不复述事实", async () => {

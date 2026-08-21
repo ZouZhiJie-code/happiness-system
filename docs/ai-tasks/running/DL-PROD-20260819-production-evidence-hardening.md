@@ -5,13 +5,16 @@
 - 最后核验：`2026-08-21`
 - 权威入口：[`docs/README.md`](../../README.md)
 - 任务编号：`DL-PROD-20260819`
-- 当前本地候选分支：`codex/production-evidence-hardening-production-reconcile-20260821`
-- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-stage4-journal-release-20260820`
+- 当前本地候选分支：`codex/production-lineage-integration-20260821`
+- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-production-lineage-integration-20260821`
+- 当前候选基线：`origin/main@624b403b81a7b4774cf8617973a5663ccf16cea0`
 - 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
 
 ## 1. 目标与当前事实
 
 本专项完善 Production 的证据、回归、代码结构和月度洞察评估能力。GI-088 v1.9 已通过独立发布线进入 Production；五阶段 Stage 1～4 成果已进入 main，尚未进入当前 GI-088 Production 源提交。下一次发布先完成两条血缘整合；月度 AI 洞察和数据库迁移继续使用独立停止门。
+
+当前单一发布血缘候选以 main `624b403` 为基线，已迁入 GI-088 v1.9 的可见回应、后台事实任务、恢复和 Pro 模型合同，同时保留阶段 1～4 的数据、权限、可靠性、前端和日记成果。本地、双 CI、零模型 E2E 与独立 Preview 均通过：同一失败回合恢复成功，新增用户消息 `0`，可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`；Codex 与产品负责人均裁决 `pass`，产品负责人已授权合并 PR #51。source-main 合并后的 main CI 为当前验证门；Production 保持当前 deployment，发布等待独立授权。
 
 当前 Production 事实：
 
@@ -21,6 +24,14 @@
 - 运行模式：`event_centered + complete_response_v1_9`；模型 `deepseek-v4-pro`
 - 源码血缘：GI-088 Production 源提交 `d8dfae7`；该提交未包含五阶段 main 的 Stage 1～4 合并节点，详见 `PEH-043`
 - 回退目标：阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY），承担 `event_centered + baseline` 回退
+
+### 单一发布血缘 Preview 证据｜2026-08-21
+
+- 运行时代码节点 `e869cf1` 已通过生成式专项 `325/325`、真实 PostgreSQL `3/3`、全量 `3401/3401`、build `77/77` 与零模型 E2E `11/11`；本地 E2E `AIRequestLog=0`、Trace `12`、模型违规 `0`，临时 Schema 已删除。
+- PR #51 head `c4617ec` 的 push run `32458151031` 与 pull request run `32458153627` 均在 attempt 1 通过，重跑 `0`；Preview `dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ` 为 Ready，运行身份回读精确为 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，候选模型同为 Pro。
+- 同一已保存失败回合使用原 `clientTurnId` 恢复成功，新增用户消息 `0`；SSE `200`、`13992ms`，最终用户消息 `1`、AI 回应 `1`、pending turn 清空。精确会话只读账本确认可见回应 Provider 派发 `1` 次、后台事实任务 `1` 次，总模型调用 `2/2`；后台任务 completed，并形成 `2` 条事实依据。
+- Codex 与产品负责人均裁决 `pass`，产品负责人已授权合并 PR #51。可见调用次数由生成 Trace 承担，后台调用保留 `AIRequestLog`；公开证据不保存原文、账号、会话标识或凭证。
+- 分支专用临时回读令牌与私有运行文件已清理；Production 读、写、部署为 `0`。下一门为合并后的唯一 main CI；Production 发布等待独立授权。
 
 ## 2. 实施范围
 

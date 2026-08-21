@@ -1,0 +1,85 @@
+{
+  "cardVersion": 1,
+  "status": "stopped_before_model_call",
+  "decision": "Confirm that the single-lineage Preview preserves the current Production GI-088 v1.9 visible-response and background-task experience while retaining the Stage 1-4 source-main contracts.",
+  "candidate": {
+    "branch": "codex/production-lineage-integration-20260821",
+    "commit": "8deb95050aa469fe29fdb168ba893fb497448a1a",
+    "pullRequest": 51,
+    "deployment": "dpl_HAvDkmDF1eDwfybGDAhH1zTJPSJa",
+    "deploymentUrl": "https://xingfuxitong-85d271uyi-zouzhijies-projects.vercel.app",
+    "target": "preview",
+    "expectedMode": "event_centered",
+    "expectedStrategy": "complete_response_v1_9",
+    "expectedModel": "deepseek-v4-pro"
+  },
+  "dataset": {
+    "identity": "production-lineage-preview-synthetic-v1",
+    "source": "controlled synthetic daily-life event",
+    "privacy": "public_synthetic_no_personal_data",
+    "recordMode": "chat",
+    "inputSha256": "938e28d341e3a05d0de74e0a13d8b8c712a3b4431a5b31b5296500dbbfefcb6e",
+    "rawInputStorage": "ephemeral_private_runtime_only"
+  },
+  "roles": {
+    "objectiveChecks": "Verify exact deployment identity, runtime mode/strategy/model, authenticated event-centered start, one valid SSE response, visible complete response, background-task handoff, and unchanged protected boundaries.",
+    "codexReview": "Assess only the controlled response against the current v1.9 response-first contract and report pass, minor, or fail with evidence boundaries.",
+    "productOwner": "Retains final experience and Production release authority."
+  },
+  "budget": {
+    "visibleResponseCalls": 1,
+    "backgroundTaskCalls": 1,
+    "maximumActualModelCalls": 2,
+    "retries": 0
+  },
+  "publicEvidence": {
+    "rawUserInput": false,
+    "rawModelOutput": false,
+    "credentials": false,
+    "cookies": false,
+    "allowed": [
+      "deployment identity",
+      "runtime identity",
+      "HTTP and SSE contract status",
+      "latency",
+      "model-call counts when legally observable",
+      "Codex label",
+      "stop reason"
+    ]
+  },
+  "stopPoints": [
+    "deployment identity mismatch",
+    "transport failure before the application response",
+    "runtime mode, strategy, or model mismatch",
+    "authentication or permission regression",
+    "invalid SSE or structured application error",
+    "missing visible complete response or background-task handoff",
+    "call budget exceeded",
+    "any Stage 1-4 protected boundary regression"
+  ],
+  "productionBoundary": {
+    "productionDeploymentUnchanged": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "rollbackDeploymentUnchanged": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "productionReads": 0,
+    "productionWrites": 0,
+    "productionDeployments": 0
+  },
+  "result": {
+    "status": "runtime_identity_mismatch",
+    "applicationResponses": {
+      "login": 200,
+      "runtimeReadback": 403,
+      "runtimeReadbackError": "RUNTIME_ENV_READBACK_FORBIDDEN"
+    },
+    "readOnlyEnvironmentAudit": {
+      "mode": "event_centered",
+      "strategy": "baseline",
+      "model": "deepseek-v4-flash"
+    },
+    "visibleResponseCalls": 0,
+    "backgroundTaskCalls": 0,
+    "actualModelCalls": 0,
+    "retries": 0,
+    "stopReason": "The Preview inherited the generic Preview runtime identity instead of the current Production v1.9 and Pro identity."
+  }
+}
