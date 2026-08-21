@@ -5,13 +5,16 @@
 - 最后核验：`2026-08-21`
 - 权威入口：[`docs/README.md`](../../README.md)
 - 任务编号：`DL-PROD-20260819`
-- 当前本地候选分支：`codex/production-evidence-hardening-production-reconcile-20260821`
-- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-stage4-journal-release-20260820`
+- 当前本地候选分支：`codex/production-lineage-integration-20260821`
+- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-production-lineage-integration-20260821`
+- 当前候选基线：`origin/main@624b403b81a7b4774cf8617973a5663ccf16cea0`
 - 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
 
 ## 1. 目标与当前事实
 
 本专项完善 Production 的证据、回归、代码结构和月度洞察评估能力。GI-088 v1.9 已通过独立发布线进入 Production；五阶段 Stage 1～4 成果已进入 main，尚未进入当前 GI-088 Production 源提交。下一次发布先完成两条血缘整合；月度 AI 洞察和数据库迁移继续使用独立停止门。
+
+当前单一发布血缘候选已进入实施：以 main `624b403` 为基线，迁入 GI-088 v1.9 的可见回应、后台事实任务、恢复和 Pro 模型合同，同时保留阶段 1～4 的数据、权限、可靠性、前端和日记成果。候选本地门、Preview 与发布结论均为 `待验证`；Production 保持当前 deployment，不在本阶段改变。
 
 当前 Production 事实：
 

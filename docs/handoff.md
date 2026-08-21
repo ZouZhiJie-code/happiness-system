@@ -9,12 +9,13 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布并保留为回退基线，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，Preview 核心主链通过至“需更新”；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第三批已由 PR #48 合入 main `dedf094`，独立终审 `P0=0 / P1=0 / P2=1`，Preview 产品 smoke 受验收工具配置阻断；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。独立 GI-088 v1.9 发布线已完成正式切流与线上回归，当前 Production 为 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、`event_centered + complete_response_v1_9 + deepseek-v4-pro`；Stage 4 尚未进入 Production，下一门为两条发布血缘整合，详见 `PEH-043`。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布并保留为回退基线，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`；阶段 4 第三批已由 PR #48 合入 main `dedf094`，独立终审 `P0=0 / P1=0 / P2=1`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。当前从 main `624b403` 建立单一发布血缘集成候选，迁入 Production 已验证的 GI-088 v1.9 可见回应、后台任务和 Pro 模型合同，并保留阶段 1～4 的完整成果；本地、Preview 与发布结果均为 `待验证`，详见 `PEH-044`。正式 Production 继续使用 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、`event_centered + complete_response_v1_9 + deepseek-v4-pro`。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
-- 当前本地候选分支：`codex/production-evidence-hardening-production-reconcile-20260821`
-- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-stage4-journal-release-20260820`
+- 当前本地候选分支：`codex/production-lineage-integration-20260821`
+- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-production-lineage-integration-20260821`
+- 当前候选基线：`origin/main@624b403b81a7b4774cf8617973a5663ccf16cea0`
 - 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
 - Stage 4 第三批代码已由 PR #48 合入 `dedf094`，治理收口由 PR #49 合入 `8f7ae40`
 - 当前 Production 源提交：`d8dfae7`（GI-088 v1.9）；阶段 1 发布头 `a86a4ba` 保留回退证据

@@ -7,7 +7,7 @@
 
 最后更新：`2026-08-21`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 已合入 main，P0=0／P1=0／P2=3，完整轨迹 0/30、样本收集 pending；月度洞察为 No-Go／insufficient_evidence；GI-088 v1.9 已独立发布 Production，五阶段 main 与当前 Production 血缘整合 pending，详见 PEH-043`
+当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 已合入 main，P0=0／P1=0／P2=3，完整轨迹 0/30、样本收集 pending；月度洞察为 No-Go／insufficient_evidence；GI-088 v1.9 已独立发布 Production，单一发布血缘候选实施中，详见 PEH-043～044`
 
 ## 1. 为什么需要这份规则
 
@@ -34,6 +34,7 @@
 
 - [Daily Light 五阶段 Production Evidence Hardening 证据索引](./production-evidence-hardening/2026-08-19/README.md)
 - [Daily Light 五阶段问题台账](./production-evidence-hardening/2026-08-19/issue-ledger.md)
+- [GI-088 v1.9 与五阶段 main 单一发布血缘集成](./production-evidence-hardening/2026-08-19/production-lineage-integration/README.md)
 - [Golden Set v2 Production 零正文元数据盘点](./production-evidence-hardening/2026-08-19/golden-set-v2/production-metadata-inventory.json)
 - [Golden Set v2 同意撤回 PostgreSQL 并发回执](./production-evidence-hardening/2026-08-19/golden-set-v2/consent-concurrency-postgres-receipt.json)
 

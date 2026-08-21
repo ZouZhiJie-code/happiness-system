@@ -295,3 +295,11 @@
 - Codex 评估：根因是并行发布缺少统一的“当前正式部署＋活跃发布线”锁定信息，且恢复事实时先读了模块旧文档与历史失败回执，晚于 GI-088 最新分支状态。血缘核对确认 `a86a4ba`、`795417d`、`ef7bf94`、`a89d5bc`、`dedf094`、`8f7ae40` 均不在 Production 源提交 `d8dfae7` 的祖先链中；管理分析仓储与事件中心工作区 blob 不同，日记字段级合并文件在 Production 源树中尚不存在。后续任何 Production 写操作先同时核对 Vercel alias API、项目级现役 Handoff、所有活跃发布专项的最新 head 与最终回执；同一项目同时只保留一条 Production 写入线，其余发布线停在 source-main／Preview。
 - 待验证假设：把 GI-088 v1.9 已批准 Production tree 与 main Stage 2～4 工程成果放入单一集成分支，完成差异审计、零模型回归、生成式真实回归、Preview 和回退演练后，可以在保留 v1.9 体验的同时发布 Stage 4。
 - 当前处理状态：`incident contained / current Production restored / Stage4 Production integration blocked`。Vercel alias API、deployment alias 清单与域名 inspect 均确认 `dailylight.chat`、`www.dailylight.chat` 已恢复到 `dpl_B9P...`，该部署为 Ready；`dpl_DCGY...` 保持 Ready 且当前别名为 `0`。恢复后匿名登录页 `200`、受保护页面服务端登录跳转、管理 API `401`；短窗口 Production 日志 `7` 条，`5×200 / 1×401 / 1×404`，`5xx / error / fatal / warning=0`，日志正文为空。额外正文读取 `0`、额外模型端点请求 `0`。
+
+## PEH-044｜GI-088 v1.9 与五阶段 main 单一发布血缘集成
+
+- 已确认事实：当前 main 为 `624b403b81a7b4774cf8617973a5663ccf16cea0`，已包含阶段 1～4 与相关治理收口；当前 Production 功能来源为 `d8dfae7bb05987f906d6917ed0e7343829136c2f`，承担 `complete_response_v1_9`、后台事实任务与 `deepseek-v4-pro` 合同。两者共同 merge-base 为 `6634a3e3e8dda32de77c8b3749ea5f432323da94`，直接整线合并会同时覆盖访谈服务、前端恢复、日记和大量历史证据，冲突面超出安全发布边界。
+- 产品判断：统一候选以最新 main 为基线，定向迁入 Production 已验证的生成式访谈能力；用户已经使用的 v1.9 可见回应和后台任务保持，阶段 1～4 的数据、权限、恢复、前端与日记成果保持。当前 Production 和回退 deployment 均不改变。
+- Codex 评估：主线定向集成能把变更收敛到真实运行所需的策略、后台任务、Provider 合同和专项测试，避免旧分支历史代码反向覆盖近期可靠性与隐私修复。共享服务需要逐段适配 Stage 4 拆分后的职责，并用生成式合同、真实 PostgreSQL、零模型 E2E 和 Preview 双主链验证共同证明兼容。
+- 待验证假设：`complete_response_v1_9` 可在 Stage 4 拆分后的服务边界上保持原用户体验；后台事实任务仍能做到结果先保存、恢复零重复调用和迟到失权；Stage 1～4 的六步漏斗、同意边界、outbox 与日记内容保护继续成立。
+- 当前处理状态：`已确认·实施中 / local candidate created / result pending`。候选分支 `codex/production-lineage-integration-20260821`，基线 `origin/main@624b403`；本地模型调用、Production 正文读取、数据库迁移、环境变量变更和正式部署均为 `0`。停止点为任一核心产品合同或工程门失败；通过本地与 Preview 门后再提交 Production 发布裁决。
