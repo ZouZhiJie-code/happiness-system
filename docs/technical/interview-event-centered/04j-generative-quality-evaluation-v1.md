@@ -9,7 +9,7 @@
 
 置信度：`高`
 
-落地验证状态：`v1.9 Preview 产品 4/4 pass；发布工具 v1.3 运行回读 No-Go；v1.4 实施中；正式域名 baseline`
+落地验证状态：`v1.9 Preview、候选产品裁决、Production 切流与线上回归均通过`
 
 ## 完整回应优先 v1.9 Production 发布门｜2026-08-20
 
@@ -20,12 +20,12 @@
 | 前置门 | 四轮产品裁决必须绑定实际输入／输出哈希；缺失时在部署凭据和网络写操作前停止 |
 | 正式切流门 | 候选可见回应产品 pass、后台 Trace 完成、临时数据清理完成 |
 | v1.1 结果 | 候选 `dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH` Ready；数据库回读因 psql 调用合同失败；临时数据独立回读全部归零 |
-| 当前状态 | `candidate_smoke_technical_pass / Codex pass / product pending`；正式域名 `event_centered + baseline` |
+| 当前状态 | `production_online_regression_pass`；正式域名 `event_centered + complete_response_v1_9` |
 | 当前专项 | [v1.9 Production 发布工具 v1.5](../../plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-5.md) |
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 
-Production 状态：`项目主链使用 event_centered + baseline；当前分支隔离 Preview 不改变 Production`
+Production 状态：`项目主链使用 event_centered + complete_response_v1_9；baseline 保留为回退目标`
 
 当前产品事实源：[04x-07｜GI-074 生成式访谈评测体系与下游交接](./04x-07-evaluation-preview-and-handoff.md)
 
@@ -180,7 +180,7 @@ Production 状态：`项目主链使用 event_centered + baseline；当前分支
 | 通过门 | 硬场景全 pass；总计 `0 fail`、最多 `1 minor`；中位不高于 `6s`、单例不高于 `15s` |
 | 技术结果 | `8/8 technical_valid / stop`；中位 `3406ms`、最长 `4621ms`；`1280` Token 未截断 |
 | Codex 初评 | `7 pass / 1 minor / 0 fail`；硬门长上下文题 `RPR-REAL-21` minor |
-| 当前状态 | `awaiting_product_review`；产品负责人裁决 pending，暂不宣称离线 Go |
+| 当前状态 | 产品负责人八题全部裁决 `pass`；该身份作为后续生产合同与 v1.9 的历史质量父证据 |
 
 当前专项：[完整回应优先 v1.1 新信息目标](../../plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md)。v1.1 结果见[公开交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md)与[阶段账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-stage-ledger-v1.json)。
 

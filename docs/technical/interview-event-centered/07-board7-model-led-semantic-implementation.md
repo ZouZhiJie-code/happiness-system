@@ -7,9 +7,9 @@
 
 产品决策状态：`当前运行合同 v1 已确认；继承 GI-067 / GI-068～080 冻结结论；GI-081～088 的旧候选、结果和运行身份只承担历史证据职责`
 
-落地验证状态：`v1.9 Preview 产品 4/4 pass；发布工具 v1.3 运行回读 No-Go；v1.4 实施中；正式域名 baseline`
+落地验证状态：`v1.9 Preview、候选产品裁决、Production 切流与线上回归均通过`
 
-Production：`正式域名保持 event_centered + baseline；v1.9 Preview 产品裁决 4/4 pass；v1.2 临时数据已清理；v1.3 模型环境合同实施中`
+Production：`正式域名使用 event_centered + complete_response_v1_9 + deepseek-v4-pro；baseline 保留为回退目标`
 
 工作方法：[生成式访谈 AI 产品工作方法 v1.0](./00-generative-interview-ai-product-working-method.md)（`已冻结`）
 
@@ -35,7 +35,7 @@ Production：`正式域名保持 event_centered + baseline；v1.9 Preview 产品
 | 正式一致性 | 当前策略强制选择 Pro；后台解析使用 v1.7 来源对齐并保存真实原文片段 |
 | 工程门 | 发布工具 `11/11`、v1.9 相关 `101/101`、全量 `3694` 条测试、Lint、类型、两套 Prisma、Production build、文档与差异检查通过 |
 | Preview 技术结果 | 首条可见内容 `4026ms` 就绪；后台 `3341ms` 完成且气泡冻结；重复提交复用原结果，新增模型调用 `0` |
-| 当前状态 | v1.9 Preview 产品 `4/4 pass`；v1.5 候选冒烟技术与 Codex 初评 pass；产品裁决 pending；正式域名 baseline |
+| 当前状态 | v1.9 Preview 与候选产品裁决 pass；Production 正式切流与线上回归 pass |
 
 ## 完整回应优先 v1.7 后台来源对齐合同｜2026-08-20
 
@@ -188,7 +188,7 @@ Production：`正式域名保持 event_centered + baseline；v1.9 Preview 产品
 | 评测 | 同一 `3＋5` 已完成 `8/8`；重试／恢复／回退 `0`；结果逐条交付原文与实际输出 |
 | 技术结果 | `8/8 technical_valid / stop`；中位 `3406ms`、最长 `4621ms`；`1280` Token 未截断 |
 | Codex 初评 | `7 pass / 1 minor / 0 fail`；硬门长上下文题 `RPR-REAL-21` minor |
-| 当前状态 | `awaiting_product_review`；产品负责人裁决 pending，暂不宣称离线 Go |
+| 当前状态 | 产品负责人八题全部裁决 `pass`；该身份作为后续生产合同与 v1.9 的历史质量父证据 |
 | 当前状态 | `已确认·实施中`；真实运行、页面、Preview 和发布待验证 |
 
 当前专项：[完整回应优先 v1.1 新信息目标](../../plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md)。v1.1 结果见[公开交接](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-quality-v1-handoff.md)与[阶段账](../../../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-stage-ledger-v1.json)。

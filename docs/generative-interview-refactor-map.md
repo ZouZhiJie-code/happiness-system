@@ -7,9 +7,9 @@
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 complete_response_v1_9 候选真实冒烟技术 pass、Codex pass；等待产品负责人原文裁决；正式域名 baseline`
+当前讨论位置：`GI-088 complete_response_v1_9 已发布 Production；候选与线上回归通过；回退目标保留`
 
-下一建议板块：`产品负责人裁决候选实际输出；pass 后正式切流并执行线上回归`
+下一建议板块：`进入上线后真实使用观察；新 Bad Case 按原文闭环处理`
 
 当前专项：[完整回应优先 v1.9 Production 发布工具 v1.5](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-5.md)
 
@@ -20,12 +20,12 @@
 | 当前专项 | [v1.9 Production 发布工具 v1.5](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-5.md) |
 | 父结果 | v1.4 运行回读 HTTP 404；受控诊断确认 Production 明确关闭调试回读，生成未运行、临时用户已清理 |
 | 唯一变化 | 移除调试回读前置门；保留候选部署身份、项目环境和生成服务自身配置硬门 |
-| 当前状态 | `候选技术 pass / Codex pass / 产品裁决 pending` |
-| 停止点 | 产品负责人依据实际输入／输出裁决；pass 后正式切流 |
+| 当前状态 | `Production released / online regression pass` |
+| 停止点 | 正式域名、可见回应、后台 Trace 与临时数据清理均验证通过；进入线上观察 |
 
-Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
+Production 状态：`项目主链使用 event_centered + complete_response_v1_9；模型 deepseek-v4-pro；baseline 保留为回退目标`
 
-本次同步范围：`v1.9 Preview 产品裁决 4/4 pass；v1.3 候选 Ready、运行身份可选字段门失败、临时数据已自动清理；v1.4 实施中`
+本次同步范围：`v1.9 Preview 与候选产品裁决 pass；Production 正式切流与线上回归通过；临时数据已清理`
 
 ## 2026-08-20｜GI-088 v1.9 Production 发布工具 v1.4 实施卡
 
@@ -35,8 +35,8 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 | 父结果 | v1.3 新候选 Ready；运行回读依赖可选 `VERCEL_DEPLOYMENT_ID` 而误停，生成未运行，临时用户自动清理 |
 | 唯一变化 | 以回读 `requestHost` 核对候选身份；继续硬核对 v1.9 策略与 Pro 模型 |
 | 候选复用 | 应用代码无变化时复用 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` |
-| 当前状态 | `已确认·实施中 / 结果待验证` |
-| 停止点 | 完成真实可见、后台、清理与候选产品裁决后才允许切流 |
+| 当前状态 | `No-Go / superseded by v1.5` |
+| 停止点 | Production 调试回读关闭；v1.5 使用生成服务自身配置门接续 |
 
 ## 2026-08-20｜GI-088 v1.9 Production 发布工具 v1.3 实施卡
 
@@ -96,9 +96,9 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 | 单一变化 | 程序先区分局部拒答＋继续与整轮停止；模型继续负责新方向和自然回应 |
 | 当前预算 | 家族可见调用 `15/15`，剩余 `0`；重试、恢复、回退保持 `0` |
 | 验证门 | 局部边界继续、明确停止和关系表达全 pass；整体零 fail、最多一项 minor；单例 ≤15s |
-| 停止点 | 核心控制场景 fail 立即停止；产品负责人验收前 Production baseline |
-| 发布准备 | 当前部署和策略已回读；数据库备份与恢复清单验证完成；回退目标已冻结；新 Production 目标部署接管域名前增加后台 Trace 数据库回读硬门；Production 变更 `not_run` |
-| 当前状态 | `Preview 已完成 / Codex 4/4 pass / 发布准备完成 / 产品裁决 pending` |
+| 停止点 | Preview 与候选产品门均已通过；Production 上线回归通过后进入真实使用观察 |
+| 发布结果 | 正式域名已切到 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；可见回应、后台 Trace、临时数据清理和线上回归均通过；baseline 部署保留为回退目标 |
+| 当前状态 | `Production released / online regression pass` |
 | 公开证据 | [Preview 结果](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-isolated-preview-v1-handoff.md)、[Production 发布准备](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-production-readiness-v1-handoff.md) |
 
 ## 2026-08-20｜GI-088 v1.8 明确推进义务实施卡
@@ -1467,10 +1467,10 @@ flowchart TD
 | 4｜成果与 AI 自主访谈策略 | **GI-067 / GI-068～074 已冻结·高置信度** | 高 | 七项落地验证均未启动 | **产品决策完成** | [04x 母文档](./technical/interview-event-centered/04x-board4-gi067-interview-question-strategy-global-framework.md)、[04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md) |
 | 5｜稳定性、用户控制与交互收束 | **GI-075～080 六类规则已冻结；6/6** | GI-075、GI-076、GI-078 中；GI-077、GI-079、GI-080 高 | 产品决策完成；落地验证未启动 | **完成；交接板块 6** | [板块 5 专项](./technical/interview-event-centered/05-board5-stability-user-control-and-interaction-scope.md)、[04x-07｜GI-074](./technical/interview-event-centered/04x-07-evaluation-preview-and-handoff.md) |
 | 6｜生成式质量评测 | **GI-074 体系、总规范 v1.0 与新产品判尺身份并行保留** | 高 | 离线新案例 Codex 零 fail；Preview 首条真实完整回应 Codex pass | **产品负责人真人验收** | [当前评测资产入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)、[生成式质量评测 v1](./technical/interview-event-centered/04j-generative-quality-evaluation-v1.md) |
-| 7｜模型提问策略与链路改造 | **完整回应优先 v1.9 局部边界与继续优先级** | 中 | 隔离 Preview 四轮 Codex `4/4 pass`，等待产品裁决 | **待验证** | [07｜板块 7 当前运行合同](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) |
-| 8｜内部 Preview、验收与发布 | **隔离 complete_response_v1_9 Preview 验收** | 高 | 家族可见预算 `15/15`；等待产品负责人裁决 | **Production baseline** | [v1.9 当前专项](./plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md)、[04p｜板块 8 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) |
+| 7｜模型提问策略与链路改造 | **完整回应优先 v1.9 局部边界与继续优先级** | 高 | Preview 四轮、候选冒烟与线上回归均通过 | **Production 已发布** | [07｜板块 7 当前运行合同](./technical/interview-event-centered/07-board7-model-led-semantic-implementation.md) |
+| 8｜内部 Preview、验收与发布 | **complete_response_v1_9 Production 发布** | 高 | 正式域名已切流；可见回应、后台 Trace、清理与线上回归通过 | **上线后观察** | [v1.9 发布专项](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-5.md)、[04p｜板块 8 Preview、Go/No-Go 与生产授权](./technical/interview-event-centered/04p-board8-preview-go-no-go-production-authorization.md) |
 
-依赖门：用户控制、可靠提交、日志闭环、反馈、埋点和发布隔离继续作为底座。当前主链为“GI-075～080 六类规则已冻结 → 板块 6A 校准锚点 → 板块 7A 六题诊断历史 → GI-084～086 失败与校准 → GI-087 六题筛选 → GI-088 v1～v8r2 历史迭代 → 项目级评测总规范 v1.0 生效 → 历史真实金标库 v1.1 完整性确认 → 真实问题回归集 v1.1 封存 30/30 → v8r2 的 9 题基线 6/9 端到端通过 → 事件关系解释复测与状态探针 → 长等待合同 A/B → 可见合同速度方向 → 回应优先 v2 Low 六题 No-Go → 回应优先 v2.1 Low 三题 No-Go → 回应优先 v2.2 Low 产品裁决 6/6 pass → v2.3～v2.9 暴露两段可见职责冲突并 No-Go → 完整回应优先 v1 技术 `8/8`、Codex 两题 fail → v1.1～v1.6 收敛到单一可见负责人＋后台事实整理 → v1.7 新案例技术全通过、Codex 零 fail → 隔离 Preview 技术门通过并等待真人验收”。Production 当前使用 `event_centered + baseline`。
+依赖门：用户控制、可靠提交、日志闭环、反馈、埋点和发布隔离继续作为底座。当前主链为“GI-075～080 六类规则已冻结 → 板块 6A 校准锚点 → 板块 7A 六题诊断历史 → GI-084～086 失败与校准 → GI-087 六题筛选 → GI-088 v1～v8r2 历史迭代 → 项目级评测总规范 v1.0 生效 → 历史真实金标库 v1.1 完整性确认 → 真实问题回归集 v1.1 封存 30/30 → v8r2 的 9 题基线 6/9 端到端通过 → 事件关系解释复测与状态探针 → 长等待合同 A/B → 可见合同速度方向 → 回应优先 v2 Low 六题 No-Go → 回应优先 v2.1 Low 三题 No-Go → 回应优先 v2.2 Low 产品裁决 6/6 pass → v2.3～v2.9 暴露两段可见职责冲突并 No-Go → 完整回应优先 v1 技术 `8/8`、Codex 两题 fail → v1.1～v1.6 收敛到单一可见负责人＋后台事实整理 → v1.7 新案例技术全通过、Codex 零 fail → v1.9 Preview、候选验收与 Production 线上回归全部通过”。Production 当前使用 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，baseline 部署保留为回退目标。
 
 ## 5. 板块任务书
 
@@ -3773,7 +3773,7 @@ GI-076～080 完成后，板块 5 六类产品规则达到 `6/6`，产品决策�
 | 日期 | 变化 | 影响 |
 |---|---|---|
 | `2026-08-20` | v1.6 持久后台任务完成本地工程接入 | 可见提交与任务创建原子化、调用前记账、结果先保存后顺序写入、恢复零重复调用、写入权失效和失败后续行已覆盖；专项 `84/84`、全量 `3649` 条、类型、Lint、两套 Prisma 与 Production build 通过。产品裁决、真实页面 Preview 与发布仍待执行，Production baseline |
-| `2026-08-20` | 完整回应优先 v1.1 离线批次完成，等待产品复核 | `8/8 technical_valid / stop`，中位 `3406ms`、最长 `4621ms`，1280 Token 未截断；Codex `7 pass / 1 minor / 0 fail`，长上下文硬题 minor；产品裁决 pending，页面与 Preview not_run |
+| `2026-08-20` | 完整回应优先 v1.1 离线批次完成 | `8/8 technical_valid / stop`，中位 `3406ms`、最长 `4621ms`，1280 Token 未截断；Codex `7 pass / 1 minor / 0 fail`；产品八题全部 `pass`，作为后续生产合同与 v1.9 的历史质量父证据 |
 | `2026-08-19` | 完整回应优先 v1.1 新信息目标进入实施 | 新候选 `2026-08-19.gi088-complete-response-first-v1-1-new-information-target`；新运行 `2026-08-19.gi088-complete-response-first-v1-1-quality-v1`；同一 `3＋5` 新预算 `0/8`，结果待验证，Production baseline |
 | `2026-08-19` | 完整回应优先 v1 完成并质量 No-Go | 技术与正文合同 `8/8`，中位 `3087ms`、最长 `6976ms`，`1280` Token 未截断；Codex 初评 RPR-REAL-22 与 RPR-REAL-21 fail，产品裁决 pending；页面与 Preview not_run |
 | `2026-08-19` | 回应优先 v2.9 真实 CONTINUE 产品 fail／No-Go | Low＋High `2/2`；Low `3967ms`、Codex minor；High `1885ms`、HTTP 200／stop／完整 JSON，但缺少覆盖判断与开放任务，三项合同失败；纯时间 `5852ms` 通过，整体技术门 false，Codex 与产品均 fail，后续 `4 not_run` |

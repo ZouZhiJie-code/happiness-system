@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-5-service-config-gate",
-  "status": "candidate_smoke_technical_pass_waiting_product_owner",
+  "status": "production_online_regression_pass",
   "planFingerprint": "458821597d4a75805a9373b43d9154a99ba3b0494a6beb5dc41dab34797547b7",
   "productOwnerPreviewVerdict": "pass",
   "baseline": {
@@ -22,12 +22,20 @@
     "backgroundPassed": true,
     "backgroundTraceHash": "9fb0e47ffde0f22da666132bbe4c0d13772c2689c750f928ffd48adf58bfd21d",
     "temporaryUserDeleted": true,
-    "productOwnerVerdict": "pending"
+    "productOwnerVerdict": "pass"
   },
-  "promotion": null,
-  "onlineRegression": null,
+  "promotion": {
+    "completed": true,
+    "deploymentId": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "domainVerified": true
+  },
+  "onlineRegression": {
+    "completed": true,
+    "technicalPassed": true,
+    "temporaryUserDeleted": true
+  },
   "rollback": null,
   "error": null,
-  "updatedAt": "2026-08-21T03:18:35.026Z",
+  "updatedAt": "2026-08-21T03:51:31.386Z",
   "publicSensitiveContentStored": false
 }

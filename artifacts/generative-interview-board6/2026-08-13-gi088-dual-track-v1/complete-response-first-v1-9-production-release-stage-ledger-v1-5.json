@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1.0",
   "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-5-service-config-gate",
-  "status": "candidate_smoke_technical_pass_waiting_product_owner",
+  "status": "production_online_regression_pass",
   "candidate": {
     "deploymentId": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
     "ready": true,
-    "domainPromoted": false
+    "domainPromoted": true
   },
   "smoke": {
     "visibleTechnicalPassed": true,
@@ -16,13 +16,26 @@
     "backgroundRetryCount": 0,
     "temporaryUserDeleted": true,
     "codexVerdict": "pass",
-    "productOwnerVerdict": "pending"
+    "productOwnerVerdict": "pass"
   },
   "production": {
-    "deploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
-    "strategy": "baseline",
-    "unchanged": true
+    "deploymentId": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "mode": "event_centered",
+    "strategy": "complete_response_v1_9",
+    "model": "deepseek-v4-pro",
+    "ready": true,
+    "domainVerified": true,
+    "onlineRegression": {
+      "visibleElapsedMs": 12190,
+      "technicalPassed": true,
+      "backgroundPassed": true,
+      "backgroundInvocationCount": 1,
+      "backgroundRetryCount": 0,
+      "temporaryUserDeleted": true,
+      "codexVerdict": "pass"
+    }
   },
   "publicSensitiveContentStored": false,
-  "stopPoint": "waiting_product_owner_candidate_smoke_verdict_before_domain_promotion"
+  "rollback": "not_triggered_baseline_deployment_retained_as_recovery_target",
+  "stopPoint": "production_released_and_online_regression_verified"
 }

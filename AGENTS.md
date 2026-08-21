@@ -10,8 +10,8 @@
 Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、事件记录与日记产品。
 
 - 正式域名：`https://dailylight.chat`。
-- 当前 Production 主链：`event_centered + baseline`；`legacy + baseline` 保留为应急回退与历史运行身份。
-- GI-088 v1.9 隔离 Preview 四轮连续链 Codex 初评与产品负责人裁决均为 `4/4 pass`；v1.5 候选真实冒烟技术通过、Codex 初评 `pass`，等待产品负责人依据实际输入／输出裁决；临时数据已清理，正式域名继续使用 baseline。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
+- 当前 Production 主链：`event_centered + complete_response_v1_9`，使用 `deepseek-v4-pro`；`event_centered + baseline` 与 `legacy + baseline` 保留为回退和历史运行身份。
+- GI-088 v1.9 Preview 四轮、候选实际输出、正式切流和线上回归均已通过；部署 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` 已接管正式域名。可见回应、后台 Trace 与临时数据清理完成，未触发回退。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
 - `2026-08-13` 阶段 C2 已修复 Judge 运行器并完成全新校准：Plus 普通与思考均 `20/20` 且 No-Go；Max 思考 `15/20` 后因连接与 DNS 故障形成 `technical_blocked`。累计 `64` 次、4 次补跑、0.584052 元，历史身份保持不变。
 - `2026-08-19` GI-088 回应优先 v2.9 纠正首题产品 `pass` 后，真实 CONTINUE 已完成 Low＋High `2/2`：Low `3967ms`、Codex 初评 `minor`；High `1885ms`、HTTP 200／stop／完整 JSON，但缺少覆盖判断与开放目标，状态合同失败；纯时间 `5852ms` 通过，整体技术门因合同失败为 `false`。Codex 与产品负责人均裁决完整回合 `fail`，本轮 `No-Go / stop`；后续 `4 not_run`，页面、Preview 和发布均为 `not_run`；Production 保持 `event_centered + baseline`。
 - `2026-08-20` GI-088 完整回应优先 v1.6 已完成 `8/8 technical_valid`：中位 `2915ms`、最长 `5152ms`、最高 completion `91/1280`；Codex 原文初评为 `7 pass / 1 minor / 0 fail`。v1.5 两处同层回问已修复，唯一待裁决项是关系题新增一处未经用户明确确认的感受；产品负责人裁决 pending。
@@ -26,6 +26,7 @@ Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、�
 - `2026-08-20` v1.1 新候选 `dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH` Ready；候选冒烟注册与会话创建成功，随后本地 psql 因连接地址、URL 参数、`-c` 变量替换和同语句快照形成技术失败。临时账号已精确清理并回读账号／会话／消息／Trace 全部为 0；v1.2 复用该候选并只修复数据库工具合同。
 - `2026-08-20` v1.2 真实冒烟确认数据库合同已进入可执行路径；可见生成前因部署环境 `deepseek-v4-flash` 与候选要求 `deepseek-v4-pro` 不一致而停止，后台与语义评审未运行，临时账号已自动清理。v1.3 只补齐候选和回退的模型环境合同。
 - `2026-08-20` v1.3 新候选 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` Ready；受保护运行回读因工具要求 Vercel 可选部署 ID 字段而停止，生成未运行、临时账号自动清理。v1.4 改用候选请求主机核对身份，策略与 Pro 模型继续硬核对。
+- `2026-08-20` 产品负责人对候选实际回答裁决 `pass`；该候选正式接管 `dailylight.chat`。Production 回读为 `event_centered + complete_response_v1_9 + deepseek-v4-pro`；线上可见回答 `12190ms`，后台一次成功、零重试，临时数据删除，回退未触发。
 - 网页端产品主线：`访谈记录 → 当天时间线事件卡片 → 今日日记`。访谈页负责表达、回应、保存和返回当天；日记页负责生成、查看和更新当天日记。
 - 五个维度为 `joy / fulfillment / reflection / improvement / gratitude`。理论与完成规则由 [`docs/theory/`](./docs/theory/) 承担。
 - 历史候选、测试数字和部署记录只承担各自时期的证据职责，不能自动转化为当前产品结论或发布授权。

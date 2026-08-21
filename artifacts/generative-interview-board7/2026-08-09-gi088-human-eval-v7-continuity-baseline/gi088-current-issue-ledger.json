@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.0",
-  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v117",
-  "status": "complete_response_first_v1_9_candidate_smoke_waiting_product_owner",
-  "currentQueueStage": "complete_response_first_v1_9_candidate_output_product_gate",
+  "ledgerVersion": "2026-08-20.gi088-current-issue-ledger-v118",
+  "status": "complete_response_first_v1_9_production_released_online_regression_pass",
+  "currentQueueStage": "complete_response_first_v1_9_post_release_observation",
   "semanticQualityDecisionPresentation": {
     "status": "product_owner_confirmed",
     "productJudgment": "每个语义质量判断先逐例展示与判断直接相关的用户输入和 AI 实际输出；Codex 只作初评，产品负责人基于原文作最终裁决。",
@@ -43,13 +43,12 @@
     "stopPoint": "v1_quality_no_go_product_pending_v1_1_uses_independent_identity_and_budget"
   },
   "completeResponseFirstV11": {
-    "status": "technical_valid_codex_seven_pass_one_minor_awaiting_product_review",
+    "status": "technical_valid_product_eight_pass_historical_parent",
     "confirmedFact": "v1.1 已完成开发 3/3 与回归 5/5，8/8 technical_valid / stop；中位 3406ms、最长 4621ms，1280 Token 未截断。预算消费 8/8，重试、恢复和回退均为 0。",
-    "productJudgment": "产品负责人裁决 pending；按完整相关用户输入、实际 AI 输出与 Codex 初评逐例裁决，裁决前暂不宣称离线 Go。",
+    "productJudgment": "产品负责人依据八题完整相关原文与实际 AI 输出裁决全部 pass。",
     "codexAssessment": "RPR-REAL-01、05、11、13、22、CF-03、REAL-19 pass；RPR-REAL-21 minor：第一选项部分重复原文已说明的即时触发，独处后是否延续仍有一点新增。合计 7 pass / 1 minor / 0 fail。",
     "openHypotheses": [
-      "产品负责人是否接受 RPR-REAL-21 的部分重复为 minor。",
-      "八题产品裁决完成后，v1.1 是否满足离线质量 Go。"
+      "v1.1 的新信息目标方法能否在生产合同与真实连续体验中保持稳定。"
     ],
     "execution": {
       "candidate": "2026-08-19.gi088-complete-response-first-v1-1-new-information-target",
@@ -84,7 +83,7 @@
       "stageLedger": "../../generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-stage-ledger-v1.json",
       "privateReview": "git_ignored_mode_0600"
     },
-    "stopPoint": "wait_for_product_owner_eight_case_review_before_offline_go_or_page_integration"
+    "stopPoint": "historical_quality_parent_superseded_by_production_contract_and_later_v1_9_release"
   },
   "completeResponseFirstV11Integration": {
     "status": "production_contract_quality_no_go",
@@ -488,13 +487,13 @@
     "stopPoint": "implement_validate_and_deploy_isolated_preview_before_new_model_calls"
   },
   "completeResponseFirstV19": {
-    "status": "preview_product_four_pass_candidate_smoke_technical_and_codex_pass_product_pending",
-    "confirmedFact": "v1.9 隔离 Preview 四轮连续链完成，Codex 初评与产品负责人裁决均为 4/4 pass。v1.2 已修复数据库合同；真实候选冒烟因部署模型为 deepseek-v4-flash、候选要求 deepseek-v4-pro 而在可见生成前停止，临时用户已自动清理。正式域名继续使用 event_centered + baseline。",
-    "productJudgment": "产品负责人依据四轮完整原文与实际 AI 输出全部裁决 pass；当前执行候选部署与后台回读，候选实际输出继续由产品负责人裁决。",
-    "codexAssessment": "普通表达、纠正、明确深挖、局部拒答＋换方向继续均初评 pass；当前用发布状态机固定产品门、后台门、临时数据清理和回退顺序，约 10.6 秒中位等待继续独立记为发布风险。",
+    "status": "production_released_online_regression_pass",
+    "confirmedFact": "v1.9 隔离 Preview 四轮连续链的 Codex 初评与产品负责人裁决均为 4/4 pass。候选部署 dpl_B9P64xCMMGtSR6CKAjNzRFdav39p 使用 event_centered + complete_response_v1_9 + deepseek-v4-pro；候选冒烟 12524ms、线上回归 12190ms，均完成一次可见回应与一次后台事实整理，零重试，临时用户已清理。正式域名已切到该部署并回读 Ready。",
+    "productJudgment": "产品负责人依据四轮 Preview 原文和候选冒烟实际输出全部裁决 pass，同意正式上线。",
+    "codexAssessment": "候选冒烟与正式域名线上回归的实际回应均忠实承接用户完成周报后的放松，并围绕用户主动强调的‘按计划’选择一个新增信息目标；线上回归初评 pass。",
     "openHypotheses": [
-      "同时冻结 complete_response_v1_9 与 deepseek-v4-pro 的新候选能否通过可见生成与后台 Trace。",
-      "Production 直连冒烟和正式域名回归能否保持与隔离 Preview 一致的语义、状态和等待体验。"
+      "正式上线后的真实用户分布中，完整回应质量、后台事实整理和约 12 秒等待能否持续稳定。",
+      "若后续出现跨场景同类失败，是否需要重开模型或方法比较。"
     ],
     "execution": {
       "candidate": "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority",
@@ -505,16 +504,22 @@
       "retries": 0,
       "recoveryCalls": 0,
       "fallback": 0,
-      "productionCurrentDeploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
-      "productionStrategy": "event_centered_baseline",
-      "productionChange": "candidate_ready_unpromoted_formal_domain_unchanged_baseline_restored"
+      "productionCurrentDeploymentId": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+      "productionStrategy": "event_centered_complete_response_v1_9_deepseek_v4_pro",
+      "productionChange": "released_and_online_regression_passed"
     },
     "readiness": {
       "productionReadback": "completed",
       "databaseBackup": "completed_restore_list_verified",
       "backupSha256": "02f4c070714ecee041421540696330aa0aedc83ebeb07ddaa769c64b37c49260",
       "rollbackTarget": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
-      "releaseProcedure": "verified_waiting_product_owner"
+      "releaseProcedure": "completed",
+      "candidateSmokeVisibleElapsedMs": 12524,
+      "onlineRegressionVisibleElapsedMs": 12190,
+      "candidateSmokeBackground": "pass_one_invocation_zero_retry",
+      "onlineRegressionBackground": "pass_one_invocation_zero_retry",
+      "temporaryDataCleanup": "verified",
+      "rollback": "not_triggered_baseline_deployment_retained"
     },
     "evidence": {
       "plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md",
@@ -546,9 +551,15 @@
       "v1_4Plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-4.md",
       "v1_4Failure": "runtime_readback_http_404_explicitly_disabled",
       "temporaryDataCleanup": "verified_automatic_cleanup",
-      "v1_5Plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-5.md"
+      "v1_5Plan": "../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-5.md",
+      "v1_5RunIdentity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-5-service-config-gate",
+      "v1_5CandidateDeploymentId": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+      "v1_5CandidateSmoke": "technical_background_and_product_pass",
+      "v1_5Promotion": "completed_domain_verified",
+      "v1_5OnlineRegression": "technical_background_and_codex_pass",
+      "v1_5Rollback": "not_triggered"
     },
-    "stopPoint": "wait_product_owner_candidate_output_verdict_then_promote_and_run_online_regression"
+    "stopPoint": "production_released_begin_post_release_observation"
   },
   "responseFirstV29": {
     "status": "correction_gate_product_pass_continuation_product_fail_no_go",
