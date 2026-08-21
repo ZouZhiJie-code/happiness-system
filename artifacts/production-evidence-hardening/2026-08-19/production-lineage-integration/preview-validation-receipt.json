@@ -1,6 +1,6 @@
 {
   "receiptVersion": 1,
-  "status": "preview_pass_production_pending",
+  "status": "preview_pass_source_main_merge_authorized_production_pending",
   "recordedAt": "2026-08-21",
   "candidate": {
     "branch": "codex/production-lineage-integration-20260821",
@@ -72,7 +72,9 @@
   },
   "review": {
     "codexLabel": "pass",
-    "productOwnerVerdict": "pending",
+    "productOwnerVerdict": "pass",
+    "productOwnerVerdictRecordedAt": "2026-08-21",
+    "sourceMainMergeAuthorized": true,
     "productionReleaseVerdict": "pending"
   },
   "privacy": {

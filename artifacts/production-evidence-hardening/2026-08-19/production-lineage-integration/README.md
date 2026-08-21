@@ -1,7 +1,7 @@
 # GI-088 v1.9 与五阶段 main 单一发布血缘集成
 
 - 文档职责：证据索引
-- 文档状态：待验证
+- 文档状态：已确认·实施中
 - 最后核验：`2026-08-21`
 - 权威入口：[`DL-PROD-20260819`](../../../../docs/ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
@@ -36,7 +36,7 @@ head `ee5fe95` 的两套 CI 与 Preview `dpl_HDereqmpJFDQNNthp33UGLQq9KAC` 继�
 
 无换行令牌生效后，head `7210905` 的两套 CI 与 Preview `dpl_8Ha4jTMtQcBshKHNHBDTiHBGqZ45` 首轮通过，运行环境回读精确为 `event_centered + complete_response_v1_9 + deepseek-v4-pro`。固定账号列表合同通过且未完成额度为 `1/2`；新聊天记录创建成功，用户回合可靠保存，SSE 在 `10274ms` 返回 `EVENT_CENTERED_CANDIDATE_MODEL_MISMATCH`，无最终会话。代码与环境对账确认通用 Preview 的 `EVENT_CENTERED_GENERATIVE_MODEL=deepseek-v4-flash` 仍拥有更高优先级，Provider 创建前即主动阻断，因此实际模型调用与后台任务均为 `0`、重试 `0`。下一步把该候选模型覆盖也对齐为 Pro，并在新部署中恢复同一失败回合。
 
-候选模型对齐后，head `c4617ec` 的 push run `32458151031`、PR run `32458153627` 与 Preview `dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ` 均在 attempt 1 通过。运行环境回读四项精确一致；同一失败回合使用原 `clientTurnId` 恢复成功，新增用户消息 `0`，SSE `200`、`13992ms`，最终用户消息 `1`、AI 回应 `1`、pending turn 清空。精确会话只读账本确认：可见回应 Provider 派发 `1` 次、后台事实任务 `1` 次，总模型调用 `2/2`；后台使用 `deepseek-v4-pro`，任务 completed，并形成 `2` 条事实依据。Codex 原文初评 `pass`，产品负责人裁决与 Production 发布裁决保持 pending。临时分支回读令牌和私有运行文件均已删除；Production 读、写、部署保持 `0`。
+候选模型对齐后，head `c4617ec` 的 push run `32458151031`、PR run `32458153627` 与 Preview `dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ` 均在 attempt 1 通过。运行环境回读四项精确一致；同一失败回合使用原 `clientTurnId` 恢复成功，新增用户消息 `0`，SSE `200`、`13992ms`，最终用户消息 `1`、AI 回应 `1`、pending turn 清空。精确会话只读账本确认：可见回应 Provider 派发 `1` 次、后台事实任务 `1` 次，总模型调用 `2/2`；后台使用 `deepseek-v4-pro`，任务 completed，并形成 `2` 条事实依据。Codex 原文初评 `pass`；产品负责人已裁决 `pass` 并授权合并 PR #51。Production 发布裁决保持 pending。临时分支回读令牌和私有运行文件均已删除；Production 读、写、部署保持 `0`。
 
 本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)，Preview 最终回执见 [`preview-validation-receipt.json`](./preview-validation-receipt.json)；五张启动卡分别保存每次运行前身份、停止点与实际结果。旧 Production 发布运行器继续保留原候选身份，本候选使用独立提交、哈希和运行回执。
 

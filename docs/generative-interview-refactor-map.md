@@ -9,11 +9,11 @@
 
 文档状态：`生效中`
 
-当前板块：`板块 8｜GI-088 v1.9 Production 已发布；跨线集成候选 Preview 通过、产品裁决 pending`
+当前板块：`板块 8｜GI-088 v1.9 Production 已发布；跨线集成候选产品 pass、source-main 合并已授权`
 
-当前讨论位置：`单一发布血缘候选已通过本地、双 CI、零模型 E2E 与独立 Preview；产品负责人裁决、source-main 合并与 Production 发布 pending`
+当前讨论位置：`单一发布血缘候选已通过本地、双 CI、零模型 E2E 与独立 Preview；产品负责人 pass 并授权合并 PR #51，Production 发布 pending`
 
-下一建议板块：`产品负责人复核受控原文，并分别裁决 source-main 合并与 Production 发布`
+下一建议板块：`合并 PR #51 并核对 main CI；Production 发布继续使用独立裁决`
 
 Production 状态：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p；event_centered + complete_response_v1_9；deepseek-v4-pro`
 
@@ -27,7 +27,7 @@ Production 状态：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p；event_centered + complet
 - 验证门：生成式合同与后台任务专项、阶段 1～4 定向回归、真实 PostgreSQL 并发恢复、全量测试、类型、Lint、构建、双 Prisma、文档、零模型 E2E，以及独立 Preview 回归。
 - 调用与隐私：本地自动门模型调用 `0`；真实生成式回归与 Preview 如进入运行，使用独立身份、明确预算和公开／私有证据分离。Production 正文读取、环境变量修改、数据库迁移和正式切流均为 `0`。
 - 停止点：出现用户可见回应退化、后台任务重复／丢失、恢复与幂等冲突、同意或权限边界回归、日记人工内容丢失、模型调用越界、数据库结构变化或任一核心工程门失败时暂停。Production 继续使用 `dpl_B9P...`，发布裁决保持 pending。
-- 当前结果：本地、双 CI、零模型 E2E 与 Preview 均通过。同一失败回合恢复成功，新增用户消息 `0`，可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`；Codex 原文初评 `pass`。产品负责人裁决、source-main 合并与 Production 发布保持 pending。
+- 当前结果：本地、双 CI、零模型 E2E 与 Preview 均通过。同一失败回合恢复成功，新增用户消息 `0`，可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`；Codex 与产品负责人均裁决 `pass`，产品负责人已授权合并 PR #51。Production 发布保持 pending。
 
 网页端实现同步：当前正式域名运行 GI-088 v1.9 `event_centered + complete_response_v1_9`，模型为 `deepseek-v4-pro`；阶段 1 deployment 保留为回退目标。五阶段 Stage 1～4 已进入 main，但当前 GI-088 Production 源提交未包含这些合并节点；下一次发布先完成单一血缘整合，公开对账见 [`PEH-043`](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 

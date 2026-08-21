@@ -162,6 +162,9 @@
       "productionWrites": 0,
       "productionDeployments": 0
     },
-    "verdict": "preview_pass_production_pending"
+    "verdict": "preview_pass_source_main_merge_authorized_production_pending",
+    "productOwnerVerdict": "pass",
+    "productOwnerVerdictRecordedAt": "2026-08-21",
+    "sourceMainMergeAuthorized": true
   }
 }
