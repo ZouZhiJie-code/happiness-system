@@ -1,0 +1,82 @@
+{
+  "cardVersion": 1,
+  "status": "authorized_in_progress",
+  "recordedAt": "2026-08-21T11:19:39Z",
+  "decision": "Deploy the source-main single lineage to Production while preserving the accepted GI-088 v1.9 experience and the Stage 1-4 contracts.",
+  "authorization": {
+    "productOwnerVerdict": "authorized",
+    "authorizationMessage": "同意，继续",
+    "authorizedAt": "2026-08-21",
+    "scope": [
+      "Production candidate deployment from the exact current main source",
+      "candidate smoke",
+      "Production promotion",
+      "online regression",
+      "exact-session background Trace readback",
+      "temporary synthetic data cleanup",
+      "evidence closeout, commit, push, pull request, and merge"
+    ]
+  },
+  "candidate": {
+    "branch": "codex/production-lineage-production-release-20260821",
+    "sourceMainCommit": "e3284b5127232dfdb8535a74b52187f33118cfdb",
+    "sourceMainTree": "8351165ceb6195cbbac85d6e28e39395ff7797f4",
+    "sourceMainCiRun": 32468682590,
+    "sourceMainCiAttempt": 1,
+    "sourceMainCiConclusion": "success",
+    "expectedMode": "event_centered",
+    "expectedStrategy": "complete_response_v1_9",
+    "expectedModel": "deepseek-v4-pro"
+  },
+  "productionBefore": {
+    "formalDomain": "https://dailylight.chat",
+    "deployment": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "status": "Ready",
+    "rollbackDeployment": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5"
+  },
+  "dataset": {
+    "identity": "production-lineage-production-smoke-synthetic-v1",
+    "source": "controlled synthetic daily-life event",
+    "privacy": "public_synthetic_no_personal_data",
+    "rawInputStorage": "ephemeral_private_runtime_only"
+  },
+  "roles": {
+    "objectiveChecks": "Verify exact deployment, runtime identity, one visible response, one background fact task, one user message, one assistant message, no pending turn, and complete temporary-data cleanup.",
+    "codexReview": "Assess the controlled response against the already accepted v1.9 contract and report pass, minor, or fail.",
+    "productOwner": "Authorized this Production release and retains final product authority for any plan expansion."
+  },
+  "budget": {
+    "visibleResponseProviderDispatches": 1,
+    "backgroundTaskCalls": 1,
+    "maximumActualModelCalls": 2,
+    "retries": 0
+  },
+  "excluded": [
+    "database migration",
+    "environment-variable change",
+    "strategy or model change",
+    "monthly AI insight release",
+    "Production user-content sampling",
+    "plan expansion"
+  ],
+  "stopPoints": [
+    "candidate source or deployment identity mismatch",
+    "runtime mode, strategy, or model mismatch",
+    "candidate smoke failure",
+    "invalid visible response or missing background task",
+    "model-call budget exceeded",
+    "duplicate or lost message",
+    "permission, consent, daily-journal, recovery, or idempotency regression",
+    "Production 5xx or error signal",
+    "temporary-data cleanup failure"
+  ],
+  "result": {
+    "candidateDeployment": "pending",
+    "candidateSmoke": "pending",
+    "promotion": "pending",
+    "onlineRegression": "pending",
+    "exactSessionAudit": "pending",
+    "cleanup": "pending",
+    "verdict": "pending"
+  }
+}

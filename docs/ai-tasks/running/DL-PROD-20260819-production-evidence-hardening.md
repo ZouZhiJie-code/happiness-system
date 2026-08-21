@@ -5,16 +5,25 @@
 - 最后核验：`2026-08-21`
 - 权威入口：[`docs/README.md`](../../README.md)
 - 任务编号：`DL-PROD-20260819`
-- 当前本地候选分支：`codex/production-lineage-integration-20260821`
+- 当前本地候选分支：`codex/production-lineage-production-release-20260821`
 - 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-production-lineage-integration-20260821`
-- 当前候选基线：`origin/main@624b403b81a7b4774cf8617973a5663ccf16cea0`
+- 当前候选基线：`origin/main@e3284b5127232dfdb8535a74b52187f33118cfdb`
 - 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
 
 ## 1. 目标与当前事实
 
-本专项完善 Production 的证据、回归、代码结构和月度洞察评估能力。GI-088 v1.9 已通过独立发布线进入 Production；五阶段 Stage 1～4 与 GI-088 v1.9 已完成 source-main 统一血缘集成。当前 Production deployment 保持原样，统一血缘发布、月度 AI 洞察和数据库迁移继续使用独立停止门。
+本专项完善 Production 的证据、回归、代码结构和月度洞察评估能力。GI-088 v1.9 已通过独立发布线进入 Production；五阶段 Stage 1～4 与 GI-088 v1.9 已完成 source-main 统一血缘集成。产品负责人已于 `2026-08-21` 独立授权统一血缘 Production 发布，当前处于 `已确认·实施中`；月度 AI 洞察和数据库迁移继续使用独立停止门。
 
-单一发布血缘已由 PR #51 合入 main `0f483567`：候选保留 GI-088 v1.9 的可见回应、后台事实任务、恢复和 Pro 模型合同，同时保留阶段 1～4 的数据、权限、可靠性、前端和日记成果。产品负责人裁决 `pass`；唯一 main CI run `32467211291` 在 attempt 1 通过，source-main 集成已完成。Production 保持当前 deployment，发布等待独立授权。
+单一发布血缘已由 PR #51 合入 main `0f483567`：候选保留 GI-088 v1.9 的可见回应、后台事实任务、恢复和 Pro 模型合同，同时保留阶段 1～4 的数据、权限、可靠性、前端和日记成果。最终文档收口由 PR #52 合入 main `e3284b5`，main CI run `32468682590` 在 attempt 1 通过。Production 发布授权已获得，候选部署、冒烟、正式切流、线上回归、后台 Trace 回读和临时数据清理按启动卡串行执行，结果保持 `pending`。
+
+### 单一发布血缘 Production 执行｜2026-08-21
+
+- 产品负责人已明确回复“同意，继续”，授权最新 main `e3284b5127232dfdb8535a74b52187f33118cfdb` 进入 Production 发布链。
+- 发布保持 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，数据库迁移、环境变量修改、月度 AI 洞察上线和 Production 用户正文抽样均排除。
+- 线上回归使用一条合成低敏数据，最多触发可见回应与后台事实任务各 `1` 次，总模型调用上限 `2`、重试 `0`；原文、会话标识和凭证不进入公开证据。
+- 当前正式 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` 在候选冒烟通过前保持不变；阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 继续承担回退目标。
+- 任何身份、用户可见回应、后台任务、恢复、权限、同意、日记内容保护、模型预算、线上错误或清理硬门失败都会停止并按当前 active deployment 判断是否回退。
+- 启动卡见[统一血缘 Production 发布启动卡](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-start-card.json)；执行结果当前为 `pending`。
 
 当前 Production 事实：
 

@@ -303,3 +303,11 @@
 - Codex 评估：主线定向集成能把变更收敛到真实运行所需的策略、后台任务、Provider 合同和专项测试，避免旧分支历史代码反向覆盖近期可靠性与隐私修复。共享服务需要逐段适配 Stage 4 拆分后的职责，并用生成式合同、真实 PostgreSQL、零模型 E2E 和 Preview 双主链验证共同证明兼容。新候选使用新的提交身份、输入哈希和运行回执；旧运行器保持不可改写，新 Preview／发布检查在本地门通过后按本候选重新生成，避免沿用旧候选授权。
 - 待验证假设：统一血缘进入 Production 后，线上用户体验、后台任务、六步漏斗与日记内容保护继续满足已通过的 Preview 和 source-main 合同；该假设只在获得独立 Production 授权后验证。
 - 当前处理状态：`source-main merged / main CI passed / Production pending`。候选分支 `codex/production-lineage-integration-20260821`，基线 `origin/main@624b403`，运行时代码节点 `e869cf1`；生成式专项 `325/325`、真实 PostgreSQL `3/3`、全量 `3401/3401`、build `77/77`、零模型 E2E `11/11` 均通过。最终证据 head `fb0bb9d` 的 push run `32466648835` 与 PR run `32466651862` 均 attempt 1 全绿，Vercel Preview Ready。PR #51 已合入 main `0f483567e9b3fbd42bf768fc3accaf26ab15055f`；唯一 main run `32467211291` 在 attempt 1 通过：`387` 个测试文件、`3401` 条用例、build `77/77`、Lint `0 error / 33 warning`，零模型 E2E `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 已删除。产品负责人裁决 `pass`。正式域名回读仍为 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、Ready，Production 读、写、部署保持 `0`；发布等待独立授权。
+
+## PEH-045｜统一血缘 Production 发布授权与执行
+
+- 已确认事实：PR #51 已将单一发布血缘合入 main，PR #52 已将 source-main 收口文档合入 main `e3284b5127232dfdb8535a74b52187f33118cfdb`；对应 main CI run `32468682590` attempt 1 成功。`2026-08-21` 发布前只读回读确认正式域名仍指向 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，状态 Ready。
+- 产品判断：产品负责人已明确回复“同意，继续”，授权最新 main 进入 Production，并授权候选冒烟、正式切流、线上回归、后台 Trace 核验和证据封存。现役产品策略与模型保持 `event_centered + complete_response_v1_9 + deepseek-v4-pro`。
+- Codex 评估：使用独立候选部署先验证源码与运行身份，再用一条合成低敏回合验证可见回应与后台事实任务；最多两次实际模型调用、重试 `0`。候选通过后才切流，线上异常按 active deployment 和阶段 1 回退目标执行恢复。数据库迁移、环境变量修改、月度 AI 洞察上线、Production 用户正文抽样与破坏性清理均排除。
+- 待验证假设：main `e3284b5` 上线后，正式域名继续满足已通过的 v1.9 可见回应、后台任务、恢复、权限、同意、日记内容保护和 Stage 1～4 工程合同；临时合成数据可完整清理，线上日志无 5xx 或错误信号。
+- 当前处理状态：`authorized / in_progress / result_pending`。当前 active deployment 和回退目标保持原样；启动卡已冻结源码、预算、排除项、公开边界和停止点。
