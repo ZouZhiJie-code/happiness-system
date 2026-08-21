@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "stage": "stage4_journal_batch3",
+  "recordedAt": "2026-08-20",
+  "status": "local_complete_remote_pending",
+  "sourceMain": "a89d5bcc7d1d2b63741f80973a4933367193313a",
+  "replayedHead": "ecb674deea3498638499dd70286e2703c3355334",
+  "concurrentContentProtectionCommit": "a6cb4a98c18ffa84d415dfe323db05d2086457b3",
+  "review": {
+    "p0": 0,
+    "p1": 0,
+    "p2": 1,
+    "p2Issue": "future_source_removal_merge_boundary",
+    "currentPathReachable": false
+  },
+  "verification": {
+    "targetedPassed": 107,
+    "testFilesPassed": 376,
+    "testFilesSkipped": 17,
+    "testsPassed": 3332,
+    "testsSkipped": 95,
+    "testsFailed": 0,
+    "typecheckPassed": true,
+    "lintErrors": 0,
+    "retainedLintWarnings": 33,
+    "buildRoutesPassed": 77,
+    "buildRoutesPlanned": 77,
+    "mainPrismaValid": true,
+    "evaluationPrismaValid": true,
+    "docsCheckPassed": true,
+    "diffCheckPassed": true
+  },
+  "zeroModelE2E": {
+    "retries": 0,
+    "rounds": [
+      {
+        "passed": 11,
+        "planned": 11,
+        "playwrightSeconds": 6.5,
+        "aiRequestLogCount": 0,
+        "traceCount": 12,
+        "modelViolationCount": 0,
+        "schema": "daily_light_e2e_mt2cz0ep_49748b3332",
+        "schemaDropped": true
+      },
+      {
+        "passed": 11,
+        "planned": 11,
+        "playwrightSeconds": 5.7,
+        "aiRequestLogCount": 0,
+        "traceCount": 12,
+        "modelViolationCount": 0,
+        "schema": "daily_light_e2e_mt2czox6_8b1a0d754f",
+        "schemaDropped": true
+      },
+      {
+        "passed": 11,
+        "planned": 11,
+        "playwrightSeconds": 5.8,
+        "aiRequestLogCount": 0,
+        "traceCount": 12,
+        "modelViolationCount": 0,
+        "schema": "daily_light_e2e_mt2d0fi3_b933a55200",
+        "schemaDropped": true
+      }
+    ],
+    "residualSchemaCount": 0,
+    "nonIdleConnectionCount": 0,
+    "pgvector": "public|0.8.2"
+  },
+  "releaseBoundary": {
+    "push": "pending",
+    "pullRequest": "pending",
+    "preview": "pending",
+    "main": "pending",
+    "production": "blocked",
+    "productionDeployment": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5"
+  },
+  "privacy": {
+    "rawContentIncluded": false,
+    "accountIdentifiersIncluded": false,
+    "sessionIdentifiersIncluded": false,
+    "credentialsIncluded": false,
+    "productionContentReads": 0,
+    "productionModelCalls": 0
+  }
+}
