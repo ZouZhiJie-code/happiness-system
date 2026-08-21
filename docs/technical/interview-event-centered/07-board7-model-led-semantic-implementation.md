@@ -35,7 +35,7 @@ Production：`正式域名保持 event_centered + baseline；v1.9 Preview 产品
 | 正式一致性 | 当前策略强制选择 Pro；后台解析使用 v1.7 来源对齐并保存真实原文片段 |
 | 工程门 | 发布工具 `11/11`、v1.9 相关 `101/101`、全量 `3694` 条测试、Lint、类型、两套 Prisma、Production build、文档与差异检查通过 |
 | Preview 技术结果 | 首条可见内容 `4026ms` 就绪；后台 `3341ms` 完成且气泡冻结；重复提交复用原结果，新增模型调用 `0` |
-| 当前状态 | v1.9 Preview 产品裁决 `4/4 pass`；v1.3 运行回读技术 No-Go；v1.4 实施中；正式域名 baseline |
+| 当前状态 | v1.9 Preview 产品 `4/4 pass`；v1.5 候选冒烟技术与 Codex 初评 pass；产品裁决 pending；正式域名 baseline |
 
 ## 完整回应优先 v1.7 后台来源对齐合同｜2026-08-20
 

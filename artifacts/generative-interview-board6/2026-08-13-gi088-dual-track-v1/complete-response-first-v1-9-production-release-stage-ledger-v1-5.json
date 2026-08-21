@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-5-service-config-gate",
+  "status": "candidate_smoke_technical_pass_waiting_product_owner",
+  "candidate": {
+    "deploymentId": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "ready": true,
+    "domainPromoted": false
+  },
+  "smoke": {
+    "visibleTechnicalPassed": true,
+    "visibleElapsedMs": 12524,
+    "visibleResponseHash": "703e045f7dfe36890f1e894738fe5bef7c8fa89f7ff186af05a895aea1b6190a",
+    "backgroundPassed": true,
+    "backgroundInvocationCount": 1,
+    "backgroundRetryCount": 0,
+    "temporaryUserDeleted": true,
+    "codexVerdict": "pass",
+    "productOwnerVerdict": "pending"
+  },
+  "production": {
+    "deploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "strategy": "baseline",
+    "unchanged": true
+  },
+  "publicSensitiveContentStored": false,
+  "stopPoint": "waiting_product_owner_candidate_smoke_verdict_before_domain_promotion"
+}

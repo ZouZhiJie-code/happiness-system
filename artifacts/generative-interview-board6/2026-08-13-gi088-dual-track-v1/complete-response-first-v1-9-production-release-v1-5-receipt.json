@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-5-service-config-gate",
-  "status": "product_owner_preview_pass_ready_for_candidate_deploy",
+  "status": "candidate_smoke_technical_pass_waiting_product_owner",
   "planFingerprint": "458821597d4a75805a9373b43d9154a99ba3b0494a6beb5dc41dab34797547b7",
   "productOwnerPreviewVerdict": "pass",
   "baseline": {
@@ -9,12 +9,25 @@
     "strategy": "baseline",
     "domain": "https://dailylight.chat"
   },
-  "candidate": null,
-  "smoke": null,
+  "candidate": {
+    "deploymentId": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "deploymentUrl": "https://xingfuxitong-n89wbs5qq-zouzhijies-projects.vercel.app",
+    "ready": true,
+    "sourceCommit": "d8dfae7bb05987f906d6917ed0e7343829136c2f"
+  },
+  "smoke": {
+    "technicalPassed": true,
+    "visibleElapsedMs": 12524,
+    "visibleResponseHash": "703e045f7dfe36890f1e894738fe5bef7c8fa89f7ff186af05a895aea1b6190a",
+    "backgroundPassed": true,
+    "backgroundTraceHash": "9fb0e47ffde0f22da666132bbe4c0d13772c2689c750f928ffd48adf58bfd21d",
+    "temporaryUserDeleted": true,
+    "productOwnerVerdict": "pending"
+  },
   "promotion": null,
   "onlineRegression": null,
   "rollback": null,
   "error": null,
-  "updatedAt": "2026-08-21T03:17:36.684Z",
+  "updatedAt": "2026-08-21T03:18:35.026Z",
   "publicSensitiveContentStored": false
 }
