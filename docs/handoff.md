@@ -9,7 +9,7 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布并保留为回退基线；阶段 2～4 已合入 main；阶段 3 结论 `P0=0 / P1=0 / P2=3`；阶段 4 独立终审 `P0=0 / P1=0 / P2=1`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。单一发布血缘与最终文档收口已进入 main `e3284b5`。Production 候选 `dpl_ACg3...` 已 Ready，首次候选验收在精确 Trace 回读处形成 `technical_blocked`；临时数据清理全 `0`，正式切流和线上回归 `not_run`，详见 `PEH-044`～`PEH-045`。正式 Production 继续使用 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、`event_centered + complete_response_v1_9 + deepseek-v4-pro`。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1～4 与 GI-088 v1.9 已形成单一发布血缘并进入 Production；阶段 3 结论 `P0=0 / P1=0 / P2=3`、自然样本收集 pending；阶段 4 独立终审 `P0=0 / P1=0 / P2=1`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。统一血缘源码 main `e3284b5` 的 Production deployment `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW` 已通过第二次候选验收、正式切流和线上零模型回归，临时数据残留全 `0`，详见 `PEH-044`～`PEH-045`。正式 Production 运行 `event_centered + complete_response_v1_9 + deepseek-v4-pro`。
 
 当前工作线事实：
 
@@ -25,14 +25,14 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - 阶段 4 第一批 main 合并提交：`548fda5`
 - 画像测试夹具热修 main 合并提交：`d98c915`
 - 阶段 4 第二批 main 合并提交：`a89d5bc`
-- 当前正式 deployment：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`（READY／PROMOTED，GI-088 v1.9）；阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 保留为回退目标
+- 当前正式 deployment：`dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW`（READY／PROMOTED，统一血缘 main `e3284b5`）；上一正式 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` 保留为即时回退，阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 保留为更深回退
 - 回退 deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY）
 - Production 模式：`event_centered + complete_response_v1_9`；模型 `deepseek-v4-pro`
 - 单一血缘运行时代码节点：`e869cf1`；PR #51 Preview 证据节点：`c4617ec`
 - PR #51 `c4617ec` 的 push run `32458151031` 与 pull request run `32458153627` 均 attempt 1 全绿；Preview `dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ` Ready
 - Preview 同一失败回合恢复成功：新增用户消息 `0`，SSE `200`／`13992ms`，最终用户消息 `1`、AI 回应 `1`、pending turn 清空；可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`，后台任务 completed，Codex 原文初评 `pass`
 - PR #51 已合入 main `0f483567`；唯一 main CI run `32467211291` attempt 1 全绿，重跑 `0`
-- 当前门：同一 Ready 候选第二次验收已授权并实施中，最多可见回应与后台任务各 `1` 次、模型重试 `0`；硬门通过后提升同一 deployment，并执行零模型正式域名路由与日志验证
+- 当前门：统一血缘 Production 发布已完成；新的策略、模型、数据库、月度 AI 洞察或发布变更继续建立独立候选、验证门与产品授权
 
 阶段 4 第一批本地发布线事实：
 
@@ -160,7 +160,7 @@ AI 质量链路已经从“收集案例”推进到“验证候选、全量发�
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容入口：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并废弃
-- 当前事件中心发布策略：Production 使用 GI-088 v1.9 `event_centered + complete_response_v1_9` 与 `deepseek-v4-pro`；现役 deployment 为 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`。GI-067 / GI-068～080 冻结规则继续有效，v8r2 及更早候选保留历史运行身份。单一血缘整合与双主链回归已完成；下一次 Production 变更等待产品负责人独立裁决，详见 `PEH-043`～`PEH-044`
+- 当前事件中心发布策略：Production 使用 GI-088 v1.9 `event_centered + complete_response_v1_9` 与 `deepseek-v4-pro`；现役 deployment 为统一血缘 `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW`。GI-067 / GI-068～080 冻结规则继续有效，v8r2 及更早候选保留历史运行身份。单一血缘整合、候选验收、正式切流与线上零模型回归已完成；下一次 Production 变更继续等待产品负责人独立裁决，详见 `PEH-043`～`PEH-045`
 - Vercel production 的 `APP_URL` 为 `https://dailylight.chat`
 - `2026-07-21` 历史 production deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`
 - `2026-07-21` 历史 production alias：`https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`

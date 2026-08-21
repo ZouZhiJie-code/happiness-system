@@ -14,9 +14,10 @@
 - 候选分支：`codex/production-lineage-integration-20260821`
 - 候选基线：`origin/main@624b403b81a7b4774cf8617973a5663ccf16cea0`
 - Production 功能来源：`d8dfae7bb05987f906d6917ed0e7343829136c2f`
-- 当前 Production：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`
+- 当前 Production：`dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW`（source main `e3284b5`）
 - 当前策略与模型：`event_centered + complete_response_v1_9 + deepseek-v4-pro`
-- 回退目标：`dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`
+- 即时回退目标：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`
+- 更深回退目标：`dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`
 
 ## 3. 范围与门禁
 
@@ -44,8 +45,10 @@ head `ee5fe95` 的两套 CI 与 Preview `dpl_HDereqmpJFDQNNthp33UGLQq9KAC` 继�
 
 首次候选 `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW` 已由该 main 节点构建并 Ready，源码 metadata 与运行身份对账通过。候选注册、会话创建和回应流三条请求均为 `200`，回应流保留一条用户消息与一条 AI 消息、结构化错误 `0`；随后首次精确 Trace 回读返回 `PSQL_FAILED`，后台 Trace、Provider 派发次数和内容级证据未能封存，因此候选裁决为 `technical_blocked`。本轮不追加提交，临时账号、会话、消息与 Trace 已清理为全 `0`；正式切流与线上回归 `not_run`，正式域名继续指向 `dpl_B9P...`。完整公开边界见 [`production-release-attempt-1-receipt.json`](./production-release-attempt-1-receipt.json)。
 
-产品负责人随后回复“继续，直到完成任务”，授权同一 Ready 候选执行第二次全新验收：可见回应与后台任务各 `1` 次，总模型调用上限 `2`、模型重试 `0`；数据库只读回读允许最多 `3` 次连接重试且不会新增模型调用。通过后提升同一 deployment，并以正式域名 deployment 身份、零模型公共路由和日志完成线上验证。当前结果为 `pending`，见 [`production-release-attempt-2-start-card.json`](./production-release-attempt-2-start-card.json)。
+产品负责人随后回复“继续，直到完成任务”，授权同一 Ready 候选执行第二次全新验收：可见回应与后台任务各 `1` 次，总模型调用上限 `2`、模型重试 `0`；数据库只读回读允许最多 `3` 次连接重试且不会新增模型调用。第二次验收完整通过：注册、会话创建与可见回应均为 `200`，可见回应 `12826ms`；可见 Provider 与后台事实任务各成功派发 `1` 次，重试 `0`，后台写入与有效事实均为 `2`，实际模型调用 `2/2`，Codex 内容初评 `pass`。临时用户、会话、消息与 Trace 清理后均为 `0`，候选日志 warning／error／fatal／5xx 均为 `0`。
 
-本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)，Preview 最终回执见 [`preview-validation-receipt.json`](./preview-validation-receipt.json)；五张 Preview 启动卡分别保存每次运行前身份、停止点与实际结果。旧 Production 发布运行器继续保留原候选身份，本候选使用独立提交、哈希和运行回执。
+同一 deployment 随后提升至 Production。`https://dailylight.chat` 与 `https://www.dailylight.chat` 均精确指向 `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW`，状态 Ready；deployment metadata 对应 main `e3284b5` 和发布标记 `production-lineage-20260821`。正式域名零模型验证覆盖首页、登录、匿名权限和会话端点，共 `7` 条请求：`5×200 + 2×401`，warning／error／fatal／5xx 均为 `0`；提升后新增模型调用 `0`，回退未触发。上一正式 `dpl_B9P...` 和阶段 1 `dpl_DCGY...` 均保持 Ready。最终公开回执见 [`production-release-final-receipt.json`](./production-release-final-receipt.json)。
+
+本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)，Preview 最终回执见 [`preview-validation-receipt.json`](./preview-validation-receipt.json)，Production 最终回执见 [`production-release-final-receipt.json`](./production-release-final-receipt.json)；五张 Preview 启动卡分别保存每次运行前身份、停止点与实际结果。旧 Production 发布运行器继续保留原候选身份，本候选使用独立提交、哈希和运行回执。
 
 过程问题与裁决见 [`PEH-044`～`PEH-045`](../issue-ledger.md)。

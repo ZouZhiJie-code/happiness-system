@@ -12,31 +12,31 @@
 
 ## 1. 目标与当前事实
 
-本专项完善 Production 的证据、回归、代码结构和月度洞察评估能力。GI-088 v1.9 已通过独立发布线进入 Production；五阶段 Stage 1～4 与 GI-088 v1.9 已完成 source-main 统一血缘集成。产品负责人已于 `2026-08-21` 独立授权统一血缘 Production 发布；首次候选已 Ready，验收在精确 Trace 回读处形成 `technical_blocked`，正式切流暂停。月度 AI 洞察和数据库迁移继续使用独立停止门。
+本专项完善 Production 的证据、回归、代码结构和月度洞察评估能力。GI-088 v1.9 与五阶段 Stage 1～4 已完成 source-main 统一血缘集成，并由 `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW` 进入 Production。第二次候选验收、正式切流、线上零模型回归与临时数据清理均通过。月度 AI 洞察和数据库迁移继续使用独立停止门。
 
-单一发布血缘已由 PR #51 合入 main `0f483567`：候选保留 GI-088 v1.9 的可见回应、后台事实任务、恢复和 Pro 模型合同，同时保留阶段 1～4 的数据、权限、可靠性、前端和日记成果。最终文档收口由 PR #52 合入 main `e3284b5`，main CI run `32468682590` 在 attempt 1 通过。Production 发布授权已获得，候选部署、冒烟、正式切流、线上回归、后台 Trace 回读和临时数据清理按启动卡串行执行，结果保持 `pending`。
+单一发布血缘已由 PR #51 合入 main `0f483567`：候选保留 GI-088 v1.9 的可见回应、后台事实任务、恢复和 Pro 模型合同，同时保留阶段 1～4 的数据、权限、可靠性、前端和日记成果。最终文档收口由 PR #52 合入 main `e3284b5`，main CI run `32468682590` 在 attempt 1 通过。Production 发布已按启动卡串行完成候选部署、第二次冒烟、正式切流、线上回归、后台 Trace 回读和临时数据清理；第一次 Trace 回读失败继续保留为历史技术证据。
 
 ### 单一发布血缘 Production 执行｜2026-08-21
 
 - 产品负责人已明确回复“同意，继续”，授权最新 main `e3284b5127232dfdb8535a74b52187f33118cfdb` 进入 Production 发布链。
 - 发布保持 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，数据库迁移、环境变量修改、月度 AI 洞察上线和 Production 用户正文抽样均排除。
 - 线上回归使用一条合成低敏数据，最多触发可见回应与后台事实任务各 `1` 次，总模型调用上限 `2`、重试 `0`；原文、会话标识和凭证不进入公开证据。
-- 当前正式 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` 在候选冒烟通过前保持不变；阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 继续承担回退目标。
+- 当前正式 deployment 为 `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW`；上一正式 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` 与阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 分别承担即时和更深回退。
 - 任何身份、用户可见回应、后台任务、恢复、权限、同意、日记内容保护、模型预算、线上错误或清理硬门失败都会停止并按当前 active deployment 判断是否回退。
 - 首次候选 `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW` 已由 main `e3284b5` 构建并 Ready，运行身份对账通过。注册、会话创建和回应流三条候选请求均为 `200`，回应流保留一条用户消息与一条 AI 消息且无结构化错误；首次精确 Trace 回读返回 `PSQL_FAILED`，后台 Trace、Provider 派发次数与内容级证据未能封存，候选裁决为 `technical_blocked`。
 - 临时账号已按用户 ID 级联清理，用户、会话、消息与 Trace 残留均为 `0`；候选日志 `3×200`，warning／error／fatal／5xx 均为 `0`。本轮预算按零重试封存，不追加提交。
-- 正式域名仍指向 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，首页与登录 `200`、匿名管理接口 `401`、匿名 session 接口 `200`；正式切流、线上回归与回退均为 `not_run`。
-- 启动卡见[统一血缘 Production 发布启动卡](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-start-card.json)，首次回执见[Production 发布尝试 1 回执](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-attempt-1-receipt.json)。下一步需要产品负责人为同一候选追加一次全新验收额度，上限 `2` 次模型调用、重试 `0`。
-- 产品负责人已回复“继续，直到完成任务”，同一 Ready 候选的第二次验收已获授权并进入实施。新增预算为可见回应与后台任务各 `1` 次、总模型调用上限 `2`、模型重试 `0`；数据库只读回读允许最多 `3` 次连接重试且不触发模型。证据在清理前封存，通过后提升同一 deployment，并以正式域名指向同一 deployment、零模型公共路由和日志完成线上验证；第二次启动卡见 [`production-release-attempt-2-start-card.json`](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-attempt-2-start-card.json)。
+- 产品负责人回复“继续，直到完成任务”后，同一 Ready 候选的第二次验收完整通过：可见回应与后台任务各成功调用 `1` 次，总模型调用 `2/2`、模型重试 `0`、数据库只读重试 `0`；Codex 内容初评 `pass`，临时用户、会话、消息与 Trace 残留全 `0`。
+- 同一 deployment 已完成正式切流；`dailylight.chat` 与 `www.dailylight.chat` 均精确指向 `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW`。线上零模型验证为 `5×200 + 2×401`，warning／error／fatal／5xx 均为 `0`，提升后新增模型调用 `0`，回退未触发。
+- 启动卡见[统一血缘 Production 发布启动卡](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-start-card.json)，首次失败回执见[Production 发布尝试 1 回执](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-attempt-1-receipt.json)，最终结果见[Production 发布最终回执](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-final-receipt.json)。
 
 当前 Production 事实：
 
 - 正式域名：`https://dailylight.chat`
-- deployment：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`（READY／PROMOTED）
-- 发布时间：`2026-08-20`
+- deployment：`dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW`（READY／PROMOTED）
+- 发布时间：`2026-08-21`
 - 运行模式：`event_centered + complete_response_v1_9`；模型 `deepseek-v4-pro`
-- 源码血缘：GI-088 Production 源提交 `d8dfae7`；该提交未包含五阶段 main 的 Stage 1～4 合并节点，详见 `PEH-043`
-- 回退目标：阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY），承担 `event_centered + baseline` 回退
+- 源码血缘：统一血缘 main `e3284b5127232dfdb8535a74b52187f33118cfdb`，已包含 GI-088 v1.9 与五阶段 Stage 1～4
+- 回退目标：上一正式 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`（READY）承担即时回退；阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY）承担更深 `event_centered + baseline` 回退
 
 ### 单一发布血缘 Preview 证据｜2026-08-21
 
@@ -44,7 +44,7 @@
 - PR #51 head `c4617ec` 的 push run `32458151031` 与 pull request run `32458153627` 均在 attempt 1 通过，重跑 `0`；Preview `dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ` 为 Ready，运行身份回读精确为 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，候选模型同为 Pro。
 - 同一已保存失败回合使用原 `clientTurnId` 恢复成功，新增用户消息 `0`；SSE `200`、`13992ms`，最终用户消息 `1`、AI 回应 `1`、pending turn 清空。精确会话只读账本确认可见回应 Provider 派发 `1` 次、后台事实任务 `1` 次，总模型调用 `2/2`；后台任务 completed，并形成 `2` 条事实依据。
 - Codex 与产品负责人均裁决 `pass`，产品负责人已授权合并 PR #51。可见调用次数由生成 Trace 承担，后台调用保留 `AIRequestLog`；公开证据不保存原文、账号、会话标识或凭证。
-- 分支专用临时回读令牌与私有运行文件已清理；PR #51 已合入 main `0f483567`，main CI run `32467211291` attempt 1 全绿：`3401` 条用例、build `77/77`、零模型 E2E `11/11`。Production 读、写、部署为 `0`，正式域名仍指向 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；下一门为独立 Production 发布授权。
+- Preview 阶段的分支专用临时回读令牌与私有运行文件已清理；PR #51 已合入 main `0f483567`，main CI run `32467211291` attempt 1 全绿：`3401` 条用例、build `77/77`、零模型 E2E `11/11`。该阶段 Production 读、写、部署为 `0`，正式域名当时仍指向 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；后续 Production 发布结果见本节上方最终回执。
 
 ## 2. 实施范围
 

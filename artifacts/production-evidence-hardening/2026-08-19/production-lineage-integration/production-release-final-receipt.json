@@ -1,19 +1,33 @@
 {
   "receiptVersion": 1,
-  "status": "candidate_pass_promoted_live_verified",
-  "recordedAt": "2026-08-21T12:19:54Z",
-  "candidate": {
+  "status": "production_released_live_verified",
+  "recordedAt": "2026-08-21T12:22:40Z",
+  "source": {
+    "mainCommit": "e3284b5127232dfdb8535a74b52187f33118cfdb",
+    "mainTree": "8351165ceb6195cbbac85d6e28e39395ff7797f4",
+    "mainCiRun": 32468682590,
+    "mainCiAttempt": 1,
+    "mainCiConclusion": "success"
+  },
+  "production": {
     "deployment": "dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW",
-    "sourceCommit": "e3284b5127232dfdb8535a74b52187f33118cfdb",
+    "deploymentUrl": "https://xingfuxitong-nh4a0q7kd-zouzhijies-projects.vercel.app",
     "status": "Ready",
-    "domainPromoted": true,
+    "source": "cli",
+    "sourceCommitMetadata": "e3284b5127232dfdb8535a74b52187f33118cfdb",
+    "releaseMetadata": "production-lineage-20260821",
     "runtimeIdentity": {
       "mode": "event_centered",
       "strategy": "complete_response_v1_9",
       "model": "deepseek-v4-pro"
+    },
+    "domains": {
+      "https://dailylight.chat": "dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW",
+      "https://www.dailylight.chat": "dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW"
     }
   },
   "candidateSmoke": {
+    "attempt": 2,
     "dataset": "production-lineage-production-smoke-synthetic-v2",
     "registerHttpStatus": 200,
     "sessionStartHttpStatus": 200,
@@ -72,13 +86,43 @@
     },
     "verdict": "pass"
   },
-  "productionBoundary": {
-    "activeDeploymentBeforePromotion": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
-    "rollbackDeployment": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
-    "promotion": "passed",
-    "formalDomainUnchangedAtReceipt": false,
-    "activeDeploymentAfterPromotion": "dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW",
-    "onlineVerification": "passed_zero_model_same_deployment"
+  "promotion": {
+    "result": "success",
+    "promotedDeployment": "dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW",
+    "rollbackTriggered": false
+  },
+  "onlineVerification": {
+    "method": "same-deployment identity plus canonical-domain inspect, zero-model route checks, and exact-deployment logs",
+    "postPromotionModelCalls": 0,
+    "routes": {
+      "primaryHome": 200,
+      "primaryLogin": 200,
+      "anonymousAdminAnalytics": 401,
+      "anonymousAuthSession": 200,
+      "wwwHome": 200,
+      "anonymousEventCenteredSessions": 401,
+      "interviewHead": 200
+    },
+    "canonicalLogWindow": {
+      "requestCount": 7,
+      "http200Count": 5,
+      "http401Count": 2,
+      "warningCount": 0,
+      "errorCount": 0,
+      "fatalCount": 0,
+      "http5xxCount": 0
+    },
+    "verdict": "pass"
+  },
+  "rollback": {
+    "immediateDeployment": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "immediateDeploymentStatus": "Ready",
+    "deeperBaselineDeployment": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "deeperBaselineDeploymentStatus": "Ready"
+  },
+  "history": {
+    "attempt1Status": "technical_blocked_at_exact_trace_readback",
+    "attempt1Cleanup": "passed_all_zero"
   },
   "privacy": {
     "rawUserInputPublished": false,
@@ -86,5 +130,6 @@
     "userIdsPublished": false,
     "sessionIdsPublished": false,
     "credentialsPublished": false
-  }
+  },
+  "verdict": "pass_live_verified"
 }

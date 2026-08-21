@@ -1,6 +1,6 @@
 {
   "cardVersion": 1,
-  "status": "candidate_pass_ready_for_promotion",
+  "status": "completed",
   "recordedAt": "2026-08-21T12:14:57Z",
   "supersedesAttempt": 1,
   "authorization": {
@@ -66,8 +66,8 @@
   "result": {
     "candidateSmoke": "pass",
     "cleanup": "passed_all_zero",
-    "promotion": "pending",
-    "canonicalVerification": "pending",
-    "verdict": "candidate_pass_ready_for_promotion"
+    "promotion": "passed",
+    "canonicalVerification": "passed_zero_model_same_deployment",
+    "verdict": "pass_live_verified"
   }
 }
