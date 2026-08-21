@@ -34,6 +34,8 @@
 
 head `ee5fe95` 的两套 CI 与 Preview `dpl_HDereqmpJFDQNNthp33UGLQq9KAC` 继续首轮通过。第三张启动卡使用通过标准输入写入的临时令牌，应用回读仍返回 `403`；该轮在模型调用前停止，调用与重试均为 `0`。对账判断标准输入保留了换行，下一步以无换行值覆盖同一私有令牌并生成新的部署身份。
 
-本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)，三次 Preview 启动与停止证据见 [`preview-start-card.json`](./preview-start-card.json)、[`preview-start-card-v2.json`](./preview-start-card-v2.json) 和 [`preview-start-card-v3.json`](./preview-start-card-v3.json)。旧 Production 发布运行器继续保留原候选身份，新候选会生成独立的提交身份、哈希和运行回执。
+无换行令牌生效后，head `7210905` 的两套 CI 与 Preview `dpl_8Ha4jTMtQcBshKHNHBDTiHBGqZ45` 首轮通过，运行环境回读精确为 `event_centered + complete_response_v1_9 + deepseek-v4-pro`。固定账号列表合同通过且未完成额度为 `1/2`；新聊天记录创建成功，用户回合可靠保存，SSE 在 `10274ms` 返回 `EVENT_CENTERED_CANDIDATE_MODEL_MISMATCH`，无最终会话。代码与环境对账确认通用 Preview 的 `EVENT_CENTERED_GENERATIVE_MODEL=deepseek-v4-flash` 仍拥有更高优先级，Provider 创建前即主动阻断，因此实际模型调用与后台任务均为 `0`、重试 `0`。下一步把该候选模型覆盖也对齐为 Pro，并在新部署中恢复同一失败回合。
+
+本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)，Preview 启动与停止证据见 [`preview-start-card.json`](./preview-start-card.json)、[`preview-start-card-v2.json`](./preview-start-card-v2.json)、[`preview-start-card-v3.json`](./preview-start-card-v3.json) 和 [`preview-start-card-v4.json`](./preview-start-card-v4.json)。旧 Production 发布运行器继续保留原候选身份，新候选会生成独立的提交身份、哈希和运行回执。
 
 过程问题与裁决见 [`PEH-044`](../issue-ledger.md)。
