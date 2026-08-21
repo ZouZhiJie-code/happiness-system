@@ -1,6 +1,6 @@
 {
   "cardVersion": 1,
-  "status": "authorized_in_progress",
+  "status": "technical_blocked_before_promotion",
   "recordedAt": "2026-08-21T11:19:39Z",
   "decision": "Deploy the source-main single lineage to Production while preserving the accepted GI-088 v1.9 experience and the Stage 1-4 contracts.",
   "authorization": {
@@ -71,12 +71,13 @@
     "temporary-data cleanup failure"
   ],
   "result": {
-    "candidateDeployment": "pending",
-    "candidateSmoke": "pending",
-    "promotion": "pending",
-    "onlineRegression": "pending",
-    "exactSessionAudit": "pending",
-    "cleanup": "pending",
-    "verdict": "pending"
+    "candidateDeployment": "dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW_ready",
+    "candidateSmoke": "technical_blocked_at_exact_trace_readback",
+    "promotion": "not_run",
+    "onlineRegression": "not_run",
+    "exactSessionAudit": "technical_failed_psql_failed",
+    "cleanup": "passed_all_zero",
+    "productionDeployment": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p_unchanged",
+    "verdict": "technical_blocked"
   }
 }

@@ -1,0 +1,109 @@
+{
+  "receiptVersion": 1,
+  "status": "technical_blocked_before_promotion",
+  "recordedAt": "2026-08-21",
+  "source": {
+    "commit": "e3284b5127232dfdb8535a74b52187f33118cfdb",
+    "tree": "8351165ceb6195cbbac85d6e28e39395ff7797f4",
+    "mainCiRun": 32468682590,
+    "mainCiAttempt": 1,
+    "mainCiConclusion": "success"
+  },
+  "candidate": {
+    "deployment": "dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW",
+    "deploymentUrl": "https://xingfuxitong-nh4a0q7kd-zouzhijies-projects.vercel.app",
+    "target": "production",
+    "domainPromoted": false,
+    "status": "Ready",
+    "createdAt": "2026-08-21T11:23:33.765Z",
+    "source": "cli",
+    "sourceCommitMetadata": "e3284b5127232dfdb8535a74b52187f33118cfdb",
+    "runtimeIdentity": {
+      "mode": "event_centered",
+      "strategy": "complete_response_v1_9",
+      "model": "deepseek-v4-pro",
+      "readbackSource": "production environment pull with secret values excluded from public evidence"
+    }
+  },
+  "candidateSmoke": {
+    "dataset": "production-lineage-production-smoke-synthetic-v1",
+    "register": {
+      "httpStatus": 200,
+      "observedAt": "2026-08-21T11:29:07.355Z"
+    },
+    "sessionStart": {
+      "httpStatus": 200,
+      "observedAt": "2026-08-21T11:29:17.501Z"
+    },
+    "visibleResponse": {
+      "httpStatus": 200,
+      "observedAt": "2026-08-21T11:29:25.588Z",
+      "streamErrorCount": 0,
+      "userMessagesForTurn": 1,
+      "assistantMessagesForTurn": 1,
+      "generationTraceIdPresent": true,
+      "contentLevelEvidenceSealed": false
+    },
+    "exactSessionAudit": {
+      "status": "technical_failed",
+      "errorCode": "PSQL_FAILED",
+      "failurePoint": "first exact visible Trace readback",
+      "backgroundTraceStatus": "unverified",
+      "providerDispatchCount": "unverified",
+      "rootCause": "unconfirmed",
+      "laterNoRowSqlContractCheck": "passed"
+    },
+    "modelBudget": {
+      "maximumActualModelCalls": 2,
+      "retries": 0,
+      "additionalSubmissions": 0,
+      "actualProviderDispatches": "unverified",
+      "budgetStatus": "sealed_no_retry"
+    },
+    "deploymentLogs": {
+      "requestCount": 3,
+      "http200Count": 3,
+      "warningCount": 0,
+      "errorCount": 0,
+      "fatalCount": 0,
+      "http5xxCount": 0
+    },
+    "cleanup": {
+      "deletedUsers": 1,
+      "remainingUsers": 0,
+      "remainingSessions": 0,
+      "remainingMessages": 0,
+      "remainingTraces": 0,
+      "passed": true
+    },
+    "verdict": "technical_blocked"
+  },
+  "productionBoundary": {
+    "formalDomain": "https://dailylight.chat",
+    "activeDeployment": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "activeDeploymentStatus": "Ready",
+    "rollbackDeployment": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "promotionPerformed": false,
+    "rollbackTriggered": false,
+    "canonicalSmoke": {
+      "home": 200,
+      "login": 200,
+      "anonymousAdminApi": 401,
+      "anonymousSessionApi": 200
+    },
+    "unchanged": true
+  },
+  "nextGate": {
+    "required": "new product-owner authorization for one fresh candidate smoke budget",
+    "maximumActualModelCalls": 2,
+    "retries": 0,
+    "candidateReuseAllowed": "dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW"
+  },
+  "privacy": {
+    "rawUserInputPublished": false,
+    "rawModelOutputPublished": false,
+    "userIdsPublished": false,
+    "sessionIdsPublished": false,
+    "credentialsPublished": false
+  }
+}

@@ -11,9 +11,9 @@
 
 当前板块：`板块 8｜GI-088 v1.9 Production 已发布；跨线 source-main 集成已完成`
 
-当前讨论位置：`统一血缘已进入 main e3284b5，main CI attempt 1 通过；产品负责人已授权 Production 发布，当前实施中`
+当前讨论位置：`统一血缘 Production 候选已 Ready；首次验收 Trace 回读 technical_blocked；正式域名保持原 deployment`
 
-下一建议板块：`完成统一血缘候选部署、冒烟、正式切流、线上回归、Trace 回读与证据封存`
+下一建议板块：`如需继续，为同一候选授权一次全新验收额度，最多 2 次模型调用、零重试`
 
 Production 状态：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p；event_centered + complete_response_v1_9；deepseek-v4-pro`
 
@@ -27,7 +27,7 @@ Production 状态：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p；event_centered + complet
 - 验证门：生成式合同与后台任务专项、阶段 1～4 定向回归、真实 PostgreSQL 并发恢复、全量测试、类型、Lint、构建、双 Prisma、文档、零模型 E2E，以及独立 Preview 回归。
 - 调用与隐私：本地自动门模型调用 `0`；真实生成式回归与 Preview 如进入运行，使用独立身份、明确预算和公开／私有证据分离。Production 正文读取、环境变量修改、数据库迁移和正式切流均为 `0`。
 - 停止点：出现用户可见回应退化、后台任务重复／丢失、恢复与幂等冲突、同意或权限边界回归、日记人工内容丢失、模型调用越界、数据库结构变化、线上错误或临时数据清理失败时暂停。候选冒烟通过前 Production 继续使用 `dpl_B9P...`，异常时按 active deployment 决定停止或回退。
-- 当前结果：本地、双 CI、零模型 E2E 与 Preview 均通过；Codex 与产品负责人均裁决 `pass`。统一血缘与最终文档收口已进入 main `e3284b5`，main CI run `32468682590` attempt 1 通过；产品负责人已独立授权 Production 发布，候选部署至证据封存当前为 `pending`。
+- 当前结果：本地、双 CI、零模型 E2E 与 Preview 均通过；Codex 与产品负责人均裁决 `pass`。统一血缘与最终文档收口已进入 main `e3284b5`，main CI run `32468682590` attempt 1 通过。Production 候选 `dpl_ACg3...` 已 Ready且身份对账通过；候选注册、会话与回应流 `3×200`，随后精确 Trace 回读 `PSQL_FAILED`，临时数据清理为全 `0`。正式切流与线上回归 `not_run`，Production 继续使用 `dpl_B9P...`。
 
 网页端实现同步：当前正式域名运行 GI-088 v1.9 `event_centered + complete_response_v1_9`，模型为 `deepseek-v4-pro`；阶段 1 deployment 保留为回退目标。五阶段 Stage 1～4 与 GI-088 v1.9 已在 main `0f483567` 形成统一血缘；Production deployment 仍为原版本，后续发布等待产品负责人独立授权，公开对账见 [`PEH-043`](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 

@@ -7,7 +7,7 @@
 
 最后更新：`2026-08-21`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 已合入 main，P0=0／P1=0／P2=3，完整轨迹 0/30、样本收集 pending；月度洞察为 No-Go／insufficient_evidence；统一血缘已进入 main e3284b5 且 main CI 通过，Production 发布已获独立授权、当前实施中，详见 PEH-043～045`
+当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 已合入 main，P0=0／P1=0／P2=3，完整轨迹 0/30、样本收集 pending；月度洞察为 No-Go／insufficient_evidence；统一血缘 Production 候选已 Ready，首次验收 Trace 回读 technical_blocked，正式域名保持原 deployment，详见 PEH-043～045`
 
 ## 1. 为什么需要这份规则
 

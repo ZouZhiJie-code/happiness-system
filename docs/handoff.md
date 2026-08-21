@@ -9,7 +9,7 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布并保留为回退基线；阶段 2～4 已合入 main；阶段 3 结论 `P0=0 / P1=0 / P2=3`；阶段 4 独立终审 `P0=0 / P1=0 / P2=1`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。单一发布血缘与最终文档收口已进入 main `e3284b5`，产品负责人已独立授权 Production 发布，当前依次执行候选部署、冒烟、正式切流、线上回归、后台 Trace 回读和临时数据清理，结果为 `pending`，详见 `PEH-044`～`PEH-045`。正式 Production 在候选硬门通过前继续使用 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、`event_centered + complete_response_v1_9 + deepseek-v4-pro`。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布并保留为回退基线；阶段 2～4 已合入 main；阶段 3 结论 `P0=0 / P1=0 / P2=3`；阶段 4 独立终审 `P0=0 / P1=0 / P2=1`；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。单一发布血缘与最终文档收口已进入 main `e3284b5`。Production 候选 `dpl_ACg3...` 已 Ready，首次候选验收在精确 Trace 回读处形成 `technical_blocked`；临时数据清理全 `0`，正式切流和线上回归 `not_run`，详见 `PEH-044`～`PEH-045`。正式 Production 继续使用 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、`event_centered + complete_response_v1_9 + deepseek-v4-pro`。
 
 当前工作线事实：
 
@@ -32,7 +32,7 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - PR #51 `c4617ec` 的 push run `32458151031` 与 pull request run `32458153627` 均 attempt 1 全绿；Preview `dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ` Ready
 - Preview 同一失败回合恢复成功：新增用户消息 `0`，SSE `200`／`13992ms`，最终用户消息 `1`、AI 回应 `1`、pending turn 清空；可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`，后台任务 completed，Codex 原文初评 `pass`
 - PR #51 已合入 main `0f483567`；唯一 main CI run `32467211291` attempt 1 全绿，重跑 `0`
-- 当前门：统一血缘 Production 发布已授权、实施中；候选冒烟通过前 deployment 保持不变，线上异常按回退门处理
+- 当前门：为同一 Ready 候选追加一次全新验收额度，最多可见回应与后台任务各 `1` 次、重试 `0`；授权前 deployment 保持不变
 
 阶段 4 第一批本地发布线事实：
 

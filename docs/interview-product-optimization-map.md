@@ -9,7 +9,7 @@
 
 文档状态：`生效中；五阶段生产主线 source-main 集成已完成；Production 使用 event_centered + complete_response_v1_9`
 
-当前讨论位置：`DL-PROD-20260819｜统一血缘已进入 main e3284b5，main CI attempt 1 通过；Production 发布已授权、实施中；阶段 5 No-Go / insufficient_evidence`
+当前讨论位置：`DL-PROD-20260819｜统一血缘 Production 候选已 Ready；首次验收 Trace 回读 technical_blocked；阶段 5 No-Go / insufficient_evidence`
 
 落地验证状态：`总规范 v1.0 与阶段 B2 资产已冻结；阶段 C 保留 19 次技术阻断历史，阶段 C2 的 Plus 普通／思考均 20/20 且 No-Go，Max 思考 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
@@ -17,7 +17,7 @@
 
 当前跨模块专项：[`Daily Light 五阶段生产主线完善`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-当前停止点：单一发布血缘已完成本地差异审计、生成式合同、后台任务恢复、阶段 1～4 回归、零模型 E2E、Preview、产品裁决和 source-main 合并；最终 main `e3284b5` 的 CI 已通过。产品负责人已独立授权 Production 发布，当前依次执行候选部署、冒烟、正式切流、线上回归、Trace 回读与临时数据清理；正式域名在候选硬门通过前继续运行 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，阶段 1 `dpl_DCGY...` 继续作为回退目标，详见 `PEH-043`～`PEH-045`。
+当前停止点：单一发布血缘已完成本地、Preview、产品裁决、source-main 合并与 main CI。Production 候选 `dpl_ACg3...` 已 Ready，运行身份与 main `e3284b5` 对账通过；首次验收三条应用请求均 `200`，精确 Trace 回读 `PSQL_FAILED`，临时数据已清理为全 `0`。正式切流与线上回归保持 `not_run`，正式域名继续运行 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，阶段 1 `dpl_DCGY...` 继续作为回退目标；下一门为同一候选的新验收额度，详见 `PEH-043`～`PEH-045`。
 
 网页端实现同步：阶段 2～4 的 source-main 工程成果已进入 main；单一血缘候选已在独立 Preview 验证 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，同一失败回合恢复后可见回应与后台事实任务各调用 `1` 次。当前正式域名继续运行 GI-088 v1.9 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，阶段 1 deployment 保留为回退目标；Production 发布等待独立裁决。
 

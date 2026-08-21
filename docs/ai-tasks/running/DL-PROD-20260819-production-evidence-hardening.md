@@ -12,7 +12,7 @@
 
 ## 1. 目标与当前事实
 
-本专项完善 Production 的证据、回归、代码结构和月度洞察评估能力。GI-088 v1.9 已通过独立发布线进入 Production；五阶段 Stage 1～4 与 GI-088 v1.9 已完成 source-main 统一血缘集成。产品负责人已于 `2026-08-21` 独立授权统一血缘 Production 发布，当前处于 `已确认·实施中`；月度 AI 洞察和数据库迁移继续使用独立停止门。
+本专项完善 Production 的证据、回归、代码结构和月度洞察评估能力。GI-088 v1.9 已通过独立发布线进入 Production；五阶段 Stage 1～4 与 GI-088 v1.9 已完成 source-main 统一血缘集成。产品负责人已于 `2026-08-21` 独立授权统一血缘 Production 发布；首次候选已 Ready，验收在精确 Trace 回读处形成 `technical_blocked`，正式切流暂停。月度 AI 洞察和数据库迁移继续使用独立停止门。
 
 单一发布血缘已由 PR #51 合入 main `0f483567`：候选保留 GI-088 v1.9 的可见回应、后台事实任务、恢复和 Pro 模型合同，同时保留阶段 1～4 的数据、权限、可靠性、前端和日记成果。最终文档收口由 PR #52 合入 main `e3284b5`，main CI run `32468682590` 在 attempt 1 通过。Production 发布授权已获得，候选部署、冒烟、正式切流、线上回归、后台 Trace 回读和临时数据清理按启动卡串行执行，结果保持 `pending`。
 
@@ -23,7 +23,10 @@
 - 线上回归使用一条合成低敏数据，最多触发可见回应与后台事实任务各 `1` 次，总模型调用上限 `2`、重试 `0`；原文、会话标识和凭证不进入公开证据。
 - 当前正式 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` 在候选冒烟通过前保持不变；阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 继续承担回退目标。
 - 任何身份、用户可见回应、后台任务、恢复、权限、同意、日记内容保护、模型预算、线上错误或清理硬门失败都会停止并按当前 active deployment 判断是否回退。
-- 启动卡见[统一血缘 Production 发布启动卡](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-start-card.json)；执行结果当前为 `pending`。
+- 首次候选 `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW` 已由 main `e3284b5` 构建并 Ready，运行身份对账通过。注册、会话创建和回应流三条候选请求均为 `200`，回应流保留一条用户消息与一条 AI 消息且无结构化错误；首次精确 Trace 回读返回 `PSQL_FAILED`，后台 Trace、Provider 派发次数与内容级证据未能封存，候选裁决为 `technical_blocked`。
+- 临时账号已按用户 ID 级联清理，用户、会话、消息与 Trace 残留均为 `0`；候选日志 `3×200`，warning／error／fatal／5xx 均为 `0`。本轮预算按零重试封存，不追加提交。
+- 正式域名仍指向 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，首页与登录 `200`、匿名管理接口 `401`、匿名 session 接口 `200`；正式切流、线上回归与回退均为 `not_run`。
+- 启动卡见[统一血缘 Production 发布启动卡](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-start-card.json)，首次回执见[Production 发布尝试 1 回执](../../../artifacts/production-evidence-hardening/2026-08-19/production-lineage-integration/production-release-attempt-1-receipt.json)。下一步需要产品负责人为同一候选追加一次全新验收额度，上限 `2` 次模型调用、重试 `0`。
 
 当前 Production 事实：
 

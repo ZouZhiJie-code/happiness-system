@@ -309,5 +309,5 @@
 - 已确认事实：PR #51 已将单一发布血缘合入 main，PR #52 已将 source-main 收口文档合入 main `e3284b5127232dfdb8535a74b52187f33118cfdb`；对应 main CI run `32468682590` attempt 1 成功。`2026-08-21` 发布前只读回读确认正式域名仍指向 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，状态 Ready。
 - 产品判断：产品负责人已明确回复“同意，继续”，授权最新 main 进入 Production，并授权候选冒烟、正式切流、线上回归、后台 Trace 核验和证据封存。现役产品策略与模型保持 `event_centered + complete_response_v1_9 + deepseek-v4-pro`。
 - Codex 评估：使用独立候选部署先验证源码与运行身份，再用一条合成低敏回合验证可见回应与后台事实任务；最多两次实际模型调用、重试 `0`。候选通过后才切流，线上异常按 active deployment 和阶段 1 回退目标执行恢复。数据库迁移、环境变量修改、月度 AI 洞察上线、Production 用户正文抽样与破坏性清理均排除。
-- 待验证假设：main `e3284b5` 上线后，正式域名继续满足已通过的 v1.9 可见回应、后台任务、恢复、权限、同意、日记内容保护和 Stage 1～4 工程合同；临时合成数据可完整清理，线上日志无 5xx 或错误信号。
-- 当前处理状态：`authorized / in_progress / result_pending`。当前 active deployment 和回退目标保持原样；启动卡已冻结源码、预算、排除项、公开边界和停止点。
+- 待验证假设：同一 Ready 候选在一次新的受控验收中可以完成可见回应与后台 Trace 精确回读，并继续满足恢复、权限、同意、日记内容保护和 Stage 1～4 工程合同；正式域名切流后日志无 5xx 或错误信号。
+- 当前处理状态：`candidate ready / smoke technical_blocked / Production unchanged`。候选 `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW` 精确绑定 main `e3284b5`，运行身份对账通过。注册、会话创建与回应流 `3×200`，回应流保留一条用户消息与一条 AI 消息；首次 Trace SQL 回读返回 `PSQL_FAILED`，后台 Trace、Provider 派发次数和内容级证据未封存。随后零行 SQL 合同验证通过，根因保持 `unconfirmed`；本轮按零重试封存。临时账号级联清理后用户、会话、消息与 Trace 均为 `0`；候选日志 warning／error／fatal／5xx 均为 `0`。正式域名继续指向 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` 且 Ready，正式切流、线上回归和回退均为 `not_run`。下一门为产品负责人授权同一候选一次全新验收额度，上限 `2` 次模型调用、重试 `0`。

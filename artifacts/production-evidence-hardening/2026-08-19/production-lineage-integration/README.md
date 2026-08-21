@@ -40,7 +40,9 @@ head `ee5fe95` 的两套 CI 与 Preview `dpl_HDereqmpJFDQNNthp33UGLQq9KAC` 继�
 
 最终证据 head `fb0bb9d` 的 push run `32466648835` 与 PR run `32466651862` 均在 attempt 1 通过，Vercel Preview 为 Ready。PR #51 已合入 main `0f483567e9b3fbd42bf768fc3accaf26ab15055f`；唯一 main run `32467211291` 在 attempt 1 通过：`387` 个测试文件、`3401` 条用例、build `77/77`、Lint `0 error / 33 warning`，零模型 E2E `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 已删除。正式域名回读仍为 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、Ready，本次 source-main 合并触发的 Production 部署为 `0`；Production 发布继续等待独立授权。
 
-产品负责人已于 `2026-08-21` 独立授权统一血缘 Production 发布。目标源码为 main `e3284b5127232dfdb8535a74b52187f33118cfdb`，main CI run `32468682590` attempt 1 通过；发布保持 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，排除数据库迁移、环境变量修改、月度 AI 洞察上线和 Production 用户正文抽样。候选部署、冒烟、正式切流、线上回归、后台 Trace 回读与临时数据清理当前为 `pending`，见 [`production-release-start-card.json`](./production-release-start-card.json)。
+产品负责人已于 `2026-08-21` 独立授权统一血缘 Production 发布。目标源码为 main `e3284b5127232dfdb8535a74b52187f33118cfdb`，main CI run `32468682590` attempt 1 通过；发布保持 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，排除数据库迁移、环境变量修改、月度 AI 洞察上线和 Production 用户正文抽样。
+
+首次候选 `dpl_ACg3o7tqmwCJzU6Nzx3qz3B28prW` 已由该 main 节点构建并 Ready，源码 metadata 与运行身份对账通过。候选注册、会话创建和回应流三条请求均为 `200`，回应流保留一条用户消息与一条 AI 消息、结构化错误 `0`；随后首次精确 Trace 回读返回 `PSQL_FAILED`，后台 Trace、Provider 派发次数和内容级证据未能封存，因此候选裁决为 `technical_blocked`。本轮不追加提交，临时账号、会话、消息与 Trace 已清理为全 `0`；正式切流与线上回归 `not_run`，正式域名继续指向 `dpl_B9P...`。完整公开边界见 [`production-release-attempt-1-receipt.json`](./production-release-attempt-1-receipt.json)。
 
 本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)，Preview 最终回执见 [`preview-validation-receipt.json`](./preview-validation-receipt.json)；五张 Preview 启动卡分别保存每次运行前身份、停止点与实际结果。旧 Production 发布运行器继续保留原候选身份，本候选使用独立提交、哈希和运行回执。
 
