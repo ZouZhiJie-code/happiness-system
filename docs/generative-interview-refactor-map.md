@@ -7,15 +7,15 @@
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 complete_response_v1_9 隔离 Preview 四轮 Codex 4/4 pass；等待产品负责人验收；Production baseline`
+当前讨论位置：`GI-088 complete_response_v1_9 隔离 Preview 四轮 Codex 4/4 pass；Production 快照、数据库备份与回退准备完成；等待产品负责人验收；Production baseline`
 
-下一建议板块：`产品负责人裁决 v1.9 四轮真实输出；通过后进入 Production 快照、备份、回退与发布`
+下一建议板块：`产品负责人裁决 v1.9 四轮真实输出；通过后按已核对路径直接发布并执行线上回归`
 
 当前专项：[完整回应优先 v1.9 局部边界与继续优先级](./plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md)
 
 Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 
-本次同步范围：`v1.9 Preview 四轮连续链已封存；家族可见预算 15/15；Codex 4/4 pass；产品裁决 pending，Production baseline`
+本次同步范围：`v1.9 Preview 四轮连续链已封存；家族可见预算 15/15；Codex 4/4 pass；Production 快照、数据库备份与回退准备完成；产品裁决 pending，Production baseline`
 
 ## 2026-08-20｜GI-088 v1.9 局部边界与继续优先级实施卡
 
@@ -26,7 +26,9 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 | 当前预算 | 家族可见调用 `15/15`，剩余 `0`；重试、恢复、回退保持 `0` |
 | 验证门 | 局部边界继续、明确停止和关系表达全 pass；整体零 fail、最多一项 minor；单例 ≤15s |
 | 停止点 | 核心控制场景 fail 立即停止；产品负责人验收前 Production baseline |
-| 当前状态 | `Preview 已完成 / Codex 4/4 pass / 产品裁决 pending` |
+| 发布准备 | 当前部署和策略已回读；数据库备份与恢复清单验证完成；回退目标已冻结；Production 变更 `not_run` |
+| 当前状态 | `Preview 已完成 / Codex 4/4 pass / 发布准备完成 / 产品裁决 pending` |
+| 公开证据 | [Preview 结果](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-isolated-preview-v1-handoff.md)、[Production 发布准备](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-production-readiness-v1-handoff.md) |
 
 ## 2026-08-20｜GI-088 v1.8 明确推进义务实施卡
 

@@ -9,7 +9,7 @@
 
 置信度：`高`
 
-落地验证状态：`隔离 Preview 技术门通过；首条真实完整回应 Codex pass；等待产品负责人真人验收；Production baseline`
+落地验证状态：`v1.9 隔离 Preview Codex 4/4 pass；Production 发布准备完成；等待产品负责人真人验收；Production baseline`
 
 适用范围：`板块 6 评测资产化、板块 7 新候选验证、板块 8 真人验收、上线后持续评测及历史候选回归`
 

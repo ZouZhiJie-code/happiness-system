@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-readiness-v1",
+  "status": "ready_waiting_product_owner_preview_verdict",
+  "productOwnerDecision": "pending",
+  "production": {
+    "domain": "https://dailylight.chat",
+    "deploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "readyState": "READY",
+    "mode": "event_centered",
+    "strategy": "baseline",
+    "changePerformed": false
+  },
+  "candidate": {
+    "version": "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority",
+    "strategy": "complete_response_v1_9",
+    "previewDeploymentId": "dpl_J4oYShrzC9rtTMyUDFbew485Gvm4",
+    "codeCommit": "82214e5",
+    "readinessParentCommit": "e290a5b26b5ebe3a617b540d78fa84ca3c5c7868",
+    "databaseMigrationRequired": false
+  },
+  "readiness": {
+    "productionReadback": "completed",
+    "environmentReadback": "event_centered_baseline",
+    "databaseBackup": "completed",
+    "databaseBackupRestoreList": "verified",
+    "rollbackCliContract": "verified",
+    "releaseCliContract": "verified",
+    "productionDeployment": "not_run",
+    "productionOnlineRegression": "not_run"
+  },
+  "backup": {
+    "format": "postgres_custom",
+    "sizeBytes": 1451891,
+    "sha256": "02f4c070714ecee041421540696330aa0aedc83ebeb07ddaa769c64b37c49260",
+    "privateMode": "0600",
+    "productionWritesPerformed": false
+  },
+  "rollback": {
+    "targetDeploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "environmentStrategy": "baseline",
+    "commandVerified": true
+  },
+  "preview": {
+    "codexPass": 4,
+    "codexMinor": 0,
+    "codexFail": 0,
+    "productOwnerDecision": "pending",
+    "medianElapsedMs": 10633.5,
+    "maxElapsedMs": 11505,
+    "singleCase15sGatePassed": true,
+    "idealMedian6sGatePassed": false
+  },
+  "evidence": {
+    "privateReadinessSha256": "a9c6f3712b12f911a52f60a60fc6786a6c21eed550dbd39bf120347d66c250c2",
+    "privateBackupSha256": "02f4c070714ecee041421540696330aa0aedc83ebeb07ddaa769c64b37c49260",
+    "publicSensitiveContentStored": false
+  },
+  "next": {
+    "required": "product_owner_verdict_on_four_exact_preview_turns",
+    "passPath": "update_production_strategy_build_skip_domain_smoke_promote_online_regression",
+    "stopPoint": "production_unchanged_until_product_owner_pass"
+  }
+}
