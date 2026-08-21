@@ -12,9 +12,9 @@
 
 ## 1. 目标与当前事实
 
-本专项完善 Production 的证据、回归、代码结构和月度洞察评估能力。GI-088 v1.9 已通过独立发布线进入 Production；五阶段 Stage 1～4 成果已进入 main，尚未进入当前 GI-088 Production 源提交。下一次发布先完成两条血缘整合；月度 AI 洞察和数据库迁移继续使用独立停止门。
+本专项完善 Production 的证据、回归、代码结构和月度洞察评估能力。GI-088 v1.9 已通过独立发布线进入 Production；五阶段 Stage 1～4 与 GI-088 v1.9 已完成 source-main 统一血缘集成。当前 Production deployment 保持原样，统一血缘发布、月度 AI 洞察和数据库迁移继续使用独立停止门。
 
-当前单一发布血缘候选以 main `624b403` 为基线，已迁入 GI-088 v1.9 的可见回应、后台事实任务、恢复和 Pro 模型合同，同时保留阶段 1～4 的数据、权限、可靠性、前端和日记成果。本地、双 CI、零模型 E2E 与独立 Preview 均通过：同一失败回合恢复成功，新增用户消息 `0`，可见回应与后台事实任务各调用 `1` 次，总调用 `2/2`；Codex 与产品负责人均裁决 `pass`，产品负责人已授权合并 PR #51。source-main 合并后的 main CI 为当前验证门；Production 保持当前 deployment，发布等待独立授权。
+单一发布血缘已由 PR #51 合入 main `0f483567`：候选保留 GI-088 v1.9 的可见回应、后台事实任务、恢复和 Pro 模型合同，同时保留阶段 1～4 的数据、权限、可靠性、前端和日记成果。产品负责人裁决 `pass`；唯一 main CI run `32467211291` 在 attempt 1 通过，source-main 集成已完成。Production 保持当前 deployment，发布等待独立授权。
 
 当前 Production 事实：
 
@@ -31,7 +31,7 @@
 - PR #51 head `c4617ec` 的 push run `32458151031` 与 pull request run `32458153627` 均在 attempt 1 通过，重跑 `0`；Preview `dpl_6vCMxUCtkc64XwsZajrUyKrvmqjQ` 为 Ready，运行身份回读精确为 `event_centered + complete_response_v1_9 + deepseek-v4-pro`，候选模型同为 Pro。
 - 同一已保存失败回合使用原 `clientTurnId` 恢复成功，新增用户消息 `0`；SSE `200`、`13992ms`，最终用户消息 `1`、AI 回应 `1`、pending turn 清空。精确会话只读账本确认可见回应 Provider 派发 `1` 次、后台事实任务 `1` 次，总模型调用 `2/2`；后台任务 completed，并形成 `2` 条事实依据。
 - Codex 与产品负责人均裁决 `pass`，产品负责人已授权合并 PR #51。可见调用次数由生成 Trace 承担，后台调用保留 `AIRequestLog`；公开证据不保存原文、账号、会话标识或凭证。
-- 分支专用临时回读令牌与私有运行文件已清理；Production 读、写、部署为 `0`。下一门为合并后的唯一 main CI；Production 发布等待独立授权。
+- 分支专用临时回读令牌与私有运行文件已清理；PR #51 已合入 main `0f483567`，main CI run `32467211291` attempt 1 全绿：`3401` 条用例、build `77/77`、零模型 E2E `11/11`。Production 读、写、部署为 `0`，正式域名仍指向 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；下一门为独立 Production 发布授权。
 
 ## 2. 实施范围
 

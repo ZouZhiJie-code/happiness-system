@@ -1,6 +1,6 @@
 {
   "receiptVersion": 1,
-  "status": "preview_pass_source_main_merge_authorized_production_pending",
+  "status": "preview_pass_source_main_merged_main_ci_passed_production_pending",
   "recordedAt": "2026-08-21",
   "candidate": {
     "branch": "codex/production-lineage-integration-20260821",
@@ -76,6 +76,20 @@
     "productOwnerVerdictRecordedAt": "2026-08-21",
     "sourceMainMergeAuthorized": true,
     "productionReleaseVerdict": "pending"
+  },
+  "sourceMainMerge": {
+    "pullRequest": 51,
+    "finalEvidenceHead": "fb0bb9d5fbf73fdb0acd6416f1a9d846d5d01b6e",
+    "mergeCommit": "0f483567e9b3fbd42bf768fc3accaf26ab15055f",
+    "mainRun": 32467211291,
+    "mainRunAttempt": 1,
+    "mainRunConclusion": "success",
+    "testFilesPassed": 387,
+    "testsPassed": 3401,
+    "buildRoutesPassed": 77,
+    "zeroModelE2ePassed": 11,
+    "aiRequestLogCount": 0,
+    "traceCount": 12
   },
   "privacy": {
     "rawUserInputPublished": false,
