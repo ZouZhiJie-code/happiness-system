@@ -2,14 +2,14 @@
 
 - 文档职责：总 Map
 - 文档状态：已确认·实施中
-- 最后核验：`2026-08-20`
+- 最后核验：`2026-08-21`
 - 权威入口：[`DL-PROD-20260819`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-最后更新：`2026-08-20`
+最后更新：`2026-08-21`
 
-文档状态：`生效中；五阶段生产主线完善已确认·实施中；Production 使用 event_centered + baseline`
+文档状态：`生效中；五阶段生产主线完善已确认·实施中；Production 使用 event_centered + complete_response_v1_9`
 
-当前讨论位置：`DL-PROD-20260819｜阶段 1 管理员成功读取 pending；阶段 2 热修复远程门与 main CI 全绿、Preview 通过至需更新、Production blocked；阶段 3 已合入 main、收集 pending；阶段 4 第三批已合入 main、Preview smoke blocked、Production blocked；阶段 5 No-Go / insufficient_evidence`
+当前讨论位置：`DL-PROD-20260819｜阶段 1 管理员成功读取 pending；阶段 2 热修复远程门与 main CI 全绿、Preview 通过至需更新；阶段 3 已合入 main、收集 pending；阶段 4 第三批已合入 main、Preview smoke blocked、Production 血缘整合 blocked；阶段 5 No-Go / insufficient_evidence`
 
 落地验证状态：`总规范 v1.0 与阶段 B2 资产已冻结；阶段 C 保留 19 次技术阻断历史，阶段 C2 的 Plus 普通／思考均 20/20 且 No-Go，Max 思考 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
@@ -17,9 +17,9 @@
 
 当前跨模块专项：[`Daily Light 五阶段生产主线完善`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-当前停止点：阶段 1 管理员成功读取等待白名单内既有内部管理员合法登录态；阶段 2 Preview 已通过编辑、保存和需更新，浏览器续跑等待稳定网络／线路，Production 同时受 `PEH-020`、`PEH-022` 与 `PEH-028` 约束；凭证轮换见 `PEH-029`。阶段 3 已合入 main，`P0=0 / P1=0 / P2=3`，正文开关继续关闭，完整轨迹 `0/30`，等待自然样本与样本级授权。阶段 4 第三批已由 PR #48 合入 main `dedf094`，唯一 main CI attempt 1 全绿，当前可达 P1 已关闭、未来来源删除 P2 见 `PEH-041`；Preview Ready，产品 smoke 因验收脚本工作目录解析在应用请求前停止，见 `PEH-042`。Production 继续 blocked。阶段 5 维持 No-Go 候选隔离。数据库迁移、GI-088 新调用、生成式策略发布、月度洞察上线和破坏性清理继续使用独立停止门。
+当前停止点：阶段 1 管理员成功读取等待白名单内既有内部管理员合法登录态；阶段 2 Preview 已通过编辑、保存和需更新，浏览器续跑等待稳定网络／线路；凭证轮换见 `PEH-029`。阶段 3 已合入 main，`P0=0 / P1=0 / P2=3`，正文开关继续关闭，完整轨迹 `0/30`，等待自然样本与样本级授权。阶段 4 第三批已由 PR #48 合入 main `dedf094`，治理收口由 PR #49 合入 main `8f7ae40`，当前可达 P1 已关闭、未来来源删除 P2 见 `PEH-041`；Preview 产品 smoke 见 `PEH-042`。正式 Production 已由独立 GI-088 v1.9 发布线切换至 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；Stage 4 尚未进入 Production，后续发布先整合 main 与 GI-088 Production 血缘，见 `PEH-043`。阶段 5 维持 No-Go 候选隔离。数据库迁移、月度洞察上线和破坏性清理继续使用独立停止门。
 
-网页端实现同步：管理分析合同 v2 已于 `2026-08-20` 发布 Production，deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已通过正式域名核心 smoke；阶段 2 PR #41 已合入 main `77de8d1`，只形成 Preview，正式域名继续运行阶段 1 deployment。项目主链继续使用 `event_centered + baseline`。管理员成功读取保持 pending；GI-088 的模型评测、独立准入和生成式能力授权边界保持原状态。
+网页端实现同步：管理分析合同 v2 已于 `2026-08-20` 发布 Production，阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已通过正式域名核心 smoke并保留为回退目标；阶段 2～4 的 source-main 工程成果已进入 main。当前正式域名运行 GI-088 v1.9 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，策略为 `event_centered + complete_response_v1_9`，模型为 `deepseek-v4-pro`。管理员成功读取保持 pending；Stage 4 Production 集成等待两条血缘统一。
 
 当前专项进度源：[`生成式访谈重构总 Map（Batch B 专项）`](./generative-interview-refactor-map.md)
 
@@ -128,7 +128,7 @@ flowchart TD
 - 用户原话、明确纠正、停止意愿、来源安全、可靠提交、失败恢复、事件卡片沉淀与日记页生成更新继续作为产品底座。
 - 正式内容问题的候选 Provider 使用 DeepSeek 官方 API，新候选模型固定为 `deepseek-v4-flash`；候选 Provider、模型和版本仍需在 Preview 前完成预检。
 - 推进职责已经确认：板块 4 已完成 GI-067 全部批次；板块 5 已冻结 GI-075～080，六类规则完成 `6/6`，生成式访谈方法 v1.0 与项目级评测总规范 v1.0 均已冻结。板块 6 的阶段 B2 资产已封存；阶段 C2 最终为技术阻断，当前无可推荐 Judge。板块 7 正式准入与板块 8 继续等待新的 Judge 路线及独立授权。
-- Production 当前使用 `event_centered + baseline`。`optional + generative` 需要新候选通过板块 8 真人验收，并获得产品负责人独立 Production 授权。
+- Production 当前使用 `event_centered + complete_response_v1_9` 与 `deepseek-v4-pro`。任何后续生成式候选或五阶段集成候选都需要保留现役体验、通过板块 8 真人验收，并获得产品负责人独立 Production 授权。
 
 ### 待执行与待校准
 

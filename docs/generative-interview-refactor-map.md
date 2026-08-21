@@ -2,24 +2,31 @@
 
 - 文档职责：总 Map
 - 文档状态：现役
-- 最后核验：`2026-08-19`
+- 最后核验：`2026-08-21`
 - 权威入口：本文件
 
-最后更新：`2026-08-13`
+最后更新：`2026-08-21`
 
 文档状态：`生效中`
 
-当前板块：`板块 6｜生成式访谈正式评测资产建设`
+当前板块：`板块 8｜GI-088 v1.9 Production 已发布；跨线集成候选待建立`
 
-当前讨论位置：`GI-088 阶段 C2｜technical_blocked；Plus 双 No-Go，Max 质量结论保留`
+当前讨论位置：`GI-088 v1.9 已完成产品裁决、正式切流和线上回归；Stage 1～4 main 成果尚未进入当前 Production 源提交`
 
-下一建议板块：`确认后续 Judge 路线；继续补齐 Max 或调整 Judge 方案均需新授权`
+下一建议板块：`建立同时包含 GI-088 v1.9 与五阶段 main 成果的单一集成候选，完成双主链回归后再裁决 Production`
 
-Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
+Production 状态：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p；event_centered + complete_response_v1_9；deepseek-v4-pro`
 
-本次同步范围：`阶段 B2 零调用资产已封存；阶段 C 只校准固定 Plus 普通／思考模式，必要时按冻结规则校准固定 Max；独立准入、正式人工评分、Preview 与 Production 保持关闭`
+本次同步范围：`同步独立 GI-088 v1.9 最终发布事实与 PEH-043 跨线对账；历史阶段 B2、C、C2 运行身份保持原值`
 
-网页端实现同步：第二轮验收基线已于 `2026-08-13` 发布 Production，项目主链使用 `event_centered + baseline`；GI-088 真人评测、模型质量裁决和生成式能力发布继续沿本 Map 的既有流程推进。
+网页端实现同步：当前正式域名运行 GI-088 v1.9 `event_centered + complete_response_v1_9`，模型为 `deepseek-v4-pro`；阶段 1 deployment 保留为回退目标。五阶段 Stage 1～4 已进入 main，但当前 GI-088 Production 源提交未包含这些合并节点；下一次发布先完成单一血缘整合，公开对账见 [`PEH-043`](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+
+## 2026-08-21｜GI-088 v1.9 Production 与五阶段 main 跨线对账
+
+- 已确认事实：独立 GI-088 发布线 `codex/gi088-response-first-v2-20260816@0309165` 已封存产品负责人裁决、正式切流和线上回归；当前 deployment 为 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，策略为 `complete_response_v1_9`，模型为 `deepseek-v4-pro`。
+- 血缘边界：该 Production 源提交 `d8dfae7` 未包含五阶段 main 的 Stage 1～4 合并节点；Stage 4 已完成 source-main，尚未进入 Production。
+- 当前裁决：保留 GI-088 v1.9 在线；阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 作为回退目标。任何后续 Production 变更先建立单一集成候选，同时回归生成式访谈和五阶段网页主链。
+- 过程记录：并行发布造成的旧文档误判、别名纠正、恢复后日志和零额外正文／模型请求证据统一见 `PEH-043`；本 Map 其余阶段 C/C2 内容继续承担历史运行证据职责。
 
 日志成果关联：日志生成专项复用了 GI-088 的 9 条真人轨迹作为评测素材。今日日记 Prompt v3 的真人证据覆盖 9 条，其中 6 条完成“记录卡 v3 → 今日日记 v3”完整回归；这项结果只更新上层产品总 Map 的“日志成果与确认”模块，不改变 GI-088 访谈候选以及板块 6/7/8 的当前状态。阶段总结见[九条真人轨迹阶段性总结](../artifacts/journal-generation-evaluation/nine-human-trajectory-summary.md)。
 

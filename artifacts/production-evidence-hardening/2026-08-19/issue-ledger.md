@@ -2,7 +2,7 @@
 
 - 文档职责：问题台账
 - 文档状态：已确认·实施中
-- 最后核验：`2026-08-20`
+- 最后核验：`2026-08-21`
 - 权威入口：[`DL-PROD-20260819`](../../../docs/ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
 ## PEH-001｜最新 main 与当前 Production 源码分叉
@@ -174,7 +174,7 @@
 - 产品判断：Stage 2 浏览器验收保持 blocked，使用稳定网络或稳定线路完成剩余最小续跑后再判断 Production。
 - Codex 评估：本项归因传输环境，当前证据不改变 `PEH-022` 已验证范围，也不扩大为产品回归。
 - 待验证假设：稳定线路下，同一 Preview 数据可完成日记更新，并保留更新前的用户人工片段。
-- 当前处理状态：deployment、证书和 Protection 证据已封存；等待稳定网络／线路。Production 继续使用阶段 1 deployment。
+- 当前处理状态：deployment、证书和 Protection 证据已封存；等待稳定网络／线路。该项运行时 Production 使用阶段 1 deployment；当前正式部署见 `PEH-043`。
 
 ## PEH-029｜Verbose 诊断造成保护凭证终端暴露
 
@@ -203,7 +203,7 @@
 ## PEH-032｜Stage 4 第一批合并后画像测试夹具时间竞争
 
 - 已确认事实：PR #45 合入 main merge `548fda5` 后，唯一 main push run `32363542406` 在 attempt 1 的画像兜底用例失败：期望最近事实为 `fact 0`，实际为 `fact 1`；类型检查与零模型 E2E `11/11` 通过，构建和 Lint 随前序失败跳过。Stage 4 合并差异与画像文件交集为 `0`；合并前后画像测试与产品服务的 Git blob 分别保持 `4d031387` 与 `f84c5b21`。
-- 产品判断：本项归入测试隔离与确定性问题，Stage 4 后端产品行为、画像产品逻辑和缓存合同保持原值；Production 继续使用阶段 1 deployment，Stage 4 Production 继续关闭。
+- 产品判断：本项归入测试隔离与确定性问题，Stage 4 后端产品行为、画像产品逻辑和缓存合同保持原值；该项运行时 Production 使用阶段 1 deployment，Stage 4 Production 继续关闭，当前正式部署见 `PEH-043`。
 - Codex 评估：旧夹具在循环中为每条事实调用实时 `new Date()`，产品逻辑再按 `updatedAt` 选择最近事实；高负载下循环跨越毫秒边界会使 `fact 1` 或 `fact 2` 成为真实最新项。精确用例单跑、完整文件和随机顺序可通过，并发进程压力可稳定暴露同类漂移；仓储与 Prisma 均为模块 mock，当前证据不支持缓存未清理或全局状态污染归因。
 - 待验证假设：只把测试夹具的 `createdAt / updatedAt` 固定为 `fact 0` 最新的确定性顺序，即可消除调度敏感性，同时继续验证产品按时间选择最新事实的既有合同。
 - 当前处理状态：已解决。最小修复仅修改 `tests/unit/portrait-synthesis.service.test.ts`，产品源码、Schema、依赖和 CI 配置变更均为 `0`。修复后精确用例与完整文件通过，随机顺序 `50/50`、并发进程 `32/32`、全量 `3301` 条通过；类型、Lint `0 errors / 43 inherited warnings`、build `77/77`、零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 与临时 Schema 删除通过。PR #46 已合入 main merge `d98c915`；合并后 main CI run `32365805590` attempt 1 全绿，零模型 E2E `11/11`、模型调用 `0`。
@@ -222,7 +222,7 @@
 - 产品判断：本批只降低事件中心前端维护风险并保持用户可见行为与恢复合同兼容。完整本地门通过后可以推送并创建 PR；合并、Production 发布与 `PEH-033` 日记 P1 修复继续保持独立停止点。
 - Codex 评估：工作区状态、请求、outbox 和可靠恢复职责拆出后，现有 Stage 2 地址等待、接口分流、幂等 ID、结构化错误、焦点恢复和内部导航合同继续由定向、压力、全量和浏览器四层回归保护。独立审查发现并关闭的草稿／新 outbox 清理问题由 `PEH-035` 承担。
 - 待验证假设：已由 final head `d71a9b3` 的远程门与 main run `32439906894` 验证；测试在会话列表完成后等待按钮可用，并稳定验证菜单动作阻断与零请求。
-- 当前处理状态：`已关闭 / source-main complete / Production blocked`。最终 head `d71a9b3` 已由 PR #47 合入 main `a89d5bc`；main run `32439906894` attempt 1 全绿，零模型 E2E `11/11`。正式域名继续使用阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`，第三批日记发布门由 `PEH-038` 承担。
+- 当前处理状态：`已关闭 / source-main complete / Production blocked`。最终 head `d71a9b3` 已由 PR #47 合入 main `a89d5bc`；main run `32439906894` attempt 1 全绿，零模型 E2E `11/11`。该项关闭时正式域名使用阶段 1 deployment；当前正式 Production 已切换为 GI-088 v1.9，跨线状态见 `PEH-043`。第三批日记发布门由 `PEH-038` 承担。
 
 ## PEH-035｜accepted 回合清理误删下一草稿与新 outbox
 
@@ -254,7 +254,7 @@
 - 产品判断：用户退出或删号后不应残留可恢复内容；日记来源变化后必须稳定显示“需更新”，更新过程必须保留人工修改。本批完成工程与体验验证后才具备进入 Stage 4 Production 评估的资格。
 - Codex 评估：本地候选已覆盖第三批现役责任边界。独立终审为 `P0=0 / P1=0 / P2=1`；唯一 P2 是未来开放事件卡删除时的读取合并边界，当前产品没有删除或取消保存入口，详见 `PEH-041`。
 - 待验证假设：source-main 工程门已验证；Preview 产品 smoke 需在验收脚本工作目录修正后形成新的独立运行身份，Production 仍需五阶段总停止点解除与独立发布裁决。
-- 当前处理状态：`source-main complete / Preview smoke blocked / Production blocked`。本地定向独立复审 `107/107`，全量 `3332 passed / 95 skipped` 与三轮零模型 E2E 已通过。PR #48 final head `9d075f7` 的 push run `32443259149`、pull request run `32443261597` 均 attempt 1 全绿、重跑 `0`，随后合入 main `dedf094`；唯一 main run `32443785474` attempt 1 全绿，零模型 E2E `11/11`、`AIRequestLog=0`、Trace `12`，Schema `daily_light_e2e_mt2eb6zb_e81ce48001` 已删除。Preview Ready，产品 smoke 见 `PEH-042`；正式域名继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
+- 当前处理状态：`source-main complete / Preview smoke blocked / Production lineage integration blocked`。本地定向独立复审 `107/107`，全量 `3332 passed / 95 skipped` 与三轮零模型 E2E 已通过。PR #48 final head `9d075f7` 两套 CI attempt 1 全绿后合入 main `dedf094`；PR #49 治理收口 head `89f53ee` 两套 CI attempt 1 全绿后合入 main `8f7ae40`，唯一 main run `32444933451` attempt 1 全绿，零模型 E2E `11/11`、`AIRequestLog=0`、Trace `12`，Schema 已删除。Preview 产品 smoke 见 `PEH-042`。当前正式域名运行独立 GI-088 v1.9 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；Stage 4 尚未部署，后续发布门见 `PEH-043`。
 
 ## PEH-039｜记录刷新晚到覆盖人工日记内容
 
@@ -287,3 +287,11 @@
 - Codex 评估：新的独立 smoke 应把 `ACCEPTANCE_VERCEL_CWD` 精确指向已绑定项目的主工作区，再从匿名保护开始生成全新运行身份。本轮遵守单步一次规则，不修改工具参数后继续请求。
 - 待验证假设：修正工作目录后，固定验收账号可完成登录、登录态、事件中心和今日日记读取；日记人工修改与来源变化验收继续遵守模型端点和单步停止门。
 - 当前处理状态：`blocked_before_application_request / retry 0 / Production blocked`。应用登录、session、事件中心、今日日记均 `not_run`；业务写入 `0`、模型端点请求 `0`、Production 请求 `0`。CLI 私有输出包含默认验收凭据参数，公开敏感值保持 `0`，凭证治理见 `PEH-029`。
+
+## PEH-043｜并行发布导致 Production 基线交接冲突
+
+- 已确认事实：Stage 4 第三批与独立 GI-088 v1.9 发布线在同一时间窗推进。Stage 4 main 收口文档仍把阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 记录为当前正式部署；GI-088 分支随后已完成产品负责人候选实际回答裁决、后台 Trace、正式切流与线上回归，并把 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p` 设为正式 Production。Stage 4 合并监控发现域名指向变化后，Codex 先依据旧文档与 v1.3 失败回执精确回退到 `dpl_DCGY...`；恢复同分支最新 v1.5 权威回执后，立即把正式域名重新推广到已批准的 `dpl_B9P...`。两次动作均只改变 Vercel Production 别名，代码、环境变量、账号、数据库结构和业务数据变更为 `0`。
+- 产品判断：当前正式 Production 继续使用 GI-088 v1.9 `event_centered + complete_response_v1_9 + deepseek-v4-pro`；阶段 1 deployment 保留为回退目标。Stage 4 已完成 source-main，尚未进入 Production；任何后续 Stage 4 发布都先整合 main 与 GI-088 Production 血缘，保护当前生成式访谈能力。阶段 1 数据口径 v2 保留原发布证据，当前 Production 实际版本在整合候选中重新验收。
+- Codex 评估：根因是并行发布缺少统一的“当前正式部署＋活跃发布线”锁定信息，且恢复事实时先读了模块旧文档与历史失败回执，晚于 GI-088 最新分支状态。血缘核对确认 `a86a4ba`、`795417d`、`ef7bf94`、`a89d5bc`、`dedf094`、`8f7ae40` 均不在 Production 源提交 `d8dfae7` 的祖先链中；管理分析仓储与事件中心工作区 blob 不同，日记字段级合并文件在 Production 源树中尚不存在。后续任何 Production 写操作先同时核对 Vercel alias API、项目级现役 Handoff、所有活跃发布专项的最新 head 与最终回执；同一项目同时只保留一条 Production 写入线，其余发布线停在 source-main／Preview。
+- 待验证假设：把 GI-088 v1.9 已批准 Production tree 与 main Stage 2～4 工程成果放入单一集成分支，完成差异审计、零模型回归、生成式真实回归、Preview 和回退演练后，可以在保留 v1.9 体验的同时发布 Stage 4。
+- 当前处理状态：`incident contained / current Production restored / Stage4 Production integration blocked`。Vercel alias API、deployment alias 清单与域名 inspect 均确认 `dailylight.chat`、`www.dailylight.chat` 已恢复到 `dpl_B9P...`，该部署为 Ready；`dpl_DCGY...` 保持 Ready 且当前别名为 `0`。恢复后匿名登录页 `200`、受保护页面服务端登录跳转、管理 API `401`；短窗口 Production 日志 `7` 条，`5×200 / 1×401 / 1×404`，`5xx / error / fatal / warning=0`，日志正文为空。额外正文读取 `0`、额外模型端点请求 `0`。

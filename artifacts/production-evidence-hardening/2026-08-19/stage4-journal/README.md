@@ -2,16 +2,16 @@
 
 - 文档职责：历史证据
 - 文档状态：待验证
-- 最后核验：`2026-08-20`
+- 最后核验：`2026-08-21`
 - 权威入口：[`docs/README.md`](../../../../docs/README.md)
 
 ## 当前结论
 
-- source-main 基线：`a89d5bcc7d1d2b63741f80973a4933367193313a`。
+- source-main 基线：`a89d5bcc7d1d2b63741f80973a4933367193313a`；PR #48 代码合并为 `dedf0942f6e53cf1d2a1968e6084fdedeee1fdc8`，PR #49 治理收口 main 为 `8f7ae405bab81400911f4222b95d0a8c93d4e120`。
 - 原 `8` 笔日记候选重放 head：`ecb674deea3498638499dd70286e2703c3355334`。
 - 并发内容保护提交：`a6cb4a9`。
 - 本地独立终审：`P0=0 / P1=0 / P2=1`。
-- 当前状态：`source_main_complete / Preview_smoke_blocked / Production_blocked`。
+- 当前状态：`source_main_complete / Preview_smoke_blocked / Production_lineage_integration_blocked`。
 
 ## 已验证范围
 
@@ -29,7 +29,7 @@
 
 - 唯一 P2 是未来开放事件卡删除时的来源合并边界；当前产品没有删除或取消保存入口，详见问题台账 `PEH-041`。
 - source-main 工程门已通过；Preview 产品 smoke 受验收工具配置阻断，Production 保留独立状态。
-- Production 继续运行阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`，第三批未进入 Production。
+- 当前 Production 运行独立 GI-088 v1.9 deployment `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`；阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 保留为回退目标。第三批未进入 Production，后续发布先完成 main 与 GI-088 Production 血缘整合，详见 `PEH-043`。
 - 公开证据不包含用户正文、账号、会话标识、连接信息或凭证。
 
 机器可读回执见 [`receipt.json`](./receipt.json)。

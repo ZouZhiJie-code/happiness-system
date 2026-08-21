@@ -2,7 +2,7 @@
 
 - 文档职责：Agent 协作规则
 - 文档状态：现役
-- 最后核验：`2026-08-20`
+- 最后核验：`2026-08-21`
 - 权威入口：[`docs/README.md`](./docs/README.md)
 
 ## 1. 项目定位与当前边界
@@ -10,9 +10,9 @@
 Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、事件记录与日记产品。
 
 - 正式域名：`https://dailylight.chat`。
-- 当前 Production 主链：`event_centered + baseline`；`legacy + baseline` 保留为应急回退与历史运行身份。
-- 当前跨模块执行入口为 [`DL-PROD-20260819`](./docs/ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，状态 `已确认·实施中`；数据口径 v2 已发布，零模型回归 Production 仍受停止门约束。Golden Set v2 已合入 main，结论为 `P0=0 / P1=0 / P2=3`，样本状态 `insufficient_samples / collection_pending`、完整轨迹 `0/30`，正文收集 pending。主链重构第三批已由 PR #48 合入 main `dedf094`，唯一 main CI attempt 1 全绿，独立终审 `P0=0 / P1=0 / P2=1`；Preview Ready、产品 smoke 在应用请求前受验收工具配置阻断，Production 保持 blocked。月度洞察评估已形成 `No-Go / insufficient_evidence`，Production 继续使用确定性总结。
-- GI-088 生成式访谈、独立准入、真人 Preview 和生成式能力发布继续关闭。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
+- 当前 Production 主链：`event_centered + complete_response_v1_9`，模型为 `deepseek-v4-pro`；阶段 1 `event_centered + baseline` deployment 保留为回退目标，`legacy + baseline` 保留历史运行身份。
+- 当前跨模块执行入口为 [`DL-PROD-20260819`](./docs/ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，状态 `已确认·实施中`；数据口径 v2 保留阶段 1 发布证据，当前 GI-088 Production 中的实际版本等待血缘整合后复验。Golden Set v2 已合入 main，结论为 `P0=0 / P1=0 / P2=3`，样本状态 `insufficient_samples / collection_pending`、完整轨迹 `0/30`，正文收集 pending。主链重构第三批已由 PR #48 合入 main `dedf094`，治理收口由 PR #49 合入 main `8f7ae40`，独立终审 `P0=0 / P1=0 / P2=1`；Preview Ready、产品 smoke 在应用请求前受验收工具配置阻断。当前正式 Production 已由独立 GI-088 v1.9 发布线切换为 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，运行 `event_centered + complete_response_v1_9 + deepseek-v4-pro`；该源提交不包含五阶段 main 合并节点，后续发布先完成单一血缘整合，详见 `PEH-043`。月度洞察评估已形成 `No-Go / insufficient_evidence`，Production 继续使用确定性总结。
+- GI-088 v1.9 已完成产品负责人裁决、正式切流和线上回归，当前承担 Production 可见回应与后台任务；后续生成式候选、下一次 Production 变更和 Stage 4 上线继续执行独立准入与发布门。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及 `PEH-043` 的跨线对账。
 - `2026-08-13` 阶段 C2 已修复 Judge 运行器并完成全新校准：Plus 普通与思考均 `20/20` 且 No-Go；Max 思考 `15/20` 后因连接与 DNS 故障形成 `technical_blocked`。累计 `64` 次、4 次补跑、0.584052 元，当前无可推荐 Judge；后续 Judge 路线需要新授权。
 - 网页端产品主线：`访谈记录 → 当天时间线事件卡片 → 今日日记`。访谈页负责表达、回应、保存和返回当天；日记页负责生成、查看和更新当天日记。
 - 五个维度为 `joy / fulfillment / reflection / improvement / gratitude`。理论与完成规则由 [`docs/theory/`](./docs/theory/) 承担。
