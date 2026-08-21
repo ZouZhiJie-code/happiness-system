@@ -9,14 +9,18 @@ import {
   GI088_V19_PRODUCTION_DOMAIN,
   GI088_V19_RELEASE_IDENTITY,
   GI088_V19_STRATEGY,
+  assertParentCandidateApplicationUnchanged,
   assertGi088V19CommandAllowed,
   buildGi088V19PreviewEvidence,
   buildGi088V19ProductReviewTemplate,
+  buildGi088V19PsqlInvocation,
   buildGi088V19ReadinessEvidence,
   buildGi088V19SmokeReviewTemplate,
   buildGi088V19VercelArgs,
   calculateGi088V19PlanFingerprint,
   createGi088V19ReleasePaths,
+  deleteTemporaryUser,
+  normalizeGi088V19PsqlUrl,
   parseGi088V19DeploymentIdentity,
   parseGi088V19Sse,
   recordGi088V19ProductVerdict,
@@ -24,6 +28,7 @@ import {
   sha256Text,
   validateGi088V19BackgroundTrace,
   validateGi088V19ParentReleaseFailure,
+  validateGi088V19ParentV11Failure,
   validateGi088V19ProductReview,
   validateGi088V19SmokeReview
 // @ts-expect-error The executable is intentionally plain Node ESM; Vitest exercises its public exports directly.
@@ -97,6 +102,7 @@ describe("GI-088 v1.9 production release gate", () => {
     const preview = buildGi088V19PreviewEvidence(paths);
     const readiness = buildGi088V19ReadinessEvidence(paths);
     const parentV1 = validateGi088V19ParentReleaseFailure(paths);
+    const parentV11 = validateGi088V19ParentV11Failure(paths);
 
     expect(preview.identity).toBe(
       "2026-08-20.gi088-complete-response-first-v1-9-isolated-preview-v1"
@@ -114,6 +120,12 @@ describe("GI-088 v1.9 production release gate", () => {
       identity: "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1",
       observedDeploymentId: "dpl_8tTNtvoemDhstcPqaLu1g3q3gvWU",
       failureCode: "GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING"
+    });
+    expect(parentV11).toMatchObject({
+      identity:
+        "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-1-cli-json-shape",
+      candidateDeploymentId: "dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH",
+      candidateSourceCommit: "c0cb06e9f7dc3d1746a77865091b00c6aa2ffb4e"
     });
   });
 
@@ -144,6 +156,67 @@ describe("GI-088 v1.9 production release gate", () => {
     );
   });
 
+  it("normalizes the direct database URL and runs psql through stdin variables", () => {
+    const normalized = normalizeGi088V19PsqlUrl(
+      "postgresql://user:pass@example.test/db?channel_binding=require&sslmode=require&schema=public"
+    );
+    const url = new URL(normalized);
+    expect([...url.searchParams.keys()]).toEqual(["sslmode"]);
+    const invocation = buildGi088V19PsqlInvocation(
+      normalized,
+      "SELECT :'user_id';",
+      { user_id: "user-1" }
+    );
+    expect(invocation.args).toEqual([
+      normalized,
+      "-X",
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-tA",
+      "-v",
+      "user_id=user-1",
+      "-f",
+      "-"
+    ]);
+    expect(invocation.input).toBe("SELECT :'user_id';");
+  });
+
+  it("verifies temporary user deletion in an independent database read", () => {
+    const calls: Array<{ program: string; args: string[]; input?: string }> = [];
+    const exec = (program: string, args: string[], options: { input?: string }) => {
+      calls.push({ program, args, input: options.input });
+      return {
+        stdout: calls.length === 1
+          ? '{"deletedCount":1}\n'
+          : '{"remainingCount":0}\n',
+        stderr: ""
+      };
+    };
+    expect(deleteTemporaryUser(exec, "postgresql://example.test/db", "user-1")).toBe(true);
+    expect(calls).toHaveLength(2);
+    expect(calls.every((call) => call.args.includes("-f") && call.args.includes("-"))).toBe(true);
+    expect(calls[0].input).toContain("DELETE FROM \"User\"");
+    expect(calls[1].input).toContain("remainingCount");
+  });
+
+  it("reuses the parent candidate only when production application files are unchanged", () => {
+    const paths = { root: repoRoot };
+    const cleanExec = (_program: string, args: string[]) => ({
+      stdout: args[0] === "diff" ? "" : "",
+      stderr: ""
+    });
+    expect(
+      assertParentCandidateApplicationUnchanged(paths, cleanExec, "parent-commit")
+    ).toBe(true);
+    const driftExec = (_program: string, args: string[]) => ({
+      stdout: args[0] === "diff" ? "src/server/example.ts\n" : "",
+      stderr: ""
+    });
+    expect(() =>
+      assertParentCandidateApplicationUnchanged(paths, driftExec, "parent-commit")
+    ).toThrow("GI088_V19_RELEASE_PARENT_CANDIDATE_APPLICATION_DRIFT");
+  });
+
   it("requires a hash-bound product-owner pass before candidate deployment", () => {
     const preview = buildGi088V19PreviewEvidence(createGi088V19ReleasePaths(repoRoot));
     const template = buildGi088V19ProductReviewTemplate(
@@ -169,6 +242,7 @@ describe("GI-088 v1.9 production release gate", () => {
     );
     state.productOwnerPreviewVerdict = "pass";
     expect(assertGi088V19CommandAllowed(state, "deploy-candidate")).toBe(true);
+    expect(assertGi088V19CommandAllowed(state, "adopt-parent-candidate")).toBe(true);
   });
 
   it("uses a candidate deployment that cannot take the domain during build", () => {

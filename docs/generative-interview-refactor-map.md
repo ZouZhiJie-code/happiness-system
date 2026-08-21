@@ -7,15 +7,27 @@
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 complete_response_v1_9 隔离 Preview 产品裁决 4/4 pass；发布工具 v1 CLI 返回解析 No-Go；v1.1 单因素修复实施中；正式域名 baseline`
+当前讨论位置：`GI-088 complete_response_v1_9 Preview 产品 4/4 pass；发布工具 v1.1 数据库回读 No-Go；v1.2 psql 合同修复实施中；正式域名 baseline`
 
-下一建议板块：`完成发布工具 v1.1 返回格式修复并创建新候选；完成候选可见回应与后台 Trace；交付候选实际输出裁决`
+下一建议板块：`完成发布工具 v1.2 数据库合同修复；复用 Ready 候选完成可见回应与后台 Trace；交付候选实际输出裁决`
 
-当前专项：[完整回应优先 v1.9 Production 发布工具 v1.1](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-1.md)
+当前专项：[完整回应优先 v1.9 Production 发布工具 v1.2](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-2.md)
 
 Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 
-本次同步范围：`v1.9 Preview 产品裁决 4/4 pass；发布工具 v1 成功创建候选但解析失败，正式域名与 baseline 已核验；v1.1 实施中`
+本次同步范围：`v1.9 Preview 产品裁决 4/4 pass；v1.1 候选 Ready、数据库回读失败、临时数据已精确清理；v1.2 实施中`
+
+## 2026-08-20｜GI-088 v1.9 Production 发布工具 v1.2 实施卡
+
+| 项目 | 当前事实 |
+|---|---|
+| 当前专项 | [v1.9 Production 发布工具 v1.2](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-2.md) |
+| 父结果 | v1.1 候选 `dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH` Ready；注册与会话创建成功，数据库回读和自动清理因 psql 调用合同失败 |
+| 数据清理 | 人工精确清理后账号、会话、消息、Trace 均为 0 |
+| 唯一变化 | DIRECT_URL 规范化、`psql -f -` 标准输入变量替换、删除后独立确认 |
+| 候选复用 | 生产应用代码无变化时复用 v1.1 Ready 候选，不重复构建 |
+| 当前状态 | `已确认·实施中 / 结果待验证` |
+| 停止点 | 完成工具修复、候选血缘门和真实冒烟；随后交付候选原文裁决 |
 
 ## 2026-08-20｜GI-088 v1.9 Production 发布工具 v1.1 实施卡
 
@@ -26,8 +38,9 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 | 唯一变化 | 兼容读取 `result.deployment.id/url` 与旧顶层 `id/url` |
 | 产品门 | Preview 四轮产品裁决 `4/4 pass`，继续绑定同一输入／输出哈希 |
 | 外部状态 | 正式域名仍指向 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；Production 已恢复 baseline |
-| 当前状态 | `已确认·实施中 / 结果待验证` |
-| 停止点 | 修复、测试、提交、推送和新启动卡后创建全新候选；候选实际输出仍需产品裁决 |
+| 实际结果 | 嵌套 JSON 解析修复通过并成功识别候选；冒烟随后在 psql 数据库调用合同失败，临时账号已人工精确清理 |
+| 当前状态 | `No-Go / superseded by v1.2 / 正式域名 baseline` |
+| 停止点 | v1.1 不再继续；v1.2 复用 Ready 候选并修复数据库工具合同 |
 
 ## 2026-08-20｜GI-088 v1.9 Production 发布工具实施卡
 

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-1-cli-json-shape",
+  "status": "candidate_smoke_psql_contract_no_go_superseded_by_v1_2",
+  "planFingerprint": "7ee06c9eed204c503eaa46f902f1b5e0d48989458ef027a9a759301e6cadf5f8",
+  "productOwnerPreviewVerdict": "pass",
+  "candidate": {
+    "deploymentId": "dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH",
+    "deploymentUrl": "https://xingfuxitong-dyfj5qu4h-zouzhijies-projects.vercel.app",
+    "ready": true,
+    "sourceCommit": "c0cb06e9f7dc3d1746a77865091b00c6aa2ffb4e",
+    "domainPromoted": false
+  },
+  "smoke": {
+    "registration": "completed",
+    "sessionCreated": true,
+    "databaseReadback": "technical_fail",
+    "backgroundTraceEvaluated": false,
+    "productOutputEvaluated": false
+  },
+  "failure": {
+    "publicCode": "GI088_V19_RELEASE_UNEXPECTED:99688d3c31090e4b8fe684ae00420bbeae1330303d02bce4921fb4365ee3a4c8",
+    "rootCause": "psql_connection_url_variable_and_snapshot_contract"
+  },
+  "manualCleanup": {
+    "privateEvidenceSha256": "85b33af23763468d3acefff1074504dd1082248187ccba2dee153827e9a42b8f",
+    "before": {
+      "userCount": 1,
+      "sessionCount": 1,
+      "messageCount": 2,
+      "traceCount": 0
+    },
+    "after": {
+      "userCount": 0,
+      "sessionCount": 0,
+      "messageCount": 0,
+      "traceCount": 0
+    }
+  },
+  "production": {
+    "formalDomainDeploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "formalDomainRuntimeStrategy": "baseline",
+    "projectEnvironmentStrategy": "complete_response_v1_9"
+  },
+  "publicSensitiveContentStored": false,
+  "nextStopPoint": "release_runner_v1_2_psql_contract"
+}

@@ -5,9 +5,9 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-版本：`完整回应优先 v1.9 隔离 Preview 产品通过与 Production 发布工具 v1.1`
+版本：`完整回应优先 v1.9 隔离 Preview 产品通过与 Production 发布工具 v1.2`
 
-状态：`v1.9 四轮连续链产品裁决 4/4 pass；发布工具 v1 CLI JSON 解析 No-Go；v1.1 实施中；正式域名 baseline`
+状态：`v1.9 四轮连续链产品裁决 4/4 pass；发布工具 v1.1 psql 合同 No-Go；临时数据已清理；v1.2 实施中；正式域名 baseline`
 
 现行职责、单一回答焦点规则和旧身份边界统一读取[板块 7 当前运行合同](../../../docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。本目录中的原始回执继续保存当时请求、失败码和调用事实。
 
@@ -21,16 +21,19 @@
 
 ### 完整回应优先当前任务
 
-- 当前专项：[v1.9 Production 发布工具 v1.1](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-1.md)
-- 当前状态：v1.9 普通表达、纠正、明确深挖、局部拒答＋换方向继续均由 Codex 初评与产品负责人裁决为 `pass`；候选部署实施中
+- 当前专项：[v1.9 Production 发布工具 v1.2](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-2.md)
+- 当前状态：v1.9 普通表达、纠正、明确深挖、局部拒答＋换方向继续均由 Codex 初评与产品负责人裁决为 `pass`；发布工具 v1.2 实施中
 - 验收预算：最多 `15` 次可见回应，已消费 `15`、剩余 `0`；重试、恢复、回退均为 `0`
 - 发布准备：当前部署与策略已回读；数据库备份、恢复清单和回退路径已验证
-- 发布边界：产品裁决前 Production 继续使用 `event_centered + baseline`
+- 发布边界：正式域名继续使用 baseline；候选冒烟与候选产品裁决通过后才切流
 - [v1.9 Preview 结果交接](./complete-response-first-v1-9-isolated-preview-v1-handoff.md)
 - [v1.9 Production 发布准备交接](./complete-response-first-v1-9-production-readiness-v1-handoff.md)
 - [v1.9 Production 发布回执](./complete-response-first-v1-9-production-release-v1-receipt.json)
 - [v1.9 Production 发布工具交接](./complete-response-first-v1-9-production-release-v1-handoff.md)
 - [v1.9 Production 发布工具阶段账](./complete-response-first-v1-9-production-release-stage-ledger-v1.json)
+- [v1.9 Production 发布工具 v1.1 回执](./complete-response-first-v1-9-production-release-v1-1-receipt.json)
+- [v1.9 Production 发布工具 v1.1 交接](./complete-response-first-v1-9-production-release-v1-1-handoff.md)
+- [v1.9 Production 发布工具 v1.1 阶段账](./complete-response-first-v1-9-production-release-stage-ledger-v1-1.json)
 - [隔离 Preview 验收交接](./complete-response-first-v1-6-isolated-preview-v1-handoff.md)
 - [隔离 Preview 阶段账](./complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)
 

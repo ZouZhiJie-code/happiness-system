@@ -19,7 +19,7 @@ import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const GI088_V19_RELEASE_IDENTITY =
-  "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-1-cli-json-shape";
+  "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-2-psql-contract";
 export const GI088_V19_CANDIDATE_VERSION =
   "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority";
 export const GI088_V19_STRATEGY = "complete_response_v1_9";
@@ -35,7 +35,11 @@ const ARTIFACT_RELATIVE_ROOT =
 const READINESS_PRIVATE_RELATIVE_ROOT =
   `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release`;
 const PRIVATE_RELATIVE_ROOT =
-  `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release-v1-1-cli-json-shape`;
+  `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release-v1-2-psql-contract`;
+const PARENT_V11_CANDIDATE_ID = "dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH";
+const PARENT_V11_CANDIDATE_URL =
+  "https://xingfuxitong-dyfj5qu4h-zouzhijies-projects.vercel.app";
+const PARENT_V11_CANDIDATE_COMMIT = "c0cb06e9f7dc3d1746a77865091b00c6aa2ffb4e";
 const EXPECTED_PREVIEW_PRIVATE_SHA =
   "feacbc123e798e8de482fd12c2e4e0679ab9fca88520d2b7898e1459e9c0f46b";
 const EXPECTED_READINESS_PRIVATE_SHA =
@@ -57,7 +61,7 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
     privateRoot,
     plan: resolve(
       root,
-      "docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-1.md"
+      "docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-2.md"
     ),
     runner: resolve(root, "scripts/run-gi088-v1-9-production-release.mjs"),
     candidateRuntime: resolve(
@@ -99,6 +103,18 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
       artifactRoot,
       "complete-response-first-v1-9-production-release-stage-ledger-v1.json"
     ),
+    parentV11Receipt: resolve(
+      artifactRoot,
+      "complete-response-first-v1-9-production-release-v1-1-receipt.json"
+    ),
+    parentV11StageLedger: resolve(
+      artifactRoot,
+      "complete-response-first-v1-9-production-release-stage-ledger-v1-1.json"
+    ),
+    parentV11ManualCleanup: resolve(
+      artifactRoot,
+      ".private/complete-response-first-v1-9-production-release-v1-1-cli-json-shape/manual-cleanup-evidence.json"
+    ),
     state: resolve(privateRoot, "release-state.json"),
     previewReviewTemplate: resolve(privateRoot, "product-owner-preview-review.template.json"),
     previewReview: resolve(privateRoot, "product-owner-preview-review.json"),
@@ -107,7 +123,7 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
     lock: resolve(privateRoot, "release.lock"),
     publicReceipt: resolve(
       artifactRoot,
-      "complete-response-first-v1-9-production-release-v1-1-receipt.json"
+      "complete-response-first-v1-9-production-release-v1-2-receipt.json"
     )
   };
 }
@@ -254,6 +270,38 @@ export function validateGi088V19ParentReleaseFailure(paths) {
   };
 }
 
+export function validateGi088V19ParentV11Failure(paths) {
+  const receipt = readJson(paths.parentV11Receipt);
+  const stage = readJson(paths.parentV11StageLedger);
+  const manualCleanupSha256 = sha256File(paths.parentV11ManualCleanup);
+  if (
+    receipt.identity !==
+      "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-1-cli-json-shape" ||
+    receipt.status !== "temporary_user_cleanup_failed_manual_recovery_required" ||
+    receipt.productOwnerPreviewVerdict !== "pass" ||
+    receipt.candidate?.deploymentId !== PARENT_V11_CANDIDATE_ID ||
+    receipt.candidate?.deploymentUrl !== PARENT_V11_CANDIDATE_URL ||
+    receipt.candidate?.sourceCommit !== PARENT_V11_CANDIDATE_COMMIT ||
+    receipt.candidate?.ready !== true ||
+    stage.status !== "candidate_smoke_psql_contract_no_go_superseded_by_v1_2" ||
+    stage.candidate?.deploymentId !== PARENT_V11_CANDIDATE_ID ||
+    stage.candidate?.domainPromoted !== false ||
+    stage.manualCleanup?.privateEvidenceSha256 !== manualCleanupSha256 ||
+    Object.values(stage.manualCleanup?.after ?? {}).some((value) => Number(value) !== 0)
+  ) {
+    throw new Error("GI088_V19_RELEASE_PARENT_V11_EVIDENCE_INVALID");
+  }
+  return {
+    identity: receipt.identity,
+    receiptSha256: sha256File(paths.parentV11Receipt),
+    stageLedgerSha256: sha256File(paths.parentV11StageLedger),
+    manualCleanupSha256,
+    candidateDeploymentId: PARENT_V11_CANDIDATE_ID,
+    candidateDeploymentUrl: PARENT_V11_CANDIDATE_URL,
+    candidateSourceCommit: PARENT_V11_CANDIDATE_COMMIT
+  };
+}
+
 function sourceFiles(paths) {
   return {
     plan: paths.plan,
@@ -269,7 +317,10 @@ function sourceFiles(paths) {
     readinessPrivate: paths.readinessPrivate,
     backup: paths.backup,
     parentV1Receipt: paths.parentV1Receipt,
-    parentV1StageLedger: paths.parentV1StageLedger
+    parentV1StageLedger: paths.parentV1StageLedger,
+    parentV11Receipt: paths.parentV11Receipt,
+    parentV11StageLedger: paths.parentV11StageLedger,
+    parentV11ManualCleanup: paths.parentV11ManualCleanup
   };
 }
 
@@ -560,6 +611,12 @@ export function sanitizeGi088V19PublicState(state) {
 }
 
 export function assertGi088V19CommandAllowed(state, command) {
+  if (
+    command === "adopt-parent-candidate" &&
+    (state.productOwnerPreviewVerdict !== "pass" || state.candidate)
+  ) {
+    throw new Error("GI088_V19_RELEASE_PARENT_CANDIDATE_ADOPTION_NOT_ALLOWED");
+  }
   if (command === "deploy-candidate" && state.productOwnerPreviewVerdict !== "pass") {
     throw new Error("GI088_V19_RELEASE_PRODUCT_REVIEW_REQUIRED");
   }
@@ -646,6 +703,7 @@ function pullProductionEnvironment(paths, exec) {
     const text = readFileSync(envPath, "utf8");
     return {
       databaseUrl: parseDotenvValue(text, "DATABASE_URL"),
+      directUrl: parseDotenvValue(text, "DIRECT_URL"),
       mode: parseDotenvValue(text, "INTERVIEW_EVENT_CENTERED_MODE"),
       strategy: parseDotenvValue(text, "INTERVIEW_EVENT_CENTERED_STRATEGY")
     };
@@ -662,18 +720,34 @@ function productionDatabaseUrl(paths, exec, expectedStrategy) {
   ) {
     throw new Error("GI088_V19_RELEASE_PRODUCTION_ENVIRONMENT_MISMATCH");
   }
-  return environment.databaseUrl;
+  return normalizeGi088V19PsqlUrl(environment.directUrl);
 }
 
-function psqlJson(exec, databaseUrl, sql, variables = {}) {
-  const args = ["-X", "-v", "ON_ERROR_STOP=1", "-tA"];
+export function normalizeGi088V19PsqlUrl(value) {
+  const url = new URL(String(value));
+  if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
+    throw new Error("GI088_V19_RELEASE_DATABASE_URL_INVALID");
+  }
+  url.searchParams.delete("channel_binding");
+  url.searchParams.delete("schema");
+  return url.toString();
+}
+
+export function buildGi088V19PsqlInvocation(databaseUrl, sql, variables = {}) {
+  const args = [databaseUrl, "-X", "-v", "ON_ERROR_STOP=1", "-tA"];
   for (const [key, value] of Object.entries(variables)) {
     args.push("-v", `${key}=${value}`);
   }
-  args.push("-c", sql);
-  const result = exec("psql", args, {
+  args.push("-f", "-");
+  return { args, input: sql };
+}
+
+function psqlJson(exec, databaseUrl, sql, variables = {}) {
+  const invocation = buildGi088V19PsqlInvocation(databaseUrl, sql, variables);
+  const result = exec("psql", invocation.args, {
     cwd: process.cwd(),
-    env: { ...process.env, PGDATABASE: databaseUrl }
+    env: process.env,
+    input: invocation.input
   });
   const text = result.stdout.trim();
   return text ? JSON.parse(text) : null;
@@ -711,7 +785,11 @@ function backgroundTraceSql() {
 function deleteTemporaryUserSql() {
   return `WITH deleted AS (
     DELETE FROM "User" WHERE id = :'user_id' RETURNING id
-  ) SELECT json_build_object('deletedCount', (SELECT count(*) FROM deleted), 'remainingCount', (SELECT count(*) FROM "User" WHERE id = :'user_id'))::text;`;
+  ) SELECT json_build_object('deletedCount', (SELECT count(*) FROM deleted))::text;`;
+}
+
+function remainingTemporaryUserSql() {
+  return `SELECT json_build_object('remainingCount', count(*))::text FROM "User" WHERE id = :'user_id';`;
 }
 
 function vercelCurl(exec, paths, deploymentUrl, path, request = {}) {
@@ -835,9 +913,10 @@ async function waitForBackgroundTrace({ exec, databaseUrl, userId, sessionId, ti
   throw new Error("GI088_V19_RELEASE_BACKGROUND_TIMEOUT");
 }
 
-function deleteTemporaryUser(exec, databaseUrl, userId) {
-  const result = psqlJson(exec, databaseUrl, deleteTemporaryUserSql(), { user_id: userId });
-  if (Number(result?.deletedCount) !== 1 || Number(result?.remainingCount) !== 0) {
+export function deleteTemporaryUser(exec, databaseUrl, userId) {
+  const deleted = psqlJson(exec, databaseUrl, deleteTemporaryUserSql(), { user_id: userId });
+  const verified = psqlJson(exec, databaseUrl, remainingTemporaryUserSql(), { user_id: userId });
+  if (Number(deleted?.deletedCount) !== 1 || Number(verified?.remainingCount) !== 0) {
     throw new Error("GI088_V19_RELEASE_TEMP_USER_CLEANUP_FAILED");
   }
   return true;
@@ -848,15 +927,19 @@ function verifyLocalReleaseInputs(paths, state) {
   const previewEvidence = buildGi088V19PreviewEvidence(paths);
   const readiness = buildGi088V19ReadinessEvidence(paths);
   const parentV1 = validateGi088V19ParentReleaseFailure(paths);
+  const parentV11 = validateGi088V19ParentV11Failure(paths);
   if (
     previewEvidence.privateReviewSha256 !== state.previewEvidence.privateReviewSha256 ||
     readiness.privateReadinessSha256 !== state.readiness.privateReadinessSha256 ||
     parentV1.receiptSha256 !== state.parentV1.receiptSha256 ||
-    parentV1.stageLedgerSha256 !== state.parentV1.stageLedgerSha256
+    parentV1.stageLedgerSha256 !== state.parentV1.stageLedgerSha256 ||
+    parentV11.receiptSha256 !== state.parentV11.receiptSha256 ||
+    parentV11.stageLedgerSha256 !== state.parentV11.stageLedgerSha256 ||
+    parentV11.manualCleanupSha256 !== state.parentV11.manualCleanupSha256
   ) {
     throw new Error("GI088_V19_RELEASE_EVIDENCE_DRIFT");
   }
-  return { previewEvidence, readiness, parentV1 };
+  return { previewEvidence, readiness, parentV1, parentV11 };
 }
 
 function assertGitReady(paths, exec, { allowPublicReceipt = false } = {}) {
@@ -916,6 +999,7 @@ export async function prepareGi088V19Release({ repoRoot = process.cwd(), now = n
   const previewEvidence = buildGi088V19PreviewEvidence(paths);
   const readiness = buildGi088V19ReadinessEvidence(paths);
   const parentV1 = validateGi088V19ParentReleaseFailure(paths);
+  const parentV11 = validateGi088V19ParentV11Failure(paths);
   const sourceHashes = calculateGi088V19SourceHashes(paths);
   const planFingerprint = calculateGi088V19PlanFingerprint(sourceHashes);
   const state = {
@@ -927,6 +1011,7 @@ export async function prepareGi088V19Release({ repoRoot = process.cwd(), now = n
     previewEvidence,
     readiness,
     parentV1,
+    parentV11,
     productOwnerPreviewVerdict: "pending",
     baseline: {
       deploymentId: GI088_V19_BASELINE_DEPLOYMENT,
@@ -1068,6 +1153,95 @@ async function deployCandidate({ paths, state, exec, now }) {
       }
     }
     state.status = "candidate_deploy_failed_baseline_restore_attempted";
+    state.error = { code: stableErrorCode(error) };
+    state.updatedAt = new Date().toISOString();
+    writeState(paths, state);
+    releaseLock(paths);
+    throw error;
+  }
+}
+
+export function assertParentCandidateApplicationUnchanged(paths, exec, parentCommit) {
+  exec("git", ["merge-base", "--is-ancestor", parentCommit, "HEAD"], {
+    cwd: paths.root,
+    env: process.env
+  });
+  const changed = exec(
+    "git",
+    ["diff", "--name-only", `${parentCommit}..HEAD`, "--", "src", "prisma", "package.json"],
+    { cwd: paths.root, env: process.env }
+  ).stdout.trim();
+  if (changed) throw new Error("GI088_V19_RELEASE_PARENT_CANDIDATE_APPLICATION_DRIFT");
+  return true;
+}
+
+async function adoptParentCandidate({ paths, state, exec, now }) {
+  const { previewEvidence, parentV11 } = verifyLocalReleaseInputs(paths, state);
+  validatePreviewReviewFile(paths, previewEvidence);
+  assertGi088V19CommandAllowed(state, "adopt-parent-candidate");
+  assertGitReady(paths, exec, { allowPublicReceipt: true });
+  assertParentCandidateApplicationUnchanged(paths, exec, parentV11.candidateSourceCommit);
+  acquireLock(paths, "adopt-parent-candidate", now);
+  state.status = "parent_candidate_adoption_started";
+  state.updatedAt = now.toISOString();
+  writeState(paths, state);
+  try {
+    const currentProduction = parseJsonOutput(
+      exec("vercel", buildGi088V19VercelArgs("inspect", GI088_V19_PRODUCTION_DOMAIN), {
+        cwd: paths.root,
+        env: process.env
+      }).stdout,
+      "GI088_V19_RELEASE_PRODUCTION_INSPECT_INVALID"
+    );
+    if (
+      (currentProduction.id ?? currentProduction.deploymentId) !==
+        GI088_V19_BASELINE_DEPLOYMENT ||
+      String(currentProduction.readyState ?? currentProduction.state ?? "").toUpperCase() !==
+        "READY"
+    ) {
+      throw new Error("GI088_V19_RELEASE_PRODUCTION_BASELINE_DRIFT");
+    }
+    const inspected = parseJsonOutput(
+      exec("vercel", buildGi088V19VercelArgs("inspect", parentV11.candidateDeploymentId), {
+        cwd: paths.root,
+        env: process.env
+      }).stdout,
+      "GI088_V19_RELEASE_DEPLOY_INSPECT_INVALID"
+    );
+    if (
+      inspected.id !== parentV11.candidateDeploymentId ||
+      String(inspected.readyState ?? inspected.state ?? "").toUpperCase() !== "READY" ||
+      String(inspected.target ?? "").toLowerCase() !== "production" ||
+      `https://${String(inspected.url ?? "").replace(/^https?:\/\//u, "")}` !==
+        parentV11.candidateDeploymentUrl
+    ) {
+      throw new Error("GI088_V19_RELEASE_PARENT_CANDIDATE_INVALID");
+    }
+    const environment = pullProductionEnvironment(paths, exec);
+    if (
+      environment.mode !== "event_centered" ||
+      environment.strategy !== GI088_V19_STRATEGY
+    ) {
+      throw new Error("GI088_V19_RELEASE_PRODUCTION_ENVIRONMENT_MISMATCH");
+    }
+    state.candidate = {
+      deploymentId: parentV11.candidateDeploymentId,
+      deploymentUrl: parentV11.candidateDeploymentUrl,
+      ready: true,
+      sourceCommit: parentV11.candidateSourceCommit,
+      strategy: GI088_V19_STRATEGY,
+      domainPromoted: false,
+      createdAt: now.toISOString(),
+      adoptedFromIdentity: parentV11.identity
+    };
+    state.status = "candidate_ready_waiting_direct_smoke";
+    state.error = null;
+    state.updatedAt = new Date().toISOString();
+    writeState(paths, state);
+    releaseLock(paths);
+    return sanitizeGi088V19PublicState(state);
+  } catch (error) {
+    state.status = "parent_candidate_adoption_failed_release_stopped";
     state.error = { code: stableErrorCode(error) };
     state.updatedAt = new Date().toISOString();
     writeState(paths, state);
@@ -1325,6 +1499,9 @@ export async function runGi088V19ReleaseCommand({
   if (command === "inspect") {
     verifyLocalReleaseInputs(paths, state);
     return sanitizeGi088V19PublicState(state);
+  }
+  if (command === "adopt-parent-candidate") {
+    return adoptParentCandidate({ paths, state, exec, now });
   }
   if (command === "deploy-candidate") return deployCandidate({ paths, state, exec, now });
   if (command === "smoke") return runDirectSmoke({ paths, state, exec, now });

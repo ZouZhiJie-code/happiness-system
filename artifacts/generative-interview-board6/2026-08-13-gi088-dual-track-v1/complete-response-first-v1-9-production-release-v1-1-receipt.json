@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-1-cli-json-shape",
-  "status": "product_owner_preview_pass_ready_for_candidate_deploy",
+  "status": "temporary_user_cleanup_failed_manual_recovery_required",
   "planFingerprint": "7ee06c9eed204c503eaa46f902f1b5e0d48989458ef027a9a759301e6cadf5f8",
   "productOwnerPreviewVerdict": "pass",
   "baseline": {
@@ -9,12 +9,20 @@
     "strategy": "baseline",
     "domain": "https://dailylight.chat"
   },
-  "candidate": null,
+  "candidate": {
+    "deploymentId": "dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH",
+    "deploymentUrl": "https://xingfuxitong-dyfj5qu4h-zouzhijies-projects.vercel.app",
+    "ready": true,
+    "sourceCommit": "c0cb06e9f7dc3d1746a77865091b00c6aa2ffb4e"
+  },
   "smoke": null,
   "promotion": null,
   "onlineRegression": null,
   "rollback": null,
-  "error": null,
-  "updatedAt": "2026-08-21T02:15:02.240Z",
+  "error": {
+    "code": "GI088_V19_RELEASE_UNEXPECTED:99688d3c31090e4b8fe684ae00420bbeae1330303d02bce4921fb4365ee3a4c8",
+    "detailHash": null
+  },
+  "updatedAt": "2026-08-21T02:19:30.644Z",
   "publicSensitiveContentStored": false
 }
