@@ -2,12 +2,12 @@
 
 - 文档职责：证据索引
 - 文档状态：现役
-- 最后核验：`2026-08-20`
+- 最后核验：`2026-08-21`
 - 权威入口：[`docs/README.md`](../docs/README.md)
 
-最后更新：`2026-08-20`
+最后更新：`2026-08-21`
 
-当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 已完成独立复审、最新 main 干净重基线和本地完整门，P0=0／P1=0／P2=3，完整轨迹 0/30，PR、远程门、Preview 与样本收集 pending；月度洞察为 No-Go／insufficient_evidence；GI-088 阶段 C2 历史证据保持原身份，独立准入继续关闭`
+当前状态：`正式资产、历史证据和本地过程文件已分层；Golden Set v2 已合入 main，P0=0／P1=0／P2=3，完整轨迹 0/30、样本收集 pending；月度洞察为 No-Go／insufficient_evidence；GI-088 v1.9 已独立发布 Production，五阶段 main 与当前 Production 血缘整合 pending，详见 PEH-043`
 
 ## 1. 为什么需要这份规则
 

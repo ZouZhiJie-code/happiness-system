@@ -2,10 +2,10 @@
 
 - 文档职责：知识导航
 - 文档状态：现役
-- 最后核验：`2026-08-20`
+- 最后核验：`2026-08-21`
 - 权威入口：本文件
 
-最后更新：`2026-08-20`
+最后更新：`2026-08-21`
 
 用途：让新的 AI、开发者或产品协作者在五分钟内找到当前事实、开放问题、实现说明和评测证据。
 
@@ -13,14 +13,14 @@
 
 当前执行入口：[DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-- 五阶段生产主线完善已获产品负责人确认并进入实施；当前专项为 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，状态 `已确认·实施中`。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已合入 main `795417d` 且远程门与 main CI 全绿，Preview 通过至“需更新”，Production blocked；阶段 3 已由 PR #44 合入 main `ef7bf94`，`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，自然样本收集 pending；阶段 4 第三批已由 PR #48 合入 main `dedf094`，唯一 main run `32443785474` attempt 1 全绿、零模型 E2E `11/11`，独立终审 `P0=0 / P1=0 / P2=1`；Preview Ready，产品 smoke 在应用登录前受验收工具配置阻断，Production blocked；阶段 5 已形成 `No-Go / insufficient_evidence` 结论并合入 main `aef37577`。正式域名继续运行阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。公开证据见[数据口径 v2 回执](../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)、[零模型 E2E 回执](../artifacts/production-evidence-hardening/2026-08-19/e2e-zero-model/README.md)与[Golden Set v2 入口](../artifacts/production-evidence-hardening/2026-08-19/golden-set-v2/README.md)。
+- 五阶段生产主线完善已获产品负责人确认并进入实施；当前专项为 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，状态 `已确认·实施中`。阶段 1 数据口径 v2 保留已发布证据，当前 Production 实际版本等待整合复验，管理员成功读取保持 pending；阶段 2 热修复已合入 main `795417d`，Preview 通过至“需更新”；阶段 3 已由 PR #44 合入 main `ef7bf94`，`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，自然样本收集 pending；阶段 4 第三批已由 PR #48 合入 main `dedf094`，治理收口由 PR #49 合入 main `8f7ae40`，独立终审 `P0=0 / P1=0 / P2=1`，Preview 产品 smoke 受验收工具配置阻断；阶段 5 已形成 `No-Go / insufficient_evidence` 结论并合入 main `aef37577`。独立 GI-088 v1.9 发布线已把正式域名切换至 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`，运行 `event_centered + complete_response_v1_9 + deepseek-v4-pro`；该源提交不包含五阶段 main 合并节点，后续发布先完成单一集成候选，详见 `PEH-043`。公开证据见[数据口径 v2 回执](../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)、[零模型 E2E 回执](../artifacts/production-evidence-hardening/2026-08-19/e2e-zero-model/README.md)与[Golden Set v2 入口](../artifacts/production-evidence-hardening/2026-08-19/golden-set-v2/README.md)。
 - 五阶段原工作线通过基线提交 `5c36b49` 对齐当时 Production 源码 `ed8c36d`；Stage 3 原候选从 `origin/main@77de8d1` 建立并继续原样保留，最终发布线从 `origin/main@aef37577` 建立独立 worktree。分叉原因和处理证据见[问题台账 PEH-001](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 - 本轮范围为数据口径 v2、零模型端到端回归、Production 日志 Golden Set v2、主链重构和月度个性化洞察 Go/No-Go。阶段 1、2、4 逐步 Preview／Production；阶段 3 私有评审；阶段 5 保持隔离。
-- GI-088、生成式访谈发布、数据库迁移、月度 AI 洞察 Production 上线和破坏性清理继续使用独立停止门。Stage 3 正文开关保持关闭，Production 正文读取 `0`、模型调用 `0`；Production 继续运行 `event_centered + baseline`。
+- 数据库迁移、月度 AI 洞察 Production 上线和破坏性清理继续使用独立停止门。Stage 3 正文开关保持关闭，Production 正文读取 `0`、模型调用 `0`；GI-088 v1.9 已完成独立发布，Stage 4 后续 Production 变更先完成当前生成式访谈血缘整合。
 
 - 全站产品架构已统一为“首页 → 记录 → 日记 → 认识自己”；第二轮视觉基线已验收并恢复，后续字体与色阶增强候选已否决并转入历史证据；基线隔离功能 Preview、真实闭环复验和发布前运行依赖安全验证已经完成。
 - `/insights?section=trends|portrait|memories` 已形成新版「认识自己」候选：趋势与画像只读取新版事件记录和日／周／月记，记忆页显示“即将上线”。
-- 第二轮验收基线已于 `2026-08-13` 发布 Production，正式域名为 `https://dailylight.chat`，运行模式为 `event_centered + baseline`；生成式访谈候选和 GI-088 发布范围继续关闭。
+- 第二轮验收基线于 `2026-08-13` 以 `event_centered + baseline` 发布并保留历史证据；当前正式域名运行 GI-088 v1.9 `event_centered + complete_response_v1_9`，后续候选与下一次 Production 变更继续执行独立发布门。
 - 项目级 [AI 评测总规范 v1.0](./ai-evaluation-standard.md)与[专项模板 v1.0](./templates/ai-evaluation-specialty-template.md)已获产品负责人确认并冻结生效；任何新的评测运行先完成总规范启动卡，再进入当前专项。
 - `GI-068～080` 保持关闭；
 - 生成式访谈工作方法 `v1.0` 已冻结；
@@ -49,7 +49,7 @@
 - 板块 8 继续等待；
 - 日志成果专项已完成 9 条真人轨迹的今日日记 Prompt v3 评价；其中 6 条完成“记录卡 v3 → 今日日记 v3”完整回归，记录卡 v3 的证据范围限定为 6 条；
 - 当前新前端已完成第二轮视觉验收、验收基线恢复、隔离功能 Preview 真实闭环复验和发布前运行依赖安全验证；字体与色阶增强候选及旧 UI Preview 只作为历史工程证据；
-- Production 当前使用 `event_centered + baseline`；GI-088 与 `generative` 策略继续关闭。
+- Production 当前使用 `event_centered + complete_response_v1_9` 与 `deepseek-v4-pro`；五阶段 main 成果等待与该 Production 血缘整合。
 
 Daily Light 当前网页端方向为“访谈记录 → 当天事件卡片 → 今日日记”。生成式访谈双轨资产已冻结；阶段 C2 完整确认 Plus 双 No-Go，Max 形成技术阻断，正式准入继续保持关闭。联调契约见[隔离 Preview 联调契约](./plans/2026-08-12-daily-light-journal-preview-contract.md)，评测证据见[GI-088 阶段 C2 入口](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/README.md)。
 

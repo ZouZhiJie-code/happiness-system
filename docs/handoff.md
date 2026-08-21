@@ -2,31 +2,31 @@
 
 - 文档职责：当前执行交接
 - 文档状态：已确认·实施中
-- 最后核验：`2026-08-20`
+- 最后核验：`2026-08-21`
 - 权威入口：[`DL-PROD-20260819`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-最后更新：`2026-08-20`
+最后更新：`2026-08-21`
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第三批已由 PR #48 合入 main `dedf094`，唯一 main run `32443785474` attempt 1 全绿，独立终审 `P0=0 / P1=0 / P2=1`；Preview Ready，产品 smoke 在应用登录前受验收工具配置阻断，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布并保留为回退基线，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，Preview 核心主链通过至“需更新”；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第三批已由 PR #48 合入 main `dedf094`，独立终审 `P0=0 / P1=0 / P2=1`，Preview 产品 smoke 受验收工具配置阻断；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估。独立 GI-088 v1.9 发布线已完成正式切流与线上回归，当前 Production 为 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`、`event_centered + complete_response_v1_9 + deepseek-v4-pro`；Stage 4 尚未进入 Production，下一门为两条发布血缘整合，详见 `PEH-043`。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
-- 当前本地候选分支：`codex/production-evidence-hardening-stage4-journal-release-20260820`
+- 当前本地候选分支：`codex/production-evidence-hardening-production-reconcile-20260821`
 - 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-stage4-journal-release-20260820`
 - 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
-- Stage 4 第三批基线：`a89d5bc`，已包含 PR #47 final head `d71a9b3` 的 source-main 合并结果
-- Production 发布头：`a86a4ba`
+- Stage 4 第三批代码已由 PR #48 合入 `dedf094`，治理收口由 PR #49 合入 `8f7ae40`
+- 当前 Production 源提交：`d8dfae7`（GI-088 v1.9）；阶段 1 发布头 `a86a4ba` 保留回退证据
 - 阶段 1 main 合并提交：`305f209`
 - 阶段 2 main 合并提交：`77de8d1`
 - 阶段 2 热修复 main 合并提交：`795417d`
 - 阶段 4 第一批 main 合并提交：`548fda5`
 - 画像测试夹具热修 main 合并提交：`d98c915`
 - 阶段 4 第二批 main 合并提交：`a89d5bc`
-- 正式 deployment：`dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`（READY／PROMOTED）
+- 当前正式 deployment：`dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`（READY／PROMOTED，GI-088 v1.9）；阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 保留为回退目标
 - 回退 deployment：`dpl_3ChuumbtWFLLhWogNrCVrFwCu1M2`（READY）
-- Production 模式：`event_centered + baseline`
+- Production 模式：`event_centered + complete_response_v1_9`；模型 `deepseek-v4-pro`
 
 阶段 4 第一批本地发布线事实：
 
@@ -57,7 +57,7 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - 独立终审为 `P0=0 / P1=0 / P2=1`。`PEH-039` 与 `PEH-040` 的人工内容保护 P1 已在 source branch 关闭；唯一 P2 是未来事件卡删除时的来源合并边界，当前无删除入口，见 `PEH-041`。
 - PR #48 证据 head `519cc37` 的 push run `32442390634` 与 pull request run `32442422147` 均 attempt 1 全绿、重跑 `0`；两套均为 `3332 passed / 95 skipped`、build `77/77`、Lint `0 errors / 33 warnings`，零模型 E2E 均 `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 已删除。
 - Preview `dpl_BAux5cqn6ATTqB7DsHZDSu3u6Wxt` Ready；匿名保护单次返回 HTTP `302` 至 Vercel SSO。固定账号登录在应用请求前因验收脚本工作目录解析失败而停止，重试 `0`、业务写入 `0`、模型端点请求 `0`，详见 `PEH-042`。该 smoke 运行身份按停止门保留，新的 Preview 产品验收需使用修正后的工作目录形成独立运行身份；Production 保持 blocked。
-- final docs head `9d075f7` 的 push run `32443259149` 与 pull request run `32443261597` 均 attempt 1 全绿；PR #48 随后合入 main `dedf094`，唯一 main run `32443785474` attempt 1 全绿：`3332 passed / 95 skipped`、build `77/77`、Lint `0 errors / 33 warnings`，零模型 E2E `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 已删除。正式域名继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`，Production 保持 blocked。
+- final docs head `9d075f7` 的 push run `32443259149` 与 pull request run `32443261597` 均 attempt 1 全绿；PR #48 随后合入 main `dedf094`，唯一 main run `32443785474` attempt 1 全绿。PR #49 治理收口 head `89f53ee` 两套 CI attempt 1 全绿后合入 main `8f7ae40`，唯一 main run `32444933451` attempt 1 全绿：`3332 passed / 95 skipped`、build `77/77`、Lint `0 errors / 33 warnings`，零模型 E2E `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 已删除。Stage 4 尚未进入 Production；当前正式域名运行独立 GI-088 v1.9 deployment，后续发布先完成两条血缘整合，详见 `PEH-043`。
 
 阶段 3 本地候选事实：
 
@@ -77,7 +77,7 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - Preview deployment `dpl_DExPivo5Qqfk97kH9jVahU8yWQ8A` 已通过管理员、匿名、普通用户、空态、错误态和旧链展开区验收。
 - `2026-07-22..2026-08-20` 的六步漏斗 Preview API 与独立 SQL 均为 `6 / 5 / 5 / 1 / 1 / 1`，差异为 `0`；数据库事务只读，正文读取、业务写入和临时秘密残留均为 `0`。
 - 留存与质量保留本轮独立 SQL 统计；后续 Preview API 再读受到 deployment protection／TLS 路径阻断，逐字段一致性范围继续使用已封存证据。
-- Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已 READY／PROMOTED，正式域名匿名 `401`、普通用户 `403`、注册登录、session、空 joy session 和非法日期合同均通过；模型端点调用 `0`，抽查 `19` 条日志的 `5xx / error / fatal / warning` 均为 `0`。
+- 阶段 1 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 发布时为 READY／PROMOTED，匿名 `401`、普通用户 `403`、注册登录、session、空 joy session 和非法日期合同均通过；模型端点调用 `0`，抽查 `19` 条日志的 `5xx / error / fatal / warning` 均为 `0`。该 deployment 当前保持 READY 并承担回退目标。
 - 管理员白名单存在 `1` 个身份；当前缺少合法凭证且两种受控浏览器环境均无既有登录态，管理员成功读取保持 pending。完整证据见[数据口径 v2 回执](../artifacts/production-evidence-hardening/2026-08-19/analytics-contract-v2/README.md)。
 - smoke 创建的固定验收账号、`AuthSession` 和空 `InterviewSession` 继续保留，清理等待产品负责人单独确认；Production 运行依赖审计为 `0`，Vite／Vitest 开发测试工具链告警进入独立治理。
 
@@ -90,7 +90,7 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - GI payload 已恢复真实首次选择路径，fake digest 只作为测试替身；该 payload `50/50 P4`、完整 GI 文件 `20/20 P4`、混合压力 `270/270 P4` 通过。第二轮已改为按接口地址分流，随机顺序 `750/750`、精确场景 `200/200`、连续三轮全量和零模型 E2E `11/11` 均通过。只修改两个测试文件，产品源码 `0`。
 - PR #43 final head `a4173d7` 的 push run `32346020465` 与 pull request run `32346025037` 均在 attempt 1 全绿、重试 `0`，两套 E2E 均为 `11/11`；PR #43 已合入 main merge `795417d`，main push run `32346808393` 的常规测试与零模型 E2E 全绿。
 - Preview transport 根因已定位为本机 Xray／上游 TLS 链路间歇重置；deployment、证书和 Protection 状态正常。浏览器验收等待稳定网络／线路；一次 verbose 诊断造成保护凭证只在本地任务终端可见，该值未被主动复制到 Git、项目文档、PR 或外发消息，公开记录敏感值为 `0`，凭证轮换等待单独授权。详见 `PEH-028`、`PEH-029`。
-- Stage 2 Production 等待 `PEH-020` 与剩余 `PEH-022` 同时完成。正式域名继续使用阶段 1 deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
+- Stage 2 未单独发布；其 source-main 结果与 Stage 1、3、4 一并等待和当前 GI-088 v1.9 Production 血缘整合。验收数据清理仍见 `PEH-020`，剩余 Preview 链见 `PEH-022`。
 
 阶段 5 隔离候选证据：
 
@@ -154,7 +154,7 @@ AI 质量链路已经从“收集案例”推进到“验证候选、全量发�
 - 唯一生产主域名：`https://dailylight.chat`
 - 兼容入口：`https://www.dailylight.chat`
 - `dlight.cc.cd` 已于 `2026-07-20` 从 Vercel production aliases 中移除并废弃
-- 当前事件中心发布策略：Production 保持 `legacy + baseline`；GI-067 / GI-068～080 产品规则已冻结，板块 6 正在建设正式评测资产；GI-088 v8r1 因 A1 单例阻断退出最终通过候选。v8r2 最终初始化幂等、不可变版本、静态门和私有 Preview 已收口，当前 deployment `dpl_YRUQitffCQH264xiksHpLMviQZLy` 为 `READY`，Vercel Linux 远程构建的两套 Prisma Client 已通过登录存储验收；当前 run `b816d468-e3c3-4459-a822-04f95b1e78cd` 保持 `running 0/12 / gate=pending / high_only / high / calls=0`，等待产品负责人完成 12 项真人验收。质量、板块 7 正式接入、板块 8 和发布范围继续等待裁决，`optional + generative` 保持关闭
+- 当前事件中心发布策略：Production 使用 GI-088 v1.9 `event_centered + complete_response_v1_9` 与 `deepseek-v4-pro`；现役 deployment 为 `dpl_B9P64xCMMGtSR6CKAjNzRFdav39p`。GI-067 / GI-068～080 冻结规则继续有效，v8r2 及更早候选保留历史运行身份。下一次生成式或五阶段 Production 变更先完成单一血缘整合、双主链回归与产品负责人独立裁决，详见 `PEH-043`
 - Vercel production 的 `APP_URL` 为 `https://dailylight.chat`
 - `2026-07-21` 历史 production deployment：`dpl_3CrHUAqd4MtrMc5PTSsNitrwB4Nr`，状态为 `Ready`
 - `2026-07-21` 历史 production alias：`https://xingfuxitong-dhg8kgt7f-zouzhijies-projects.vercel.app`
