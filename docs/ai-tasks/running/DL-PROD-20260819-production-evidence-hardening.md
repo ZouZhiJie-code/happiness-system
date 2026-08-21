@@ -114,7 +114,7 @@
 | 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
 | 2. 零模型 E2E | 已合入 main·热修复远程门与 main CI 全绿·Preview 通过至需更新·Production blocked | PR #41 合入 `77de8d1`；PR #43 final head 两套 CI 全绿并合入 `795417d`，main CI 全绿；日记更新与人工保护待跑 |
 | 3. Golden Set v2 | 已合入 main·收集 pending | PR #44 已合入 main `ef7bf94`；`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，正文开关保持关闭 |
-| 4. 主链重构 | 第一批已合入 main·第二批本地门全绿·远程门 pending·Production P1 blocked | PR #45 已合入 main `548fda5`；画像测试夹具热修 PR #46 已合入 `d98c915` 且 main CI 全绿；第二批前端候选仅含 `4` 个文件，本地定向 `45/45`、压力 `90/90`、全量 `3307` 条与零模型 E2E `11/11` 通过；详见 `PEH-033`～`PEH-035` |
+| 4. 主链重构 | 第一批已合入 main·第二批 source head 远程门全绿·最终回执头 pending·Production P1 blocked | PR #47 source head `7976c1c` 两套 CI attempt 1 全绿，Preview Ready；受控 smoke 通过至事件中心列表 HTTP `200`，本地解析器误读 `items` 后按门停止，session start `not_run`、重试 `0`；详见 `PEH-033`～`PEH-036` |
 | 5. 月度洞察评估 | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；2 条低数据量用例 Provider 调用 `0`，其余 4 条候选调用 `not_run`；真实用户月 `0`、模型调用 `0`，Production 保持确定性 `AnalysisNarrative` |
 
 问题、归因和处理状态统一记录在[问题台账](../../../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
@@ -200,5 +200,7 @@
 - 独立审查发现 accepted outbox A 服务端可见时可能清掉用户后来输入的同分支草稿 B，且旧 A 的持久层清理可能删除新 outbox B。修复后 accepted-visible 只按 `clientTurnId` 条件清理 outbox，不再改写 composer draft；真实组件同文 B 重挂恢复、新 B outbox 条件清理与 `SecurityError` 三项合同 `18/18` 通过，独立复核结论 `P0=0 / P1=0 / P2=0`，详见 `PEH-035`。
 - 本地发布门已通过：定向 `6` 个文件 `45/45`；核心工作区 `18` 条并行 `5` 轮共 `90/90`；全量 `374 passed / 17 skipped` 个文件、`3307 passed / 95 skipped / 0 failed` 条用例；类型通过；Lint `0 error / 43` 条继承 warning；Production build `77/77`、16 条继承 tracing warning；两套 Prisma、文档 `24` 个核心文档／`847` 条链接／`1` 个当前入口和差异检查通过。
 - 零模型 E2E 为 `11/11`、`AIRequestLog=0`、12 条 Trace；临时 Schema `daily_light_e2e_mt26u4bp_9f45ddda37` 已删除，同前缀残留 `0`。相对 main 代码差异继续严格为 `4` 个文件，日记与画像代码差异为 `0`。
+- 独立终审 `P0=0 / P1=0 / P2=0` 后，PR #47 source head `7976c1c13469a6594aaacd676bb52b063140d4ed` 已推送。push run `32431840137` 与 pull request run `32431860395` 均在 attempt 1 全绿、重跑 `0`；两套远程零模型 E2E 均为 `11/11`、`AIRequestLog=0`、12 条 Trace，临时 Schema `daily_light_e2e_mt276f80_138300395d` 与 `daily_light_e2e_mt276zih_283d34dfe9` 均已删除。
+- Preview `dpl_FCiuGt6fnLt9hUm5uWnNHwcvWqHd` 为 Ready，URL、分支、PR #47 与 source head 精确映射。受控 smoke 按步骤各请求一次：匿名列表 `401 AUTHENTICATION_REQUIRED`、固定账号登录 `200`、登录态 `200`、事件中心列表 HTTP `200`；验收脚本把真实 `items` 合同误按 `sessions` 解析后立即停止，session start 为 `not_run`、重试 `0`。账号创建、权限变更、模型端点请求和 Production 请求均为 `0`，详见 `PEH-036`。
 - 已确认 Production P1：事件卡保存后，日记“需更新”状态存在被较旧读取结果覆盖的 `stale` 刷新竞态。独立归因确认该问题存在于第一批 main 基线，第二批 `4` 文件引入数为 `0`；详见 `PEH-033`。
-- 修复归属第三批日记工作区候选 `bf45`。完成门增加延迟 `GET /api/journal/day` 与保存响应交错单元合同，以及零模型 E2E 全套连续 `3` 轮通过。第二批下一门为文档提交、最终独立复核、推送和创建 PR；本批保持不合并、不发布 Production，Preview 只执行逐步单次受控 smoke，TLS 失败立即停止并保持零重试。发布门见 `PEH-034`。
+- 修复归属第三批日记工作区候选 `bf45`。完成门增加延迟 `GET /api/journal/day` 与保存响应交错单元合同，以及零模型 E2E 全套连续 `3` 轮通过。第二批下一门为本次公开回执提交后的最终 head push／PR 两套 CI attempt 1 与 Preview Ready；本批保持不合并、不发布 Production，也不重跑本轮 smoke。发布门见 `PEH-034`。

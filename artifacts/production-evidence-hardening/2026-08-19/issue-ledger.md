@@ -218,11 +218,11 @@
 
 ## PEH-034｜Stage 4 第二批前端发布门
 
-- 已确认事实：第二批实现提交 `61dd4cf` 与 P1 修复提交 `03b8501` 基于最新 main merge `d98c915`，只包含事件中心工作区组件、状态 Hook、可靠回合恢复 Hook 与工作区单元合同 `4` 个文件；旧发布线文档提交已退出重放，主线 `PEH-032` 完整保留。Prisma、依赖、CI、E2E 基础设施、日记和画像文件的第二批差异均为 `0`。
+- 已确认事实：第二批实现提交 `61dd4cf`、P1 修复提交 `03b8501` 与发布前文档提交 `7976c1c` 基于最新 main merge `d98c915`，只包含事件中心工作区组件、状态 Hook、可靠回合恢复 Hook、工作区单元合同 `4` 个代码／测试文件和 `6` 份发布文档；旧发布线文档提交已退出重放，主线 `PEH-032` 完整保留。Prisma、依赖、CI、E2E 基础设施、日记和画像文件的第二批差异均为 `0`。
 - 产品判断：本批只降低事件中心前端维护风险并保持用户可见行为与恢复合同兼容。完整本地门通过后可以推送并创建 PR；合并、Production 发布与 `PEH-033` 日记 P1 修复继续保持独立停止点。
 - Codex 评估：工作区状态、请求、outbox 和可靠恢复职责拆出后，现有 Stage 2 地址等待、接口分流、幂等 ID、结构化错误、焦点恢复和内部导航合同继续由定向、压力、全量和浏览器四层回归保护。独立审查发现并关闭的草稿／新 outbox 清理问题由 `PEH-035` 承担。
-- 待验证假设：push 与 PR 两套 CI attempt 1 全绿，隔离 Preview Ready 且受控单次 smoke 不出现新的前端回归。
-- 当前处理状态：`local full gates passed / push pending / PR pending / Preview pending / Production blocked`。本地定向 `45/45`、核心工作区压力 `90/90`、全量 `3307 passed / 95 skipped / 0 failed`、类型、Lint、build、双 Prisma、文档与差异检查通过；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace，临时 Schema 已删除且残留 `0`。Preview smoke 按步骤各执行一次；TLS 失败立即停止并保持零重试，业务写入、模型请求和 Production 访问分别记账。
+- 待验证假设：本次公开回执提交后的最终 head 继续满足 push 与 PR 两套 CI attempt 1 全绿，并形成精确对应的 Ready Preview。
+- 当前处理状态：`source head remote gates passed / final receipt head pending / Preview Ready / controlled smoke partially passed / Production blocked`。本地定向 `45/45`、核心工作区压力 `90/90`、全量 `3307 passed / 95 skipped / 0 failed`、类型、Lint、build、双 Prisma、文档与差异检查通过；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace，临时 Schema 已删除且残留 `0`。PR #47 source head `7976c1c` 的 push run `32431840137` 与 pull request run `32431860395` 均在 attempt 1 全绿、重跑 `0`；两套远程 E2E 均为 `11/11`、`AIRequestLog=0`、12 条 Trace且临时 Schema 已删除。Preview `dpl_FCiuGt6fnLt9hUm5uWnNHwcvWqHd` Ready 并精确映射该 head。受控 smoke 的匿名保护、固定账号登录、登录态与事件中心列表 HTTP 状态均通过；本地解析器口径问题和停止结果见 `PEH-036`。PR 保持未合并，Production 保持 blocked。
 
 ## PEH-035｜accepted 回合清理误删下一草稿与新 outbox
 
@@ -231,3 +231,11 @@
 - Codex 评估：发送 A 时 composer 已在等待请求前同步清空，accepted-visible cleanup 只承担 outbox 收束。修复将 composer draft 完全移出该清理路径，并让内存与持久层都按 expected `clientTurnId` 条件清除 outbox；持久层不可用时保持内存可用和用户草稿安全。
 - 待验证假设：真实组件链路 A accepted → 恢复 GET 失败 → 用户输入与 A 同文的 B → 同分支重挂看到 A，可稳定清 A outbox并保留 B；旧 A 清理遇到新 outbox B 或 `SecurityError` 时不造成新数据丢失。
 - 当前处理状态：已解决。提交 `03b8501` 增加同文草稿重挂、outbox CAS 与 `SecurityError` 三项合同；独立单文件复跑 `18/18`，复核结论 `P0=0 / P1=0 / P2=0`。后续定向 `45/45`、压力 `90/90`、全量 `3307 passed / 95 skipped / 0 failed`、类型、Lint、build、双 Prisma 与零模型 E2E `11/11` 全部通过；模型调用 `0`，临时 Schema 残留 `0`。
+
+## PEH-036｜第二批 Preview 列表 smoke 解析口径不一致
+
+- 已确认事实：PR #47 source head `7976c1c` 对应 Preview `dpl_FCiuGt6fnLt9hUm5uWnNHwcvWqHd` 为 Ready。受控 smoke 每步只请求一次：匿名列表返回 `401 AUTHENTICATION_REQUIRED`；固定账号登录返回 `200` 并建立 cookie；登录态返回 `200` 且固定账号匹配；事件中心列表返回 HTTP `200`。验收脚本把接口真实 `{ items, unfinishedCount, unfinishedLimit, nextCursor }` 合同按 `{ sessions: [...] }` 解析，将列表步骤标为失败并立即停止；最小 session start 为 `not_run`。
+- 产品判断：本项归入验收脚本口径问题，不形成 Preview 产品失败结论。HTTP `200` 证明登录态列表请求到达应用并成功响应；内容形状本轮未保存为运行回执，不能扩大声明为完整列表字段验收。
+- Codex 评估：仓储、路由和前端现役合同均使用 `items`，本批代码没有改变列表响应结构。后续 smoke 脚本应先复用正式 schema 或现役类型，再读取 `items`；修复与重跑进入独立候选，避免改变本轮单步一次、零重试证据身份。
+- 待验证假设：将 smoke 解析器对齐 `items` 后，同一固定账号可以继续完成列表内容校验与幂等 session start；该假设本轮保持 `not_run`。
+- 当前处理状态：`acceptance_parser_mismatch / product response HTTP 200 / retry 0 / session start not_run`。账号创建 `0`、权限变更 `0`、模型端点请求 `0`、Production 请求 `0`；本轮无 TLS 阻断。按停止门不再请求 Preview，PR 保持未合并，Production 保持 blocked。

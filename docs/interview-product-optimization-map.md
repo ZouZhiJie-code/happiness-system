@@ -9,15 +9,15 @@
 
 文档状态：`生效中；五阶段生产主线完善已确认·实施中；Production 使用 event_centered + baseline`
 
-当前讨论位置：`DL-PROD-20260819｜阶段 1 管理员成功读取 pending；阶段 2 热修复远程门与 main CI 全绿、Preview 通过至需更新、Production blocked；阶段 3 已合入 main、收集 pending；阶段 4 第一批与画像测试热修已合入 main、第二批前端本地门全绿且远程门 pending、Production P1 blocked；阶段 5 No-Go / insufficient_evidence`
+当前讨论位置：`DL-PROD-20260819｜阶段 1 管理员成功读取 pending；阶段 2 热修复远程门与 main CI 全绿、Preview 通过至需更新、Production blocked；阶段 3 已合入 main、收集 pending；阶段 4 第一批与画像测试热修已合入 main、第二批前端 source head 远程门全绿且最终回执头 pending、Production P1 blocked；阶段 5 No-Go / insufficient_evidence`
 
 落地验证状态：`总规范 v1.0 与阶段 B2 资产已冻结；阶段 C 保留 19 次技术阻断历史，阶段 C2 的 Plus 普通／思考均 20/20 且 No-Go，Max 思考 15/20 后网络阻断；当前无可推荐 Judge，独立准入继续关闭`
 
-本次同步范围：`数据口径 v2 已发布；零模型端到端回归热修复已合入 main；Production 日志 Golden Set v2 已合入 main 并进入自然样本收集；主链重构第一批与画像测试热修已合入 main，第二批前端本地发布门通过并等待远程验证；月度个性化洞察评估已形成 No-Go / insufficient_evidence`
+本次同步范围：`数据口径 v2 已发布；零模型端到端回归热修复已合入 main；Production 日志 Golden Set v2 已合入 main 并进入自然样本收集；主链重构第一批与画像测试热修已合入 main，第二批前端 source head 远程门全绿并等待最终回执头验证；月度个性化洞察评估已形成 No-Go / insufficient_evidence`
 
 当前跨模块专项：[`Daily Light 五阶段生产主线完善`](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)
 
-当前停止点：阶段 1 管理员成功读取等待白名单内既有内部管理员合法登录态；阶段 2 Preview 已通过编辑、保存和需更新，浏览器续跑等待稳定网络／线路，Production 同时受 `PEH-020`、`PEH-022` 与 `PEH-028` 约束；凭证轮换见 `PEH-029`。阶段 3 已合入 main，`P0=0 / P1=0 / P2=3`，正文开关继续关闭，完整轨迹 `0/30`，等待自然样本与样本级授权。阶段 4 第二批前端本地工程门已通过，下一门为最终独立复核、推送、PR、远程 CI 与 Preview；Production 受 `PEH-033` 日记 `stale` 刷新竞态阻断，`PEH-035` 草稿保护 P1 已关闭。第三批日记候选需完成延迟读取与保存交错合同及零模型 E2E 连续三轮。阶段 5 维持 No-Go 候选隔离。数据库迁移、GI-088 新调用、生成式策略发布、月度洞察上线和破坏性清理继续使用独立停止门。
+当前停止点：阶段 1 管理员成功读取等待白名单内既有内部管理员合法登录态；阶段 2 Preview 已通过编辑、保存和需更新，浏览器续跑等待稳定网络／线路，Production 同时受 `PEH-020`、`PEH-022` 与 `PEH-028` 约束；凭证轮换见 `PEH-029`。阶段 3 已合入 main，`P0=0 / P1=0 / P2=3`，正文开关继续关闭，完整轨迹 `0/30`，等待自然样本与样本级授权。阶段 4 第二批前端 source head 两套 CI 与 Preview 已通过，受控 smoke 通过至事件中心列表 HTTP `200` 后因验收解析器口径问题停止，session start `not_run`、重试 `0`；下一门为最终公开回执 head 两套 CI 与 Preview Ready。Production 受 `PEH-033` 日记 `stale` 刷新竞态阻断，`PEH-035` 草稿保护 P1 已关闭，`PEH-036` 记录 smoke 口径问题。第三批日记候选需完成延迟读取与保存交错合同及零模型 E2E 连续三轮。阶段 5 维持 No-Go 候选隔离。数据库迁移、GI-088 新调用、生成式策略发布、月度洞察上线和破坏性清理继续使用独立停止门。
 
 网页端实现同步：管理分析合同 v2 已于 `2026-08-20` 发布 Production，deployment `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 已通过正式域名核心 smoke；阶段 2 PR #41 已合入 main `77de8d1`，只形成 Preview，正式域名继续运行阶段 1 deployment。项目主链继续使用 `event_centered + baseline`。管理员成功读取保持 pending；GI-088 的模型评测、独立准入和生成式能力授权边界保持原状态。
 

@@ -9,7 +9,7 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第一批后端纯拆分已由 PR #45 合入 main `548fda5`，画像测试夹具热修 PR #46 已合入 main `d98c915` 且 main CI 全绿，第二批前端拆分已确认并进入本地发布门；既有日记 `stale` 刷新竞态登记为 Production P1，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第一批后端纯拆分已由 PR #45 合入 main `548fda5`，画像测试夹具热修 PR #46 已合入 main `d98c915` 且 main CI 全绿；第二批前端 PR #47 source head 两套 CI attempt 1 全绿、Preview Ready，受控 smoke 通过至登录态列表 HTTP `200` 后因本地解析器口径问题停止，最终公开回执 head 待验证；既有日记 `stale` 刷新竞态登记为 Production P1，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
@@ -41,8 +41,10 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 - 实现提交 `61dd4cf` 与 P1 修复提交 `03b8501` 基于 `origin/main@d98c915`；差异严格为工作区组件、状态 Hook、可靠回合恢复 Hook 与工作区单元合同 `4` 个文件，旧发布线文档提交带入数为 `0`。
 - 独立审查发现 accepted A 可见时可能清除后来输入的同分支草稿 B，且旧 A 清理可能删除新 outbox B。`03b8501` 将 accepted-visible 收窄为只按 `clientTurnId` 条件清 outbox，composer draft 保持原值；真实组件同文 B 重挂恢复、新 B outbox CAS 与 `SecurityError` 三项合同通过，独立复核 `P0=0 / P1=0 / P2=0`，过程问题见 `PEH-035`。
 - Stage 2 的跨日期地址等待与按接口地址分流测试继续保留；真实 outbox、幂等 ID、结构化错误与恢复动作保持兼容。本地定向 `45/45`、核心工作区压力 `90/90`、全量 `3307 passed / 95 skipped / 0 failed`、类型、Lint、build `77/77`、双 Prisma、文档和差异检查通过；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace，临时 Schema 残留 `0`。
+- 独立终审为 `P0=0 / P1=0 / P2=0`。PR #47 source head `7976c1c` 的 push run `32431840137` 与 pull request run `32431860395` 均在 attempt 1 全绿、重跑 `0`；两套远程 E2E 均 `11/11`、`AIRequestLog=0`、12 条 Trace且临时 Schema 已删除。Preview `dpl_FCiuGt6fnLt9hUm5uWnNHwcvWqHd` Ready 并精确对应 source head。
+- 受控 smoke 单次通过匿名保护 `401`、固定账号登录 `200`、登录态 `200` 和事件中心列表 HTTP `200`；验收脚本误把真实 `items` 合同按 `sessions` 解析后停止，session start `not_run`、重试 `0`。账号创建、权限变更、模型端点请求与 Production 请求均为 `0`；详见 `PEH-036`。
 - 已确认日记 `stale` 刷新竞态存在于第一批 main 基线，前端 `4` 文件引入数为 `0`。该问题定为 Production P1，源码 main 工程门可以继续，前端 Production 保持 blocked；完整归因见 `PEH-033`。
-- 修复归属第三批日记工作区候选 `bf45`，完成门包含延迟 `GET` 与保存交错单元合同、零模型 E2E 全套连续 `3` 轮。第二批下一门为文档提交、最终独立复核、推送和创建 PR，保持不合并、不发布 Production；Preview smoke 每步一次，TLS 失败立即停止并保持零重试。发布门见 `PEH-034`。
+- 修复归属第三批日记工作区候选 `bf45`，完成门包含延迟 `GET` 与保存交错单元合同、零模型 E2E 全套连续 `3` 轮。第二批下一门为本次公开回执提交后的最终 head push／PR 两套 CI attempt 1 与 Preview Ready，保持不合并、不发布 Production，也不重跑本轮 smoke。发布门见 `PEH-034`。
 
 阶段 3 本地候选事实：
 
