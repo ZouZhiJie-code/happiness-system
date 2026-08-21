@@ -22,7 +22,7 @@
 - Production 正式域名为 `https://dailylight.chat`；`2026-08-16` 已验证公开首页返回 `200`。
 - 仓库当前批准的 Production 主链为 `event_centered + baseline`；生成式访谈能力继续关闭。
 - 网页端用户路径为 `访谈记录 → 当天时间线事件卡片 → 今日日记`。
-- GI-088 v1.9 隔离 Preview 四轮连续链 Codex 初评 `4/4 pass`；可见预算 `15/15`，等待产品负责人验收。Production 快照、数据库备份和回退准备已完成；新 Production 目标部署接管域名前保留后台 Trace 数据库回读硬门。单例 15 秒门通过，中位约 `10.6s` 未达到 6 秒理想目标；Production 保持 `event_centered + baseline`。
+- GI-088 v1.9 隔离 Preview 四轮连续链 Codex 初评 `4/4 pass`；可见预算 `15/15`，等待产品负责人验收。Production 快照、数据库备份、回退准备和发布状态机本地门禁已完成；新 Production 目标部署接管域名前保留后台 Trace 数据库回读硬门。单例 15 秒门通过，中位约 `10.6s` 未达到 6 秒理想目标；Production 保持 `event_centered + baseline`。
 - 文档治理两阶段及授权清理已经完成；[最终治理记录](./maintenance/2026-08-16-document-governance-cleanup-preview.md)保留全量台账、清理结果和仍受保护的独立成果。
 
 当前任务、工作区血缘、验证门和停止点统一从 [Handoff](./handoff.md) 读取；专项数字与裁决从对应 Map 和证据包读取。
@@ -56,7 +56,7 @@
 | v1.6 怎样部署隔离 Preview 并完成真实页面验收 | [v1.6 隔离 Preview 验收](./plans/2026-08-20-gi088-complete-response-first-v1-6-isolated-preview-acceptance.md) |
 | 当前隔离 Preview 地址、技术冒烟、重复提交与真人验收停止点 | [Preview 验收交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)、[Preview 阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json) |
 | v1.9 怎样区分局部拒答＋继续与整轮停止 | [v1.9 局部边界与继续优先级](./plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md) |
-| v1.9 验收通过后怎样直接发布并快速回退 | [v1.9 Production 发布准备交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-production-readiness-v1-handoff.md) |
+| v1.9 验收通过后怎样直接发布并快速回退 | [v1.9 Production 发布工具](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner.md)、[发布准备交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-production-readiness-v1-handoff.md) |
 | v1.2 为什么因 JSON 传输 No-Go、v1.2.1 如何验证 JSON 模式因素 | [v1.2 结果交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-2-production-contract-quality-v1-handoff.md)、[v1.2.1 单因素计划](./plans/2026-08-20-gi088-complete-response-first-v1-2-1-json-mode-off.md) |
 | v1.1 生产旧合同为何 No-Go、v1.2 为什么改成最少状态 | [v1.1 生产合同交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-1-production-contract-quality-v1-handoff.md)、[v1.2 最小合同计划](./plans/2026-08-20-gi088-complete-response-first-v1-2-minimal-envelope.md) |
 | v1.1 怎样在完整回应前先选择尚未回答的新信息目标 | [完整回应优先 v1.1 新信息目标](./plans/2026-08-19-gi088-complete-response-first-v1-1-new-information-target.md) |

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1",
+  "status": "prepared_waiting_product_owner_preview_review",
+  "planFingerprint": "1edd95dfa7be436f241bdbd576b2b6f316e7d9bee494f28f4028b18c9515fd4f",
+  "productOwnerPreviewVerdict": "pending",
+  "baseline": {
+    "deploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "strategy": "baseline",
+    "domain": "https://dailylight.chat"
+  },
+  "candidate": null,
+  "smoke": null,
+  "promotion": null,
+  "onlineRegression": null,
+  "rollback": null,
+  "error": null,
+  "updatedAt": "2026-08-21T01:52:48.756Z",
+  "publicSensitiveContentStored": false
+}

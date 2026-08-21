@@ -7,15 +7,28 @@
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 complete_response_v1_9 隔离 Preview 四轮 Codex 4/4 pass；Production 快照、数据库备份与回退准备完成；等待产品负责人验收；Production baseline`
+当前讨论位置：`GI-088 complete_response_v1_9 隔离 Preview 四轮 Codex 4/4 pass；Production 发布工具本地验证通过；等待产品负责人验收；Production baseline`
 
-下一建议板块：`产品负责人裁决 v1.9 四轮真实输出；通过后按已核对路径直接发布并执行线上回归`
+下一建议板块：`产品负责人裁决 v1.9 四轮真实输出；通过后直接执行候选部署、后台回读、切流与线上回归`
 
-当前专项：[完整回应优先 v1.9 局部边界与继续优先级](./plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md)
+当前专项：[完整回应优先 v1.9 Production 发布工具](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner.md)
 
 Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 
-本次同步范围：`v1.9 Preview 四轮连续链已封存；家族可见预算 15/15；Codex 4/4 pass；Production 快照、数据库备份与回退准备完成；产品裁决 pending，Production baseline`
+本次同步范围：`v1.9 Preview 四轮连续链、发布准备和发布工具本地门禁已封存；产品裁决 pending，Production baseline`
+
+## 2026-08-20｜GI-088 v1.9 Production 发布工具实施卡
+
+| 项目 | 当前事实 |
+|---|---|
+| 当前专项 | [v1.9 Production 发布工具](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner.md) |
+| 目标 | 把产品验收、候选部署、真实可见冒烟、后台数据库回读、正式切流、线上回归和回退固化为可审计状态机 |
+| 产品门 | 四轮 Preview 产品裁决 `pass` 且证据哈希匹配，才允许任何 Production 变更 |
+| 接管域名门 | 候选可见回应、后台 Trace、临时数据清理和候选语义裁决全部通过 |
+| 工程结果 | 发布工具专项 `11/11`、v1.9 相关 `101/101`、全量 `3694` 条通过；类型、Lint、两套 Prisma、Production build、文档与差异检查通过 |
+| 缺失裁决门 | 真实命令在部署凭据和网络写操作前返回 `GI088_V19_RELEASE_PRODUCT_REVIEW_REQUIRED` |
+| 当前状态 | `工具本地验证通过 / awaiting_product_review / Production baseline` |
+| 停止点 | 产品裁决前 Production 环境、部署、域名和数据库保持现状；裁决通过后直接执行发布状态机 |
 
 ## 2026-08-20｜GI-088 v1.9 局部边界与继续优先级实施卡
 

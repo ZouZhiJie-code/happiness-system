@@ -7,15 +7,17 @@
 
 ## 1. 当前交接结论
 
-GI-088 当前执行[v1.9 局部边界与继续优先级](./plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md)。隔离 Preview 四轮连续链已完成，Codex 初评 `4/4 pass`；局部拒答＋换方向继续保持对话并进入新焦点。Production 快照、数据库备份和回退准备也已完成。当前等待产品负责人验收，Production 保持 `event_centered + baseline`。
+GI-088 当前执行[v1.9 Production 发布工具](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner.md)。隔离 Preview 四轮连续链已完成，Codex 初评 `4/4 pass`；局部拒答＋换方向继续保持对话并进入新焦点。产品验收、候选部署、真实可见冒烟、后台数据库回读、正式切流、线上回归和回退已经固化为一套发布状态机。产品负责人验收前，Production 保持 `event_centered + baseline`。
 
 技术冒烟、后台冻结与重复提交均已通过。随后又完成五个真实 Preview 回合：纠正和停止通过；明确继续深挖时，AI 几乎逐字重复上一条“当时回应还是压下去”的问题；关系表达中，用户已经说“想聊这种差别”，AI 又询问是否先聊这种差别。真人可见预算累计 `7/15`、剩余 `8`。公开结果见[Preview 验收交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)与[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)。
 
 当前状态为 `v1.9 Preview awaiting product owner review`。v1.9 只调整用户控制范围：局部拒答同时带有继续或换方向时继续对话；明确整轮停止时收住。四轮原文与输出已逐例交付，等待产品裁决。
 
-v1.9 当前专项 `101/101`、类型检查、Lint、两套 Prisma 与 Production build 通过。全量并行测试中旧评测工作台出现一条渲染失败，同文件隔离复跑 `15/15` 通过。Preview 四轮中位 `10633.5ms`、最大 `11505ms`，家族可见预算 `15/15`。
+v1.9 当前专项 `101/101`、发布工具 `11/11`、全量 `460` 个测试文件／`3694` 条测试通过，另有 `2` 个文件／`10` 条测试按既定条件跳过；类型检查、Lint、两套 Prisma 与 Production build 通过。Preview 四轮中位 `10633.5ms`、最大 `11505ms`，家族可见预算 `15/15`。
 
 发布准备已冻结当前 Production 部署 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` 与 `event_centered + baseline`。Production 数据库 custom dump 共 `1451891` bytes，SHA-256 为 `02f4c070714ecee041421540696330aa0aedc83ebeb07ddaa769c64b37c49260`，`pg_restore --list` 验证通过。历史 Preview 部署仍可读取本次九条消息，但当前可拉取的 Preview／Production 数据库均找不到该历史会话，四条历史后台任务保持 `inconclusive`。发布会先生成不接管正式域名的 Production 目标部署；可见回应、后台事实任务及 Production 数据库 Trace 回读全部通过后才切域名。失败时恢复 `baseline` 并回退到当前部署。公开交接见[v1.9 Production 发布准备](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-9-production-readiness-v1-handoff.md)。
+
+发布工具本地门禁已经通过。工具实现和自动测试使用本地临时目录与伪造执行器；缺少四轮产品裁决时，真实部署命令在读取部署凭据和执行网络写操作前返回 `GI088_V19_RELEASE_PRODUCT_REVIEW_REQUIRED`。候选部署使用 `--skip-domain`，正式域名切换前还需要候选冒烟的输入／AI 输出产品裁决 `pass` 与后台 Trace 完成证据。
 
 v1.7 已完成新增调用 `10/10`：复用前六条可见回应，补完 `RPR-CF-02`、`RPR-CF-05` 两条可见回应，并重跑八条后台事实。八条可见与八条后台均技术有效，HTTP 200、stop、Thinking 关闭且未截断。
 

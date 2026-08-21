@@ -7,7 +7,7 @@
 
 当前入口：[GI-088 历史真实金标库 v1 与双轨资产](./2026-08-13-gi088-dual-track-v1/README.md)
 
-当前状态：`历史金标库 v1.1 与回归集 v1.2 保持冻结。v1.9 隔离 Preview Codex 4/4 pass，Production 快照、数据库备份与回退准备完成；等待产品验收；Production baseline`
+当前状态：`历史金标库 v1.1 与回归集 v1.2 保持冻结。v1.9 隔离 Preview Codex 4/4 pass，Production 快照、数据库备份、回退准备与发布状态机本地门禁完成；等待产品验收；Production baseline`
 
 历史入口：[2026-08-06 板块 6 首批人工校准资产](./2026-08-06/README.md)。该包只承担 GI-081 时期的校准证据职责。
 

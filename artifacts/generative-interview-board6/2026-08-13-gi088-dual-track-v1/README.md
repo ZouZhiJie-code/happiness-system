@@ -5,9 +5,9 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[生成式访谈重构总 Map](../../../docs/generative-interview-refactor-map.md)
 
-版本：`完整回应优先 v1.9 隔离 Preview 与 Production 发布准备待产品验收`
+版本：`完整回应优先 v1.9 隔离 Preview 与 Production 发布状态机待产品验收`
 
-状态：`v1.9 四轮连续链 Codex 4/4 pass；发布准备完成；产品裁决 pending；Production baseline`
+状态：`v1.9 四轮连续链 Codex 4/4 pass；发布状态机本地门禁通过；产品裁决 pending；Production baseline`
 
 现行职责、单一回答焦点规则和旧身份边界统一读取[板块 7 当前运行合同](../../../docs/technical/interview-event-centered/07-board7-model-led-semantic-implementation.md)。本目录中的原始回执继续保存当时请求、失败码和调用事实。
 
@@ -21,13 +21,16 @@
 
 ### 完整回应优先当前任务
 
-- 当前专项：[v1.9 局部边界与继续优先级](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-local-boundary-continue.md)
+- 当前专项：[v1.9 Production 发布工具](../../../docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner.md)
 - 当前状态：v1.9 普通表达、纠正、明确深挖、局部拒答＋换方向继续均由 Codex 初评 `pass`；等待产品验收
 - 验收预算：最多 `15` 次可见回应，已消费 `15`、剩余 `0`；重试、恢复、回退均为 `0`
 - 发布准备：当前部署与策略已回读；数据库备份、恢复清单和回退路径已验证
 - 发布边界：产品裁决前 Production 继续使用 `event_centered + baseline`
 - [v1.9 Preview 结果交接](./complete-response-first-v1-9-isolated-preview-v1-handoff.md)
 - [v1.9 Production 发布准备交接](./complete-response-first-v1-9-production-readiness-v1-handoff.md)
+- [v1.9 Production 发布回执](./complete-response-first-v1-9-production-release-v1-receipt.json)
+- [v1.9 Production 发布工具交接](./complete-response-first-v1-9-production-release-v1-handoff.md)
+- [v1.9 Production 发布工具阶段账](./complete-response-first-v1-9-production-release-stage-ledger-v1.json)
 - [隔离 Preview 验收交接](./complete-response-first-v1-6-isolated-preview-v1-handoff.md)
 - [隔离 Preview 阶段账](./complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)
 
