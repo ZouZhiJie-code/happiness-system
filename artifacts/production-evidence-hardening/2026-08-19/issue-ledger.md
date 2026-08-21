@@ -214,7 +214,7 @@
 - 产品判断：该问题定为 Production P1。第二批源码工程门可以继续，前端 Production 完成状态保持关闭；日记来源变化后，用户必须稳定看到“需更新”并能在更新时保留手工修改。
 - Codex 评估：日记页面的异步当天读取可能晚于事件卡保存返回，并用较旧状态覆盖保存后的新状态。修复归属第三批日记发布线，由当天数据状态拆分统一处理读取与保存的先后权；第二批保持日记代码改动为 `0`。
 - 待验证假设：增加延迟 `GET /api/journal/day` 与事件卡保存响应交错的单元合同后，可以稳定阻止旧读取覆盖新保存状态；修复后零模型 E2E 全套连续 `3` 轮均能通过日记生成、编辑、保存、需更新和人工修改保护。
-- 当前处理状态：`候选修复已关闭 / remote engineering complete / Preview smoke blocked / Production blocked`。第三批基于 main `a89d5bc`，原 `8` 笔重放代码 head 为 `ecb674d`，追加并发内容保护提交 `a6cb4a9`。修复后的真实组件交错合同、全量 `3332 passed / 95 skipped / 0 failed`、独立复审和零模型 E2E 连续三轮已通过；PR #48 证据 head `519cc37` 的 push／PR 两套 CI attempt 1 全绿，Preview Ready、产品 smoke 受验收工具配置阻断，main pending，阶段 4 Production 保持 blocked。
+- 当前处理状态：`候选修复已关闭 / source-main complete / Preview smoke blocked / Production blocked`。第三批基于 main `a89d5bc`，原 `8` 笔重放代码 head 为 `ecb674d`，追加并发内容保护提交 `a6cb4a9`。修复后的真实组件交错合同、全量 `3332 passed / 95 skipped / 0 failed`、独立复审和零模型 E2E 连续三轮已通过；PR #48 final head `9d075f7` 两套 CI attempt 1 全绿后合入 main `dedf094`，唯一 main CI attempt 1 全绿。Preview Ready、产品 smoke 受验收工具配置阻断，阶段 4 Production 保持 blocked。
 
 ## PEH-034｜Stage 4 第二批前端发布门
 
@@ -253,8 +253,8 @@
 - 已确认事实：第三批从第二批 source-main `a89d5bc` 建立独立发布线，依序带入日记与现役前端收束的 `8` 笔提交，patch-id 与原候选一致；重放代码 head 为 `ecb674d`，追加并发内容保护提交 `a6cb4a9`。范围包含今日日记工作区拆分、退出／删号后的恢复数据清理、焦点恢复、同月刷新状态、现役 warning 清理、事件卡保存后的 `stale` 刷新竞态修复、读取／保存字段级合并，以及提交等待期输入保护。
 - 产品判断：用户退出或删号后不应残留可恢复内容；日记来源变化后必须稳定显示“需更新”，更新过程必须保留人工修改。本批完成工程与体验验证后才具备进入 Stage 4 Production 评估的资格。
 - Codex 评估：本地候选已覆盖第三批现役责任边界。独立终审为 `P0=0 / P1=0 / P2=1`；唯一 P2 是未来开放事件卡删除时的读取合并边界，当前产品没有删除或取消保存入口，详见 `PEH-041`。
-- 待验证假设：本地与 source-branch 远程工程门已验证；Preview 产品 smoke 需在验收脚本工作目录修正后形成新的独立运行身份，main 合并后仍需唯一流水线复核。
-- 当前处理状态：`remote engineering complete / Preview smoke blocked / Production blocked`。本地定向独立复审 `107/107`，全量 `3332 passed / 95 skipped` 与三轮零模型 E2E 已通过。PR #48 证据 head `519cc37` 的 push run `32442390634`、pull request run `32442422147` 均 attempt 1 全绿、重跑 `0`；两套零模型 E2E 均 `11/11`、`AIRequestLog=0`、Trace `12`，Schema `daily_light_e2e_mt2dgstr_5747f2258a` 与 `daily_light_e2e_mt2dhkf1_0311f82f83` 均已删除。Preview Ready，产品 smoke 见 `PEH-042`；main pending，正式域名继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
+- 待验证假设：source-main 工程门已验证；Preview 产品 smoke 需在验收脚本工作目录修正后形成新的独立运行身份，Production 仍需五阶段总停止点解除与独立发布裁决。
+- 当前处理状态：`source-main complete / Preview smoke blocked / Production blocked`。本地定向独立复审 `107/107`，全量 `3332 passed / 95 skipped` 与三轮零模型 E2E 已通过。PR #48 final head `9d075f7` 的 push run `32443259149`、pull request run `32443261597` 均 attempt 1 全绿、重跑 `0`，随后合入 main `dedf094`；唯一 main run `32443785474` attempt 1 全绿，零模型 E2E `11/11`、`AIRequestLog=0`、Trace `12`，Schema `daily_light_e2e_mt2eb6zb_e81ce48001` 已删除。Preview Ready，产品 smoke 见 `PEH-042`；正式域名继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
 
 ## PEH-039｜记录刷新晚到覆盖人工日记内容
 
@@ -262,7 +262,7 @@
 - 产品判断：该问题按第三批 P1 处理。用户已经保存的人工日记必须在记录刷新、日记保存和轮询读取任意先后顺序下继续显示；第三批推送、PR 与 Preview 在修复和独立复审前暂停，Production 继续 blocked。
 - Codex 评估：`stale` 状态保护已经生效，剩余缺口来自当天读取对整份视图的覆盖。安全修复需要让记录、日记和当天读取都基于响应时最新视图做字段级合并，按内容版本与保存版本保留较新记录和日记，再统一重算来源签名、集合、freshness 和 displayStatus；多次读取还需保留请求顺序与中止保护。
 - 待验证假设：真实工作区覆盖“读取先返回／日记后返回”和“日记先返回／旧读取后返回”两种顺序，以及生成轮询与人工编辑交错后，可以同时保留新事件卡、人工日记、最新来源签名和“需更新”状态；相关定向、全量与零模型 E2E 连续三轮可再次通过。
-- 当前处理状态：`source branch 已关闭 / main pending / Production blocked`。提交 `a6cb4a9` 加入共享字段级合并、统一状态派生和读取顺序保护；真实组件两种响应顺序、全量、修复后三轮零模型 E2E 及 PR #48 两套首轮 CI 均通过，原三轮证据继续保留原运行身份。
+- 当前处理状态：`已关闭 / source-main complete / Production blocked`。提交 `a6cb4a9` 加入共享字段级合并、统一状态派生和读取顺序保护；真实组件两种响应顺序、全量、修复后三轮零模型 E2E、PR #48 final head 两套 CI 与合并后 main CI 均通过，原三轮证据继续保留原运行身份。
 
 ## PEH-040｜保存请求等待期仍可输入导致新文字丢失
 
@@ -270,7 +270,7 @@
 - 产品判断：该问题按第三批 P1 处理。保存过程需要给用户清楚、稳定的输入边界；系统可以在短暂提交期间锁定输入，也可以识别新编辑并继续保留编辑态，任何方案都必须保证用户可见输入不会静默丢失。
 - Codex 评估：本批优先采用提交期间禁用对应输入的最小方案，让界面状态与实际提交快照一致；回归需要分别覆盖事件卡与日记，确认请求等待时输入不可编辑、响应后保存内容准确，并保持错误时可继续处理。
 - 待验证假设：在两个编辑器的 busy 状态统一锁定输入后，延迟保存响应期间无法产生未提交的新文字；成功、失败、自动暂存与焦点合同仍可通过现有及新增测试。
-- 当前处理状态：`source branch 已关闭 / main pending / Production blocked`。提交 `a6cb4a9` 在事件卡与日记提交期间统一锁定标题和正文输入，两个延迟响应真实组件合同与 PR #48 两套首轮 CI 通过；独立终审确认本项 P1 关闭。
+- 当前处理状态：`已关闭 / source-main complete / Production blocked`。提交 `a6cb4a9` 在事件卡与日记提交期间统一锁定标题和正文输入，两个延迟响应真实组件合同、PR #48 final head 两套 CI 与合并后 main CI 通过；独立终审确认本项 P1 关闭。
 
 ## PEH-041｜未来事件卡删除时的来源合并边界
 

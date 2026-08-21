@@ -115,7 +115,7 @@
 | 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
 | 2. 零模型 E2E | 已合入 main·热修复远程门与 main CI 全绿·Preview 通过至需更新·Production blocked | PR #41 合入 `77de8d1`；PR #43 final head 两套 CI 全绿并合入 `795417d`，main CI 全绿；日记更新与人工保护待跑 |
 | 3. Golden Set v2 | 已合入 main·收集 pending | PR #44 已合入 main `ef7bf94`；`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，正文开关保持关闭 |
-| 4. 主链重构 | 第一、二批已合入 main·第三批远程工程门通过·Preview smoke blocked·Production blocked | 第三批证据 head `519cc37` 的 push／PR 两套 CI attempt 1 全绿、零模型 E2E 均 `11/11`；Preview Ready，产品 smoke 在应用登录前受验收工具工作目录配置阻断；独立终审 `P0=0 / P1=0 / P2=1`，详见 `PEH-033`～`PEH-042` |
+| 4. 主链重构 | 第三批已合入 main·Preview smoke blocked·Production blocked | PR #48 final head `9d075f7` 两套 CI attempt 1 全绿后合入 main `dedf094`；唯一 main run `32443785474` attempt 1 全绿，零模型 E2E `11/11`、模型调用 `0`；独立终审 `P0=0 / P1=0 / P2=1`，详见 `PEH-033`～`PEH-042` |
 | 5. 月度洞察评估 | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；2 条低数据量用例 Provider 调用 `0`，其余 4 条候选调用 `not_run`；真实用户月 `0`、模型调用 `0`，Production 保持确定性 `AnalysisNarrative` |
 
 问题、归因和处理状态统一记录在[问题台账](../../../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
@@ -217,4 +217,5 @@
 - 修复后零模型 E2E 全套连续 `3` 轮均 `11/11`，每轮 `AIRequestLog=0`、Trace `12`、模型执行字段为 `0`，三份临时 Schema 均已删除且最终残留 `0`。
 - PR #48 证据 head `519cc37252a0c1610181fea0f3258438f6ce40e2` 的 push run `32442390634` 与 pull request run `32442422147` 均 attempt 1 全绿、重跑 `0`；两套零模型 E2E 均 `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 均已删除。Preview `dpl_BAux5cqn6ATTqB7DsHZDSu3u6Wxt` 为 Ready，且与 PR、分支和 head 精确一致。
 - 受控 Preview smoke 的匿名保护单次返回 HTTP `302` 至 Vercel SSO；固定账号登录在正式应用请求发出前，因 sibling worktree 缺少项目绑定文件且验收脚本工作目录解析失败而停止。重试 `0`、业务写入 `0`、模型端点请求 `0`、Production 请求 `0`；应用登录、session、事件中心和今日日记均为 `not_run`，详见 `PEH-042`。
-- 独立终审为 `P0=0 / P1=0 / P2=1`。人工日记覆盖与提交等待期丢字 P1 已关闭；唯一 P2 为未来事件卡删除时的来源合并边界，当前无删除入口，详见 `PEH-039`～`PEH-041`。当前下一门为纯文档最终 head 的两套 CI、Preview Ready 与 main 合并复核；正式域名继续运行 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。数据库迁移、GI-088 新调用、生成式策略与月度洞察发布仍使用独立停止门。
+- final docs head `9d075f7` 的 push run `32443259149` 与 pull request run `32443261597` 均 attempt 1 全绿，PR #48 随后合入 main `dedf094`。唯一 main run `32443785474` attempt 1 全绿：全量 `3332 passed / 95 skipped`、build `77/77`、Lint `0 errors / 33 warnings`；零模型 E2E `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 已删除。
+- 独立终审为 `P0=0 / P1=0 / P2=1`。人工日记覆盖与提交等待期丢字 P1 已关闭；唯一 P2 为未来事件卡删除时的来源合并边界，当前无删除入口，详见 `PEH-039`～`PEH-041`。第三批 source-main 已完成；Preview 产品 smoke 保持工具配置阻断，Production 继续运行 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。数据库迁移、GI-088 新调用、生成式策略与月度洞察发布仍使用独立停止门。

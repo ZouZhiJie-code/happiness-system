@@ -9,7 +9,7 @@
 
 ## 0. 当前执行入口｜DL-PROD-20260819
 
-Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第一、二批已合入 main `a89d5bc`，第三批 PR #48 证据 head `519cc37` 两套首轮 CI 与零模型 E2E 全绿，独立终审 `P0=0 / P1=0 / P2=1`；Preview Ready，产品 smoke 在应用登录前受验收工具配置阻断，main pending，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
+Daily Light 五阶段生产主线完善已获产品负责人确认并进入实施。阶段 1 已发布 Production，正式域名核心回验通过，管理员成功读取保持 pending；阶段 2 热修复已由 PR #43 合入 main merge `795417d`，final head 两套 CI 与 main CI 全绿，Preview 核心主链通过至“需更新”，Production blocked；阶段 3 已由 PR #44 合入 main `ef7bf94`，结论 `P0=0 / P1=0 / P2=3`，样本状态为 `insufficient_samples / collection_pending`；阶段 4 第三批已由 PR #48 合入 main `dedf094`，唯一 main run `32443785474` attempt 1 全绿，独立终审 `P0=0 / P1=0 / P2=1`；Preview Ready，产品 smoke 在应用登录前受验收工具配置阻断，Production blocked；阶段 5 已以 `No-Go / insufficient_evidence` 完成隔离评估，真实用户月 `0`、模型调用 `0`，Production 保持确定性月度总结。总计划、授权、验证门和停止点见 [DL-PROD-20260819](./ai-tasks/running/DL-PROD-20260819-production-evidence-hardening.md)，过程问题见[五阶段问题台账](../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
 
 当前工作线事实：
 
@@ -51,12 +51,13 @@ Daily Light 五阶段生产主线完善已获产品负责人确认并进入实�
 
 阶段 4 第三批日记发布线事实：
 
-- 发布线基于 `origin/main@a89d5bc`，依序带入 `8` 笔 patch-id 一致提交形成重放 head `ecb674d`，随后追加并发内容保护提交 `a6cb4a9`；当前本地状态为完成、远程 pending。
+- 发布线基于 `origin/main@a89d5bc`，依序带入 `8` 笔 patch-id 一致提交形成重放 head `ecb674d`，随后追加并发内容保护提交 `a6cb4a9`；final head 已由 PR #48 合入 main `dedf094`，唯一 main CI attempt 1 全绿。
 - 范围包含日记工作区职责拆分、退出／删号后的恢复数据清理、焦点恢复、同月刷新状态、现役 warning 清理、`stale` 刷新竞态修复、记录／日记／当天读取字段级合并、提交等待期输入保护及真实交错测试。
 - 修复后本地门：独立定向 `107/107`；全量 `3332 passed / 95 skipped / 0 failed`；类型、Lint `0 errors / 33 retained warnings`、build `77/77`、双 Prisma、docs `24/847/1` 与差异检查通过。零模型 E2E 全套连续 `3` 轮均 `11/11`、`AIRequestLog=0`、Trace `12`，三份临时 Schema 均删除且残留 `0`。
 - 独立终审为 `P0=0 / P1=0 / P2=1`。`PEH-039` 与 `PEH-040` 的人工内容保护 P1 已在 source branch 关闭；唯一 P2 是未来事件卡删除时的来源合并边界，当前无删除入口，见 `PEH-041`。
 - PR #48 证据 head `519cc37` 的 push run `32442390634` 与 pull request run `32442422147` 均 attempt 1 全绿、重跑 `0`；两套均为 `3332 passed / 95 skipped`、build `77/77`、Lint `0 errors / 33 warnings`，零模型 E2E 均 `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 已删除。
-- Preview `dpl_BAux5cqn6ATTqB7DsHZDSu3u6Wxt` Ready；匿名保护单次返回 HTTP `302` 至 Vercel SSO。固定账号登录在应用请求前因验收脚本工作目录解析失败而停止，重试 `0`、业务写入 `0`、模型端点请求 `0`，详见 `PEH-042`。下一门为 final docs head 两套 CI 与 main；正式域名继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`，Production 保持 blocked。
+- Preview `dpl_BAux5cqn6ATTqB7DsHZDSu3u6Wxt` Ready；匿名保护单次返回 HTTP `302` 至 Vercel SSO。固定账号登录在应用请求前因验收脚本工作目录解析失败而停止，重试 `0`、业务写入 `0`、模型端点请求 `0`，详见 `PEH-042`。该 smoke 运行身份按停止门保留，新的 Preview 产品验收需使用修正后的工作目录形成独立运行身份；Production 保持 blocked。
+- final docs head `9d075f7` 的 push run `32443259149` 与 pull request run `32443261597` 均 attempt 1 全绿；PR #48 随后合入 main `dedf094`，唯一 main run `32443785474` attempt 1 全绿：`3332 passed / 95 skipped`、build `77/77`、Lint `0 errors / 33 warnings`，零模型 E2E `11/11`、`AIRequestLog=0`、Trace `12`，临时 Schema 已删除。正式域名继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`，Production 保持 blocked。
 
 阶段 3 本地候选事实：
 
