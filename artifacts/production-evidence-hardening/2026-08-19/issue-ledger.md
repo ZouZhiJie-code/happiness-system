@@ -178,11 +178,11 @@
 
 ## PEH-029｜Verbose 诊断造成保护凭证终端暴露
 
-- 已确认事实：一次 verbose 诊断在当前本地任务终端显示了 Deployment Protection 绕行请求头及其凭证值；该值未被主动复制到 Git、项目文档、PR 或外发消息，本次公开记录保持敏感值 `0`。
+- 已确认事实：一次 verbose 诊断在当前本地任务终端显示了 Deployment Protection 绕行请求头及其凭证值；Stage 4 第三批 Preview smoke 的本地 CLI 解析错误又在私有工具输出中显示了验收脚本默认凭据参数。相关值均未被主动复制到 Git、项目文档、PR 或外发消息，公开记录保持敏感值 `0`。
 - 产品判断：凭证轮换使用独立授权与平台写入门；本阶段继续完成本地代码和证据验证。
 - Codex 评估：终端可见形成凭证治理风险；仓库敏感扫描确认真实凭证命中 `0`，代码与公开证据边界保持通过。
 - 待验证假设：完成轮换并使旧凭证失效后，可关闭本项剩余风险。
-- 当前处理状态：已登记、零值封存；凭证轮换 pending，等待产品负责人单独授权。
+- 当前处理状态：已登记、零值封存；两份工具输出按私有运行证据处理，凭证轮换 pending，等待产品负责人单独授权。
 
 ## PEH-030｜Stage 4 第一批拆分需冻结并发恢复现状
 
@@ -214,7 +214,7 @@
 - 产品判断：该问题定为 Production P1。第二批源码工程门可以继续，前端 Production 完成状态保持关闭；日记来源变化后，用户必须稳定看到“需更新”并能在更新时保留手工修改。
 - Codex 评估：日记页面的异步当天读取可能晚于事件卡保存返回，并用较旧状态覆盖保存后的新状态。修复归属第三批日记发布线，由当天数据状态拆分统一处理读取与保存的先后权；第二批保持日记代码改动为 `0`。
 - 待验证假设：增加延迟 `GET /api/journal/day` 与事件卡保存响应交错的单元合同后，可以稳定阻止旧读取覆盖新保存状态；修复后零模型 E2E 全套连续 `3` 轮均能通过日记生成、编辑、保存、需更新和人工修改保护。
-- 当前处理状态：`候选修复已关闭 / remote pending / Production blocked`。第三批基于 main `a89d5bc`，原 `8` 笔重放代码 head 为 `ecb674d`，追加并发内容保护提交 `a6cb4a9`。修复后的真实组件交错合同、全量 `3332 passed / 95 skipped / 0 failed`、独立复审和零模型 E2E 连续三轮已通过；PR、Preview 与 main 门仍 pending，阶段 4 Production 保持 blocked。
+- 当前处理状态：`候选修复已关闭 / remote engineering complete / Preview smoke blocked / Production blocked`。第三批基于 main `a89d5bc`，原 `8` 笔重放代码 head 为 `ecb674d`，追加并发内容保护提交 `a6cb4a9`。修复后的真实组件交错合同、全量 `3332 passed / 95 skipped / 0 failed`、独立复审和零模型 E2E 连续三轮已通过；PR #48 证据 head `519cc37` 的 push／PR 两套 CI attempt 1 全绿，Preview Ready、产品 smoke 受验收工具配置阻断，main pending，阶段 4 Production 保持 blocked。
 
 ## PEH-034｜Stage 4 第二批前端发布门
 
@@ -253,8 +253,8 @@
 - 已确认事实：第三批从第二批 source-main `a89d5bc` 建立独立发布线，依序带入日记与现役前端收束的 `8` 笔提交，patch-id 与原候选一致；重放代码 head 为 `ecb674d`，追加并发内容保护提交 `a6cb4a9`。范围包含今日日记工作区拆分、退出／删号后的恢复数据清理、焦点恢复、同月刷新状态、现役 warning 清理、事件卡保存后的 `stale` 刷新竞态修复、读取／保存字段级合并，以及提交等待期输入保护。
 - 产品判断：用户退出或删号后不应残留可恢复内容；日记来源变化后必须稳定显示“需更新”，更新过程必须保留人工修改。本批完成工程与体验验证后才具备进入 Stage 4 Production 评估的资格。
 - Codex 评估：本地候选已覆盖第三批现役责任边界。独立终审为 `P0=0 / P1=0 / P2=1`；唯一 P2 是未来开放事件卡删除时的读取合并边界，当前产品没有删除或取消保存入口，详见 `PEH-041`。
-- 待验证假设：本地门已验证；后续需由 final head 的 push 与 pull request 两套首轮 CI、零模型 E2E、Preview Ready 和受控 smoke 验证远程运行身份，再由 main 合并后唯一流水线复核。
-- 当前处理状态：`local complete / remote pending / Production blocked`。定向独立复审 `107/107`，全量 `376` 个文件通过／`17` 个跳过、`3332` 条通过／`95` 条跳过；类型、Lint `0 errors / 33 retained warnings`、build `77/77`、双 Prisma、docs `24/847/1` 和差异检查通过。修复后的零模型 E2E 连续三轮均 `11/11`、`AIRequestLog=0`、Trace `12`，Schema `daily_light_e2e_mt2cz0ep_49748b3332`、`daily_light_e2e_mt2czox6_8b1a0d754f`、`daily_light_e2e_mt2d0fi3_b933a55200` 均已删除，最终残留 `0`。下一门为提交治理证据、push、PR、Preview 与 main；正式域名继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
+- 待验证假设：本地与 source-branch 远程工程门已验证；Preview 产品 smoke 需在验收脚本工作目录修正后形成新的独立运行身份，main 合并后仍需唯一流水线复核。
+- 当前处理状态：`remote engineering complete / Preview smoke blocked / Production blocked`。本地定向独立复审 `107/107`，全量 `3332 passed / 95 skipped` 与三轮零模型 E2E 已通过。PR #48 证据 head `519cc37` 的 push run `32442390634`、pull request run `32442422147` 均 attempt 1 全绿、重跑 `0`；两套零模型 E2E 均 `11/11`、`AIRequestLog=0`、Trace `12`，Schema `daily_light_e2e_mt2dgstr_5747f2258a` 与 `daily_light_e2e_mt2dhkf1_0311f82f83` 均已删除。Preview Ready，产品 smoke 见 `PEH-042`；main pending，正式域名继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`。
 
 ## PEH-039｜记录刷新晚到覆盖人工日记内容
 
@@ -262,7 +262,7 @@
 - 产品判断：该问题按第三批 P1 处理。用户已经保存的人工日记必须在记录刷新、日记保存和轮询读取任意先后顺序下继续显示；第三批推送、PR 与 Preview 在修复和独立复审前暂停，Production 继续 blocked。
 - Codex 评估：`stale` 状态保护已经生效，剩余缺口来自当天读取对整份视图的覆盖。安全修复需要让记录、日记和当天读取都基于响应时最新视图做字段级合并，按内容版本与保存版本保留较新记录和日记，再统一重算来源签名、集合、freshness 和 displayStatus；多次读取还需保留请求顺序与中止保护。
 - 待验证假设：真实工作区覆盖“读取先返回／日记后返回”和“日记先返回／旧读取后返回”两种顺序，以及生成轮询与人工编辑交错后，可以同时保留新事件卡、人工日记、最新来源签名和“需更新”状态；相关定向、全量与零模型 E2E 连续三轮可再次通过。
-- 当前处理状态：`候选已关闭 / remote pending / Production blocked`。提交 `a6cb4a9` 加入共享字段级合并、统一状态派生和读取顺序保护；真实组件两种响应顺序全部通过。独立终审确认本项 P1 关闭；全量工程门与修复后的零模型 E2E 连续三轮通过，原三轮证据继续保留原运行身份。
+- 当前处理状态：`source branch 已关闭 / main pending / Production blocked`。提交 `a6cb4a9` 加入共享字段级合并、统一状态派生和读取顺序保护；真实组件两种响应顺序、全量、修复后三轮零模型 E2E 及 PR #48 两套首轮 CI 均通过，原三轮证据继续保留原运行身份。
 
 ## PEH-040｜保存请求等待期仍可输入导致新文字丢失
 
@@ -270,7 +270,7 @@
 - 产品判断：该问题按第三批 P1 处理。保存过程需要给用户清楚、稳定的输入边界；系统可以在短暂提交期间锁定输入，也可以识别新编辑并继续保留编辑态，任何方案都必须保证用户可见输入不会静默丢失。
 - Codex 评估：本批优先采用提交期间禁用对应输入的最小方案，让界面状态与实际提交快照一致；回归需要分别覆盖事件卡与日记，确认请求等待时输入不可编辑、响应后保存内容准确，并保持错误时可继续处理。
 - 待验证假设：在两个编辑器的 busy 状态统一锁定输入后，延迟保存响应期间无法产生未提交的新文字；成功、失败、自动暂存与焦点合同仍可通过现有及新增测试。
-- 当前处理状态：`候选已关闭 / remote pending / Production blocked`。提交 `a6cb4a9` 在事件卡与日记提交期间统一锁定标题和正文输入，两个延迟响应真实组件合同通过；独立终审确认本项 P1 关闭，远程门 pending。
+- 当前处理状态：`source branch 已关闭 / main pending / Production blocked`。提交 `a6cb4a9` 在事件卡与日记提交期间统一锁定标题和正文输入，两个延迟响应真实组件合同与 PR #48 两套首轮 CI 通过；独立终审确认本项 P1 关闭。
 
 ## PEH-041｜未来事件卡删除时的来源合并边界
 
@@ -279,3 +279,11 @@
 - Codex 评估：支持删除时应记录读取请求起点的来源快照或本地 mutation epoch，只保留请求期间真实增长的本地修订，并让服务端已删除的来源从视图退出。直接保留所有缺失来源会造成删除后短期回现。
 - 待验证假设：未来删除方案加入请求起点快照／mutation epoch 和删除交错测试后，可同时保留并发更新安全与删除结果一致性。
 - 当前处理状态：`P2 registered / current path unreachable / source-main allowed`。当前第三批独立终审总结果为 `P0=0 / P1=0 / P2=1`；Production 继续受第三批远程门和五阶段总停止点约束。
+
+## PEH-042｜第三批 Preview smoke 工作目录解析阻断
+
+- 已确认事实：PR #48 证据 head `519cc37` 对应 Preview `dpl_BAux5cqn6ATTqB7DsHZDSu3u6Wxt` 为 Ready，PR、分支、SHA 和 deployment 四方一致。匿名保护单次请求返回 HTTP `302` 并转向 Vercel SSO；固定 `preview_acceptance` 登录在正式应用请求发出前，由于 sibling worktree 缺少 `.vercel/project.json` 且验收脚本把当前工作区路径交给 Vercel CLI，CLI 将路径解析成非法项目名并返回 `400`。
+- 产品判断：本项归入验收工具配置阻断，不形成 Preview 产品失败结论。Preview Ready 与两套远程工程门继续有效；登录态、事件中心和今日日记产品 smoke 保持 `not_run`，Production 继续 blocked。
+- Codex 评估：新的独立 smoke 应把 `ACCEPTANCE_VERCEL_CWD` 精确指向已绑定项目的主工作区，再从匿名保护开始生成全新运行身份。本轮遵守单步一次规则，不修改工具参数后继续请求。
+- 待验证假设：修正工作目录后，固定验收账号可完成登录、登录态、事件中心和今日日记读取；日记人工修改与来源变化验收继续遵守模型端点和单步停止门。
+- 当前处理状态：`blocked_before_application_request / retry 0 / Production blocked`。应用登录、session、事件中心、今日日记均 `not_run`；业务写入 `0`、模型端点请求 `0`、Production 请求 `0`。CLI 私有输出包含默认验收凭据参数，公开敏感值保持 `0`，凭证治理见 `PEH-029`。

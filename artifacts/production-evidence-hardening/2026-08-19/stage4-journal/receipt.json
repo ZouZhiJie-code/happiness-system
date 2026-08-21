@@ -2,10 +2,11 @@
   "schemaVersion": 1,
   "stage": "stage4_journal_batch3",
   "recordedAt": "2026-08-20",
-  "status": "local_complete_remote_pending",
+  "status": "remote_engineering_complete_preview_smoke_blocked",
   "sourceMain": "a89d5bcc7d1d2b63741f80973a4933367193313a",
   "replayedHead": "ecb674deea3498638499dd70286e2703c3355334",
   "concurrentContentProtectionCommit": "a6cb4a98c18ffa84d415dfe323db05d2086457b3",
+  "candidateEvidenceCommit": "519cc37252a0c1610181fea0f3258438f6ce40e2",
   "review": {
     "p0": 0,
     "p1": 0,
@@ -68,10 +69,52 @@
     "nonIdleConnectionCount": 0,
     "pgvector": "public|0.8.2"
   },
+  "remoteCI": {
+    "head": "519cc37252a0c1610181fea0f3258438f6ce40e2",
+    "push": {
+      "runId": 32442390634,
+      "attempt": 1,
+      "conclusion": "success",
+      "schema": "daily_light_e2e_mt2dgstr_5747f2258a",
+      "schemaDropped": true
+    },
+    "pullRequest": {
+      "number": 48,
+      "runId": 32442422147,
+      "attempt": 1,
+      "conclusion": "success",
+      "schema": "daily_light_e2e_mt2dhkf1_0311f82f83",
+      "schemaDropped": true
+    },
+    "testFilesPassed": 376,
+    "testFilesSkipped": 17,
+    "testsPassed": 3332,
+    "testsSkipped": 95,
+    "buildRoutesPassed": 77,
+    "lintErrors": 0,
+    "lintWarnings": 33,
+    "e2ePassedPerRun": 11,
+    "aiRequestLogCountPerRun": 0,
+    "traceCountPerRun": 12,
+    "rerunCount": 0
+  },
+  "preview": {
+    "deployment": "dpl_BAux5cqn6ATTqB7DsHZDSu3u6Wxt",
+    "status": "READY",
+    "headMatched": true,
+    "anonymousProtection": "http_302_vercel_sso",
+    "applicationLogin": "not_run",
+    "productSmoke": "blocked_before_application_request",
+    "stopReason": "acceptance_vercel_cwd_project_resolution_error",
+    "retryCount": 0,
+    "businessWriteCount": 0,
+    "modelEndpointRequestCount": 0,
+    "productionRequestCount": 0
+  },
   "releaseBoundary": {
-    "push": "pending",
-    "pullRequest": "pending",
-    "preview": "pending",
+    "push": "complete",
+    "pullRequest": "open_checks_passed",
+    "preview": "ready_smoke_blocked",
     "main": "pending",
     "production": "blocked",
     "productionDeployment": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5"
