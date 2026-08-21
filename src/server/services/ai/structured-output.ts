@@ -117,7 +117,26 @@ export async function completeStructuredOutput<T>({
         thinking,
         signal
       });
-      const parsed = schema.safeParse(parseStructuredJson(result.content));
+      let json: unknown;
+      try {
+        json = parseStructuredJson(result.content);
+      } catch (error) {
+        await onAttempt?.({
+          stage,
+          attempt: attempt + 1,
+          provider: result.provider,
+          success: false,
+          latencyMs: result.latencyMs,
+          tokenUsage: result.tokenUsage ?? null,
+          errorCode: "INVALID_JSON",
+          errorMessage: error instanceof Error
+            ? error.message.slice(0, 500)
+            : "Unknown JSON parse error",
+          responseText: result.content
+        });
+        continue;
+      }
+      const parsed = schema.safeParse(json);
 
       if (!parsed.success) {
         await onAttempt?.({

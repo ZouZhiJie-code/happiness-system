@@ -147,12 +147,11 @@ describe("event-centered turn quality gate", () => {
     expect(result.safetyBlockers).toEqual([]);
     expect(result.qualityIssues).toEqual([
       "internal_structure_exposure",
-      "unsolicited_advice",
-      "multiple_question_targets"
+      "unsolicited_advice"
     ]);
   });
 
-  it("拒绝把追问藏进自然理解，或在同一回复中叠加多个问题", () => {
+  it("拒绝把追问藏进自然理解，并把正文多问留给语义质量评审", () => {
     const result = runEventCenteredTurnQualityGate({
       payload: payload({
         naturalUnderstanding: "你愿意先说说最难受的部分吗？",
@@ -163,10 +162,7 @@ describe("event-centered turn quality gate", () => {
       pendingHypothesisStatement: null
     });
 
-    expect(result.qualityIssues).toEqual([
-      "natural_understanding_question",
-      "multiple_question_targets"
-    ]);
+    expect(result.qualityIssues).toEqual(["natural_understanding_question"]);
   });
 
   it("rejects exact repeated questions and invisible pending hypotheses", () => {
@@ -460,15 +456,16 @@ describe("event-centered turn quality gate", () => {
   });
 
   it.each([
-    [null, "light_event_anchor"],
-    ["当时发生了什么？你后来又做了什么？", "light_event_anchor"],
-    ["你更接近难过还是生气？", "direct_experience"]
-  ])("上下文不足或多目标问题使用通用边界：%s", (currentQuestionText, currentQuestionTarget) => {
+    [null, "light_event_anchor", "你暂时还说不清更具体的时刻。"],
+    ["当时发生了什么？你后来又做了什么？", "light_event_anchor", "你暂时还说不清更具体的时刻。"],
+    ["你更接近难过还是生气？", "direct_experience", "你暂时还说不清当时的感受。"],
+    ["当时发生了什么？你后来又做了什么？", null, "你暂时还说不清更具体的时刻。"]
+  ])("结构化目标优先于问号数量，目标缺失时使用通用边界：%s", (currentQuestionText, currentQuestionTarget, expected) => {
     expect(getEventCenteredTextBoundaryUnderstanding({
       rawText: "不知道。",
       currentQuestionText,
       currentQuestionTarget
-    })).toBeNull();
+    })).toBe(expected);
   });
 
   it.each([

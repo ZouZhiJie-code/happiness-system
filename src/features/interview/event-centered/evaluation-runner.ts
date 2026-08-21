@@ -2442,10 +2442,18 @@ export function evaluateBatchBFinalVisiblePayload(input: {
     payload: rawPayload
   });
   const rawObservation = evaluateBatchBObservation(input.evaluationCase, input.replay.observation);
+  // Production v1.9 的正文质量门以完整回应语义合同为准，不再用问号数量
+  // 推断问题目标。Batch B 仍单独保留模型草稿的多问信号，支持历史回归归因。
+  const rawDraftQualityIssues =
+    (rawPayload.naturalUnderstanding.match(/[？?]/gu) ?? []).length +
+      (rawPayload.naturalResponse.match(/[？?]/gu) ?? []).length > 1
+      ? ["multiple_question_targets"]
+      : [];
   const rawModelIssues = Array.from(new Set([
     ...rawObservation.issues.map((issue) => `raw_observation:${issue}`),
     ...rawRuntime.safetyBlockers.map((issue) => `raw_safety:${issue}`),
-    ...rawRuntime.qualityIssues.map((issue) => `raw_quality:${issue}`)
+    ...rawRuntime.qualityIssues.map((issue) => `raw_quality:${issue}`),
+    ...rawDraftQualityIssues.map((issue) => `raw_quality:${issue}`)
   ]));
 
   const visibleRuntimeBeforeSafety = collectPayloadRuntimeIssues({

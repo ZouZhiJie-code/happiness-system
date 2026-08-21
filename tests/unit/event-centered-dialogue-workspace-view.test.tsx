@@ -275,6 +275,35 @@ describe("事件中心对话工作台呈现层", () => {
     ]);
   });
 
+  it("刷新后把完整回应策略保存的内容恢复为一个 AI 气泡", () => {
+    const assistant = {
+      ...buildSession().messages[0],
+      id: "assistant-complete-response",
+      generationTraceId: "trace-complete-response",
+      assistantPayload: {
+        ...buildSession().messages[0]!.assistantPayload!,
+        naturalUnderstanding: "",
+        naturalResponse:
+          "你已经把那份矛盾说清楚了，我们可以沿着仍然在意比较的部分继续。\n\n" +
+          "除了具体结果，平时没有明确输赢时，你也会默默衡量自己和别人吗？"
+      }
+    };
+    const { container } = render(
+      <EventCenteredDialogueWorkspaceView
+        session={buildSession({ messages: [assistant] })}
+        entryDate="2026-07-22"
+        feedbackMode="local"
+        onAction={vi.fn()}
+      />
+    );
+
+    const assistantBubbles = container.querySelectorAll('[data-message-role="assistant"]');
+    expect(assistantBubbles).toHaveLength(1);
+    expect(assistantBubbles[0]).toHaveTextContent("你已经把那份矛盾说清楚了");
+    expect(assistantBubbles[0]).toHaveTextContent("平时没有明确输赢时");
+    expect(screen.getAllByTestId("ai-feedback-trace-complete-response")).toHaveLength(1);
+  });
+
   it("重生成入口不依赖 Trace，并从循环图标打开三个轻量方向", async () => {
     const onAction = vi.fn<(action: EventCenteredDialogueWorkspaceAction) => void>();
     render(<EventCenteredDialogueWorkspaceView session={buildSession()} entryDate="2026-07-22" onAction={onAction} />);

@@ -161,6 +161,9 @@ describe("runtime env readback api", () => {
     vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "dailylight.example.com");
     vi.stubEnv("VERCEL_DEPLOYMENT_ID", "dpl_123");
     vi.stubEnv("APP_URL", "https://dailylight.example.com");
+    vi.stubEnv("INTERVIEW_EVENT_CENTERED_MODE", "event_centered");
+    vi.stubEnv("INTERVIEW_EVENT_CENTERED_STRATEGY", "complete_response_v1_9");
+    vi.stubEnv("DEEPSEEK_MODEL", "deepseek-v4-pro");
     vi.stubEnv("AI_PROVIDER", "volcengine-ark");
     vi.stubEnv("VOLCENGINE_ARK_API_KEY", "ark-api-key");
     vi.stubEnv("VOLCENGINE_ARK_ENDPOINT_ID", "ep-live-ready");
@@ -187,6 +190,11 @@ describe("runtime env readback api", () => {
         VERCEL_PROJECT_PRODUCTION_URL: "dailylight.example.com",
         VERCEL_DEPLOYMENT_ID: "dpl_123",
         APP_URL: "https://dailylight.example.com"
+      },
+      eventCentered: {
+        mode: "event_centered",
+        strategy: "complete_response_v1_9",
+        model: "deepseek-v4-pro"
       },
       resolved: {
         deploymentUrl: "https://preview.example.vercel.app",

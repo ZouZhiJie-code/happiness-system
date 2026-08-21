@@ -120,6 +120,11 @@ export interface CommitEventCenteredTurnUnderstandingInput {
     finalOutput: Record<string, unknown>;
     pipelineDecisions: Array<Record<string, unknown>>;
   };
+  /** 与可见回应原子预留、随后异步执行的后台事实整理任务。 */
+  backgroundFactsTask?: {
+    id?: string;
+    contextSnapshot: Record<string, unknown>;
+  } | null;
   checks: {
     eventBoundaryPassed: boolean;
     factsHaveUserSource: boolean;
@@ -137,6 +142,7 @@ export interface CommitEventCenteredTurnUnderstandingResult {
   userTurnId: string;
   assistantMessageId: string;
   generationTraceId: string;
+  backgroundFactsTaskTraceId: string | null;
   factIds: string[];
   pendingUnderstandingClaimId: string | null;
   angleOutcomeIds: string[];

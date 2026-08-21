@@ -2378,7 +2378,6 @@ export function validateEventCenteredGenerativeTurn(
     existingFactIds: input.existingFactIds,
     understanding: turn.understanding
   });
-  const questionCount = (turn.reply.question?.match(/[？?]/gu) ?? []).length;
   const visible = turn.visibleTurn;
   const semanticPlanValidation = validateEventCenteredGenerativeSemanticPlan({
     understanding: turn.understanding,
@@ -2619,7 +2618,7 @@ export function validateEventCenteredGenerativeTurn(
     issues.push("thinking_summary_must_be_one_or_two_sentences");
   }
   if (turn.decision.turnAction === "ask") {
-    if (!turn.reply.question || questionCount !== 1) issues.push("ask_requires_single_question");
+    if (!turn.reply.question) issues.push("ask_requires_question");
   } else {
     if (turn.reply.question) issues.push("non_ask_must_not_have_question");
   }

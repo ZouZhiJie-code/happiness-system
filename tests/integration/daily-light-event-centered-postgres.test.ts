@@ -4,7 +4,12 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { getTodayEntryDate } from "@/features/interview/entry-date";
+import {
+  EVENT_CENTERED_BACKGROUND_FACTS_TASK_CODES,
+  createEventCenteredBackgroundFactsTaskContext
+} from "@/features/interview/event-centered/background-facts-task";
 import { parseEventCenteredAssistantPayload } from "@/features/interview/event-centered/dialogue-state";
+import type { AIProvider } from "@/server/services/ai/ai-provider";
 import type { EventCenteredRespondRequest } from "@/types/event-centered-dialogue";
 
 const INTEGRATION_ENABLED =
@@ -72,6 +77,8 @@ describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
   const username = `daily_light_it_${randomUUID().replaceAll("-", "")}`;
   const recoveryUserId = `daily-light-recovery-it-${randomUUID()}`;
   const recoveryUsername = `daily_light_recovery_it_${randomUUID().replaceAll("-", "")}`;
+  const backgroundUserId = `daily-light-background-it-${randomUUID()}`;
+  const backgroundUsername = `daily_light_background_it_${randomUUID().replaceAll("-", "")}`;
   const entryDate = getTodayEntryDate();
   let database: PrismaClient;
   let serviceDatabase: PrismaClient;
@@ -79,6 +86,10 @@ describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
   let acceptEventCenteredUserTurn: typeof import("@/server/services/interview/event-centered-interview.service").acceptEventCenteredUserTurn;
   let respondEventCenteredInterview: typeof import("@/server/services/interview/event-centered-interview.service").respondEventCenteredInterview;
   let markEventCenteredTurnUnderstandingFailed: typeof import("@/server/services/interview/event-centered-interview.service").markEventCenteredTurnUnderstandingFailed;
+  let claimNextEventCenteredBackgroundFactsTask: typeof import("@/server/repositories/event-centered-background-facts.repository").claimNextEventCenteredBackgroundFactsTask;
+  let prepareEventCenteredBackgroundFactsGenerationInput: typeof import("@/server/repositories/event-centered-background-facts.repository").prepareEventCenteredBackgroundFactsGenerationInput;
+  let saveEventCenteredBackgroundFactsResult: typeof import("@/server/repositories/event-centered-background-facts.repository").saveEventCenteredBackgroundFactsResult;
+  let drainEventCenteredBackgroundFactsQueue: typeof import("@/server/services/interview/event-centered-background-facts.service").drainEventCenteredBackgroundFactsQueue;
   let getJournalDailyJournalView: typeof import("@/server/repositories/journal-daily-entry.repository").getJournalDailyJournalView;
   let saveJournalDailyEntry: typeof import("@/server/repositories/journal-daily-entry.repository").saveJournalDailyEntry;
   let updateJournalDailyEntry: typeof import("@/server/repositories/journal-daily-entry.repository").updateJournalDailyEntry;
@@ -117,6 +128,13 @@ describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
           passwordHash: "integration-only",
           agreedToTermsAt: new Date(),
           agreedToPrivacyAt: new Date()
+        },
+        {
+          id: backgroundUserId,
+          username: backgroundUsername,
+          passwordHash: "integration-only",
+          agreedToTermsAt: new Date(),
+          agreedToPrivacyAt: new Date()
         }
       ]
     });
@@ -126,12 +144,26 @@ describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
     const periodRepository = await import("@/server/repositories/journal-period-report.repository");
     const dailyService = await import("@/server/services/journal-daily-entry");
     const periodService = await import("@/server/services/journal-period-report");
+    const backgroundRepository = await import(
+      "@/server/repositories/event-centered-background-facts.repository"
+    );
+    const backgroundService = await import(
+      "@/server/services/interview/event-centered-background-facts.service"
+    );
     const prismaModule = await import("@/server/db/prisma");
     startEventCenteredInterview = interviewService.startEventCenteredInterview;
     acceptEventCenteredUserTurn = interviewService.acceptEventCenteredUserTurn;
     respondEventCenteredInterview = interviewService.respondEventCenteredInterview;
     markEventCenteredTurnUnderstandingFailed =
       interviewService.markEventCenteredTurnUnderstandingFailed;
+    claimNextEventCenteredBackgroundFactsTask =
+      backgroundRepository.claimNextEventCenteredBackgroundFactsTask;
+    prepareEventCenteredBackgroundFactsGenerationInput =
+      backgroundRepository.prepareEventCenteredBackgroundFactsGenerationInput;
+    saveEventCenteredBackgroundFactsResult =
+      backgroundRepository.saveEventCenteredBackgroundFactsResult;
+    drainEventCenteredBackgroundFactsQueue =
+      backgroundService.drainEventCenteredBackgroundFactsQueue;
     getJournalDailyJournalView = dailyRepository.getJournalDailyJournalView;
     saveJournalDailyEntry = dailyRepository.saveJournalDailyEntry;
     updateJournalDailyEntry = dailyRepository.updateJournalDailyEntry;
@@ -149,10 +181,10 @@ describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
   afterAll(async () => {
     if (!database) return;
     await database.analyticsEvent.deleteMany({
-      where: { userId: { in: [userId, recoveryUserId] } }
+      where: { userId: { in: [userId, recoveryUserId, backgroundUserId] } }
     });
     await database.user.deleteMany({
-      where: { id: { in: [userId, recoveryUserId] } }
+      where: { id: { in: [userId, recoveryUserId, backgroundUserId] } }
     });
     await database.$disconnect();
     if (serviceDatabase) await serviceDatabase.$disconnect();
@@ -597,5 +629,188 @@ describeIntegration("Daily Light event-centered PostgreSQL closure", () => {
       traces: 1,
       requests: 0
     });
+  }, TEST_TIMEOUT_MS);
+
+  it("replays a saved background-facts result without another provider dispatch", async () => {
+    const session = await startEventCenteredInterview(
+      backgroundUserId,
+      entryDate,
+      "capture",
+      "start-background-replay"
+    );
+    const rawText = "今天开会时我有点紧张，后来把延期风险和新的交付日期都说明白了。";
+    const responded = await respondEventCenteredInterview(backgroundUserId, {
+      action: "reply",
+      rootSessionId: session.rootSessionId,
+      clientTurnId: "background-source-turn",
+      baseBranchSessionId: session.activeBranchSessionId,
+      baseMessageSequence: session.latestMessageSequence,
+      rawText,
+      inputMode: "text"
+    });
+    const turn = await database.interviewUserTurn.findUniqueOrThrow({
+      where: {
+        sessionId_clientTurnId: {
+          sessionId: session.activeBranchSessionId,
+          clientTurnId: "background-source-turn"
+        }
+      },
+      select: { id: true, journalEventId: true }
+    });
+    if (!turn.journalEventId) {
+      throw new Error("BACKGROUND_FACTS_EVENT_ID_MISSING");
+    }
+    const eventId = turn.journalEventId;
+    const messages = await database.interviewMessage.findMany({
+      where: { userTurnId: turn.id },
+      orderBy: { sequence: "asc" },
+      select: { id: true, role: true, content: true }
+    });
+    const sourceMessage = messages.find((message) => message.role === "user");
+    const assistantMessage = messages.find((message) => message.role === "assistant");
+    const branch = await database.interviewSession.findUniqueOrThrow({
+      where: { id: session.activeBranchSessionId },
+      select: { activeEventId: true }
+    });
+    expect(sourceMessage).toBeDefined();
+    expect(assistantMessage).toBeDefined();
+    expect(branch.activeEventId).toBeTruthy();
+    const context = createEventCenteredBackgroundFactsTaskContext({
+      branchStateId: branch.activeEventId!,
+      sourceTurnId: turn.id,
+      sourceUserMessageId: sourceMessage!.id,
+      currentVisibleAssistantMessageId: assistantMessage!.id,
+      conversation: [
+        { id: sourceMessage!.id, role: "user", content: rawText },
+        {
+          id: assistantMessage!.id,
+          role: "assistant",
+          content: parseEventCenteredAssistantPayload(assistantMessage!.content)?.naturalResponse ??
+            assistantMessage!.content
+        }
+      ],
+      explicitCorrectionTargetAssistantMessageId: null
+    });
+    const trace = await database.aIGenerationTrace.create({
+      data: {
+        requestId: "background-replay",
+        userId: backgroundUserId,
+        sessionId: session.activeBranchSessionId,
+        journalEventId: eventId,
+        artifactType: "interview_turn",
+        artifactId: `background-replay-${randomUUID()}`,
+        artifactVersion: 2,
+        triggerMessageId: sourceMessage!.id,
+        status: "pending",
+        contextSnapshot: JSON.parse(JSON.stringify(context)) as Prisma.InputJsonValue,
+        pipelineDecisions: []
+      },
+      select: { id: true }
+    });
+
+    await expect(claimNextEventCenteredBackgroundFactsTask({
+      userId: backgroundUserId,
+      sessionId: session.activeBranchSessionId
+    })).resolves.toMatchObject({ kind: "started", traceId: trace.id });
+    const prepared = await prepareEventCenteredBackgroundFactsGenerationInput({
+      traceId: trace.id,
+      userId: backgroundUserId
+    });
+    const output = {
+      processedUserMessageIds: [sourceMessage!.id],
+      factDeltas: [{
+        sourceUserMessageId: sourceMessage!.id,
+        statement: "用户在会议中感到紧张，并说明了延期风险和新的交付日期",
+        quote: "有点紧张",
+        scope: "current_event" as const,
+        stance: "affirmed" as const,
+        kind: "inner_experience" as const
+      }],
+      corrections: []
+    };
+    expect(prepared.generationInput.pendingUserMessageIds).toEqual([sourceMessage!.id]);
+    await saveEventCenteredBackgroundFactsResult({
+      traceId: trace.id,
+      userId: backgroundUserId,
+      responseContent: JSON.stringify(output),
+      output,
+      diagnostics: {
+        finishReason: "stop",
+        reasoningPresent: false,
+        responseModel: "deepseek-v4-pro"
+      }
+    });
+    await expect(database.aIGenerationTrace.findUnique({
+      where: { id: trace.id },
+      select: { status: true, errorCode: true }
+    })).resolves.toEqual({
+      status: "pending",
+      errorCode: EVENT_CENTERED_BACKGROUND_FACTS_TASK_CODES.resultReady
+    });
+
+    let providerDispatchCount = 0;
+    const provider: AIProvider = {
+      name: "integration-must-not-dispatch",
+      complete: async () => {
+        providerDispatchCount += 1;
+        throw new Error("UNEXPECTED_PROVIDER_DISPATCH");
+      }
+    };
+    const replay = await drainEventCenteredBackgroundFactsQueue(
+      {
+        userId: backgroundUserId,
+        sessionId: session.activeBranchSessionId
+      },
+      { provider }
+    );
+    expect(replay).toEqual({
+      processed: 1,
+      completed: 1,
+      failed: 0,
+      canceled: 0,
+      busy: false
+    });
+    expect(providerDispatchCount).toBe(0);
+    await expect(drainEventCenteredBackgroundFactsQueue(
+      {
+        userId: backgroundUserId,
+        sessionId: session.activeBranchSessionId
+      },
+      { provider }
+    )).resolves.toEqual({
+      processed: 0,
+      completed: 0,
+      failed: 0,
+      canceled: 0,
+      busy: false
+    });
+    expect(providerDispatchCount).toBe(0);
+
+    const [storedTrace, facts, requests] = await Promise.all([
+      database.aIGenerationTrace.findUnique({
+        where: { id: trace.id },
+        select: { status: true, errorCode: true, completedAt: true }
+      }),
+      database.journalEventFact.findMany({
+        where: { eventId },
+        include: { evidence: true }
+      }),
+      database.aIRequestLog.count({
+        where: { sessionId: session.activeBranchSessionId }
+      })
+    ]);
+    expect(storedTrace).toMatchObject({
+      status: "completed",
+      errorCode: null,
+      completedAt: expect.any(Date)
+    });
+    expect(facts).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        statement: "用户在会议中感到紧张，并说明了延期风险和新的交付日期",
+        evidence: [expect.objectContaining({ quote: "有点紧张" })]
+      })
+    ]));
+    expect(requests).toBe(0);
+    expect(responded.backgroundFactsTask).toBeUndefined();
   }, TEST_TIMEOUT_MS);
 });

@@ -2,15 +2,34 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   requireUser: vi.fn(),
-  respond: vi.fn()
+  respond: vi.fn(),
+  after: vi.fn(),
+  drainBackgroundFacts: vi.fn()
 }));
+
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return { ...actual, after: mocks.after };
+});
 
 vi.mock("@/server/services/auth/current-user.service", () => ({
   requireCurrentUserFromRequest: mocks.requireUser
 }));
 
 vi.mock("@/server/services/interview/event-centered-interview.service", () => ({
+  EventCenteredGenerationBlockedError: class EventCenteredGenerationBlockedError extends Error {
+    constructor(
+      readonly category: "transient_provider" | "configuration" | "content_check",
+      readonly detailCode: string
+    ) {
+      super(detailCode);
+    }
+  },
   respondEventCenteredInterview: mocks.respond
+}));
+
+vi.mock("@/server/services/interview/event-centered-background-facts.service", () => ({
+  drainEventCenteredBackgroundFactsQueue: mocks.drainBackgroundFacts
 }));
 
 import { POST } from "@/app/api/interview/event-centered/session/respond/stream/route";
@@ -108,6 +127,8 @@ function request() {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.requireUser.mockResolvedValue({ id: "user-1" });
+  mocks.after.mockImplementation(() => undefined);
+  mocks.drainBackgroundFacts.mockResolvedValue({ processed: 1, completed: 1 });
 });
 
 describe("event-centered stream api", () => {
@@ -168,5 +189,33 @@ describe("event-centered stream api", () => {
     } else {
       expect(body).not.toContain("event: session");
     }
+  });
+
+  it("先结束可见流，再由 after 处理后台事实任务", async () => {
+    let backgroundCallback: (() => Promise<void>) | null = null;
+    mocks.after.mockImplementation((callback: () => Promise<void>) => {
+      backgroundCallback = callback;
+    });
+    mocks.respond.mockResolvedValue({
+      workspace: workspace(),
+      assistantPayload: null,
+      backgroundFactsTask: {
+        traceId: "background-1",
+        sessionId: "branch-1"
+      }
+    });
+
+    const response = await POST(request());
+    const body = await response.text();
+
+    expect(body).toContain("event: session");
+    expect(mocks.drainBackgroundFacts).not.toHaveBeenCalled();
+    expect(backgroundCallback).toBeTypeOf("function");
+    await backgroundCallback!();
+    expect(mocks.drainBackgroundFacts).toHaveBeenCalledWith({
+      userId: "user-1",
+      sessionId: "branch-1",
+      maxTasks: 4
+    });
   });
 });
