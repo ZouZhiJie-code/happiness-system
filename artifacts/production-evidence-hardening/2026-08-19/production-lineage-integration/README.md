@@ -26,8 +26,10 @@
 
 ## 4. 当前结果
 
-本地候选代码节点为 `e869cf194b34de598be3ba3f9ccefc9f85cfadb1`。生成式专项 `325/325`、真实 PostgreSQL `3/3`、全量 `3401/3401`、Production build `77/77` 与零模型 E2E `11/11` 均通过；E2E `AIRequestLog=0`、Trace `12`、模型违规 `0`，临时 Schema 已删除。当前状态为 `local gates passed / Preview pending / Production unchanged`。
+本地候选代码节点为 `e869cf194b34de598be3ba3f9ccefc9f85cfadb1`。生成式专项 `325/325`、真实 PostgreSQL `3/3`、全量 `3401/3401`、Production build `77/77` 与零模型 E2E `11/11` 均通过；E2E `AIRequestLog=0`、Trace `12`、模型违规 `0`，临时 Schema 已删除。PR #51 head `8deb950` 的 push 与 PR 两套 CI 均在 attempt 1 通过：各 `387` 个文件、`3401` 条用例、build `77/77`、Lint `0 error / 33 warning`，两套 E2E 均 `11/11`、`AIRequestLog=0`、Trace `12`、Schema 已删除。Preview `dpl_HAvDkmDF1eDwfybGDAhH1zTJPSJa` 为 Ready。
 
-本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)。旧 Production 发布运行器继续保留原候选身份，新候选会生成独立的提交身份、哈希和运行回执。
+首次受控 Preview 启动在模型调用前停止：固定账号登录成功，运行环境回读返回 `403 RUNTIME_ENV_READBACK_FORBIDDEN`；随后只读环境对账确认该分支继承的是 `event_centered + baseline + deepseek-v4-flash`，与当前 Production v1.9／Pro 身份不一致。可见回应、后台任务和实际模型调用均为 `0`，重试 `0`。下一步先配置该分支专用 Preview 运行身份并生成全新部署，再创建新的启动卡；Production 继续保持不变。
+
+本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)，首次 Preview 启动与停止证据见 [`preview-start-card.json`](./preview-start-card.json)。旧 Production 发布运行器继续保留原候选身份，新候选会生成独立的提交身份、哈希和运行回执。
 
 过程问题与裁决见 [`PEH-044`](../issue-ledger.md)。
