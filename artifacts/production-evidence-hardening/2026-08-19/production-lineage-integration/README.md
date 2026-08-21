@@ -30,6 +30,8 @@
 
 首次受控 Preview 启动在模型调用前停止：固定账号登录成功，运行环境回读返回 `403 RUNTIME_ENV_READBACK_FORBIDDEN`；随后只读环境对账确认该分支继承的是 `event_centered + baseline + deepseek-v4-flash`，与当前 Production v1.9／Pro 身份不一致。可见回应、后台任务和实际模型调用均为 `0`，重试 `0`。下一步先配置该分支专用 Preview 运行身份并生成全新部署，再创建新的启动卡；Production 继续保持不变。
 
-本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)，首次 Preview 启动与停止证据见 [`preview-start-card.json`](./preview-start-card.json)。旧 Production 发布运行器继续保留原候选身份，新候选会生成独立的提交身份、哈希和运行回执。
+分支运行身份对齐后，head `d4f24ed` 的两套 CI 与 Preview `dpl_AaEwiSGaD6uVvYKs2oszPL5KaB6g` 均首轮通过；离线环境对账确认 `event_centered + complete_response_v1_9 + deepseek-v4-pro`。第二张启动卡仍在模型调用前停止：Vercel 的受保护回读令牌无法导出给验收进程，应用回读返回 `403`，部署日志确认请求到达；实际模型调用与重试仍为 `0`。下一步使用分支专用临时回读令牌生成新的 Preview 身份。
+
+本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)，两次 Preview 启动与停止证据见 [`preview-start-card.json`](./preview-start-card.json) 和 [`preview-start-card-v2.json`](./preview-start-card-v2.json)。旧 Production 发布运行器继续保留原候选身份，新候选会生成独立的提交身份、哈希和运行回执。
 
 过程问题与裁决见 [`PEH-044`](../issue-ledger.md)。
