@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1",
   "planFingerprint": "1edd95dfa7be436f241bdbd576b2b6f316e7d9bee494f28f4028b18c9515fd4f",
-  "status": "product_owner_preview_pass_candidate_deploy_in_progress",
+  "status": "candidate_deploy_parse_no_go_superseded_by_v1_1",
   "productOwnerPreviewVerdict": "pass",
   "localValidation": {
     "releaseRunnerTests": "11/11",
@@ -34,13 +34,23 @@
   "stages": {
     "prepare": "passed",
     "previewProductReview": "pass",
-    "candidateDeploy": "in_progress",
+    "candidateDeploy": "technical_fail_after_ready_deployment_created",
     "candidateSmoke": "not_run",
     "candidateProductReview": "not_run",
     "promotion": "not_run",
     "onlineRegression": "not_run",
     "rollback": "not_needed"
   },
+  "observedUnpromotedDeployment": {
+    "deploymentId": "dpl_8tTNtvoemDhstcPqaLu1g3q3gvWU",
+    "readyState": "READY",
+    "domainPromoted": false,
+    "evidenceRole": "historical_failed_run_only"
+  },
+  "failure": {
+    "code": "GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING",
+    "rootCause": "vercel_noninteractive_json_nested_deployment_not_parsed"
+  },
   "publicSensitiveContentStored": false,
-  "nextStopPoint": "candidate_smoke_product_verdict"
+  "nextStopPoint": "release_runner_v1_1_new_identity"
 }

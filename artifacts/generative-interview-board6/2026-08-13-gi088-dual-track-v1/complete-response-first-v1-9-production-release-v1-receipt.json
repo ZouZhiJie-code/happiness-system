@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1",
-  "status": "product_owner_preview_pass_ready_for_candidate_deploy",
+  "status": "candidate_deploy_failed_baseline_restore_attempted",
   "planFingerprint": "1edd95dfa7be436f241bdbd576b2b6f316e7d9bee494f28f4028b18c9515fd4f",
   "productOwnerPreviewVerdict": "pass",
   "baseline": {
@@ -14,7 +14,10 @@
   "promotion": null,
   "onlineRegression": null,
   "rollback": null,
-  "error": null,
-  "updatedAt": "2026-08-21T02:01:35.735Z",
+  "error": {
+    "code": "GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING",
+    "detailHash": null
+  },
+  "updatedAt": "2026-08-21T02:06:05.527Z",
   "publicSensitiveContentStored": false
 }

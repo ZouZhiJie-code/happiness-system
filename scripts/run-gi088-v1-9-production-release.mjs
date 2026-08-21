@@ -19,7 +19,7 @@ import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const GI088_V19_RELEASE_IDENTITY =
-  "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1";
+  "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-1-cli-json-shape";
 export const GI088_V19_CANDIDATE_VERSION =
   "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority";
 export const GI088_V19_STRATEGY = "complete_response_v1_9";
@@ -32,7 +32,10 @@ export const GI088_V19_SMOKE_INPUT =
 
 const ARTIFACT_RELATIVE_ROOT =
   "artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1";
-const PRIVATE_RELATIVE_ROOT = `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release`;
+const READINESS_PRIVATE_RELATIVE_ROOT =
+  `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release`;
+const PRIVATE_RELATIVE_ROOT =
+  `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release-v1-1-cli-json-shape`;
 const EXPECTED_PREVIEW_PRIVATE_SHA =
   "feacbc123e798e8de482fd12c2e4e0679ab9fca88520d2b7898e1459e9c0f46b";
 const EXPECTED_READINESS_PRIVATE_SHA =
@@ -47,13 +50,14 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
   const root = resolve(repoRoot);
   const artifactRoot = resolve(root, ARTIFACT_RELATIVE_ROOT);
   const privateRoot = resolve(root, PRIVATE_RELATIVE_ROOT);
+  const readinessPrivateRoot = resolve(root, READINESS_PRIVATE_RELATIVE_ROOT);
   return {
     root,
     artifactRoot,
     privateRoot,
     plan: resolve(
       root,
-      "docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner.md"
+      "docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-1.md"
     ),
     runner: resolve(root, "scripts/run-gi088-v1-9-production-release.mjs"),
     candidateRuntime: resolve(
@@ -85,8 +89,16 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
       artifactRoot,
       "complete-response-first-v1-9-production-readiness-stage-ledger-v1.json"
     ),
-    readinessPrivate: resolve(privateRoot, "readiness.json"),
-    backup: resolve(privateRoot, "production-before-v1-9-20260820.dump"),
+    readinessPrivate: resolve(readinessPrivateRoot, "readiness.json"),
+    backup: resolve(readinessPrivateRoot, "production-before-v1-9-20260820.dump"),
+    parentV1Receipt: resolve(
+      artifactRoot,
+      "complete-response-first-v1-9-production-release-v1-receipt.json"
+    ),
+    parentV1StageLedger: resolve(
+      artifactRoot,
+      "complete-response-first-v1-9-production-release-stage-ledger-v1.json"
+    ),
     state: resolve(privateRoot, "release-state.json"),
     previewReviewTemplate: resolve(privateRoot, "product-owner-preview-review.template.json"),
     previewReview: resolve(privateRoot, "product-owner-preview-review.json"),
@@ -95,7 +107,7 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
     lock: resolve(privateRoot, "release.lock"),
     publicReceipt: resolve(
       artifactRoot,
-      "complete-response-first-v1-9-production-release-v1-receipt.json"
+      "complete-response-first-v1-9-production-release-v1-1-receipt.json"
     )
   };
 }
@@ -215,6 +227,33 @@ export function buildGi088V19ReadinessEvidence(paths) {
   };
 }
 
+export function validateGi088V19ParentReleaseFailure(paths) {
+  const receipt = readJson(paths.parentV1Receipt);
+  const stage = readJson(paths.parentV1StageLedger);
+  if (
+    receipt.identity !==
+      "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1" ||
+    receipt.status !== "candidate_deploy_failed_baseline_restore_attempted" ||
+    receipt.productOwnerPreviewVerdict !== "pass" ||
+    receipt.error?.code !== "GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING" ||
+    stage.status !== "candidate_deploy_parse_no_go_superseded_by_v1_1" ||
+    stage.observedUnpromotedDeployment?.deploymentId !==
+      "dpl_8tTNtvoemDhstcPqaLu1g3q3gvWU" ||
+    stage.observedUnpromotedDeployment?.readyState !== "READY" ||
+    stage.observedUnpromotedDeployment?.domainPromoted !== false ||
+    stage.failure?.code !== "GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING"
+  ) {
+    throw new Error("GI088_V19_RELEASE_PARENT_V1_EVIDENCE_INVALID");
+  }
+  return {
+    identity: receipt.identity,
+    receiptSha256: sha256File(paths.parentV1Receipt),
+    stageLedgerSha256: sha256File(paths.parentV1StageLedger),
+    observedDeploymentId: stage.observedUnpromotedDeployment.deploymentId,
+    failureCode: stage.failure.code
+  };
+}
+
 function sourceFiles(paths) {
   return {
     plan: paths.plan,
@@ -228,7 +267,9 @@ function sourceFiles(paths) {
     previewPrivateReview: paths.previewPrivateReview,
     readinessStageLedger: paths.readinessStageLedger,
     readinessPrivate: paths.readinessPrivate,
-    backup: paths.backup
+    backup: paths.backup,
+    parentV1Receipt: paths.parentV1Receipt,
+    parentV1StageLedger: paths.parentV1StageLedger
   };
 }
 
@@ -408,6 +449,21 @@ function parseJsonOutput(value, code) {
     }
   }
   throw new Error(code);
+}
+
+export function parseGi088V19DeploymentIdentity(payload) {
+  const deployment = payload?.deployment ?? payload;
+  const deploymentId = deployment?.id ?? deployment?.deploymentId;
+  const deploymentUrl = deployment?.url ?? deployment?.deploymentUrl;
+  if (!deploymentId || !deploymentUrl) {
+    throw new Error("GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING");
+  }
+  return {
+    deploymentId,
+    deploymentUrl: deploymentUrl.startsWith("http")
+      ? deploymentUrl
+      : `https://${deploymentUrl}`
+  };
 }
 
 function stableErrorCode(error) {
@@ -791,13 +847,16 @@ function verifyLocalReleaseInputs(paths, state) {
   assertGi088V19SourceHashes(paths, state.sourceHashes);
   const previewEvidence = buildGi088V19PreviewEvidence(paths);
   const readiness = buildGi088V19ReadinessEvidence(paths);
+  const parentV1 = validateGi088V19ParentReleaseFailure(paths);
   if (
     previewEvidence.privateReviewSha256 !== state.previewEvidence.privateReviewSha256 ||
-    readiness.privateReadinessSha256 !== state.readiness.privateReadinessSha256
+    readiness.privateReadinessSha256 !== state.readiness.privateReadinessSha256 ||
+    parentV1.receiptSha256 !== state.parentV1.receiptSha256 ||
+    parentV1.stageLedgerSha256 !== state.parentV1.stageLedgerSha256
   ) {
     throw new Error("GI088_V19_RELEASE_EVIDENCE_DRIFT");
   }
-  return { previewEvidence, readiness };
+  return { previewEvidence, readiness, parentV1 };
 }
 
 function assertGitReady(paths, exec, { allowPublicReceipt = false } = {}) {
@@ -856,6 +915,7 @@ export async function prepareGi088V19Release({ repoRoot = process.cwd(), now = n
   }
   const previewEvidence = buildGi088V19PreviewEvidence(paths);
   const readiness = buildGi088V19ReadinessEvidence(paths);
+  const parentV1 = validateGi088V19ParentReleaseFailure(paths);
   const sourceHashes = calculateGi088V19SourceHashes(paths);
   const planFingerprint = calculateGi088V19PlanFingerprint(sourceHashes);
   const state = {
@@ -866,6 +926,7 @@ export async function prepareGi088V19Release({ repoRoot = process.cwd(), now = n
     sourceHashes,
     previewEvidence,
     readiness,
+    parentV1,
     productOwnerPreviewVerdict: "pending",
     baseline: {
       deploymentId: GI088_V19_BASELINE_DEPLOYMENT,
@@ -970,9 +1031,7 @@ async function deployCandidate({ paths, state, exec, now }) {
       deployResult.stdout,
       "GI088_V19_RELEASE_DEPLOY_OUTPUT_INVALID"
     );
-    const deploymentId = deployed.id ?? deployed.deploymentId;
-    const deploymentUrl = deployed.url ?? deployed.deploymentUrl;
-    if (!deploymentId || !deploymentUrl) throw new Error("GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING");
+    const { deploymentId, deploymentUrl } = parseGi088V19DeploymentIdentity(deployed);
     const inspected = parseJsonOutput(
       exec("vercel", buildGi088V19VercelArgs("inspect", deploymentId), {
         cwd: paths.root,
@@ -984,7 +1043,7 @@ async function deployCandidate({ paths, state, exec, now }) {
     if (readyState !== "READY") throw new Error("GI088_V19_RELEASE_CANDIDATE_NOT_READY");
     state.candidate = {
       deploymentId,
-      deploymentUrl: deploymentUrl.startsWith("http") ? deploymentUrl : `https://${deploymentUrl}`,
+      deploymentUrl,
       ready: true,
       sourceCommit: releaseCommit,
       strategy: GI088_V19_STRATEGY,

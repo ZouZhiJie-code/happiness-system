@@ -17,11 +17,13 @@ import {
   buildGi088V19VercelArgs,
   calculateGi088V19PlanFingerprint,
   createGi088V19ReleasePaths,
+  parseGi088V19DeploymentIdentity,
   parseGi088V19Sse,
   recordGi088V19ProductVerdict,
   sanitizeGi088V19PublicState,
   sha256Text,
   validateGi088V19BackgroundTrace,
+  validateGi088V19ParentReleaseFailure,
   validateGi088V19ProductReview,
   validateGi088V19SmokeReview
 // @ts-expect-error The executable is intentionally plain Node ESM; Vitest exercises its public exports directly.
@@ -94,6 +96,7 @@ describe("GI-088 v1.9 production release gate", () => {
     const paths = createGi088V19ReleasePaths(repoRoot);
     const preview = buildGi088V19PreviewEvidence(paths);
     const readiness = buildGi088V19ReadinessEvidence(paths);
+    const parentV1 = validateGi088V19ParentReleaseFailure(paths);
 
     expect(preview.identity).toBe(
       "2026-08-20.gi088-complete-response-first-v1-9-isolated-preview-v1"
@@ -107,6 +110,38 @@ describe("GI-088 v1.9 production release gate", () => {
       baselineDeploymentId: GI088_V19_BASELINE_DEPLOYMENT,
       baselineStrategy: GI088_V19_BASELINE_STRATEGY
     });
+    expect(parentV1).toMatchObject({
+      identity: "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1",
+      observedDeploymentId: "dpl_8tTNtvoemDhstcPqaLu1g3q3gvWU",
+      failureCode: "GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING"
+    });
+  });
+
+  it("parses both Vercel non-interactive nested JSON and legacy top-level JSON", () => {
+    expect(
+      parseGi088V19DeploymentIdentity({
+        status: "ok",
+        deployment: {
+          id: "dpl_nested",
+          url: "https://nested.example"
+        }
+      })
+    ).toEqual({
+      deploymentId: "dpl_nested",
+      deploymentUrl: "https://nested.example"
+    });
+    expect(
+      parseGi088V19DeploymentIdentity({
+        deploymentId: "dpl_top_level",
+        deploymentUrl: "top-level.example"
+      })
+    ).toEqual({
+      deploymentId: "dpl_top_level",
+      deploymentUrl: "https://top-level.example"
+    });
+    expect(() => parseGi088V19DeploymentIdentity({ status: "ok" })).toThrow(
+      "GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING"
+    );
   });
 
   it("requires a hash-bound product-owner pass before candidate deployment", () => {

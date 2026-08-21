@@ -11,7 +11,7 @@ Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、�
 
 - 正式域名：`https://dailylight.chat`。
 - 当前 Production 主链：`event_centered + baseline`；`legacy + baseline` 保留为应急回退与历史运行身份。
-- GI-088 v1.9 隔离 Preview 四轮连续链 Codex 初评与产品负责人裁决均为 `4/4 pass`；Production 候选部署进入实施，正式域名继续使用 baseline。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
+- GI-088 v1.9 隔离 Preview 四轮连续链 Codex 初评与产品负责人裁决均为 `4/4 pass`；发布工具 v1 因 Vercel CLI 嵌套 JSON 解析形成技术 No-Go，v1.1 单因素修复实施中；正式域名继续使用 baseline。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
 - `2026-08-13` 阶段 C2 已修复 Judge 运行器并完成全新校准：Plus 普通与思考均 `20/20` 且 No-Go；Max 思考 `15/20` 后因连接与 DNS 故障形成 `technical_blocked`。累计 `64` 次、4 次补跑、0.584052 元，历史身份保持不变。
 - `2026-08-19` GI-088 回应优先 v2.9 纠正首题产品 `pass` 后，真实 CONTINUE 已完成 Low＋High `2/2`：Low `3967ms`、Codex 初评 `minor`；High `1885ms`、HTTP 200／stop／完整 JSON，但缺少覆盖判断与开放目标，状态合同失败；纯时间 `5852ms` 通过，整体技术门因合同失败为 `false`。Codex 与产品负责人均裁决完整回合 `fail`，本轮 `No-Go / stop`；后续 `4 not_run`，页面、Preview 和发布均为 `not_run`；Production 保持 `event_centered + baseline`。
 - `2026-08-20` GI-088 完整回应优先 v1.6 已完成 `8/8 technical_valid`：中位 `2915ms`、最长 `5152ms`、最高 completion `91/1280`；Codex 原文初评为 `7 pass / 1 minor / 0 fail`。v1.5 两处同层回问已修复，唯一待裁决项是关系题新增一处未经用户明确确认的感受；产品负责人裁决 pending。
@@ -22,6 +22,7 @@ Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、�
 - `2026-08-20` v1.9 Production 发布准备已完成：当前 Production 部署与 `event_centered + baseline` 已回读，数据库 custom dump 已备份并通过 `pg_restore --list`，回退目标和 CLI 路径已核对。历史 Preview 后台任务因部署数据库快照无法从当前环境重建而保持 `inconclusive`；新 Production 目标部署接管域名前必须完成可见回应＋后台 Trace 数据库回读硬门。发布继续停在产品负责人四轮原文裁决前，Production 未发生变更。
 - `2026-08-20` v1.9 Production 发布状态机本地门禁已通过：发布工具 `11/11`、v1.9 相关 `101/101`、全量 `3694` 条测试通过；缺少产品裁决时，真实部署命令在读取部署凭据和网络写操作前停止。产品负责人验收通过后可依次执行候选部署、候选冒烟、后台 Trace 回读、正式切流和线上回归。
 - `2026-08-20` 产品负责人已依据四轮完整用户输入和实际 AI 输出裁决 v1.9 Preview `4/4 pass`，裁决文件与四轮输入／输出哈希绑定且权限为 `0600`。当前进入不接管正式域名的 Production 候选部署；候选可见回应、后台 Trace 与候选语义裁决仍是正式切流硬门。
+- `2026-08-20` 首次候选部署实际创建 `dpl_8tTNtvoemDhstcPqaLu1g3q3gvWU` 并 Ready；Vercel CLI `50.41.0` 在非交互模式把身份放在 `deployment` 子对象，v1 工具读取顶层字段后记录技术失败。正式域名仍指向原部署，Production 已恢复 baseline；v1.1 只修正返回格式解析并创建新候选。
 - 网页端产品主线：`访谈记录 → 当天时间线事件卡片 → 今日日记`。访谈页负责表达、回应、保存和返回当天；日记页负责生成、查看和更新当天日记。
 - 五个维度为 `joy / fulfillment / reflection / improvement / gratitude`。理论与完成规则由 [`docs/theory/`](./docs/theory/) 承担。
 - 历史候选、测试数字和部署记录只承担各自时期的证据职责，不能自动转化为当前产品结论或发布授权。

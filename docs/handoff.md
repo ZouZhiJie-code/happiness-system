@@ -7,11 +7,13 @@
 
 ## 1. 当前交接结论
 
-GI-088 当前执行[v1.9 Production 发布工具](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner.md)。隔离 Preview 四轮连续链已完成，Codex 初评与产品负责人裁决均为 `4/4 pass`；局部拒答＋换方向继续保持对话并进入新焦点。产品验收、候选部署、真实可见冒烟、后台数据库回读、正式切流、线上回归和回退已经固化为一套发布状态机。当前进入不接管正式域名的候选部署，正式域名继续使用 `event_centered + baseline`。
+GI-088 当前执行[v1.9 Production 发布工具 v1.1](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-1.md)。隔离 Preview 四轮连续链已完成，Codex 初评与产品负责人裁决均为 `4/4 pass`；局部拒答＋换方向继续保持对话并进入新焦点。
+
+发布工具 v1 已成功创建 Ready 候选 `dpl_8tTNtvoemDhstcPqaLu1g3q3gvWU`，随后因 Vercel CLI 非交互 JSON 把部署身份放在 `deployment` 子对象而被工具误判为失败。正式域名继续指向原部署 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`，Production 策略已经恢复 `baseline`。v1.1 只修正这一处返回格式解析，使用新身份和新候选继续发布链路。
 
 技术冒烟、后台冻结与重复提交均已通过。随后又完成五个真实 Preview 回合：纠正和停止通过；明确继续深挖时，AI 几乎逐字重复上一条“当时回应还是压下去”的问题；关系表达中，用户已经说“想聊这种差别”，AI 又询问是否先聊这种差别。真人可见预算累计 `7/15`、剩余 `8`。公开结果见[Preview 验收交接](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-v1-handoff.md)与[阶段账](../artifacts/generative-interview-board6/2026-08-13-gi088-dual-track-v1/complete-response-first-v1-6-isolated-preview-stage-ledger-v1.json)。
 
-当前状态为 `v1.9 Preview product 4/4 pass / candidate deployment in progress`。v1.9 只调整用户控制范围：局部拒答同时带有继续或换方向时继续对话；明确整轮停止时收住。四轮原文与输出已逐例交付，产品负责人全部裁决 `pass`，私有裁决与四轮输入／输出哈希绑定。
+当前状态为 `v1.9 Preview product 4/4 pass / release runner v1.1 implementation`。v1.9 只调整用户控制范围：局部拒答同时带有继续或换方向时继续对话；明确整轮停止时收住。四轮原文与输出已逐例交付，产品负责人全部裁决 `pass`，私有裁决与四轮输入／输出哈希绑定。
 
 v1.9 当前专项 `101/101`、发布工具 `11/11`、全量 `460` 个测试文件／`3694` 条测试通过，另有 `2` 个文件／`10` 条测试按既定条件跳过；类型检查、Lint、两套 Prisma 与 Production build 通过。Preview 四轮中位 `10633.5ms`、最大 `11505ms`，家族可见预算 `15/15`。
 

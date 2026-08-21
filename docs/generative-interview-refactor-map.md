@@ -7,15 +7,27 @@
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 complete_response_v1_9 隔离 Preview 四轮产品裁决 4/4 pass；Production 候选部署实施中；正式域名 baseline`
+当前讨论位置：`GI-088 complete_response_v1_9 隔离 Preview 产品裁决 4/4 pass；发布工具 v1 CLI 返回解析 No-Go；v1.1 单因素修复实施中；正式域名 baseline`
 
-下一建议板块：`完成候选部署、候选可见回应与后台 Trace；交付候选实际输出裁决，通过后切流并执行线上回归`
+下一建议板块：`完成发布工具 v1.1 返回格式修复并创建新候选；完成候选可见回应与后台 Trace；交付候选实际输出裁决`
 
-当前专项：[完整回应优先 v1.9 Production 发布工具](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner.md)
+当前专项：[完整回应优先 v1.9 Production 发布工具 v1.1](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-1.md)
 
 Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 
-本次同步范围：`v1.9 Preview 四轮连续链产品裁决 4/4 pass；发布准备和发布工具本地门禁已封存；候选部署实施中，正式域名 baseline`
+本次同步范围：`v1.9 Preview 产品裁决 4/4 pass；发布工具 v1 成功创建候选但解析失败，正式域名与 baseline 已核验；v1.1 实施中`
+
+## 2026-08-20｜GI-088 v1.9 Production 发布工具 v1.1 实施卡
+
+| 项目 | 当前事实 |
+|---|---|
+| 当前专项 | [v1.9 Production 发布工具 v1.1](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-1.md) |
+| 父结果 | v1 创建候选 `dpl_8tTNtvoemDhstcPqaLu1g3q3gvWU` 且 Ready；因 Vercel CLI 嵌套返回格式未被识别而 No-Go |
+| 唯一变化 | 兼容读取 `result.deployment.id/url` 与旧顶层 `id/url` |
+| 产品门 | Preview 四轮产品裁决 `4/4 pass`，继续绑定同一输入／输出哈希 |
+| 外部状态 | 正式域名仍指向 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；Production 已恢复 baseline |
+| 当前状态 | `已确认·实施中 / 结果待验证` |
+| 停止点 | 修复、测试、提交、推送和新启动卡后创建全新候选；候选实际输出仍需产品裁决 |
 
 ## 2026-08-20｜GI-088 v1.9 Production 发布工具实施卡
 
@@ -27,8 +39,9 @@ Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 o
 | 接管域名门 | 候选可见回应、后台 Trace、临时数据清理和候选语义裁决全部通过 |
 | 工程结果 | 发布工具专项 `11/11`、v1.9 相关 `101/101`、全量 `3694` 条通过；类型、Lint、两套 Prisma、Production build、文档与差异检查通过 |
 | 缺失裁决门 | 真实命令在部署凭据和网络写操作前返回 `GI088_V19_RELEASE_PRODUCT_REVIEW_REQUIRED` |
-| 当前状态 | `已确认·实施中 / candidate_deploy / 正式域名 baseline` |
-| 停止点 | 候选部署与后台 Trace 完成后交付候选实际输入／输出；候选产品裁决通过后切换正式域名 |
+| 实际结果 | 创建候选 `dpl_8tTNtvoemDhstcPqaLu1g3q3gvWU` 且 Ready；Vercel 非交互 JSON 嵌套 deployment 未被识别，工具记录 `GI088_V19_RELEASE_DEPLOY_IDENTITY_MISSING` |
+| 当前状态 | `No-Go / superseded by v1.1 / 正式域名 baseline` |
+| 停止点 | v1 不再继续；候选保持未推广的历史证据，由 v1.1 新身份创建全新候选 |
 
 ## 2026-08-20｜GI-088 v1.9 局部边界与继续优先级实施卡
 
