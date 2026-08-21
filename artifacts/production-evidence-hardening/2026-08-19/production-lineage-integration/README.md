@@ -26,6 +26,8 @@
 
 ## 4. 当前结果
 
-`待验证`。
+本地候选代码节点为 `e869cf194b34de598be3ba3f9ccefc9f85cfadb1`。生成式专项 `325/325`、真实 PostgreSQL `3/3`、全量 `3401/3401`、Production build `77/77` 与零模型 E2E `11/11` 均通过；E2E `AIRequestLog=0`、Trace `12`、模型违规 `0`，临时 Schema 已删除。当前状态为 `local gates passed / Preview pending / Production unchanged`。
+
+本地公开回执见 [`local-validation-receipt.json`](./local-validation-receipt.json)。旧 Production 发布运行器继续保留原候选身份，新候选会生成独立的提交身份、哈希和运行回执。
 
 过程问题与裁决见 [`PEH-044`](../issue-ledger.md)。

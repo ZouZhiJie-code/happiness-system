@@ -298,8 +298,8 @@
 
 ## PEH-044｜GI-088 v1.9 与五阶段 main 单一发布血缘集成
 
-- 已确认事实：当前 main 为 `624b403b81a7b4774cf8617973a5663ccf16cea0`，已包含阶段 1～4 与相关治理收口；当前 Production 功能来源为 `d8dfae7bb05987f906d6917ed0e7343829136c2f`，承担 `complete_response_v1_9`、后台事实任务与 `deepseek-v4-pro` 合同。两者共同 merge-base 为 `6634a3e3e8dda32de77c8b3749ea5f432323da94`，直接整线合并会同时覆盖访谈服务、前端恢复、日记和大量历史证据，冲突面超出安全发布边界。
+- 已确认事实：当前 main 为 `624b403b81a7b4774cf8617973a5663ccf16cea0`，已包含阶段 1～4 与相关治理收口；当前 Production 功能来源为 `d8dfae7bb05987f906d6917ed0e7343829136c2f`，承担 `complete_response_v1_9`、后台事实任务与 `deepseek-v4-pro` 合同。两者共同 merge-base 为 `6634a3e3e8dda32de77c8b3749ea5f432323da94`，直接整线合并会同时覆盖访谈服务、前端恢复、日记和大量历史证据，冲突面超出安全发布边界。旧 Production 发布运行器固定绑定旧候选提交、私有资产哈希和当次发布回执，只承担原运行身份的历史证据职责。
 - 产品判断：统一候选以最新 main 为基线，定向迁入 Production 已验证的生成式访谈能力；用户已经使用的 v1.9 可见回应和后台任务保持，阶段 1～4 的数据、权限、恢复、前端与日记成果保持。当前 Production 和回退 deployment 均不改变。
-- Codex 评估：主线定向集成能把变更收敛到真实运行所需的策略、后台任务、Provider 合同和专项测试，避免旧分支历史代码反向覆盖近期可靠性与隐私修复。共享服务需要逐段适配 Stage 4 拆分后的职责，并用生成式合同、真实 PostgreSQL、零模型 E2E 和 Preview 双主链验证共同证明兼容。
+- Codex 评估：主线定向集成能把变更收敛到真实运行所需的策略、后台任务、Provider 合同和专项测试，避免旧分支历史代码反向覆盖近期可靠性与隐私修复。共享服务需要逐段适配 Stage 4 拆分后的职责，并用生成式合同、真实 PostgreSQL、零模型 E2E 和 Preview 双主链验证共同证明兼容。新候选使用新的提交身份、输入哈希和运行回执；旧运行器保持不可改写，新 Preview／发布检查在本地门通过后按本候选重新生成，避免沿用旧候选授权。
 - 待验证假设：`complete_response_v1_9` 可在 Stage 4 拆分后的服务边界上保持原用户体验；后台事实任务仍能做到结果先保存、恢复零重复调用和迟到失权；Stage 1～4 的六步漏斗、同意边界、outbox 与日记内容保护继续成立。
-- 当前处理状态：`已确认·实施中 / local candidate created / result pending`。候选分支 `codex/production-lineage-integration-20260821`，基线 `origin/main@624b403`；本地模型调用、Production 正文读取、数据库迁移、环境变量变更和正式部署均为 `0`。停止点为任一核心产品合同或工程门失败；通过本地与 Preview 门后再提交 Production 发布裁决。
+- 当前处理状态：`已确认·实施中 / local gates passed / Preview pending`。候选分支 `codex/production-lineage-integration-20260821`，基线 `origin/main@624b403`，运行时代码节点 `e869cf1`；生成式专项 `325/325`、真实 PostgreSQL `3/3`、全量 `3401/3401`、build `77/77`、零模型 E2E `11/11` 均通过。E2E `AIRequestLog=0`、Trace `12`、模型违规 `0`、临时 Schema 残留 `0`；本地模型调用、Production 正文读取、数据库迁移、环境变量变更和正式部署均为 `0`。首次全量暴露 Batch B 历史草稿信号与 v1.9 运行时语义职责冲突，现已把多问信号限定在评测层并完成全量复验；首次 PostgreSQL 新例仅为 optional 字段断言口径差异，修正后 `3/3`。下一门为 push／PR 双 CI 与独立 Preview，Production 发布仍等待单独裁决。
