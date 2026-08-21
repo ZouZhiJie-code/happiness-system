@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-4-runtime-host-contract",
+  "status": "runtime_readback_disabled_no_go_superseded_by_v1_5",
+  "candidate": {
+    "deploymentId": "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p",
+    "ready": true,
+    "domainPromoted": false
+  },
+  "smoke": {
+    "runtimeReadbackHttpStatus": 404,
+    "visibleGeneration": "not_run",
+    "background": "not_run",
+    "temporaryUserDeleted": true,
+    "errorCode": "GI088_V19_RELEASE_CANDIDATE_RUNTIME_MODEL_MISMATCH"
+  },
+  "confirmedRootCause": "production_runtime_readback_explicitly_disabled",
+  "receiptSha256": "b978e4f65eedce7f4870dce88ac31a90819450ec14b00a2cc7da7adc13bb16a1",
+  "publicSensitiveContentStored": false,
+  "nextIdentity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-5-service-config-gate"
+}

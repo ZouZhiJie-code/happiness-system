@@ -29,7 +29,7 @@ Production：`正式域名保持 event_centered + baseline；v1.9 Preview 产品
 
 | 项目 | 当前合同 |
 |---|---|
-| 当前专项 | [v1.9 Production 发布工具 v1.4](../../plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-4.md) |
+| 当前专项 | [v1.9 Production 发布工具 v1.5](../../plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-5.md) |
 | 可见链路 | 一次调用生成一条完整气泡；`deepseek-v4-pro`、Thinking disabled、`1280` Token、45 秒硬门 |
 | 后台链路 | 第二次调用只整理事实与纠正；同模型、Thinking disabled、`1600` Token、20 秒硬门；零可见写权限 |
 | 正式一致性 | 当前策略强制选择 Pro；后台解析使用 v1.7 来源对齐并保存真实原文片段 |

@@ -33,8 +33,8 @@ import {
   validateGi088V19ParentV11Failure,
   validateGi088V19ParentV12Failure,
   validateGi088V19ParentV13Failure,
+  validateGi088V19ParentV14Failure,
   validateGi088V19ProductReview,
-  validateGi088V19RuntimeReadback,
   validateGi088V19SmokeReview
 // @ts-expect-error The executable is intentionally plain Node ESM; Vitest exercises its public exports directly.
 } from "../../scripts/run-gi088-v1-9-production-release.mjs";
@@ -110,6 +110,7 @@ describe("GI-088 v1.9 production release gate", () => {
     const parentV11 = validateGi088V19ParentV11Failure(paths);
     const parentV12 = validateGi088V19ParentV12Failure(paths);
     const parentV13 = validateGi088V19ParentV13Failure(paths);
+    const parentV14 = validateGi088V19ParentV14Failure(paths);
 
     expect(preview.identity).toBe(
       "2026-08-20.gi088-complete-response-first-v1-9-isolated-preview-v1"
@@ -142,6 +143,11 @@ describe("GI-088 v1.9 production release gate", () => {
     expect(parentV13).toMatchObject({
       identity:
         "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-3-model-environment-contract",
+      candidateDeploymentId: "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p"
+    });
+    expect(parentV14).toMatchObject({
+      identity:
+        "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-4-runtime-host-contract",
       candidateDeploymentId: "dpl_B9P64xCMMGtSR6CKAjNzRFdav39p"
     });
   });
@@ -282,30 +288,6 @@ describe("GI-088 v1.9 production release gate", () => {
     expect(buildGi088V19VercelArgs("set-candidate-model")).toContain(
       GI088_V19_CANDIDATE_MODEL
     );
-  });
-
-  it("binds runtime identity to the candidate host while requiring the v1.9 Pro contract", () => {
-    const runtime = {
-      status: 200,
-      json: {
-        requestHost: "candidate.example",
-        env: { VERCEL_DEPLOYMENT_ID: null },
-        eventCentered: {
-          mode: "event_centered",
-          strategy: GI088_V19_STRATEGY,
-          model: GI088_V19_CANDIDATE_MODEL
-        }
-      }
-    };
-    expect(
-      validateGi088V19RuntimeReadback(runtime, "https://candidate.example")
-    ).toBe(true);
-    expect(() =>
-      validateGi088V19RuntimeReadback(
-        { ...runtime, json: { ...runtime.json, requestHost: "other.example" } },
-        "https://candidate.example"
-      )
-    ).toThrow("GI088_V19_RELEASE_CANDIDATE_RUNTIME_MODEL_MISMATCH");
   });
 
   it("freezes baseline recovery commands", () => {

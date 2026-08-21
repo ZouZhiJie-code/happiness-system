@@ -7,11 +7,21 @@
 
 当前板块：`板块 7｜模型提问策略与链路改造`
 
-当前讨论位置：`GI-088 complete_response_v1_9 Preview 产品 4/4 pass；发布工具 v1.3 运行身份回读 No-Go；v1.4 主机合同实施中；正式域名 baseline`
+当前讨论位置：`GI-088 complete_response_v1_9 Preview 产品 4/4 pass；发布工具 v1.4 调试回读关闭 No-Go；v1.5 服务配置门实施中；正式域名 baseline`
 
 下一建议板块：`复用 v1.3 Ready 候选，以候选主机核对运行身份；完成可见回应、后台 Trace 与候选实际输出裁决`
 
-当前专项：[完整回应优先 v1.9 Production 发布工具 v1.4](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-4.md)
+当前专项：[完整回应优先 v1.9 Production 发布工具 v1.5](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-5.md)
+
+## 2026-08-20｜GI-088 v1.9 Production 发布工具 v1.5 实施卡
+
+| 项目 | 当前事实 |
+|---|---|
+| 当前专项 | [v1.9 Production 发布工具 v1.5](./plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-5.md) |
+| 父结果 | v1.4 运行回读 HTTP 404；受控诊断确认 Production 明确关闭调试回读，生成未运行、临时用户已清理 |
+| 唯一变化 | 移除调试回读前置门；保留候选部署身份、项目环境和生成服务自身配置硬门 |
+| 当前状态 | `已确认·实施中 / 结果待验证` |
+| 停止点 | 完成候选真实生成、后台、清理与产品裁决后才切流 |
 
 Production 状态：`项目主链使用 event_centered + baseline；GI-088 与 optional + generative 继续关闭`
 

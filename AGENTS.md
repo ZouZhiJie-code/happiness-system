@@ -11,7 +11,7 @@ Daily Light 把“幸福日志”理论翻译成可持续使用的 AI 访谈、�
 
 - 正式域名：`https://dailylight.chat`。
 - 当前 Production 主链：`event_centered + baseline`；`legacy + baseline` 保留为应急回退与历史运行身份。
-- GI-088 v1.9 隔离 Preview 四轮连续链 Codex 初评与产品负责人裁决均为 `4/4 pass`；发布工具 v1.3 已创建 Pro 候选，运行身份回读因可选部署字段形成技术 No-Go；临时数据已自动清理，v1.4 主机合同实施中；正式域名继续使用 baseline。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
+- GI-088 v1.9 隔离 Preview 四轮连续链 Codex 初评与产品负责人裁决均为 `4/4 pass`；发布工具 v1.4 确认 Production 关闭调试回读；临时数据已自动清理，v1.5 改用生成服务自身配置门并继续实施；正式域名继续使用 baseline。当前状态只认 [`docs/generative-interview-refactor-map.md`](./docs/generative-interview-refactor-map.md) 及其当前专项。
 - `2026-08-13` 阶段 C2 已修复 Judge 运行器并完成全新校准：Plus 普通与思考均 `20/20` 且 No-Go；Max 思考 `15/20` 后因连接与 DNS 故障形成 `technical_blocked`。累计 `64` 次、4 次补跑、0.584052 元，历史身份保持不变。
 - `2026-08-19` GI-088 回应优先 v2.9 纠正首题产品 `pass` 后，真实 CONTINUE 已完成 Low＋High `2/2`：Low `3967ms`、Codex 初评 `minor`；High `1885ms`、HTTP 200／stop／完整 JSON，但缺少覆盖判断与开放目标，状态合同失败；纯时间 `5852ms` 通过，整体技术门因合同失败为 `false`。Codex 与产品负责人均裁决完整回合 `fail`，本轮 `No-Go / stop`；后续 `4 not_run`，页面、Preview 和发布均为 `not_run`；Production 保持 `event_centered + baseline`。
 - `2026-08-20` GI-088 完整回应优先 v1.6 已完成 `8/8 technical_valid`：中位 `2915ms`、最长 `5152ms`、最高 completion `91/1280`；Codex 原文初评为 `7 pass / 1 minor / 0 fail`。v1.5 两处同层回问已修复，唯一待裁决项是关系题新增一处未经用户明确确认的感受；产品负责人裁决 pending。

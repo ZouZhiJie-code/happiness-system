@@ -19,7 +19,7 @@ import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const GI088_V19_RELEASE_IDENTITY =
-  "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-4-runtime-host-contract";
+  "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-5-service-config-gate";
 export const GI088_V19_CANDIDATE_VERSION =
   "2026-08-20.gi088-complete-response-first-v1-9-local-boundary-continue-priority";
 export const GI088_V19_STRATEGY = "complete_response_v1_9";
@@ -37,7 +37,7 @@ const ARTIFACT_RELATIVE_ROOT =
 const READINESS_PRIVATE_RELATIVE_ROOT =
   `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release`;
 const PRIVATE_RELATIVE_ROOT =
-  `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release-v1-4-runtime-host-contract`;
+  `${ARTIFACT_RELATIVE_ROOT}/.private/complete-response-first-v1-9-production-release-v1-5-service-config-gate`;
 const PARENT_V11_CANDIDATE_ID = "dpl_EeobYfcEeteHyhHz4HrVFVGa5HmH";
 const PARENT_V11_CANDIDATE_URL =
   "https://xingfuxitong-dyfj5qu4h-zouzhijies-projects.vercel.app";
@@ -63,7 +63,7 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
     privateRoot,
     plan: resolve(
       root,
-      "docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-4.md"
+      "docs/plans/2026-08-20-gi088-complete-response-first-v1-9-production-release-runner-v1-5.md"
     ),
     runner: resolve(root, "scripts/run-gi088-v1-9-production-release.mjs"),
     candidateRuntime: resolve(
@@ -141,6 +141,14 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
       artifactRoot,
       "complete-response-first-v1-9-production-release-stage-ledger-v1-3.json"
     ),
+    parentV14Receipt: resolve(
+      artifactRoot,
+      "complete-response-first-v1-9-production-release-v1-4-receipt.json"
+    ),
+    parentV14StageLedger: resolve(
+      artifactRoot,
+      "complete-response-first-v1-9-production-release-stage-ledger-v1-4.json"
+    ),
     state: resolve(privateRoot, "release-state.json"),
     previewReviewTemplate: resolve(privateRoot, "product-owner-preview-review.template.json"),
     previewReview: resolve(privateRoot, "product-owner-preview-review.json"),
@@ -149,7 +157,7 @@ export function createGi088V19ReleasePaths(repoRoot = process.cwd()) {
     lock: resolve(privateRoot, "release.lock"),
     publicReceipt: resolve(
       artifactRoot,
-      "complete-response-first-v1-9-production-release-v1-4-receipt.json"
+      "complete-response-first-v1-9-production-release-v1-5-receipt.json"
     )
   };
 }
@@ -381,6 +389,31 @@ export function validateGi088V19ParentV13Failure(paths) {
   };
 }
 
+export function validateGi088V19ParentV14Failure(paths) {
+  const receipt = readJson(paths.parentV14Receipt);
+  const stage = readJson(paths.parentV14StageLedger);
+  if (
+    receipt.identity !==
+      "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-4-runtime-host-contract" ||
+    receipt.status !== "candidate_smoke_failed" ||
+    receipt.error?.code !== "GI088_V19_RELEASE_CANDIDATE_RUNTIME_MODEL_MISMATCH" ||
+    receipt.candidate?.deploymentId !== stage.candidate?.deploymentId ||
+    stage.status !== "runtime_readback_disabled_no_go_superseded_by_v1_5" ||
+    stage.smoke?.runtimeReadbackHttpStatus !== 404 ||
+    stage.smoke?.temporaryUserDeleted !== true
+  ) {
+    throw new Error("GI088_V19_RELEASE_PARENT_V14_EVIDENCE_INVALID");
+  }
+  return {
+    identity: receipt.identity,
+    receiptSha256: sha256File(paths.parentV14Receipt),
+    stageLedgerSha256: sha256File(paths.parentV14StageLedger),
+    candidateDeploymentId: receipt.candidate.deploymentId,
+    candidateDeploymentUrl: receipt.candidate.deploymentUrl,
+    candidateSourceCommit: receipt.candidate.sourceCommit
+  };
+}
+
 function sourceFiles(paths) {
   return {
     plan: paths.plan,
@@ -405,7 +438,9 @@ function sourceFiles(paths) {
     parentV12Receipt: paths.parentV12Receipt,
     parentV12StageLedger: paths.parentV12StageLedger,
     parentV13Receipt: paths.parentV13Receipt,
-    parentV13StageLedger: paths.parentV13StageLedger
+    parentV13StageLedger: paths.parentV13StageLedger,
+    parentV14Receipt: paths.parentV14Receipt,
+    parentV14StageLedger: paths.parentV14StageLedger
   };
 }
 
@@ -803,8 +838,7 @@ function pullProductionEnvironment(paths, exec) {
       directUrl: parseDotenvValue(text, "DIRECT_URL"),
       mode: parseDotenvValue(text, "INTERVIEW_EVENT_CENTERED_MODE"),
       strategy: parseDotenvValue(text, "INTERVIEW_EVENT_CENTERED_STRATEGY"),
-      model: parseDotenvValue(text, "DEEPSEEK_MODEL"),
-      runtimeReadbackToken: parseDotenvValue(text, "RUNTIME_ENV_READBACK_TOKEN")
+      model: parseDotenvValue(text, "DEEPSEEK_MODEL")
     };
   } finally {
     rmSync(tempRoot, { recursive: true, force: true });
@@ -820,10 +854,7 @@ function productionDatabaseUrl(paths, exec, expectedStrategy, expectedModel) {
   ) {
     throw new Error("GI088_V19_RELEASE_PRODUCTION_ENVIRONMENT_MISMATCH");
   }
-  return {
-    databaseUrl: normalizeGi088V19PsqlUrl(environment.directUrl),
-    runtimeReadbackToken: environment.runtimeReadbackToken
-  };
+  return normalizeGi088V19PsqlUrl(environment.directUrl);
 }
 
 export function normalizeGi088V19PsqlUrl(value) {
@@ -928,26 +959,12 @@ function vercelCurl(exec, paths, deploymentUrl, path, request = {}) {
   };
 }
 
-export function validateGi088V19RuntimeReadback(runtime, deploymentUrl) {
-  if (
-    runtime.status !== 200 ||
-    runtime.json?.requestHost !== new URL(deploymentUrl).host ||
-    runtime.json?.eventCentered?.mode !== "event_centered" ||
-    runtime.json?.eventCentered?.strategy !== GI088_V19_STRATEGY ||
-    runtime.json?.eventCentered?.model !== GI088_V19_CANDIDATE_MODEL
-  ) {
-    throw new Error("GI088_V19_RELEASE_CANDIDATE_RUNTIME_MODEL_MISMATCH");
-  }
-  return true;
-}
-
 function directVisibleTurn({
   exec,
   paths,
   deploymentUrl,
   label,
   input,
-  runtimeReadbackToken,
   onRegistered
 }) {
   const suffix = randomBytes(6).toString("hex");
@@ -966,11 +983,6 @@ function directVisibleTurn({
   });
   const cookie = String(register.headers["set-cookie"] ?? "").split(";", 1)[0];
   if (!cookie) throw new Error("GI088_V19_RELEASE_COOKIE_MISSING");
-  const runtime = vercelCurl(exec, paths, deploymentUrl, "/api/debug/runtime-env", {
-    cookie,
-    headers: { "x-runtime-readback-token": runtimeReadbackToken }
-  });
-  validateGi088V19RuntimeReadback(runtime, deploymentUrl);
   const start = vercelCurl(exec, paths, deploymentUrl, "/api/interview/event-centered/session/start", {
     method: "POST",
     cookie,
@@ -1062,6 +1074,7 @@ function verifyLocalReleaseInputs(paths, state) {
   const parentV11 = validateGi088V19ParentV11Failure(paths);
   const parentV12 = validateGi088V19ParentV12Failure(paths);
   const parentV13 = validateGi088V19ParentV13Failure(paths);
+  const parentV14 = validateGi088V19ParentV14Failure(paths);
   if (
     previewEvidence.privateReviewSha256 !== state.previewEvidence.privateReviewSha256 ||
     readiness.privateReadinessSha256 !== state.readiness.privateReadinessSha256 ||
@@ -1073,11 +1086,13 @@ function verifyLocalReleaseInputs(paths, state) {
     parentV12.receiptSha256 !== state.parentV12.receiptSha256 ||
     parentV12.stageLedgerSha256 !== state.parentV12.stageLedgerSha256 ||
     parentV13.receiptSha256 !== state.parentV13.receiptSha256 ||
-    parentV13.stageLedgerSha256 !== state.parentV13.stageLedgerSha256
+    parentV13.stageLedgerSha256 !== state.parentV13.stageLedgerSha256 ||
+    parentV14.receiptSha256 !== state.parentV14.receiptSha256 ||
+    parentV14.stageLedgerSha256 !== state.parentV14.stageLedgerSha256
   ) {
     throw new Error("GI088_V19_RELEASE_EVIDENCE_DRIFT");
   }
-  return { previewEvidence, readiness, parentV1, parentV11, parentV12, parentV13 };
+  return { previewEvidence, readiness, parentV1, parentV11, parentV12, parentV13, parentV14 };
 }
 
 function assertGitReady(paths, exec, { allowPublicReceipt = false } = {}) {
@@ -1140,6 +1155,7 @@ export async function prepareGi088V19Release({ repoRoot = process.cwd(), now = n
   const parentV11 = validateGi088V19ParentV11Failure(paths);
   const parentV12 = validateGi088V19ParentV12Failure(paths);
   const parentV13 = validateGi088V19ParentV13Failure(paths);
+  const parentV14 = validateGi088V19ParentV14Failure(paths);
   const sourceHashes = calculateGi088V19SourceHashes(paths);
   const planFingerprint = calculateGi088V19PlanFingerprint(sourceHashes);
   const state = {
@@ -1154,6 +1170,7 @@ export async function prepareGi088V19Release({ repoRoot = process.cwd(), now = n
     parentV11,
     parentV12,
     parentV13,
+    parentV14,
     productOwnerPreviewVerdict: "pending",
     baseline: {
       deploymentId: GI088_V19_BASELINE_DEPLOYMENT,
@@ -1327,11 +1344,11 @@ export function assertParentCandidateApplicationUnchanged(paths, exec, parentCom
 }
 
 async function adoptParentCandidate({ paths, state, exec, now }) {
-  const { previewEvidence, parentV13 } = verifyLocalReleaseInputs(paths, state);
+  const { previewEvidence, parentV14 } = verifyLocalReleaseInputs(paths, state);
   validatePreviewReviewFile(paths, previewEvidence);
   assertGi088V19CommandAllowed(state, "adopt-parent-candidate");
   assertGitReady(paths, exec, { allowPublicReceipt: true });
-  assertParentCandidateApplicationUnchanged(paths, exec, parentV13.candidateSourceCommit);
+  assertParentCandidateApplicationUnchanged(paths, exec, parentV14.candidateSourceCommit);
   acquireLock(paths, "adopt-parent-candidate", now);
   state.status = "parent_candidate_adoption_started";
   state.updatedAt = now.toISOString();
@@ -1353,18 +1370,18 @@ async function adoptParentCandidate({ paths, state, exec, now }) {
       throw new Error("GI088_V19_RELEASE_PRODUCTION_BASELINE_DRIFT");
     }
     const inspected = parseJsonOutput(
-      exec("vercel", buildGi088V19VercelArgs("inspect", parentV13.candidateDeploymentId), {
+      exec("vercel", buildGi088V19VercelArgs("inspect", parentV14.candidateDeploymentId), {
         cwd: paths.root,
         env: process.env
       }).stdout,
       "GI088_V19_RELEASE_DEPLOY_INSPECT_INVALID"
     );
     if (
-      inspected.id !== parentV13.candidateDeploymentId ||
+      inspected.id !== parentV14.candidateDeploymentId ||
       String(inspected.readyState ?? inspected.state ?? "").toUpperCase() !== "READY" ||
       String(inspected.target ?? "").toLowerCase() !== "production" ||
       `https://${String(inspected.url ?? "").replace(/^https?:\/\//u, "")}` !==
-        parentV13.candidateDeploymentUrl
+        parentV14.candidateDeploymentUrl
     ) {
       throw new Error("GI088_V19_RELEASE_PARENT_CANDIDATE_INVALID");
     }
@@ -1377,14 +1394,14 @@ async function adoptParentCandidate({ paths, state, exec, now }) {
       throw new Error("GI088_V19_RELEASE_PRODUCTION_ENVIRONMENT_MISMATCH");
     }
     state.candidate = {
-      deploymentId: parentV13.candidateDeploymentId,
-      deploymentUrl: parentV13.candidateDeploymentUrl,
+      deploymentId: parentV14.candidateDeploymentId,
+      deploymentUrl: parentV14.candidateDeploymentUrl,
       ready: true,
-      sourceCommit: parentV13.candidateSourceCommit,
+      sourceCommit: parentV14.candidateSourceCommit,
       strategy: GI088_V19_STRATEGY,
       domainPromoted: false,
       createdAt: now.toISOString(),
-      adoptedFromIdentity: parentV13.identity
+      adoptedFromIdentity: parentV14.identity
     };
     state.status = "candidate_ready_waiting_direct_smoke";
     state.error = null;
@@ -1413,25 +1430,21 @@ async function runDirectSmoke({ paths, state, exec, now, label = "candidate", in
   state.updatedAt = now.toISOString();
   writeState(paths, state);
   let databaseUrl = null;
-  let runtimeReadbackToken = null;
   let registered = null;
   let turn = null;
   try {
-    const production = productionDatabaseUrl(
+    databaseUrl = productionDatabaseUrl(
       paths,
       exec,
       GI088_V19_STRATEGY,
       GI088_V19_CANDIDATE_MODEL
     );
-    databaseUrl = production.databaseUrl;
-    runtimeReadbackToken = production.runtimeReadbackToken;
     turn = directVisibleTurn({
       exec,
       paths,
       deploymentUrl,
       label,
       input,
-      runtimeReadbackToken,
       onRegistered: (identity) => {
         registered = identity;
         state.temporaryUser = {
@@ -1520,13 +1533,13 @@ async function cleanupTemporaryReleaseUser({ paths, state, exec, now }) {
   state.updatedAt = now.toISOString();
   writeState(paths, state);
   try {
-    const production = productionDatabaseUrl(
+    const databaseUrl = productionDatabaseUrl(
       paths,
       exec,
       GI088_V19_STRATEGY,
       GI088_V19_CANDIDATE_MODEL
     );
-    deleteTemporaryUser(exec, production.databaseUrl, state.temporaryUser.userId);
+    deleteTemporaryUser(exec, databaseUrl, state.temporaryUser.userId);
     state.temporaryUser = null;
     state.status = "temporary_user_cleanup_completed_release_stopped_for_review";
     state.error = null;
