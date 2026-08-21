@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "identity": "2026-08-20.gi088-complete-response-first-v1-9-production-release-v1-3-model-environment-contract",
+  "status": "product_owner_preview_pass_ready_for_candidate_deploy",
+  "planFingerprint": "7989aa80384854bff7c0f0ee7ceb5a921c1a0feeff1566d975a4a18f1111a8c8",
+  "productOwnerPreviewVerdict": "pass",
+  "baseline": {
+    "deploymentId": "dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5",
+    "strategy": "baseline",
+    "domain": "https://dailylight.chat"
+  },
+  "candidate": null,
+  "smoke": null,
+  "promotion": null,
+  "onlineRegression": null,
+  "rollback": null,
+  "error": null,
+  "updatedAt": "2026-08-21T02:58:45.568Z",
+  "publicSensitiveContentStored": false
+}
