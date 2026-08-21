@@ -5,8 +5,8 @@
 - 最后核验：`2026-08-20`
 - 权威入口：[`docs/README.md`](../../README.md)
 - 任务编号：`DL-PROD-20260819`
-- 当前本地候选分支：`codex/production-evidence-hardening-stage4-backend-final-20260820`
-- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-stage4-backend-final-20260820`
+- 当前本地候选分支：`codex/production-evidence-hardening-stage4-frontend-final-20260820`
+- 当前工作区：`/Users/zouzhijie/Desktop/Happiness-system-stage4-frontend-final-20260820`
 - 上游五阶段工作分支：`codex/production-evidence-hardening-20260819`
 
 ## 1. 目标与当前事实
@@ -54,6 +54,7 @@
 - 第一批范围冻结为后端可靠回合与工作区投影的纯拆分：代码边界共 `5` 个文件，其中 `4` 个为服务源码／单元合同，`1` 个为 PostgreSQL 并发合同；API、SSE、错误码、事件顺序、数据库结果和公开行为保持兼容。
 - 第一批保留并显式冻结当前并发恢复债务：两个恢复请求竞争同一失败回合时只允许一个进入下游，`resumeAttemptCount=2` 继续作为现状记录；本批维持该行为。
 - 事件中心前端拆分状态 Hook、outbox、消息输入、侧栏和错误恢复。
+- 第二批范围冻结为事件中心前端状态与可靠恢复的纯拆分：基于最新 main merge `d98c915`，只重放工作区组件、状态 Hook、可靠回合恢复 Hook 与工作区单元合同 `4` 个文件；Stage 2 的跨日期地址等待和按接口地址分流测试继续保留。
 - 当天日记工作区拆分数据、事件卡、生成更新、编辑保存和时间线。
 - 保持 API、SSE、数据库、错误码、幂等键、事件名和开关兼容；历史 `InterviewShell` 与 `joy-interview.service.ts` 继续封存。
 - 阶段 3 的同意租约当前使用最长 `55s` 的低并发 interactive transaction；阶段 4 观察门增加验证／Few-shot 调用 P95、撤回等待 P95、事务超时、提交结果未知、连接池占用与耗尽。长期方向为具备传输确认的 durable dispatch acknowledgment／consent epoch，相关结构变更继续受数据库迁移与接口停止门约束。
@@ -113,7 +114,7 @@
 | 1. 数据口径 v2 | Production 已发布·核心回验通过·管理员成功读取 pending | 发布头 `a86a4ba`；main merge `305f209`；Production `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5`；正式域名权限保护与最小产品 smoke 通过 |
 | 2. 零模型 E2E | 已合入 main·热修复远程门与 main CI 全绿·Preview 通过至需更新·Production blocked | PR #41 合入 `77de8d1`；PR #43 final head 两套 CI 全绿并合入 `795417d`，main CI 全绿；日记更新与人工保护待跑 |
 | 3. Golden Set v2 | 已合入 main·收集 pending | PR #44 已合入 main `ef7bf94`；`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，正文开关保持关闭 |
-| 4. 主链重构 | 第一批工程门通过·Preview smoke transport_blocked·最终回执头待验证·Production blocked | PR #45 工程门保持通过；`b004f38` Preview Ready，受控匿名请求在到达应用前发生 TLS `SSL_ERROR_SYSCALL`，其余 smoke 按停止门 `not_run` |
+| 4. 主链重构 | 第一批已合入 main·第二批本地门全绿·远程门 pending·Production P1 blocked | PR #45 已合入 main `548fda5`；画像测试夹具热修 PR #46 已合入 `d98c915` 且 main CI 全绿；第二批前端候选仅含 `4` 个文件，本地定向 `45/45`、压力 `90/90`、全量 `3307` 条与零模型 E2E `11/11` 通过；详见 `PEH-033`～`PEH-035` |
 | 5. 月度洞察评估 | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；2 条低数据量用例 Provider 调用 `0`，其余 4 条候选调用 `not_run`；真实用户月 `0`、模型调用 `0`，Production 保持确定性 `AnalysisNarrative` |
 
 问题、归因和处理状态统一记录在[问题台账](../../../artifacts/production-evidence-hardening/2026-08-19/issue-ledger.md)。
@@ -190,4 +191,14 @@
 - 两套远程零模型 E2E 均为 `11/11`、`AIRequestLog=0`、12 条 Trace；临时 Schema `daily_light_e2e_mt1epstb_86372d7789` 与 `daily_light_e2e_mt1er2wm_42327172f6` 均已删除。Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` 为 Ready，target 为 `preview`。
 - `b004f38b22b7d18e77fb4deb21389a30ba80d86e` 对应 Preview `dpl_7uHdBKXy9RvZhbWVWrEXWq3jYZAG` 为 Ready。受控 smoke 仅执行一次匿名 `GET /api/interview/event-centered/sessions?limit=1`，本机传输链路在 TLS 握手发生 `SSL_ERROR_SYSCALL`；应用响应 `0`、重试 `0`。匿名保护为 `technical_blocked`；登录、登录态、事件中心列表读取和最小 session start 均为 `not_run`。
 - 该次 smoke 的业务写入 `0`、模型端点请求 `0`、Production 访问 `0`；`AIRequestLog` 增量因缺少合法只读路径记为 `unconfirmed`。账号、权限、环境变量、代码和 deployment 配置变更均为 `0`；Preview Ready 只承担构建与部署事实，产品冒烟继续单独记账，详见 `PEH-031`。
-- 当前停止点：本次 transport 回执提交后的最终 head 两套 CI 与 Preview Ready 待验证，PR 合并保持 pending。Production 继续受 Stage 2 管理员成功读取、日记更新人工保护、传输链路与发布观察门约束，本批保持 Production blocked；回退方式为撤销本批纯拆分提交并保持正式域名指向阶段 1 deployment。
+- 第一批最终 head `382457b811b311d1961670ffef46152cc37ad1ba` 已由 PR #45 合入 main merge `548fda550ac2724da0c6195e903c1f23bf9b6be8`。合并后的画像测试夹具时间竞争由 `PEH-032` 独立修复；PR #46 已合入 main merge `d98c9156afa4ed5d5c23312580922256080f64d3`，main CI run `32365805590` attempt 1 全绿、零模型 E2E `11/11`。Preview 产品 smoke 仍为 `transport_blocked`，Production 继续使用阶段 1 deployment。
+
+### 阶段 4 第二批前端发布前状态｜2026-08-20
+
+- 当前发布线基于 `origin/main@d98c9156afa4ed5d5c23312580922256080f64d3`，完整继承 Stage 2 热修复、Stage 5、Stage 3、Stage 4 第一批与画像确定性测试热修；实现提交 `61dd4cf` 只重放事件中心前端单提交，P1 修复提交 `03b8501` 继续保持同一文件边界，旧发布线的文档提交已退出重放。
+- 差异范围严格限定为 `4` 个文件：工作区组件、状态 Hook、可靠回合恢复 Hook 与工作区单元合同。Prisma、依赖、CI、E2E 基础设施、日记和画像文件的第二批差异均为 `0`；用户可见行为、请求合同、幂等键和恢复语义保持兼容。
+- 独立审查发现 accepted outbox A 服务端可见时可能清掉用户后来输入的同分支草稿 B，且旧 A 的持久层清理可能删除新 outbox B。修复后 accepted-visible 只按 `clientTurnId` 条件清理 outbox，不再改写 composer draft；真实组件同文 B 重挂恢复、新 B outbox 条件清理与 `SecurityError` 三项合同 `18/18` 通过，独立复核结论 `P0=0 / P1=0 / P2=0`，详见 `PEH-035`。
+- 本地发布门已通过：定向 `6` 个文件 `45/45`；核心工作区 `18` 条并行 `5` 轮共 `90/90`；全量 `374 passed / 17 skipped` 个文件、`3307 passed / 95 skipped / 0 failed` 条用例；类型通过；Lint `0 error / 43` 条继承 warning；Production build `77/77`、16 条继承 tracing warning；两套 Prisma、文档 `24` 个核心文档／`847` 条链接／`1` 个当前入口和差异检查通过。
+- 零模型 E2E 为 `11/11`、`AIRequestLog=0`、12 条 Trace；临时 Schema `daily_light_e2e_mt26u4bp_9f45ddda37` 已删除，同前缀残留 `0`。相对 main 代码差异继续严格为 `4` 个文件，日记与画像代码差异为 `0`。
+- 已确认 Production P1：事件卡保存后，日记“需更新”状态存在被较旧读取结果覆盖的 `stale` 刷新竞态。独立归因确认该问题存在于第一批 main 基线，第二批 `4` 文件引入数为 `0`；详见 `PEH-033`。
+- 修复归属第三批日记工作区候选 `bf45`。完成门增加延迟 `GET /api/journal/day` 与保存响应交错单元合同，以及零模型 E2E 全套连续 `3` 轮通过。第二批下一门为文档提交、最终独立复核、推送和创建 PR；本批保持不合并、不发布 Production，Preview 只执行逐步单次受控 smoke，TLS 失败立即停止并保持零重试。发布门见 `PEH-034`。

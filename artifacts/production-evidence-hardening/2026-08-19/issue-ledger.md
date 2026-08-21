@@ -190,7 +190,7 @@
 - 产品判断：第一批以降低主链维护风险、保持用户可见行为和所有公开合同兼容为目标；并发恢复尝试次数作为继承债务显式封存，本批保持现状。
 - Codex 评估：成功工作区 JSON、并发恢复结果、单卡与幂等行为已有单元、真实 PostgreSQL、全量回归和零模型 E2E 四层保护。后续若调整恢复计数，需要单独定义用户价值、数据库语义、指标基线和回退门。
 - 待验证假设：当前纯拆分在远程 CI 与隔离 Preview 中继续保持 API、SSE、错误码、事件顺序、幂等键和数据库结果兼容；Stage 2 阻断解除并完成 Production 发布后，至少 24 小时／20 次内部有效回应的观察门可支持线上判断。
-- 当前处理状态：本地门已通过；PR #45 初始 head `0a1471d` 的 push／PR CI 均 attempt 1 全绿、远程零模型 E2E 均 `11/11`，Preview `dpl_C6VDNrDThi2jkq3o6ADEGtUaszDj` Ready。本次公开回执提交后的最终 head 远程门待验证，PR 合并与 Production 保持 pending／blocked；正式域名继续运行阶段 1 deployment。回退方式为撤销第一批三个纯拆分／合同提交。
+- 当前处理状态：本地门与 PR 工程门已通过；第一批最终 head `382457b` 已由 PR #45 合入 main merge `548fda5`。合并后的画像测试夹具时间竞争已由 `PEH-032` 闭环；Preview 产品 smoke 继续保持 `transport_blocked`。Production 保持 blocked，正式域名继续运行阶段 1 deployment。回退方式为撤销第一批三个纯拆分／合同提交。
 
 ## PEH-031｜Stage 4 第一批 Preview smoke 受 TLS 传输阻断
 
@@ -206,4 +206,28 @@
 - 产品判断：本项归入测试隔离与确定性问题，Stage 4 后端产品行为、画像产品逻辑和缓存合同保持原值；Production 继续使用阶段 1 deployment，Stage 4 Production 继续关闭。
 - Codex 评估：旧夹具在循环中为每条事实调用实时 `new Date()`，产品逻辑再按 `updatedAt` 选择最近事实；高负载下循环跨越毫秒边界会使 `fact 1` 或 `fact 2` 成为真实最新项。精确用例单跑、完整文件和随机顺序可通过，并发进程压力可稳定暴露同类漂移；仓储与 Prisma 均为模块 mock，当前证据不支持缓存未清理或全局状态污染归因。
 - 待验证假设：只把测试夹具的 `createdAt / updatedAt` 固定为 `fact 0` 最新的确定性顺序，即可消除调度敏感性，同时继续验证产品按时间选择最新事实的既有合同。
-- 当前处理状态：最小修复仅修改 `tests/unit/portrait-synthesis.service.test.ts`，产品源码、Schema、依赖和 CI 配置变更均为 `0`。修复后精确用例与完整文件通过，随机顺序 `50/50`、并发进程 `32/32`、全量 `3301` 条通过；类型、Lint `0 errors / 43 inherited warnings`、build `77/77`、零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 与临时 Schema 删除通过。独立热修 PR、远程双 CI 与合并后 main CI 待验证，全部保持零重跑停止门。
+- 当前处理状态：已解决。最小修复仅修改 `tests/unit/portrait-synthesis.service.test.ts`，产品源码、Schema、依赖和 CI 配置变更均为 `0`。修复后精确用例与完整文件通过，随机顺序 `50/50`、并发进程 `32/32`、全量 `3301` 条通过；类型、Lint `0 errors / 43 inherited warnings`、build `77/77`、零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace 与临时 Schema 删除通过。PR #46 已合入 main merge `d98c915`；合并后 main CI run `32365805590` attempt 1 全绿，零模型 E2E `11/11`、模型调用 `0`。
+
+## PEH-033｜事件卡保存后的日记 stale 刷新竞态
+
+- 已确认事实：Stage 4 第二批旧基线的首轮全套零模型 E2E 为 `10/11`；事件卡内容已经保存并展示，今日日记仍显示“已保存”，预期的“需更新／更新日记”未出现。该单例隔离复跑 `1/1`，随后两轮全套连续 `11/11`。独立归因确认同一竞态已经存在于第一批 main 基线；第二批差异严格为事件中心访谈 `4` 个前端文件，与日记读取、保存和来源签名代码交集为 `0`。
+- 产品判断：该问题定为 Production P1。第二批源码工程门可以继续，前端 Production 完成状态保持关闭；日记来源变化后，用户必须稳定看到“需更新”并能在更新时保留手工修改。
+- Codex 评估：日记页面的异步当天读取可能晚于事件卡保存返回，并用较旧状态覆盖保存后的新状态。修复归属第三批日记工作区候选 `bf45`，由当天数据状态拆分统一处理读取与保存的先后权；第二批保持日记代码改动为 `0`。
+- 待验证假设：增加延迟 `GET /api/journal/day` 与事件卡保存响应交错的单元合同后，可以稳定阻止旧读取覆盖新保存状态；修复后零模型 E2E 全套连续 `3` 轮均能通过日记生成、编辑、保存、需更新和人工修改保护。
+- 当前处理状态：`Production P1 / frontend source-main allowed / Production blocked`。第二批发布门如实记录所有 E2E 结果；第三批完成交错单元合同、全量门与 E2E 连续三轮前，阶段 4 Production 保持 blocked。
+
+## PEH-034｜Stage 4 第二批前端发布门
+
+- 已确认事实：第二批实现提交 `61dd4cf` 与 P1 修复提交 `03b8501` 基于最新 main merge `d98c915`，只包含事件中心工作区组件、状态 Hook、可靠回合恢复 Hook 与工作区单元合同 `4` 个文件；旧发布线文档提交已退出重放，主线 `PEH-032` 完整保留。Prisma、依赖、CI、E2E 基础设施、日记和画像文件的第二批差异均为 `0`。
+- 产品判断：本批只降低事件中心前端维护风险并保持用户可见行为与恢复合同兼容。完整本地门通过后可以推送并创建 PR；合并、Production 发布与 `PEH-033` 日记 P1 修复继续保持独立停止点。
+- Codex 评估：工作区状态、请求、outbox 和可靠恢复职责拆出后，现有 Stage 2 地址等待、接口分流、幂等 ID、结构化错误、焦点恢复和内部导航合同继续由定向、压力、全量和浏览器四层回归保护。独立审查发现并关闭的草稿／新 outbox 清理问题由 `PEH-035` 承担。
+- 待验证假设：push 与 PR 两套 CI attempt 1 全绿，隔离 Preview Ready 且受控单次 smoke 不出现新的前端回归。
+- 当前处理状态：`local full gates passed / push pending / PR pending / Preview pending / Production blocked`。本地定向 `45/45`、核心工作区压力 `90/90`、全量 `3307 passed / 95 skipped / 0 failed`、类型、Lint、build、双 Prisma、文档与差异检查通过；零模型 E2E `11/11`、`AIRequestLog=0`、12 条 Trace，临时 Schema 已删除且残留 `0`。Preview smoke 按步骤各执行一次；TLS 失败立即停止并保持零重试，业务写入、模型请求和 Production 访问分别记账。
+
+## PEH-035｜accepted 回合清理误删下一草稿与新 outbox
+
+- 已确认事实：独立审查发现，accepted outbox A 对应用户消息后来在同分支服务端可见时，新状态 Hook 会清掉用户在恢复读取失败后输入的下一草稿 B；即使 B 与 A 原话完全相同，它仍是新的用户输入。旧 A effect 还会无条件删除同分支持久层 outbox，使已经写入的新 outbox B 丢失。
+- 产品判断：该问题按本批 P1 处理，提交与推送在修复和独立复核前暂停。用户在可靠保存后的任何新草稿与新轮次都必须继续保留；A 服务端可见只授权清理 A 自己的 outbox。
+- Codex 评估：发送 A 时 composer 已在等待请求前同步清空，accepted-visible cleanup 只承担 outbox 收束。修复将 composer draft 完全移出该清理路径，并让内存与持久层都按 expected `clientTurnId` 条件清除 outbox；持久层不可用时保持内存可用和用户草稿安全。
+- 待验证假设：真实组件链路 A accepted → 恢复 GET 失败 → 用户输入与 A 同文的 B → 同分支重挂看到 A，可稳定清 A outbox并保留 B；旧 A 清理遇到新 outbox B 或 `SecurityError` 时不造成新数据丢失。
+- 当前处理状态：已解决。提交 `03b8501` 增加同文草稿重挂、outbox CAS 与 `SecurityError` 三项合同；独立单文件复跑 `18/18`，复核结论 `P0=0 / P1=0 / P2=0`。后续定向 `45/45`、压力 `90/90`、全量 `3307 passed / 95 skipped / 0 failed`、类型、Lint、build、双 Prisma 与零模型 E2E `11/11` 全部通过；模型调用 `0`，临时 Schema 残留 `0`。
