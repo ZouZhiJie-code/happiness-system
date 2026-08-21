@@ -45,9 +45,10 @@ function HeaderPlainContext({ title, subtitle }: { title: string; subtitle: stri
 type SiteHeaderProps = {
   isAdmin?: boolean;
   authenticated?: boolean;
+  userId?: string | null;
 };
 
-function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderProps) {
+function SiteHeaderInner({ isAdmin = false, authenticated = true, userId = null }: SiteHeaderProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const headerRef = useRef<HTMLElement | null>(null);
@@ -114,6 +115,7 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
           authenticated={authenticated}
           pathname={pathname}
           todayCalendarHref={todayCalendarHref}
+          userId={userId}
         />
       </div>
       </header>
@@ -121,6 +123,6 @@ function SiteHeaderInner({ isAdmin = false, authenticated = true }: SiteHeaderPr
   );
 }
 
-export function SiteHeader({ isAdmin = false, authenticated = true }: SiteHeaderProps) {
-  return <SiteHeaderInner isAdmin={isAdmin} authenticated={authenticated} />;
+export function SiteHeader({ isAdmin = false, authenticated = true, userId = null }: SiteHeaderProps) {
+  return <SiteHeaderInner isAdmin={isAdmin} authenticated={authenticated} userId={userId} />;
 }

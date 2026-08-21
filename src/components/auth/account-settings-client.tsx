@@ -3,29 +3,7 @@
 import React from "react";
 
 import { AccountDangerZone } from "@/components/auth/account-danger-zone";
-import { clearLocalAuthUserId, getLocalAuthUserId, getScopedLocalStorageKey } from "@/features/auth/auth-local";
-import {
-  clearStoredInterviewSessionId,
-  interviewDimensionStorageKey,
-  interviewDimensions,
-  interviewSessionStorageKey
-} from "@/features/interview/dimensions";
-
-function clearInterviewClientState() {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const localAuthUserId = getLocalAuthUserId();
-  interviewDimensions.forEach((dimension) => {
-    clearStoredInterviewSessionId(dimension);
-  });
-  if (localAuthUserId) {
-    window.localStorage.removeItem(getScopedLocalStorageKey(interviewSessionStorageKey, localAuthUserId));
-    window.localStorage.removeItem(getScopedLocalStorageKey(interviewDimensionStorageKey, localAuthUserId));
-  }
-  clearLocalAuthUserId();
-}
+import { clearCurrentUserInterviewRecoveryState } from "@/features/interview/client-recovery-state";
 
 type SessionUser = {
   id: string;
@@ -50,7 +28,7 @@ export function AccountSettingsClient({ user }: AccountSettingsClientProps) {
       throw new Error("退出登录失败，请重试");
     }
 
-    clearInterviewClientState();
+    clearCurrentUserInterviewRecoveryState(user?.id);
     leaveAccount("/");
   }
 
@@ -74,7 +52,7 @@ export function AccountSettingsClient({ user }: AccountSettingsClientProps) {
       );
     }
 
-    clearInterviewClientState();
+    clearCurrentUserInterviewRecoveryState(user?.id);
     leaveAccount("/");
   }
 

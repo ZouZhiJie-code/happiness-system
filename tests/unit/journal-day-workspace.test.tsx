@@ -1,12 +1,20 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 
 import {
   JournalDayWorkspace,
   JournalDayWorkspaceView
 } from "@/components/journal/journal-day-workspace";
+import {
+  deriveJournalDayView,
+  mergeJournalDayRefresh
+} from "@/components/journal/journal-day-view-merge";
+import { useJournalDailyEditor } from "@/components/journal/use-journal-daily-editor";
+import { useJournalRecordEditor } from "@/components/journal/use-journal-record-editor";
+import { buildJournalDailySourceSignature } from "@/features/journal-daily/source-signature";
 import type {
   JournalDailyDisplayStatus,
+  JournalDailyEntryGenerationRecord,
   JournalDailyEntryRecord,
   JournalDailyJournalView,
   JournalDailySourceEntry
@@ -29,6 +37,8 @@ const source: JournalDailySourceEntry = {
   recordCount: 3,
   sourceMessageIds: ["message-1", "message-2"]
 };
+const sourceSignature1 = buildJournalDailySourceSignature([source]);
+const sourceSignature2 = buildJournalDailySourceSignature([{ ...source, contentRevision: 2 }]);
 
 function buildEntry(status: "draft" | "modified" | "saved" = "draft", revision = 1): JournalDailyEntryRecord {
   return {
@@ -46,7 +56,7 @@ function buildEntry(status: "draft" | "modified" | "saved" = "draft", revision =
     status,
     sourceEntryIds: ["record-1"],
     sourceEventIds: ["event-1"],
-    sourceSignature: "source-signature-1",
+    sourceSignature: sourceSignature1,
     sourceSnapshot: { schemaVersion: 2, entryDate: "2026-05-02", sources: [source] },
     sourceUpdatedAt: "2026-05-02T03:00:00.000Z",
     contentRevision: revision,
@@ -68,7 +78,7 @@ function buildView(displayStatus: JournalDailyDisplayStatus, options?: { empty?:
     savedSources: sources,
     legacyHistory: [],
     pendingSaveEntryIds: [],
-    sourceSignature: "source-signature-1",
+    sourceSignature: sourceSignature1,
     collection: sources.length === 0 ? { kind: "empty" } : { kind: "single_entry", entryId: "record-1" },
     entry,
     freshness: entry ? (displayStatus === "stale" ? "stale" : entry.status) : "none",
@@ -80,6 +90,51 @@ function buildView(displayStatus: JournalDailyDisplayStatus, options?: { empty?:
 
 function jsonResponse(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), { status, headers: { "Content-Type": "application/json" } });
+}
+
+function createDeferredResponse() {
+  let resolve!: (response: Response) => void;
+  const promise = new Promise<Response>((next) => {
+    resolve = next;
+  });
+  return { promise, resolve };
+}
+
+function useInterleavedEditorHarness(initialView: JournalDailyJournalView) {
+  const [view, setView] = React.useState(initialView);
+  const viewRef = React.useRef<JournalDailyJournalView | null>(initialView);
+  const sourceRefreshAppliedRef = React.useRef(false);
+  const commitView = React.useCallback((nextView: JournalDailyJournalView) => {
+    viewRef.current = nextView;
+    setView(nextView);
+  }, []);
+  const refresh = React.useCallback(() => {
+    if (sourceRefreshAppliedRef.current) return;
+    const latestView = viewRef.current;
+    if (!latestView) return;
+    sourceRefreshAppliedRef.current = true;
+    commitView({
+      ...latestView,
+      sourceSignature: sourceSignature2,
+      freshness: "stale",
+      displayStatus: "stale"
+    });
+  }, [commitView]);
+  const record = useJournalRecordEditor({
+    entryDate: initialView.entryDate,
+    view,
+    viewRef,
+    commitView,
+    refresh
+  });
+  const daily = useJournalDailyEditor({
+    entryDate: initialView.entryDate,
+    view,
+    viewRef,
+    commitView,
+    refresh
+  });
+  return { view, record, daily };
 }
 
 describe("journal day workspace", () => {
@@ -297,6 +352,104 @@ describe("journal day workspace", () => {
     expect(screen.getByRole("textbox", { name: "日记正文" })).toHaveValue("自动暂存后的今日日记。");
   });
 
+  it("locks the daily submission snapshot while its save request is pending", async () => {
+    const saveDeferred = createDeferredResponse();
+    const firstDraft = "点击保存时提交的今日日记。";
+    const laterDraft = "等待保存期间继续输入但不应混入本次提交。";
+    const updated = { ...buildEntry("modified", 2), content: firstDraft };
+    const saved = {
+      ...updated,
+      status: "saved" as const,
+      savedRevision: 2,
+      savedAt: "2026-05-02T06:00:00.000Z"
+    };
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+      if (url.startsWith("/api/journal/day")) return jsonResponse(buildView("saved"));
+      if (url === "/api/journal/daily/daily-1" && init?.method === "PATCH") return jsonResponse(updated);
+      if (url === "/api/journal/daily/daily-1/save" && init?.method === "POST") return saveDeferred.promise;
+      return jsonResponse({}, 404);
+    }) as typeof fetch;
+
+    render(<JournalDayWorkspace entryDate="2026-05-02" />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑日记" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "日记正文" }), {
+      target: { value: firstDraft }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "保存日记" }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+      "/api/journal/daily/daily-1/save",
+      expect.objectContaining({ method: "POST" })
+    ));
+
+    const editor = screen.getByRole("textbox", { name: "日记正文" });
+    expect(editor).toBeDisabled();
+    expect(editor).toHaveValue(firstDraft);
+
+    await act(async () => {
+      saveDeferred.resolve(jsonResponse(saved));
+    });
+    expect(await screen.findByText(firstDraft)).toBeInTheDocument();
+    expect(screen.queryByText(laterDraft)).not.toBeInTheDocument();
+  });
+
+  it("locks the record submission snapshot while its completion request is pending", async () => {
+    const saveDeferred = createDeferredResponse();
+    const firstDraft = "点击完成时提交的事件卡正文。";
+    const laterDraft = "等待完成期间继续输入但不应混入本次提交。";
+    const updated = {
+      ...source,
+      content: firstDraft,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+    const saved = {
+      ...updated,
+      savedRevision: 2,
+      savedAt: "2026-05-02T05:01:00.000Z"
+    };
+    let dayReadCount = 0;
+    global.fetch = vi.fn(async (input, init) => {
+      const url = String(input);
+      if (url.startsWith("/api/journal/day")) {
+        dayReadCount += 1;
+        return jsonResponse(dayReadCount === 1 ? buildView("saved") : {
+          ...buildView("stale"),
+          savedSources: [saved],
+          sourceSignature: sourceSignature2
+        });
+      }
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return jsonResponse(updated);
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        return saveDeferred.promise;
+      }
+      return jsonResponse({}, 404);
+    }) as typeof fetch;
+
+    render(<JournalDayWorkspace entryDate="2026-05-02" />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑内容" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "正文" }), {
+      target: { value: firstDraft }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "完成编辑" }));
+    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+      "/api/interview/event-centered/journal/record-1/save",
+      expect.objectContaining({ method: "POST" })
+    ));
+
+    const editor = screen.getByRole("textbox", { name: "正文" });
+    expect(editor).toBeDisabled();
+    expect(editor).toHaveValue(firstDraft);
+
+    await act(async () => {
+      saveDeferred.resolve(jsonResponse(saved));
+    });
+    expect(await screen.findByText(firstDraft)).toBeInTheDocument();
+    expect(screen.queryByText(laterDraft)).not.toBeInTheDocument();
+  });
+
   it("flushes the latest daily draft before exiting edit mode", async () => {
     const initialView = buildView("draft");
     const autosaved = { ...buildEntry("modified", 2), content: "退出前也要暂存的内容。" };
@@ -344,6 +497,42 @@ describe("journal day workspace", () => {
     expect(screen.getByRole("button", { name: action })).toHaveClass("ui-status-action");
     expect(screen.getByRole("button", { name: "编辑日记" })).toBeInTheDocument();
   });
+
+  it.each([
+    ["ungenerated", "生成日记", "generate", null],
+    ["stale", "更新日记", "update", 1]
+  ] as const)(
+    "keeps the %s generation request bound to the current source signature and content revision",
+    async (status, action, task, expectedContentRevision) => {
+      global.fetch = vi.fn(async (input, init) => {
+        const url = String(input);
+        if (url.startsWith("/api/journal/day")) return jsonResponse(buildView(status));
+        if (url === "/api/journal/daily/generate" && init?.method === "POST") {
+          return jsonResponse({ accepted: true }, 202);
+        }
+        return jsonResponse({}, 404);
+      }) as typeof fetch;
+
+      render(<JournalDayWorkspace entryDate="2026-05-02" />);
+      fireEvent.click(await screen.findByRole("button", { name: action }));
+
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledWith(
+        "/api/journal/daily/generate",
+        expect.objectContaining({ method: "POST" })
+      ));
+      const generationCall = vi.mocked(global.fetch).mock.calls.find(
+        ([input]) => String(input) === "/api/journal/daily/generate"
+      );
+      const payload = JSON.parse(String(generationCall?.[1]?.body));
+      expect(payload).toMatchObject({
+        entryDate: "2026-05-02",
+        task,
+        expectedSourceSignature: sourceSignature1,
+        expectedContentRevision
+      });
+      expect(payload.clientOperationId).toMatch(/^journal-daily-2026-05-02-\d+$/u);
+    }
+  );
 
   it("keeps the update progress visible while the action is busy", () => {
     render(
@@ -398,5 +587,662 @@ describe("journal day workspace", () => {
     await waitFor(() => expect(screen.queryByRole("textbox", { name: "日记正文" })).not.toBeInTheDocument());
     expect(screen.getByText("需更新")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "更新日记" })).toBeInTheDocument();
+  });
+
+  it.each([
+    { responseOrder: "refresh-first", caseName: "刷新先返回、记录保存后返回" },
+    { responseOrder: "save-first", caseName: "记录保存先返回、刷新后返回" }
+  ] as const)("keeps a saved daily stale across real workspace refresh/save races: $caseName", async ({ responseOrder }) => {
+    const initialView = buildView("saved");
+    const recordPatchDeferred = createDeferredResponse();
+    const dayRefreshDeferred = createDeferredResponse();
+    const recordSaveDeferred = createDeferredResponse();
+    const recordContent = "真实页面交错请求更新后的记录正文。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+    const savedRecord = {
+      ...updatedRecord,
+      savedRevision: 2,
+      savedAt: "2026-05-02T05:01:00.000Z"
+    };
+    const refreshedStaleView: JournalDailyJournalView = {
+      ...initialView,
+      savedSources: [savedRecord],
+      sourceSignature: sourceSignature2,
+      freshness: "stale",
+      displayStatus: "stale"
+    };
+    let initialDayServed = false;
+    let markRecordSaveStarted!: () => void;
+    const recordSaveStarted = new Promise<void>((resolve) => {
+      markRecordSaveStarted = resolve;
+    });
+
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.startsWith("/api/journal/day")) {
+        if (!initialDayServed) {
+          initialDayServed = true;
+          return Promise.resolve(jsonResponse(initialView));
+        }
+        return dayRefreshDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordPatchDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        markRecordSaveStarted();
+        return recordSaveDeferred.promise;
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(<JournalDayWorkspace entryDate="2026-05-02" />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑内容" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "正文" }), {
+      target: { value: recordContent }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "完成编辑" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      "/api/interview/event-centered/journal/record-1",
+      expect.objectContaining({ method: "PATCH" })
+    ));
+    await act(async () => {
+      recordPatchDeferred.resolve(jsonResponse(updatedRecord));
+      await recordSaveStarted;
+    });
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([input]) =>
+      String(input).startsWith("/api/journal/day")
+    )).toHaveLength(2));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/journal/day?entryDate=2026-05-02",
+      expect.objectContaining({ cache: "no-store" })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/interview/event-centered/journal/record-1/save",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ expectedContentRevision: 2 })
+      })
+    );
+
+    if (responseOrder === "refresh-first") {
+      await act(async () => {
+        dayRefreshDeferred.resolve(jsonResponse(refreshedStaleView));
+      });
+      await waitFor(() => expect(screen.getByText("需更新")).toBeInTheDocument());
+      await act(async () => {
+        recordSaveDeferred.resolve(jsonResponse(savedRecord));
+      });
+    } else {
+      await act(async () => {
+        recordSaveDeferred.resolve(jsonResponse(savedRecord));
+      });
+      await waitFor(() => expect(screen.queryByRole("textbox", { name: "正文" })).not.toBeInTheDocument());
+      await act(async () => {
+        dayRefreshDeferred.resolve(jsonResponse(refreshedStaleView));
+      });
+    }
+
+    await waitFor(() => expect(screen.getByText("需更新")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "更新日记" })).toBeInTheDocument();
+    expect(screen.getByText(recordContent)).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "正文" })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { responseOrder: "refresh-first", caseName: "刷新先返回、日记保存后返回" },
+    { responseOrder: "daily-first", caseName: "日记保存先返回、刷新后返回" }
+  ] as const)("keeps a manual daily edit across real workspace refresh races: $caseName", async ({ responseOrder }) => {
+    const initialView = buildView("saved");
+    const recordPatchDeferred = createDeferredResponse();
+    const dayRefreshDeferred = createDeferredResponse();
+    const recordSaveDeferred = createDeferredResponse();
+    const dailyPatchDeferred = createDeferredResponse();
+    const dailySaveDeferred = createDeferredResponse();
+    const recordContent = "刷新请求等待期间更新后的记录正文。";
+    const dailyContent = "刷新请求等待期间人工保存的今日日记。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+    const savedRecord = {
+      ...updatedRecord,
+      savedRevision: 2,
+      savedAt: "2026-05-02T05:01:00.000Z"
+    };
+    const refreshedStaleView: JournalDailyJournalView = {
+      ...initialView,
+      savedSources: [savedRecord],
+      sourceSignature: sourceSignature2,
+      freshness: "stale",
+      displayStatus: "stale"
+    };
+    const updatedDaily = {
+      ...buildEntry("modified", 2),
+      content: dailyContent,
+      sourceSignature: sourceSignature1
+    };
+    const savedDaily = {
+      ...updatedDaily,
+      status: "saved" as const,
+      savedRevision: 2,
+      savedAt: "2026-05-02T05:02:00.000Z"
+    };
+    let initialDayServed = false;
+    let markRecordSaveStarted!: () => void;
+    const recordSaveStarted = new Promise<void>((resolve) => {
+      markRecordSaveStarted = resolve;
+    });
+    let markDailySaveStarted!: () => void;
+    const dailySaveStarted = new Promise<void>((resolve) => {
+      markDailySaveStarted = resolve;
+    });
+
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.startsWith("/api/journal/day")) {
+        if (!initialDayServed) {
+          initialDayServed = true;
+          return Promise.resolve(jsonResponse(initialView));
+        }
+        return dayRefreshDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordPatchDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        markRecordSaveStarted();
+        return recordSaveDeferred.promise;
+      }
+      if (url === "/api/journal/daily/daily-1" && init?.method === "PATCH") {
+        return dailyPatchDeferred.promise;
+      }
+      if (url === "/api/journal/daily/daily-1/save" && init?.method === "POST") {
+        markDailySaveStarted();
+        return dailySaveDeferred.promise;
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    });
+    global.fetch = fetchMock as typeof fetch;
+
+    render(<JournalDayWorkspace entryDate="2026-05-02" />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑内容" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "正文" }), {
+      target: { value: recordContent }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "完成编辑" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      "/api/interview/event-centered/journal/record-1",
+      expect.objectContaining({ method: "PATCH" })
+    ));
+
+    fireEvent.click(screen.getByRole("button", { name: "编辑日记" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "日记正文" }), {
+      target: { value: dailyContent }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "保存日记" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      "/api/journal/daily/daily-1",
+      expect.objectContaining({ method: "PATCH" })
+    ));
+
+    await act(async () => {
+      recordPatchDeferred.resolve(jsonResponse(updatedRecord));
+      await recordSaveStarted;
+    });
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([input]) =>
+      String(input).startsWith("/api/journal/day")
+    )).toHaveLength(2));
+    await act(async () => {
+      recordSaveDeferred.resolve(jsonResponse(savedRecord));
+    });
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "正文" })).not.toBeInTheDocument());
+
+    if (responseOrder === "refresh-first") {
+      await act(async () => {
+        dayRefreshDeferred.resolve(jsonResponse(refreshedStaleView));
+      });
+      await waitFor(() => expect(screen.getByText("需更新")).toBeInTheDocument());
+      await act(async () => {
+        dailyPatchDeferred.resolve(jsonResponse(updatedDaily));
+        await dailySaveStarted;
+      });
+      await act(async () => {
+        dailySaveDeferred.resolve(jsonResponse(savedDaily));
+      });
+    } else {
+      await act(async () => {
+        dailyPatchDeferred.resolve(jsonResponse(updatedDaily));
+        await dailySaveStarted;
+      });
+      await act(async () => {
+        dailySaveDeferred.resolve(jsonResponse(savedDaily));
+      });
+      await waitFor(() => expect(screen.getByText(dailyContent)).toBeInTheDocument());
+      await act(async () => {
+        dayRefreshDeferred.resolve(jsonResponse(refreshedStaleView));
+      });
+    }
+
+    await waitFor(() => expect(screen.getByText("需更新")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "更新日记" })).toBeInTheDocument();
+    expect(screen.getByText(recordContent)).toBeInTheDocument();
+    expect(screen.getByText(dailyContent)).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "日记正文" })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { responseOrder: "daily-first", caseName: "日记响应先返回、记录响应后返回" },
+    { responseOrder: "record-first", caseName: "记录响应先返回、日记响应后返回" }
+  ] as const)("merges interleaved record and daily edits: $caseName", async ({ responseOrder }) => {
+    const recordDeferred = createDeferredResponse();
+    const dailyDeferred = createDeferredResponse();
+    const recordContent = "交错请求中更新后的记录正文。";
+    const dailyContent = "交错请求中更新后的今日日记。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+    const updatedDaily = {
+      ...buildEntry("modified", 2),
+      content: dailyContent,
+      sourceSignature: sourceSignature1
+    };
+
+    global.fetch = vi.fn((input, init) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordDeferred.promise;
+      }
+      if (url === "/api/journal/daily/daily-1" && init?.method === "PATCH") {
+        return dailyDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        return Promise.resolve(jsonResponse({
+          ...updatedRecord,
+          savedRevision: 2,
+          savedAt: "2026-05-02T05:01:00.000Z"
+        }));
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useInterleavedEditorHarness(buildView("draft")));
+    act(() => {
+      result.current.record.beginEdit(source);
+      result.current.daily.beginEdit();
+    });
+    act(() => {
+      result.current.record.setEdit({
+        entryId: source.entryId,
+        title: source.title,
+        content: recordContent
+      });
+      result.current.daily.setEdit({
+        title: buildEntry().title,
+        content: dailyContent
+      });
+    });
+
+    let finishRecord!: Promise<void>;
+    let exitDaily!: Promise<void>;
+    act(() => {
+      finishRecord = result.current.record.finishEdit();
+      exitDaily = result.current.daily.exitEdit();
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/interview/event-centered/journal/record-1",
+      expect.objectContaining({ method: "PATCH" })
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/journal/daily/daily-1",
+      expect.objectContaining({ method: "PATCH" })
+    );
+
+    if (responseOrder === "daily-first") {
+      await act(async () => {
+        dailyDeferred.resolve(jsonResponse(updatedDaily));
+        await exitDaily;
+      });
+      await act(async () => {
+        recordDeferred.resolve(jsonResponse(updatedRecord));
+        await finishRecord;
+      });
+    } else {
+      await act(async () => {
+        recordDeferred.resolve(jsonResponse(updatedRecord));
+        await finishRecord;
+      });
+      await act(async () => {
+        dailyDeferred.resolve(jsonResponse(updatedDaily));
+        await exitDaily;
+      });
+    }
+
+    expect(result.current.view.savedSources[0]?.content).toBe(recordContent);
+    expect(result.current.view.entry?.content).toBe(dailyContent);
+    expect(result.current.view.sourceSignature).toBe(sourceSignature2);
+    expect(result.current.view.freshness).toBe("stale");
+    expect(result.current.view.displayStatus).toBe("stale");
+  });
+
+  it("merges a record save response into a newer daily edit", async () => {
+    const recordPatchDeferred = createDeferredResponse();
+    const recordSaveDeferred = createDeferredResponse();
+    const dailyPatchDeferred = createDeferredResponse();
+    let markRecordSaveStarted!: () => void;
+    const recordSaveStarted = new Promise<void>((resolve) => {
+      markRecordSaveStarted = resolve;
+    });
+    const recordContent = "正式保存前更新后的记录正文。";
+    const dailyContent = "记录正式保存期间更新的今日日记。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+    const updatedDaily = {
+      ...buildEntry("modified", 2),
+      content: dailyContent,
+      sourceSignature: sourceSignature1
+    };
+
+    global.fetch = vi.fn((input, init) => {
+      const url = String(input);
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordPatchDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        markRecordSaveStarted();
+        return recordSaveDeferred.promise;
+      }
+      if (url === "/api/journal/daily/daily-1" && init?.method === "PATCH") {
+        return dailyPatchDeferred.promise;
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useInterleavedEditorHarness(buildView("draft")));
+    act(() => {
+      result.current.record.beginEdit(source);
+      result.current.daily.beginEdit();
+    });
+    act(() => {
+      result.current.record.setEdit({ entryId: source.entryId, title: source.title, content: recordContent });
+      result.current.daily.setEdit({ title: buildEntry().title, content: dailyContent });
+    });
+
+    let finishRecord!: Promise<void>;
+    let exitDaily!: Promise<void>;
+    act(() => {
+      finishRecord = result.current.record.finishEdit();
+      exitDaily = result.current.daily.exitEdit();
+    });
+    await act(async () => {
+      recordPatchDeferred.resolve(jsonResponse(updatedRecord));
+      await recordSaveStarted;
+    });
+    await act(async () => {
+      dailyPatchDeferred.resolve(jsonResponse(updatedDaily));
+      await exitDaily;
+    });
+    await act(async () => {
+      recordSaveDeferred.resolve(jsonResponse({
+        ...updatedRecord,
+        savedRevision: 2,
+        savedAt: "2026-05-02T05:01:00.000Z"
+      }));
+      await finishRecord;
+    });
+
+    expect(result.current.view.savedSources[0]?.content).toBe(recordContent);
+    expect(result.current.view.entry?.content).toBe(dailyContent);
+    expect(result.current.view.sourceSignature).toBe(sourceSignature2);
+    expect(result.current.view.freshness).toBe("stale");
+    expect(result.current.view.displayStatus).toBe("stale");
+  });
+
+  it("keeps the latest source staleness when a daily save response arrives after a record edit", async () => {
+    const dailyPatchDeferred = createDeferredResponse();
+    const dailySaveDeferred = createDeferredResponse();
+    const recordPatchDeferred = createDeferredResponse();
+    let markDailySaveStarted!: () => void;
+    const dailySaveStarted = new Promise<void>((resolve) => {
+      markDailySaveStarted = resolve;
+    });
+    const recordContent = "日记正式保存期间更新的记录正文。";
+    const dailyContent = "正式保存后的今日日记。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+    const updatedDaily = {
+      ...buildEntry("modified", 2),
+      content: dailyContent,
+      sourceSignature: sourceSignature1
+    };
+
+    global.fetch = vi.fn((input, init) => {
+      const url = String(input);
+      if (url === "/api/journal/daily/daily-1" && init?.method === "PATCH") {
+        return dailyPatchDeferred.promise;
+      }
+      if (url === "/api/journal/daily/daily-1/save" && init?.method === "POST") {
+        markDailySaveStarted();
+        return dailySaveDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordPatchDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        return Promise.resolve(jsonResponse({
+          ...updatedRecord,
+          savedRevision: 2,
+          savedAt: "2026-05-02T05:01:00.000Z"
+        }));
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useInterleavedEditorHarness(buildView("draft")));
+    act(() => {
+      result.current.record.beginEdit(source);
+      result.current.daily.beginEdit();
+    });
+    act(() => {
+      result.current.record.setEdit({ entryId: source.entryId, title: source.title, content: recordContent });
+      result.current.daily.setEdit({ title: buildEntry().title, content: dailyContent });
+    });
+
+    let finishRecord!: Promise<void>;
+    let saveDaily!: Promise<void>;
+    act(() => {
+      finishRecord = result.current.record.finishEdit();
+      saveDaily = result.current.daily.saveEdit();
+    });
+    await act(async () => {
+      dailyPatchDeferred.resolve(jsonResponse(updatedDaily));
+      await dailySaveStarted;
+    });
+    await act(async () => {
+      recordPatchDeferred.resolve(jsonResponse(updatedRecord));
+      await finishRecord;
+    });
+    await act(async () => {
+      dailySaveDeferred.resolve(jsonResponse({
+        ...updatedDaily,
+        status: "saved",
+        savedRevision: 2,
+        savedAt: "2026-05-02T05:02:00.000Z"
+      }));
+      await saveDaily;
+    });
+
+    expect(result.current.view.savedSources[0]?.content).toBe(recordContent);
+    expect(result.current.view.entry?.content).toBe(dailyContent);
+    expect(result.current.view.sourceSignature).toBe(sourceSignature2);
+    expect(result.current.view.freshness).toBe("stale");
+    expect(result.current.view.displayStatus).toBe("stale");
+  });
+
+  it("merges delayed generation polling with newer fields and absorbs its completion", () => {
+    const secondSource: JournalDailySourceEntry = {
+      ...source,
+      eventId: "event-2",
+      entryId: "record-2",
+      daySequence: 2,
+      title: "晚上的新片段",
+      content: "这是轮询响应带回的新事件卡。",
+      recordedAt: "2026-05-02T07:00:00.000Z",
+      updatedAt: "2026-05-02T07:00:00.000Z"
+    };
+    const currentEntry = {
+      ...buildEntry("modified", 2),
+      content: "轮询等待期间保留的人工日记。"
+    };
+    const current = deriveJournalDayView({
+      ...buildView("stale"),
+      savedSources: [{ ...source, contentRevision: 2, updatedAt: "2026-05-02T06:00:00.000Z" }],
+      pendingSaveEntryIds: ["record-1"],
+      entry: currentEntry,
+      updateBlockedByPendingSource: true
+    });
+    const processing: JournalDailyEntryGenerationRecord = {
+      id: "generation-1",
+      entryDate: "2026-05-02",
+      entryId: "daily-1",
+      traceId: "trace-1",
+      clientOperationId: "operation-1",
+      kind: "update",
+      status: "processing",
+      expectedSourceSignature: sourceSignature2,
+      expectedContentRevision: 2,
+      resultRevisionId: null,
+      attemptCount: 1,
+      errorCode: null,
+      startedAt: "2026-05-02T07:01:00.000Z",
+      completedAt: null,
+      failedAt: null,
+      canceledAt: null,
+      createdAt: "2026-05-02T07:01:00.000Z",
+      updatedAt: "2026-05-02T07:01:00.000Z"
+    };
+    const polling = mergeJournalDayRefresh(current, {
+      ...buildView("generating"),
+      savedSources: [source, secondSource],
+      latestGeneration: processing
+    });
+    const mergedSignature = buildJournalDailySourceSignature(polling.savedSources);
+
+    expect(polling.savedSources).toHaveLength(2);
+    expect(polling.savedSources.find((item) => item.entryId === "record-1")?.contentRevision).toBe(2);
+    expect(polling.collection).toEqual({ kind: "multiple_entries" });
+    expect(polling.pendingSaveEntryIds).toEqual([]);
+    expect(polling.updateBlockedByPendingSource).toBe(false);
+    expect(polling.sourceSignature).toBe(mergedSignature);
+    expect(polling.entry?.content).toBe(currentEntry.content);
+    expect(polling.freshness).toBe("stale");
+    expect(polling.displayStatus).toBe("generating");
+
+    const completedEntry = {
+      ...currentEntry,
+      content: "生成完成后吸收的新日记。",
+      contentRevision: 3,
+      sourceSignature: mergedSignature,
+      status: "draft" as const,
+      updatedAt: "2026-05-02T07:02:00.000Z"
+    };
+    const completed = mergeJournalDayRefresh(polling, {
+      ...polling,
+      entry: completedEntry,
+      latestGeneration: {
+        ...processing,
+        status: "completed",
+        resultRevisionId: "revision-3",
+        completedAt: "2026-05-02T07:02:00.000Z",
+        updatedAt: "2026-05-02T07:02:00.000Z"
+      },
+      displayStatus: "draft"
+    });
+
+    expect(completed.entry?.content).toBe(completedEntry.content);
+    expect(completed.sourceSignature).toBe(mergedSignature);
+    expect(completed.freshness).toBe("draft");
+    expect(completed.displayStatus).toBe("draft");
+  });
+
+  it("marks the latest view generating after an accepted request", async () => {
+    const generationDeferred = createDeferredResponse();
+    const recordPatchDeferred = createDeferredResponse();
+    const recordContent = "生成请求等待期间更新的记录正文。";
+    const updatedRecord = {
+      ...source,
+      content: recordContent,
+      contentRevision: 2,
+      updatedAt: "2026-05-02T05:00:00.000Z"
+    };
+
+    global.fetch = vi.fn((input, init) => {
+      const url = String(input);
+      if (url === "/api/journal/daily/generate" && init?.method === "POST") {
+        return generationDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1" && init?.method === "PATCH") {
+        return recordPatchDeferred.promise;
+      }
+      if (url === "/api/interview/event-centered/journal/record-1/save" && init?.method === "POST") {
+        return Promise.resolve(jsonResponse({
+          ...updatedRecord,
+          savedRevision: 2,
+          savedAt: "2026-05-02T05:01:00.000Z"
+        }));
+      }
+      return Promise.resolve(jsonResponse({}, 404));
+    }) as typeof fetch;
+
+    const { result } = renderHook(() => useInterleavedEditorHarness(buildView("draft")));
+    let generateDaily!: Promise<void>;
+    act(() => {
+      generateDaily = result.current.daily.generate();
+      result.current.record.beginEdit(source);
+    });
+    act(() => {
+      result.current.record.setEdit({ entryId: source.entryId, title: source.title, content: recordContent });
+    });
+    let finishRecord!: Promise<void>;
+    act(() => {
+      finishRecord = result.current.record.finishEdit();
+    });
+    await act(async () => {
+      recordPatchDeferred.resolve(jsonResponse(updatedRecord));
+      await finishRecord;
+    });
+    await act(async () => {
+      generationDeferred.resolve(jsonResponse({ accepted: true }, 202));
+      await generateDaily;
+    });
+
+    expect(result.current.view.savedSources[0]?.content).toBe(recordContent);
+    expect(result.current.view.sourceSignature).toBe(sourceSignature2);
+    expect(result.current.view.freshness).toBe("stale");
+    expect(result.current.view.displayStatus).toBe("generating");
   });
 });

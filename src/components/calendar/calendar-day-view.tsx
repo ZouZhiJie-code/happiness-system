@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CalendarDailyJournalExportMenu } from "@/components/daily-journal/daily-journal-export-menu";
 import { buildCalendarActionAccessibleName } from "@/features/calendar/accessibility";
@@ -155,6 +155,7 @@ function DailyJournalPromptDialog({
   writeJournalHref,
   dailyJournalHref,
   returnFocusRef,
+  getFallbackFocusElement,
   onClose
 }: {
   open: boolean;
@@ -165,6 +166,7 @@ function DailyJournalPromptDialog({
   writeJournalHref: string | null;
   dailyJournalHref: string;
   returnFocusRef: React.RefObject<HTMLButtonElement | null>;
+  getFallbackFocusElement: () => HTMLAnchorElement | null;
   onClose: () => void;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -179,6 +181,7 @@ function DailyJournalPromptDialog({
       return;
     }
 
+    const returnFocusElement = returnFocusRef.current;
     dialogRef.current?.focus({ preventScroll: true });
 
     function getFocusableElements() {
@@ -238,9 +241,15 @@ function DailyJournalPromptDialog({
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      returnFocusRef.current?.focus({ preventScroll: true });
+      const fallbackFocusElement = getFallbackFocusElement();
+      const focusTarget = returnFocusElement?.isConnected
+        ? returnFocusElement
+        : fallbackFocusElement?.isConnected
+          ? fallbackFocusElement
+          : null;
+      focusTarget?.focus({ preventScroll: true });
     };
-  }, [open, returnFocusRef]);
+  }, [getFallbackFocusElement, open, returnFocusRef]);
 
   if (!open) {
     return null;
@@ -363,6 +372,8 @@ export function CalendarDayView({
   const rowItems = buildCalendarDayViewCardItems(day, today);
   const [dailyJournalPromptMode, setDailyJournalPromptMode] = useState<"empty" | "sources" | null>(null);
   const dailyJournalPromptTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const dailyJournalViewLinkRef = useRef<HTMLAnchorElement | null>(null);
+  const getDailyJournalViewLink = useCallback(() => dailyJournalViewLinkRef.current, []);
   const updatedAtLabel = formatCalendarUpdatedAt(day.latestUpdatedAt);
   const overviewTitle = day.primaryTitle ? truncateCalendarCopy(day.primaryTitle, 26) : formatCalendarDayLabel(day.date);
   const overviewDateLabel = day.primaryTitle ? formatCalendarDayLabel(day.date) : "当天决策";
@@ -407,6 +418,7 @@ export function CalendarDayView({
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
             {shouldLinkDailyJournal ? (
               <Link
+                ref={dailyJournalViewLinkRef}
                 href={dailyJournalHref}
                 className="calendar-action-primary inline-flex items-center justify-center rounded-full px-3.5 py-2 text-[0.78rem] whitespace-nowrap"
                 aria-label={`${formatCalendarDayLabel(day.date)}，${dailyJournalViewLabel}`}
@@ -498,6 +510,7 @@ export function CalendarDayView({
         writeJournalHref={writeJournalHref}
         dailyJournalHref={dailyJournalHref}
         returnFocusRef={dailyJournalPromptTriggerRef}
+        getFallbackFocusElement={getDailyJournalViewLink}
         onClose={() => setDailyJournalPromptMode(null)}
       />
     </section>

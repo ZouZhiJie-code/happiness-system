@@ -1,21 +1,11 @@
 "use client";
 
 import { Menu } from "@base-ui/react/menu";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AppToast } from "@/components/ui/app-toast";
-import {
-  clearLocalAuthUserId,
-  getLocalAuthUserId,
-  getScopedLocalStorageKey
-} from "@/features/auth/auth-local";
-import {
-  clearStoredInterviewSessionId,
-  interviewDimensionStorageKey,
-  interviewDimensions,
-  interviewSessionFreshStartStorageKey,
-  interviewSessionStorageKey
-} from "@/features/interview/dimensions";
+import { clearCurrentUserInterviewRecoveryState } from "@/features/interview/client-recovery-state";
 import { cn } from "@/lib/utils";
 
 import {
@@ -27,24 +17,10 @@ import {
   UserRoundIcon
 } from "./account-menu-icons";
 
-function clearInterviewClientState() {
-  const localAuthUserId = getLocalAuthUserId();
-  interviewDimensions.forEach((dimension) => {
-    clearStoredInterviewSessionId(dimension);
-  });
-
-  if (localAuthUserId) {
-    window.localStorage.removeItem(getScopedLocalStorageKey(interviewSessionStorageKey, localAuthUserId));
-    window.localStorage.removeItem(getScopedLocalStorageKey(interviewDimensionStorageKey, localAuthUserId));
-    window.localStorage.removeItem(getScopedLocalStorageKey(interviewSessionFreshStartStorageKey, localAuthUserId));
-  }
-
-  clearLocalAuthUserId();
-}
-
 const ACCOUNT_ROUTES = ["/settings", "/legal/privacy", "/legal/terms"] as const;
 
-export function AccountMenu({ pathname }: { pathname: string }) {
+export function AccountMenu({ pathname, userId }: { pathname: string; userId: string | null }) {
+  const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const active = ACCOUNT_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
@@ -63,8 +39,9 @@ export function AccountMenu({ pathname }: { pathname: string }) {
       const response = await fetch("/api/auth/logout", { method: "POST" });
       if (!response.ok) throw new Error("退出失败，请稍后再试");
 
-      clearInterviewClientState();
-      window.location.assign("/");
+      clearCurrentUserInterviewRecoveryState(userId);
+      router.replace("/");
+      router.refresh();
     } catch (logoutError) {
       setError(logoutError instanceof Error ? logoutError.message : "退出失败，请稍后再试");
       setLoggingOut(false);

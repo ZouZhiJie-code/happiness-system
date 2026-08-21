@@ -198,6 +198,44 @@ describe("happiness score entry", () => {
     });
   });
 
+  it("uses one current global keyboard handler while advancing between score items", async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.startsWith("/api/analysis/month?month=2026-05")) {
+        return new Response(
+          JSON.stringify({
+            scoreRecords: []
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      throw new Error(`Unhandled fetch: ${url}`);
+    }) as typeof fetch;
+
+    render(<HappinessScoreEntry entryDate="2026-05-01" open onClose={() => {}} />);
+
+    await screen.findByText("当天评分 · 第 1/8 项 · 健康");
+    fireEvent.keyDown(window, { key: "6" });
+
+    await waitFor(() => {
+      expect(screen.getByText("当天评分 · 第 2/8 项 · 经济")).toBeInTheDocument();
+    });
+    expect(screen.getByText("健康：6分")).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "7" });
+
+    await waitFor(() => {
+      expect(screen.getByText("当天评分 · 第 3/8 项 · 人际")).toBeInTheDocument();
+    });
+    expect(screen.getByText("经济：7分")).toBeInTheDocument();
+    expect(screen.getByText("2/8 已评分")).toBeInTheDocument();
+  });
+
   it("enables save-and-exit only after all 8 dimensions are scored", async () => {
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);

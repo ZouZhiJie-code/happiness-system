@@ -2,7 +2,6 @@ import { prisma } from "@/server/db/prisma";
 import { formatEntryDate, getEntryDateRangeBounds, parseEntryDateInput } from "@/features/interview/entry-date";
 import type { DailyHappinessScoreInput, DailyHappinessScoreRecord } from "@/features/happiness-score/types";
 
-type DailyHappinessScoreEntry = Awaited<ReturnType<typeof prisma.dailyHappinessScore.findUnique>>;
 type DailyHappinessScoreListItem = NonNullable<Awaited<ReturnType<typeof prisma.dailyHappinessScore.findMany>>[number]>;
 type DailyHappinessScoreMappedEntry = Pick<
   DailyHappinessScoreListItem,

@@ -14,7 +14,7 @@
 | [数据口径 v2 证据](./analytics-contract-v2/README.md) | Production 已发布·核心回验通过·管理员成功读取 pending | 已封存最终 CI、Preview、只读数据库对账、正式域名核心 smoke 和线上日志；公开回执保持零正文 |
 | [零模型 E2E 证据](./e2e-zero-model/README.md) | 已合入 main·热修复远程门与 main CI 全绿·Preview 通过至需更新·Production blocked | PR #41 合入 `77de8d1`；PR #43 final head 两套 CI 全绿并合入 `795417d`，main CI 全绿；产品源码 `0`，Production 继续使用 `dpl_DCGYzf4U3nHdCiHyjo4U8NgkbGe5` |
 | [Golden Set v2](./golden-set-v2/README.md) | 已合入 main·收集 pending | PR #44 已合入 main `ef7bf94`；`P0=0 / P1=0 / P2=3`，完整轨迹 `0/30`，正文开关保持关闭，Production 正文读取 `0`、模型调用 `0` |
-| 主链重构证据 | 第一批与画像热修已合入 main·第二批测试合同二次收敛·最终远程门 pending·Production P1 blocked | PR #47 head `246a101` 两套 CI 全绿；证据 head `d4c1a07` 的 push 全绿、PR 暴露“必须先不可用”的过强测试前提。本地已收敛为“等待可用后执行菜单并阻断请求”，等待新 head 两套 CI；详见 `PEH-033`～`PEH-037` |
+| [主链重构证据](./stage4-journal/README.md) | 第一、二批已合入 main·第三批远程工程门通过·Preview smoke blocked·Production blocked | PR #48 证据 head `519cc37` 的 push／PR 两套 CI attempt 1 全绿、零模型 E2E 均 `11/11`；Preview `dpl_BAux5cqn6ATTqB7DsHZDSu3u6Wxt` Ready，产品 smoke 在应用登录前受验收工作目录解析阻断。独立终审 `P0=0 / P1=0 / P2=1`，详见 `PEH-033`～`PEH-042` |
 | [月度洞察 Go/No-Go](./monthly-insight-v1/README.md) | No-Go / insufficient_evidence | 当前成果物投影与 6 条合成合同已验证；真实用户月 `0`、模型调用 `0`，Production 继续使用确定性 `AnalysisNarrative` |
 
 ## 隐私边界

@@ -1,6 +1,10 @@
 "use client";
 
 import { getLocalAuthUserId } from "@/features/auth/auth-local";
+import {
+  interviewComposerDraftStoragePrefix,
+  interviewUserTurnOutboxStoragePrefix
+} from "@/features/interview/client-recovery-state";
 import type {
   InputMode,
   InterviewDimension,
@@ -8,9 +12,6 @@ import type {
   InterviewUserTurnAction,
   InterviewUserTurnStatus
 } from "@/types/interview";
-
-const COMPOSER_DRAFT_PREFIX = "hs-interview-composer-draft";
-const USER_TURN_OUTBOX_PREFIX = "hs-interview-user-turn-outbox";
 
 function getScope() {
   return getLocalAuthUserId() ?? "anonymous";
@@ -23,7 +24,7 @@ export function buildComposerDraftKey(input: {
   dimension: InterviewDimension;
 }) {
   return [
-    COMPOSER_DRAFT_PREFIX,
+    interviewComposerDraftStoragePrefix,
     getScope(),
     input.entryDate,
     input.dimension,
@@ -91,7 +92,7 @@ export interface UserTurnOutboxRecord {
 }
 
 function buildOutboxKey(sessionId: string, branchSessionId?: string | null) {
-  return [USER_TURN_OUTBOX_PREFIX, getScope(), sessionId, branchSessionId ?? sessionId].join("::");
+  return [interviewUserTurnOutboxStoragePrefix, getScope(), sessionId, branchSessionId ?? sessionId].join("::");
 }
 
 export function readUserTurnOutbox(sessionId: string, branchSessionId?: string | null): UserTurnOutboxRecord | null {

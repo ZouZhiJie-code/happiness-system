@@ -47,11 +47,18 @@ export function prefetchAdjacentAnalysisPeriods(period: AnalysisPeriodState) {
 }
 
 export function useAnalysisPeriodPrefetch(period: AnalysisPeriodState, enabled: boolean) {
+  const { endDate, month, preset, startDate } = period;
+
   useEffect(() => {
     if (!enabled) {
       return;
     }
 
-    prefetchAdjacentAnalysisPeriods(period);
-  }, [enabled, period.endDate, period.month, period.preset, period.startDate]);
+    prefetchAdjacentAnalysisPeriods({
+      endDate,
+      month,
+      preset,
+      startDate
+    });
+  }, [enabled, endDate, month, preset, startDate]);
 }

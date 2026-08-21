@@ -17,9 +17,10 @@ type SiteHeaderNavProps = {
   authenticated: boolean;
   pathname: string;
   todayCalendarHref: string;
+  userId: string | null;
 };
 
-export function SiteHeaderNav({ authenticated, pathname, todayCalendarHref }: SiteHeaderNavProps) {
+export function SiteHeaderNav({ authenticated, pathname, todayCalendarHref, userId }: SiteHeaderNavProps) {
   const calendarChrome = useCalendarChromeOptional();
   const isEnteringCalendar = calendarChrome?.isEnteringCalendar ?? false;
   const isActive = (paths: readonly string[]) =>
@@ -75,7 +76,7 @@ export function SiteHeaderNav({ authenticated, pathname, todayCalendarHref }: Si
           );
         })}
       </nav>
-      <AccountMenu pathname={pathname} />
+      <AccountMenu pathname={pathname} userId={userId} />
     </div>
   );
 }

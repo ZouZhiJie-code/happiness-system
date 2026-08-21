@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import type { AnalysisMonthRecord } from "@/features/analysis/types";
 import {
@@ -237,33 +237,33 @@ export function HappinessScoreEntry({ entryDate, open, onClose }: HappinessScore
     handleSelectScore(key === "0" ? 10 : Number(key));
   }
 
+  const handleWindowKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    const target = event.target as HTMLElement | null;
+    const tag = target?.tagName?.toLowerCase();
+    const isTypingTarget =
+      Boolean(target?.isContentEditable) ||
+      tag === "input" ||
+      tag === "textarea" ||
+      tag === "select";
+
+    if (isTypingTarget) {
+      return;
+    }
+
+    handleKeyDown(event);
+  });
+
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    function onWindowKeyDown(event: KeyboardEvent) {
-      const target = event.target as HTMLElement | null;
-      const tag = target?.tagName?.toLowerCase();
-      const isTypingTarget =
-        Boolean(target?.isContentEditable) ||
-        tag === "input" ||
-        tag === "textarea" ||
-        tag === "select";
-
-      if (isTypingTarget) {
-        return;
-      }
-
-      handleKeyDown(event);
-    }
-
-    window.addEventListener("keydown", onWindowKeyDown);
+    window.addEventListener("keydown", handleWindowKeyDown);
 
     return () => {
-      window.removeEventListener("keydown", onWindowKeyDown);
+      window.removeEventListener("keydown", handleWindowKeyDown);
     };
-  }, [currentIndex, currentKey, open, scores]);
+  }, [open]);
 
   if (!open) {
     return null;
